@@ -1,6 +1,3 @@
-#TODO: collapse this down to just consider 1 spectrograph
-#TODO: modify this to use the same input as sensitivity_model.py
-
 #import argparse
 import os
 import sys

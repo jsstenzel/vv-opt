@@ -1,6 +1,3 @@
-#TODO: collapse this down to just consider 1 spectrograph
-#TODO: modify this to use the same input as sensitivity_model.py
-
 #import argparse
 import os
 import sys
@@ -40,19 +37,20 @@ def uncertainty_prop(y_j, doPlot=False, doPrint=False):
         print("Gaussian fit p-value:",pvalue,"(p-value > 0.05 means its normal)")
     
     if doPlot:
-        n, bins, patches = plt.hist(x=y_j, bins='auto', color='#21aad3', alpha=1.0, rwidth=0.85)
-        plt.grid(axis='y', alpha=0.75)
-        plt.ylim(ymax=np.ceil(n.max() / 10) * 10 + n.max()*0.05)
-        #plt.xticks(rotation=90)
-        plt.xlabel("Y")
-        plt.ylabel("Frequency (N=" + str(len(y_j)) + ")")
-        
-        #add vert line
-        plt.axvline(mean, 0, color='b')
-        
-        plt.show()
+        uncertainty_prop_plot(y_j, mean):
     
     return mean, stddev
+    
+def uncertainty_prop_plot(y_j, mean=0):
+    if mean==0:
+        mean = statistics.mean(y_j)
+        
+    n, bins, patches = plt.hist(x=y_j, bins='auto', color='#21aad3', alpha=1.0, rwidth=0.85)
+    plt.grid(axis='y', alpha=0.75)
+    plt.ylim(ymax=np.ceil(n.max() / 10) * 10 + n.max()*0.05)
+    #plt.xticks(rotation=90)
+    plt.xlabel("Y")
+    plt.ylabel("Frequency (N=" + str(len(y_j)) + ")")
     
 if __name__ == '__main__':  
     print("uncertainty_propagation.py: Use me to analyze and plot the results of model samples!")
