@@ -48,10 +48,13 @@ def sobol_generate_samples(n, var_names, model, doWrite=''):
         
     #write
     if doWrite != '':
+        #make a csv file where each line has format [x0, ..., xi, ..., xn, Y]
+        writelist = [np.append(val_list, yi) for val_list, yi in zip(param_values,Y)]
+        
         with open(doWrite + '.csv', 'w+', newline='') as csvfile:
             writer = csv.writer(csvfile)
-            for y in Y:
-                writer.writerow([y])
+            for row in writelist:
+                writer.writerow(row)
     
     #return [[xn,yn] for xn,yn in zip(param_values, Y)]
     return param_values, Y
@@ -63,5 +66,5 @@ def __test_model(var_names, X=[1,2,3], X_err=[0,0,0]):
     return x1 + x2*x3
 
 if __name__ == '__main__':  
-    output = sobol_generate_samples(0, ['x1','x2','x3'], __test_model)
+    output = sobol_generate_samples(8, ['x1','x2','x3'], __test_model, 'testdata')
     print(output)
