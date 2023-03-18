@@ -19,7 +19,7 @@ import scipy.optimize as optimization
 
 
 #model is a function that can take x as an input, or x_err  N(0,1) as an input that it applies onto a default x
-def sobol_generate_samples(n, var_names, model, doWrite=''):
+def sobol_generate_samples(n, var_names, model, doWrite='', doSijCalc=False):
     N = 2 ** n
     dim = len(var_names)
 
@@ -32,7 +32,7 @@ def sobol_generate_samples(n, var_names, model, doWrite=''):
     }
     
     print("Generating param values...", flush=True)
-    param_values = sobol.sample(problem, N, calc_second_order=False)
+    param_values = sobol.sample(problem, N, calc_second_order=doSijCalc)
 
     ###Setup for func calls
     Y = np.zeros([param_values.shape[0]])
@@ -63,5 +63,5 @@ def __test_model(var_names, X=[1,2,3], X_err=[0,0,0]):
     return x1 + x2*x3
 
 if __name__ == '__main__':  
-    output = sobol_generate_samples(8, ['x1','x2','x3'], __test_model, 'testdata')
+    output = sobol_generate_samples(8, ['x1','x2','x3'], __test_model, 'testdata', doSijCalc=True)
     print(output)
