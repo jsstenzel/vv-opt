@@ -37,7 +37,7 @@ def uncertainty_prop(y_j, doPlot=False, doPrint=False):
         print("Gaussian fit p-value:",pvalue,"(p-value > 0.05 means its normal)")
     
     if doPlot:
-        uncertainty_prop_plot(y_j, mean):
+        uncertainty_prop_plot(y_j, mean)
     
     return mean, stddev
     
@@ -51,6 +51,7 @@ def uncertainty_prop_plot(y_j, mean=0):
     #plt.xticks(rotation=90)
     plt.xlabel("Y")
     plt.ylabel("Frequency (N=" + str(len(y_j)) + ")")
+    plt.show()
     
 if __name__ == '__main__':  
     print("uncertainty_propagation.py: Use me to analyze and plot the results of model samples!")
