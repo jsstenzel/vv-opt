@@ -20,7 +20,7 @@ G_fn    - function pointer to cost model
 p_theta_rvs - function pointer to generate samples of the prior distribution p(theta)
 p_theta_pdf - function pointer to the pdf of the prior distribution p(theta)
 """
-def U_brute_varH(d, exp_fn, H_fn, G_fn, p_theta_rvs, p_theta_pdf, N=1000, burnin=0, lag=1):
+def U_brute_varH(d, exp_fn, H_fn, G_fn, p_theta_rvs, p_theta_pdf, N=1000, burnin=0, lag=1, verbose=False):
     N1 = N #number of outer loops, ranging over values of y
     
     #Generate a list of y's sampled from likelihood fn, p(y|theta,d)
@@ -33,7 +33,10 @@ def U_brute_varH(d, exp_fn, H_fn, G_fn, p_theta_rvs, p_theta_pdf, N=1000, burnin
     #this outer loop amounts to calculating U over the set of all likely possible data y
     #If you have actual data, i think you can skip or simplify this loop to just do mcmc at that known data?
     
-    for y in Y1_list:
+    U_list = []
+    for k,y in enumerate(Y1_list):
+        if verbose:
+            print(k, flush=True)
         #Ok so for each value of y, i need to use MCMC to sample from the posterior
         #I think each of those values of y is my data? In each case, the best i can do for data is one
         #evaluation of the likelihood p(y|theta,d) at a value of y. Looping over the p(y|theta|d)p(theta) values of y
@@ -77,6 +80,7 @@ def U_brute_varH(d, exp_fn, H_fn, G_fn, p_theta_rvs, p_theta_pdf, N=1000, burnin
         
         #Now find the variance of that. Return the inverse minus the cost as the utility
         var_H = np.var(H_theta_posterior, ddof=1) #its a sample variance
-        U = (1/var_H) - G_fn(d)
-        return U, H_theta_posterior
+        U = (1.0/var_H) - G_fn(d)
+        U_list.append(U)
         
+    return np.average(U_list), U_list

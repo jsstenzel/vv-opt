@@ -32,23 +32,48 @@ def Ptheta_rvs(s=1):
 
 def Ptheta_pdf(_theta):
     return scipy.stats.norm.pdf(_theta, loc=0.5, scale=0.5)
-
-#plot the trace of H(posterior)
-d = 0.5
-u, H_trace = U_brute_varH(d, eta, H, Gamma, Ptheta_rvs, Ptheta_pdf, N=1000, burnin=0, lag=1)
-print(u)
-plt.plot(H_trace)
-plt.show()
-uncertainty_prop_plot(H_trace)
-
-
-#find optimal d
-u_list = []
-d_list = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
-for d in d_list:
-    print("d =",d,'...',flush=True)
-    u, _ = U_brute_varH(d, eta, H, Gamma, Ptheta_rvs, Ptheta_pdf, N=300, burnin=0, lag=1)
-    u_list.append(u)
     
-plt.plot(d_list, u_list)
-plt.show()
+def empty(whatever):
+    return 0
+
+if False:
+    #plot the trace of H(posterior)
+    d = 0.5
+    u, u_list = U_brute_varH(d, eta, H, Gamma, Ptheta_rvs, Ptheta_pdf, N=100, burnin=0, lag=1, verbose=True)
+    print(u)
+    plt.plot(u_list)
+    plt.show()
+    uncertainty_prop_plot(u_list)
+
+if False:
+    #find optimal d
+    u_list = []
+    d_list = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
+    for d in d_list:
+        print("d =",d,'...',flush=True)
+        u, _ = U_brute_varH(d, eta, H, Gamma, Ptheta_rvs, Ptheta_pdf, N=300, burnin=0, lag=1)
+        u_list.append(u)
+        
+    plt.plot(d_list, u_list)
+    plt.show()
+    
+if False:
+    #find optimal d, plotting out u and Gamma
+    u_list = []
+    d_list = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
+    G_list = []
+    for d in d_list:
+        print("d =",d,'...',flush=True)
+        u, _ = U_brute_varH(d, eta, H, empty, Ptheta_rvs, Ptheta_pdf, N=1000, burnin=0, lag=1, verbose=True)
+        u_list.append(u)
+        G_list.append(Gamma(d))
+        
+    plt.plot(d_list, u_list, 'g')
+    plt.plot(d_list, G_list, 'r')
+    plt.xlabel("d")
+    plt.ylabel("u, Γ")
+    plt.show()
+    plt.plot(G_list,u_list)
+    plt.xlabel("Γ")
+    plt.ylabel("u")
+    plt.show()
