@@ -29,10 +29,10 @@ def read_noise_exp(_theta, _d):
 	gain = _theta[0]
 	rn = _theta[1]
 	#define parameters:
-	nx = 
-	ny = 
-	sigma_stray = 
-	sigma_dc = 
+	nx = 2048
+	ny = 2048
+	sigma_stray = .1 #e-
+	sigma_dc = .5 #e-/s
 	t = .1 #100 ms exposure, best for both noise and 
 	
 	sigma_si = gain * math.sqrt(rn**2 + (sigma_dc*t)**2 + sigma_stray**2)
@@ -58,11 +58,11 @@ def dark_current_exp(_theta, _d):
 	dc = _theta[2]
 	#define parameters:
 	mu_stray = 0
-	sigma_stray =
-	sigma_dc =
+	sigma_stray = .1 #e-
+	sigma_dc = .5 #e-/s
 	t_0 = 0.1 #100ms baseline exposure assumed
-	nx = 
-	ny =
+	nx = 2048
+	ny = 2048
 	#define design variables
 	d_num = _d[0] #total number of exposures
 	d_max = _d[1] #highest exposure time in the list
@@ -112,14 +112,14 @@ def gain_exp(_theta, _d):
 	#define parameters:
 	P_signal = #probability of a signal event being correctly identified as an event; 1-P_signal is false negative rate
 	P_noise = #probability of noise being incorrectly identified as an event; P_noise is false positive rate
-	sigma_dc =
-	T =
+	sigma_dc = .5 #e-/s
+	T_ccd =
 	E0 =
 	sigma_E =
 	w =
-	rate_cd109 =
-	nx =
-	ny =
+	rate_cd109 = #look at cd-109 sample
+	nx = 2048
+	ny = 2048
 	grade_size = 3 #we are considering 3x3 event grade sizes, based on the physics of the experiment
 	#define design variables
 	t = _d[0]
