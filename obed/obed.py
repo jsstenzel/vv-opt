@@ -84,6 +84,20 @@ def U_brute_varH(d, exp_fn, H_fn, G_fn, p_theta_rvs, p_theta_pdf, N=1000, burnin
         return U, H_theta_posterior
         
 
+def calc_likelihood_kernel(d, exp_fn, p_theta_rvs, n1=1000, c='r', showplot=True):
+    thetas = p_theta_rvs(n1)
+    Y1_list = [exp_fn(theta, d) for theta in thetas]
+    
+    y_theta_values = np.vstack([Y1_list, thetas])
+    likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values)
+    
+    #lets plot this real quick
+    sns.kdeplot(Y1_list, thetas, color=c, shade=True, cmap="Reds", shade_lowest=False)
+    if showplot:
+        plt.show()
+    
+    return likelihood_kernel, Y1_list
+
 
 #This is like U_brute_varH, except we're reusing loop 1 samples in loop 3, like Huan & Marzouk
 def U_reloop_varH(d, exp_fn, H_fn, G_fn, p_theta_rvs, p_theta_pdf, n1=10000, n2=1000, burnin=0, lag=1):   
@@ -91,17 +105,11 @@ def U_reloop_varH(d, exp_fn, H_fn, G_fn, p_theta_rvs, p_theta_pdf, n1=10000, n2=
     #I think you can just do this by running eta(theta,d) over and over - the random epsilon will create the likelihood fn distribution
     #And of course, to get the theta for those executions, you must correspondingly sample from the prior, p(theta)
     #so you get a N1-long list of values [y, theta]
-    thetas = p_theta_rvs(n1)
-    Y1_list = [exp_fn(theta, d) for theta in thetas]
     
-    #Now i want to use my y|d,theta that I generated to create an estimated pdf of y as a fn of theta
+    #Then i want to use my y|d,theta that I generated to create an estimated pdf of y as a fn of theta
     #this is a little more complicated than just a pdf of y like i do originally. Can kde do this?
-    y_theta_values = np.vstack([Y1_list, thetas])
-    likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values)
-    
-    #lets plot this real quick
-    sns.kdeplot(Y1_list, thetas, color='r', shade=True, cmap="Reds", shade_lowest=False)
-    plt.show()
+	
+	likelihood_kernel, Y1_list = calc_likelihood_kernel(d, exp_fn, p_theta_rvs, n1, showplot=False)
     
     #this outer loop amounts to calculating U over the set of all likely possible data y
     #If you have actual data, i think you can skip or simplify this loop to just do mcmc at that known data?
