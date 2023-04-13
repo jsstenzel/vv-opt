@@ -20,10 +20,9 @@ def H(_theta):
 def Gamma(_d):
     return 10/(_d+.01)
     
-#we'll assume a uniform prior on theta, from 0 to 1
 def Ptheta_rvs(s=1):
     #sample from the prior probability of theta
-    return scipy.stats.norm.rvs(size=s)
+    return scipy.stats.norm.rvs(size=s, loc=0.5, scale=0.5)
     
 #def Ptheta_pdf(_theta):
 #    #return the prior probability of theta
@@ -137,3 +136,33 @@ def __trace_scipy_kde():
     plt.show()
         
 __trace_scipy_kde()
+
+
+def __loop3_convergence():
+	#Here, I want to figure out how many likelihood samples are needed to make a good model of likelihood fn
+	#seeking convergence of T=SUM(likelihood(y_test,theta_test)) across likelihood samples
+    d = 0.5
+	test_pop = 100
+	burn_in = 4000 #these looked noisy, we dont care about those early matrics
+	
+    thetas = Ptheta_rvs(burn_in)
+    ys = [eta(theta, d) for theta in thetas]
+
+    test_thetas = Ptheta_rvs(test_pop)
+    test_y_theta = [[eta(theta, d),theta] for theta in test_thetas]
+    trace = []
+    while converged == False:
+        thetas = np.append(thetas, Ptheta_rvs(1)[0])
+        ys = np.append(ys, eta(thetas[-1], d))
+        
+        y_theta_values = np.vstack([ys, thetas])
+        likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values)
+        
+        #grab metrics from this kde
+        test_calcs = [likelihood_kernel.pdf(pair)[0] for pair in test_y_theta]
+        trace_metric = sum(test_calcs)
+		
+        trace.append(trace_metric)
+				
+		#Test convergence
+		converged = is_algorithm_converged(trace, ci=0.95, closeness=0.95)
