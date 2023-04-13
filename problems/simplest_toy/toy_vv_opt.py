@@ -3,6 +3,8 @@ import os
 import scipy.stats
 import math
 import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
 
 sys.path.append('../..')
 from obed.obed import U_brute_varH, U_reloop_varH
@@ -18,10 +20,9 @@ def H(_theta):
 def Gamma(_d):
     return 10/(_d+.01)
     
-#we'll assume a uniform prior on theta, from 0 to 1
 def Ptheta_rvs(s=1):
     #sample from the prior probability of theta
-    return scipy.stats.norm.rvs(size=s)
+    return scipy.stats.norm.rvs(size=s, loc=0.5, scale=0.5)
     
 #def Ptheta_pdf(_theta):
 #    #return the prior probability of theta
@@ -36,16 +37,18 @@ def Ptheta_pdf(_theta):
 def empty(whatever):
     return 0
 
-if False:
-    #plot U across the simulated evidence
-    d = 0.5
-    u, u_list = U_brute_varH(d, eta, H, Gamma, Ptheta_rvs, Ptheta_pdf, N=100, burnin=0, lag=1, verbose=True)
-    print(u)
-    plt.plot(u_list)
-    plt.show()
-    uncertainty_prop_plot(u_list)
+#############################################
 
-if False:
+def __brute_u_example():
+    #plot the trace of H(posterior)
+    d = 0.5
+    u, H_trace = U_brute_varH(d, eta, H, Gamma, Ptheta_rvs, Ptheta_pdf, N=1000, burnin=0, lag=1)
+    print(u)
+    plt.plot(H_trace)
+    plt.show()
+    uncertainty_prop_plot(H_trace)
+
+def __brute_u_find_d():
     #find optimal d
     u_list = []
     d_list = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
@@ -57,7 +60,8 @@ if False:
     plt.plot(d_list, u_list)
     plt.show()
     
-if False:
+
+def __brute_u_plot_pareto():
     #find optimal d, plotting out u and Gamma
     u_list = []
     d_list = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
@@ -79,14 +83,16 @@ if False:
     plt.show()
     
 ###################################################################
-if False:
-    #plot U across the simulated evidence
+
+def __reloop_u_example():
+    #plot the trace of H(posterior)
     d = 0.5
     u, ulist = U_reloop_varH(d, eta, H, empty, Ptheta_rvs, Ptheta_pdf, n1=1000, n2=500, burnin=0, lag=1) 
     print(u)
     uncertainty_prop_plot(ulist)
     
-if True:
+
+def __reloop_u_plot_pareto():
     #find optimal d, plotting out u and Gamma
     u_list = []
     d_list = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
@@ -106,3 +112,63 @@ if True:
     plt.xlabel("Γ")
     plt.ylabel("u")
     plt.show()
+    
+    
+#To try to answer how large n1 needs to be, im going to try plotting trace of gaussian kde
+def __trace_scipy_kde():
+    nmax = 10000
+    d = 0.5
+    thetas = Ptheta_rvs(100)
+    ys = [eta(theta, d) for theta in thetas]
+    
+    test_thetas = Ptheta_rvs(100)
+    test_y_theta = [[eta(theta, d),theta] for theta in test_thetas]
+    trace = []
+    for n in range(nmax):
+        thetas = np.append(thetas, Ptheta_rvs(1)[0])
+        ys = np.append(ys, eta(thetas[-1], d))
+        
+        y_theta_values = np.vstack([ys, thetas])
+        likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values)
+        
+        #grab metrics from this kde
+        #i want to trace some kind of change from one step to the next
+        test_calcs = [likelihood_kernel.pdf(pair)[0] for pair in test_y_theta]
+        
+        trace_metric = sum(test_calcs)
+        trace.append(trace_metric)
+    #print(trace, flush=True)
+    plt.plot(trace)
+    plt.show()
+        
+__trace_scipy_kde()
+
+
+def __loop3_convergence():
+	#Here, I want to figure out how many likelihood samples are needed to make a good model of likelihood fn
+	#seeking convergence of T=SUM(likelihood(y_test,theta_test)) across likelihood samples
+    d = 0.5
+	test_pop = 100
+	burn_in = 4000 #these looked noisy, we dont care about those early matrics
+	
+    thetas = Ptheta_rvs(burn_in)
+    ys = [eta(theta, d) for theta in thetas]
+
+    test_thetas = Ptheta_rvs(test_pop)
+    test_y_theta = [[eta(theta, d),theta] for theta in test_thetas]
+    trace = []
+    while converged == False:
+        thetas = np.append(thetas, Ptheta_rvs(1)[0])
+        ys = np.append(ys, eta(thetas[-1], d))
+        
+        y_theta_values = np.vstack([ys, thetas])
+        likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values)
+        
+        #grab metrics from this kde
+        test_calcs = [likelihood_kernel.pdf(pair)[0] for pair in test_y_theta]
+        trace_metric = sum(test_calcs)
+		
+        trace.append(trace_metric)
+				
+		#Test convergence
+		converged = is_algorithm_converged(trace, ci=0.95, closeness=0.95)
