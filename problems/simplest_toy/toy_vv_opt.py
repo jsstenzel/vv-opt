@@ -158,9 +158,10 @@ def __loop2_convergence():
 	exp_fn = eta
 	H_fn = H
 	d = 0.5
-	y = exp_fn(p_theta_rvs(1)[0], d) #whatevs just pick one from likelihood
+	y = 0.6#exp_fn(p_theta_rvs(1)[0], d) #whatevs just pick one from likelihood
 	burnin=0
 	lag=1
+	min=100
 	
 	#assume we have a good likelihood kernel to use in loop3. set it up to reuse here
 	n1 = 10000
@@ -168,11 +169,11 @@ def __loop2_convergence():
 	
 	#setup loop
 	theta_current = p_theta_rvs(1)[0]
+	mcmc_trace = []
 	U_trace = []
 	i = 0
 	
-	print("start loop", flush=True)
-	while not is_algorithm_converged(U_trace, min=100, ci=0.95, closeness=0.95):
+	while not is_algorithm_converged(U_trace, min, ci=0.975, closeness=0.99):
 		#one MCMC loop step
 		#Propose a new value of theta from the prior
 		theta_proposal = p_theta_rvs(1)[0]
@@ -192,19 +193,28 @@ def __loop2_convergence():
 		i += 1
 		if not( i > burnin and i%lag == 0):
 			continue #i.e. run the mcmc part again, dont add corresponding U to the trace
+		mcmc_trace.append(theta_current)
+		
+		#We also want to use min here to make sure that we're not taking a meaningless variance for our utility, with too little mcmc data
+		if len(mcmc_trace) <= min:
+			continue
 			
 		#Now, use my posterior samples to calculate H(theta|y,d) samples
-		H_theta_posterior = H_fn(theta_current)
+		H_theta_posterior = [H_fn(theta) for theta in mcmc_trace]
 		
 		#Now find the variance of that. Return the inverse as the utility; consider cost separately
 		var_H = np.var(H_theta_posterior, ddof=1) #its a sample variance
 		U = (1.0/var_H)
 		U_trace.append(U)
 		#print(len(U_trace), end='\r', flush=True)
+		
+		#more informative print statement
+		"""
 		sample_mean = np.mean(U_trace)
 		sample_var = np.var(U_trace, ddof=1)
 		N_latest = len(U_trace)
-		print(N_latest, sample_mean, sample_var, scipy.stats.norm.ppf(0.95), scipy.stats.norm.ppf(0.95)*np.sqrt(sample_var/N_latest)/sample_mean, end='\r', flush=True)
+		print(N_latest, U, sample_mean, sample_var, scipy.stats.norm.ppf(0.95), scipy.stats.norm.ppf(0.95)*np.sqrt(sample_var/N_latest)/sample_mean, flush=True)
+		"""
 		
 	print("N for convergence is", len(U_trace), ", mean U is", np.mean(U_trace))
 	

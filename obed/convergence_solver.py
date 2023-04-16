@@ -34,7 +34,7 @@ def solve_convergence(algorithm, ci=0.95, closeness=0.95, min_runs=100, **kwargs
 
 #This is just like the above, but can be used in a convergence solver for a more complicated case
 def is_algorithm_converged(sample, min=1, ci=0.95, closeness=0.95):
-	q = scipy.stats.norm.ppf(ci) #phi^-1(ci), quantile fn of x. for example, ci=0.95 means q=1.96
+	q = scipy.stats.norm.ppf(ci) #phi^-1(ci), quantile fn of x. for example, ci=0.975 means q=1.96
 	threshold = 1.0-closeness #this is how many mean-units we want our CI to be
 	N = len(sample)
 	if N<=min:
