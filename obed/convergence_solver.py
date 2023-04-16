@@ -33,10 +33,12 @@ def solve_convergence(algorithm, ci=0.95, closeness=0.95, min_runs=100, **kwargs
 	
 
 #This is just like the above, but can be used in a convergence solver for a more complicated case
-def is_algorithm_converged(sample, ci=0.95, closeness=0.95):
+def is_algorithm_converged(sample, min=1, ci=0.95, closeness=0.95):
 	q = scipy.stats.norm.ppf(ci) #phi^-1(ci), quantile fn of x. for example, ci=0.95 means q=1.96
 	threshold = 1.0-closeness #this is how many mean-units we want our CI to be
-	N = size(sample)
+	N = len(sample)
+	if N<=min:
+		return False
 	
 	#Find sample mean and variance of the data
 	sample_mean = np.mean(sample)
@@ -51,3 +53,4 @@ def is_algorithm_converged(sample, ci=0.95, closeness=0.95):
 #return n
 def solve_bootstrapped_convergence(algorithm, ci=0.95, closeness=0.95, **kwargs):
 	#at some point, make a similar algorithm to the above and try doing bootstrap estimate of var instead?
+	0
