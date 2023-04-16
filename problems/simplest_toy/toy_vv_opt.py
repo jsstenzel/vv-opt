@@ -7,8 +7,9 @@ import numpy as np
 import seaborn as sns
 
 sys.path.append('../..')
-from obed.obed import U_brute_varH, U_reloop_varH
+from obed.obed import *
 from uq.uncertainty_propagation import uncertainty_prop_plot
+from obed.convergence_solver import *
 
 def eta(_theta, _d):
     random = scipy.stats.norm.rvs(loc=0, scale=_d, size=1)[0]
@@ -140,35 +141,71 @@ def __trace_scipy_kde():
     #print(trace, flush=True)
     plt.plot(trace)
     plt.show()
-        
-__trace_scipy_kde()
 
 
 def __loop3_convergence():
 	#Here, I want to figure out how many likelihood samples are needed to make a good model of likelihood fn
 	#seeking convergence of T=SUM(likelihood(y_test,theta_test)) across likelihood samples
-    d = 0.5
-	test_pop = 100
-	burn_in = 4000 #these looked noisy, we dont care about those early matrics
+    
+	#Come up with a smarter way of determining the fitness of a kde
+	0
 	
-    thetas = Ptheta_rvs(burn_in)
-    ys = [eta(theta, d) for theta in thetas]
-
-    test_thetas = Ptheta_rvs(test_pop)
-    test_y_theta = [[eta(theta, d),theta] for theta in test_thetas]
-    trace = []
-    while converged == False:
-        thetas = np.append(thetas, Ptheta_rvs(1)[0])
-        ys = np.append(ys, eta(thetas[-1], d))
-        
-        y_theta_values = np.vstack([ys, thetas])
-        likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values)
-        
-        #grab metrics from this kde
-        test_calcs = [likelihood_kernel.pdf(pair)[0] for pair in test_y_theta]
-        trace_metric = sum(test_calcs)
+def __loop2_convergence():
+	#How many MCMC steps are needed to generate a good sample of the posterior?
+	#basically i want to go until Ui is converged
+	p_theta_rvs = Ptheta_rvs
+	p_theta_pdf = Ptheta_pdf
+	exp_fn = eta
+	H_fn = H
+	d = 0.5
+	y = exp_fn(p_theta_rvs(1)[0], d) #whatevs just pick one from likelihood
+	burnin=0
+	lag=1
+	
+	#assume we have a good likelihood kernel to use in loop3. set it up to reuse here
+	n1 = 10000
+	likelihood_kernel, _ = calc_likelihood_kernel(d, exp_fn, p_theta_rvs, n1, showplot=False)
+	
+	#setup loop
+	theta_current = p_theta_rvs(1)[0]
+	U_trace = []
+	i = 0
+	
+	print("start loop", flush=True)
+	while not is_algorithm_converged(U_trace, min=100, ci=0.95, closeness=0.95):
+		#one MCMC loop step
+		#Propose a new value of theta from the prior
+		theta_proposal = p_theta_rvs(1)[0]
+		#Compute likelihood of the "data" for both thetas - reusing the loop-1 likelihood evaluations
+		likelihood_current = likelihood_kernel.evaluate([y,theta_current]) #using kde to estimate pdf
+		likelihood_proposal = likelihood_kernel.evaluate([y,theta_proposal]) #calc probability at the data y
+		#Compute acceptance ratio
+		prior_current = p_theta_pdf(theta_current)
+		prior_proposal = p_theta_pdf(theta_proposal)
+		p_current = likelihood_current * prior_current
+		p_proposal = likelihood_proposal * prior_proposal
+		R = p_proposal / p_current
+		#Accept our new value of theta according to the acceptance probability R:
+		if np.random.random_sample() < R:
+			theta_current = theta_proposal
+		#Include theta_current in my trace according to rules
+		i += 1
+		if not( i > burnin and i%lag == 0):
+			continue #i.e. run the mcmc part again, dont add corresponding U to the trace
+			
+		#Now, use my posterior samples to calculate H(theta|y,d) samples
+		H_theta_posterior = H_fn(theta_current)
 		
-        trace.append(trace_metric)
-				
-		#Test convergence
-		converged = is_algorithm_converged(trace, ci=0.95, closeness=0.95)
+		#Now find the variance of that. Return the inverse as the utility; consider cost separately
+		var_H = np.var(H_theta_posterior, ddof=1) #its a sample variance
+		U = (1.0/var_H)
+		U_trace.append(U)
+		#print(len(U_trace), end='\r', flush=True)
+		sample_mean = np.mean(U_trace)
+		sample_var = np.var(U_trace, ddof=1)
+		N_latest = len(U_trace)
+		print(N_latest, sample_mean, sample_var, scipy.stats.norm.ppf(0.95), scipy.stats.norm.ppf(0.95)*np.sqrt(sample_var/N_latest)/sample_mean, end='\r', flush=True)
+		
+	print("N for convergence is", len(U_trace), ", mean U is", np.mean(U_trace))
+	
+__loop2_convergence()
