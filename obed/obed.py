@@ -95,12 +95,12 @@ def calc_likelihood_kernel(d, exp_fn, p_theta_rvs, n1=1000, c='r', showplot=True
     
     y_theta_values = np.vstack([Y1_list, thetas])
     likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values)
-    
+
     #lets plot this real quick
-    sns.kdeplot(Y1_list, thetas, color=c, shade=True, cmap="Reds", shade_lowest=False)
     if showplot:
+        sns.kdeplot(Y1_list, thetas, color=c, shade=True, cmap="Reds", shade_lowest=False)
         plt.show()
-    
+
     return likelihood_kernel, Y1_list
 
 
