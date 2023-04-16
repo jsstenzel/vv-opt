@@ -5,6 +5,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+import csv
 
 sys.path.append('../..')
 from obed.obed import *
@@ -141,6 +142,95 @@ def __trace_scipy_kde():
     #print(trace, flush=True)
     plt.plot(trace)
     plt.show()
+	
+#To try to answer how large n1 needs to be, im going to try plotting trace of gaussian kde
+def __trace_loop2():
+	p_theta_rvs = Ptheta_rvs
+	p_theta_pdf = Ptheta_pdf
+	exp_fn = eta
+	H_fn = H
+	d = 0.5
+	y = 0.6#exp_fn(p_theta_rvs(1)[0], d) #whatevs just pick one from likelihood
+	burnin=0
+	lag=1
+	min=100
+	
+	#assume we have a good likelihood kernel to use in loop3. set it up to reuse here
+	n1 = 10000
+	likelihood_kernel, _ = calc_likelihood_kernel(d, exp_fn, p_theta_rvs, n1, showplot=False)
+	
+	#setup loop
+	theta_current = p_theta_rvs(1)[0]
+	mcmc_trace = []
+	U_trace = []
+	i = 0
+	
+	n2 = 100000
+	for _ in range(n2):
+		#one MCMC loop step
+		#Propose a new value of theta from the prior
+		theta_proposal = p_theta_rvs(1)[0]
+		#Compute likelihood of the "data" for both thetas - reusing the loop-1 likelihood evaluations
+		likelihood_current = likelihood_kernel.evaluate([y,theta_current]) #using kde to estimate pdf
+		likelihood_proposal = likelihood_kernel.evaluate([y,theta_proposal]) #calc probability at the data y
+		#Compute acceptance ratio
+		prior_current = p_theta_pdf(theta_current)
+		prior_proposal = p_theta_pdf(theta_proposal)
+		p_current = likelihood_current * prior_current
+		p_proposal = likelihood_proposal * prior_proposal
+		R = p_proposal / p_current
+		#Accept our new value of theta according to the acceptance probability R:
+		if np.random.random_sample() < R:
+			theta_current = theta_proposal
+		#Include theta_current in my trace according to rules
+		i += 1
+		if not( i > burnin and i%lag == 0):
+			continue #i.e. run the mcmc part again, dont add corresponding U to the trace
+		mcmc_trace.append(theta_current)
+		
+		#We also want to use min here to make sure that we're not taking a meaningless variance for our utility, with too little mcmc data
+		if len(mcmc_trace) <= min:
+			continue
+			
+		#Now, use my posterior samples to calculate H(theta|y,d) samples
+		H_theta_posterior = [H_fn(theta) for theta in mcmc_trace]
+		
+		#Now find the variance of that. Return the inverse as the utility; consider cost separately
+		var_H = np.var(H_theta_posterior, ddof=1) #its a sample variance
+		U = (1.0/var_H)
+		U_trace.append(U)
+		print(len(U_trace), end='\r', flush=True)
+
+	plt.xscale('log')
+	plt.title("Trace of U")
+	plt.plot(U_trace, c='r')
+	plt.plot([np.mean(U_trace[0:n]) for n in range(len(U_trace))], c='g')
+	plt.plot([np.var(U_trace[0:n], ddof=1) for n in range(len(U_trace))], c='b')
+	plt.show()
+	
+	plt.xscale('log')
+	plt.title("Trace of H(theta)")
+	Htheta_trace = [H_fn(theta) for theta in mcmc_trace]
+	plt.plot(Htheta_trace, c='r')
+	plt.plot([np.mean(Htheta_trace[0:n]) for n in range(len(Htheta_trace))], c='g')
+	plt.plot([np.var(Htheta_trace[0:n], ddof=1) for n in range(len(Htheta_trace))], c='b')
+	plt.show()
+	
+	plt.xscale('log')
+	plt.title("Trace of theta")
+	plt.plot(mcmc_trace, c='r')
+	plt.plot([np.mean(mcmc_trace[0:n]) for n in range(len(mcmc_trace))], c='g')
+	plt.plot([np.var(mcmc_trace[0:n], ddof=1) for n in range(len(mcmc_trace))], c='b')
+	plt.show()
+	
+	#Go ahead and save to logfile just in case
+	with open('loop2.csv', 'w+', newline='') as csvfile:
+		writer = csv.writer(csvfile)
+		write_Utrace = ['']*min + U_trace
+		write_Htheta = ['']*min + Htheta_trace
+		write_mcmc = mcmc_trace
+		for n in range(len(write_mcmc)):
+			writer.writerow([n, write_Utrace[n], write_Htheta[n], write_mcmc[n]])
 
 
 def __loop3_convergence():
@@ -218,4 +308,4 @@ def __loop2_convergence():
 		
 	print("N for convergence is", len(U_trace), ", mean U is", np.mean(U_trace))
 	
-__loop2_convergence()
+__trace_loop2()
