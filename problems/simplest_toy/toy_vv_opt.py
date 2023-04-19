@@ -198,6 +198,7 @@ def __trace_loop2():
 		U_trace.append(U)
 		print(len(U_trace), end='\r', flush=True)
 
+	Htheta_trace = [H_fn(theta) for theta in mcmc_trace]
 	plt.xscale('log')
 	plt.title("Trace of U")
 	plt.plot(U_trace, c='r')
@@ -207,7 +208,6 @@ def __trace_loop2():
 	
 	plt.xscale('log')
 	plt.title("Trace of H(theta)")
-	Htheta_trace = [H_fn(theta) for theta in mcmc_trace]
 	plt.plot(Htheta_trace, c='r')
 	plt.plot([np.mean(Htheta_trace[0:n]) for n in range(len(Htheta_trace))], c='g')
 	plt.plot([np.var(Htheta_trace[0:n], ddof=1) for n in range(len(Htheta_trace))], c='b')
@@ -228,6 +228,42 @@ def __trace_loop2():
 		write_mcmc = mcmc_trace
 		for n in range(len(write_mcmc)):
 			writer.writerow([n, write_Utrace[n], write_Htheta[n], write_mcmc[n]])
+
+def __analyze_trace_loop2():
+	U_trace = []
+	Htheta_trace = []
+	mcmc_trace = []
+
+	print("reading in file...", flush=True)
+	with open('loop2.csv', 'r', newline='') as csvfile:
+		reader = csv.reader(csvfile)
+		for row in reader:
+			if row[1] != '':
+				U_trace.append(float(row[1]))
+			if row[2] != '':
+				Htheta_trace.append(float(row[2]))
+			mcmc_trace.append(float(row[3]))
+
+	plt.xscale('log')
+	plt.title("Trace of U")
+	plt.plot(U_trace, c='r')
+	plt.plot([np.mean(U_trace[0:n]) for n in range(len(U_trace))], c='g')
+	plt.plot([np.var(U_trace[0:n], ddof=1) for n in range(len(U_trace))], c='b')
+	plt.show()
+	
+	plt.xscale('log')
+	plt.title("Trace of H(theta)")
+	#plt.plot(Htheta_trace, c='r')
+	plt.plot([np.mean(Htheta_trace[0:n]) for n in range(len(Htheta_trace))], c='g')
+	plt.plot([np.var(Htheta_trace[0:n], ddof=1) for n in range(len(Htheta_trace))], c='b')
+	plt.show()
+	
+	plt.xscale('log')
+	plt.title("Trace of theta")
+	#plt.plot(mcmc_trace, c='r')
+	plt.plot([np.mean(mcmc_trace[0:n]) for n in range(len(mcmc_trace))], c='g')
+	plt.plot([np.var(mcmc_trace[0:n], ddof=1) for n in range(len(mcmc_trace))], c='b')
+	plt.show()
 
 
 def __loop3_convergence():
@@ -305,4 +341,5 @@ def __loop2_convergence():
 		
 	print("N for convergence is", len(U_trace), ", mean U is", np.mean(U_trace))
 	
+    
 __reloop_u_plot_pareto()
