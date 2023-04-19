@@ -17,21 +17,14 @@ def eta(_theta, _d):
     return _theta + random
     
 def H(_theta):
-    return (_theta+1)**2
+    return 10*_theta**2
     
 def Gamma(_d):
-    return 10/(_d+.01)
+    return 10/_d
     
 def Ptheta_rvs(s=1):
     #sample from the prior probability of theta
     return scipy.stats.norm.rvs(size=s, loc=0.5, scale=0.5)
-    
-#def Ptheta_pdf(_theta):
-#    #return the prior probability of theta
-#    if _theta<0 or _theta>1:
-#        return 0
-#    else:
-#        return 1
 
 def Ptheta_pdf(_theta):
     return scipy.stats.norm.pdf(_theta, loc=0.5, scale=0.5)
@@ -97,13 +90,17 @@ def __reloop_u_example():
 def __reloop_u_plot_pareto():
     #find optimal d, plotting out u and Gamma
     u_list = []
-    d_list = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
+    d_list = [.05,.1,.15,.2,.25,.3,.35,.4,.45,.5]
     G_list = []
     for d in d_list:
         print("d =",d,'...',flush=True)
-        u, _ = U_reloop_varH(d, eta, H, empty, Ptheta_rvs, Ptheta_pdf, n1=1000, n2=500, burnin=0, lag=1)
+        u, _ = U_reloop_varH(d, eta, H, empty, Ptheta_rvs, Ptheta_pdf, n1=3000, n2=1000, burnin=0, lag=1)
         u_list.append(u)
         G_list.append(Gamma(d))
+        
+    with open('reloop_u_plot_pareto.csv', 'w+', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(u_list)
         
     plt.plot(d_list, u_list, 'g')
     plt.plot(d_list, G_list, 'r')
@@ -308,4 +305,4 @@ def __loop2_convergence():
 		
 	print("N for convergence is", len(U_trace), ", mean U is", np.mean(U_trace))
 	
-__trace_loop2()
+__reloop_u_plot_pareto()
