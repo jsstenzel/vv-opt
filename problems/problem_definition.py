@@ -7,23 +7,21 @@ sys.path.append('../..')
 #from obed.obed import *
 
 class ProblemDefinition:
-	def __init__(self, _dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors):
+	def __init__(self, _eta, _H, _G, _theta_defs, _y_defs, _d_defs, _x_defs):
 		self._internal_eta = _eta #eta(theta, d, x)
 		self._internal_H = _H #H(theta, x)
 		self._internal_G = _G #G(d, x)
 		
-		self.x_default = _x_default
-		self.dim_d = _dim_d
-		self.dim_y = _dim_y
-		self.dim_theta = _dim_theta
-		self.dim_x = _dim_x
+		self.dim_d = len(_d_defs)
+		self.dim_y = len(_y_defs)
+		self.dim_theta = len(_theta_defs)
+		self.dim_x = len(_x_defs)
+		self.x_default = [default for name,default in _x_defs]
 		
 		#priors is a list of defintions of prior distributions on the vector of thetas
 		#so it's a list of pairs, first is type and second is the list of corresponding parameters
 		#type checks:
-		if len(_priors) != self.dim_theta:
-			raise ValueError('Incorrect number of dimensions for prior distribution definition; got '+str(len(_priors))+' and expected '+str(self.dim_theta))
-		for prior in _priors:
+		for _,prior in _theta_defs:
 			type = prior[0]
 			params = prior[1]
 			
@@ -36,13 +34,13 @@ class ProblemDefinition:
 					raise ValueError('Wrong kind of arguments for prior type '+str(type)+', need int or float.')
 
 		#if you pass all of that,
-		self.priors = _priors
+		self.priors = [prior for _,prior in _theta_defs]
 	
-	#optional, for documentation:
-	theta_names=[]
-	y_names=[]
-	d_names=[]
-	x_names=[]
+		#for documentation:
+		self.theta_names=[name for name,_ in _theta_defs]
+		self.y_names=_y_defs
+		self.d_names=_d_defs
+		self.x_names=[name for name,_ in _x_defs]
 	
 	def eta(self, theta, d, x=[]):
 		if x == []: #default x
@@ -132,6 +130,13 @@ class ProblemDefinition:
 		#need to renormalize the pdf right?
 		#but unnormalized may be ok for MCMC?
 		return probabilities
+		
+	def __str__(self): #handsome little format for printing the object
+		printout = "ProblemDefinition printout:\n"
+		printout += self.__repr__() + '\n'
+		for key,val in vars(self).items():
+			printout += str(key) + " : " + str(val) + '\n'
+		return printout
 
 
 if __name__ == "__main__":
@@ -146,17 +151,23 @@ if __name__ == "__main__":
 		return _x[1]*_theta[0] + _theta[1]**2
 		
 	def Gamma(_d, _x):
-		return _x[2]/(_d[0]+_d[1])
-		
-	toy_x_default = [1, 10, 10]
+		return _x[2]/(_d[0]+_d[1])				   
+	
+	toy_theta_defs = [ 
+						("theta1", ["uniform", [-2,-1]]),
+						("theta2", ["uniform", [1, 21]])
+					 ]
+	
+	toy_y_defs = ["y1", "y2"]
+	
+	toy_d_defs = ["d1", "d2"]
+	
+	toy_x_defs = [("y2 factor", 1),("H factor", 10),("Cost factor", 10)]
 
-	toy_priors = [ ["uniform", [-2,-1]],
-				   ["uniform", [1, 21]] ]
-				   
-	#maybe I can wrap prior def, default, and variable name all into one dict or list object?
 	
 	#_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
-	toy = ProblemDefinition(2, 2, 2, 3, eta, H, Gamma, toy_x_default, toy_priors)
+	toy = ProblemDefinition(eta, H, Gamma, toy_theta_defs, toy_y_defs, toy_d_defs, toy_x_defs)
+	print(toy)
 	print(toy.prior_pdf_unnorm([-1.5,1.5]))
 	print(toy.prior_rvs(5))
 	print(toy.prior_rvs(1))
