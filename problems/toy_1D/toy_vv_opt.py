@@ -8,9 +8,9 @@ import seaborn as sns
 import csv
 
 sys.path.append('../..')
-from obed.obed import *
+from obed.obed_1D import *
 from uq.uncertainty_propagation import uncertainty_prop_plot
-from obed.convergence_solver import *
+from obed.convergence_solver_1D import *
 
 def eta(_theta, _d):
     random = scipy.stats.norm.rvs(loc=0, scale=_d, size=1)[0]

@@ -159,4 +159,22 @@ def U_reloop_varH(d, exp_fn, H_fn, G_fn, p_theta_rvs, p_theta_pdf, n1=10000, n2=
         U_list.append(U)
         
     return np.average(U_list), U_list
-        
+
+
+#Going to try using the KL divergence between H_prior and H_posterior
+#Kind of a modified D-optimality
+def U_reloop_HKL():
+	return 0
+	
+#Using a utility min(P(H > req), 0.95)
+#obvs robustness = 0.95 is a variable here
+def U_reloop_ReqProb():
+
+#Using a utility min(P(H > req), 0.95) - Cost*1(P(H > req) == 0.95)
+#I think this will give us a pareto front that satisfies both meeting the robustness criterion and minimizing cost,
+#but not minimizing the cost until we're meeting the requirement? I think?
+def U_reloop_ReqProb_Cost():
+	
+#Using an approach like Huan & Marzouk 2013, but without polynomial chaos
+#This uses D-optimality, the familiar KL divergence of the prior and posterior. Hence a totally different algorithmic approach
+def U_reloop_D():
