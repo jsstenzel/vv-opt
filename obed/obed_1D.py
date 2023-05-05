@@ -105,7 +105,7 @@ def calc_likelihood_kernel(d, exp_fn, p_theta_rvs, n1=1000, c='r', showplot=True
 
 
 #This is like U_brute_varH, except we're reusing loop 1 samples in loop 3, like Huan & Marzouk
-def U_reloop_varH(d, exp_fn, H_fn, G_fn, p_theta_rvs, p_theta_pdf, n1=10000, n2=1000, burnin=0, lag=1):   
+def U_reloop(d, exp_fn, H_fn, G_fn, p_theta_rvs, p_theta_pdf, utility="varH", n1=10000, n2=1000, burnin=0, lag=1, req=0):   
     #Generate a list of y's sampled from likelihood fn, p(y|theta,d)
     #I think you can just do this by running eta(theta,d) over and over - the random epsilon will create the likelihood fn distribution
     #And of course, to get the theta for those executions, you must correspondingly sample from the prior, p(theta)
@@ -153,27 +153,48 @@ def U_reloop_varH(d, exp_fn, H_fn, G_fn, p_theta_rvs, p_theta_pdf, n1=10000, n2=
         #Now, use my posterior samples to calculate H(theta|y,d) samples
         H_theta_posterior = [H_fn(theta) for theta in mcmc_trace]
         
-        #Now find the variance of that. Return the inverse minus the cost as the utility
-        var_H = np.var(H_theta_posterior, ddof=1) #its a sample variance
-        U = (1.0/var_H) - G_fn(d)
-        U_list.append(U)
+		U = 0
+		if utility = 'varH':
+			#Now find the variance of that posterior list. Return the inverse minus the cost as the utility
+			var_H = np.var(H_theta_posterior, ddof=1) #its a sample variance
+			U = (1.0/var_H) - G_fn(d)
+		elif utility = 'HKL':
+			#compute the KL divergence of the sample from posterior to prior
+			#Kind of a modified D-optimality
+			H_theta_prior = [H_fn(theta) for theta in p_theta_rvs(len(H_theta_posterior))]
+			summands = [posterior * np.log(posterior/H_theta_prior[i]) for i,posterior in enumerate(H_theta_posterior))
+			U = sum(summands) #D_KL
+		elif utility = "Prob95":
+			#compute a utility min(P(H > req), 0.95)
+			#easily calculated with sample probability, just count em up and find the ratio
+			#I think this is functionally the same as optimizing for small variance, just doesnt over-optimize
+			num_true = 0
+			for h in H_theta_posterior:
+				num_true += int(h > req)
+			prob = num_true / len(H_theta_posterior)
+			U = min(prob, 0.95)
+		elif utility = "Prob95_Cost":
+			#Using a utility min(P(H > req), 0.95) - Cost*1(P(H > req) >= 0.95)
+			#I think this will give us a pareto front that satisfies both meeting the robustness criterion and minimizing cost,
+			#but not minimizing the cost until we're meeting the requirement? I think?
+			num_true = 0
+			for h in H_theta_posterior:
+				num_true += int(h > req)
+			prob = num_true / len(H_theta_posterior)
+			
+			isRobust = int(prob >= 0.95)
+			penalty = isRobust*G_fn(d) #only apply a penalty cost function when we're in the saturation region; creates convexity along 95% space?
+			U = min(prob, 0.95) - penalty #does this need a softening factor? something squared? Idk doesnt look effective
+		else:
+			print("something weird")
+			exit
+        
+		
+		U_list.append(U)
         
     return np.average(U_list), U_list
 
 
-#Going to try using the KL divergence between H_prior and H_posterior
-#Kind of a modified D-optimality
-def U_reloop_HKL():
-	return 0
-	
-#Using a utility min(P(H > req), 0.95)
-#obvs robustness = 0.95 is a variable here
-def U_reloop_ReqProb():
-
-#Using a utility min(P(H > req), 0.95) - Cost*1(P(H > req) == 0.95)
-#I think this will give us a pareto front that satisfies both meeting the robustness criterion and minimizing cost,
-#but not minimizing the cost until we're meeting the requirement? I think?
-def U_reloop_ReqProb_Cost():
 	
 #Using an approach like Huan & Marzouk 2013, but without polynomial chaos
 #This uses D-optimality, the familiar KL divergence of the prior and posterior. Hence a totally different algorithmic approach
