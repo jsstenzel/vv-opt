@@ -182,9 +182,20 @@ def U_reloop(d, exp_fn, H_fn, G_fn, p_theta_rvs, p_theta_pdf, utility="varH", n1
 				num_true += int(h > req)
 			prob = num_true / len(H_theta_posterior)
 			
-			isRobust = int(prob >= 0.95)
-			penalty = isRobust*G_fn(d) #only apply a penalty cost function when we're in the saturation region; creates convexity along 95% space?
+			isRobust = prob >= 0.95
+			penalty = int(isRobust)*G_fn(d) #only apply a penalty cost function when we're in the saturation region; creates convexity along 95% space?
 			U = min(prob, 0.95) - penalty #does this need a softening factor? something squared? Idk doesnt look effective
+		elif utility = "Cost_95Constraint":
+			#Make decreasing cost the utility
+			#apply a constraint: if p(H_posterior > req) < 0.95, utility is zero
+			#only accepting solutions that satisfy the requirements to the desired certainty
+			num_true = 0
+			for h in H_theta_posterior:
+				num_true += int(h > req)
+			prob = num_true / len(H_theta_posterior)
+			isReqSatisfied = prob >= 0.95
+			
+			U = int(isReqSatisfied) * (1.0/G_fn(D))
 		else:
 			print("something weird")
 			exit
