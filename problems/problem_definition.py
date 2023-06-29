@@ -51,7 +51,11 @@ class ProblemDefinition:
 			raise ValueError("Input to ProblemDefinition eta: d size "+str(self.dim_d)+" expected, "+str(len(d))+" provided.")
 		if len(x) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition eta: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
-		return _internal_eta(theta, d, x)
+		#make dicts for inputs w/ defs, to ensure consistency
+		theta_dict = dict(zip(self.theta_names, theta))
+		d_dict = dict(zip(self.d_names, d))
+		x_dict = dict(zip(self.x_names, x))
+		return _internal_eta(theta_dict, d_dict, x_dict)
 	
 	def G(self, theta, x=[]):
 		if x == []: #default x
@@ -60,7 +64,10 @@ class ProblemDefinition:
 			raise ValueError("Input to ProblemDefinition eta: theta size "+str(self.dim_theta)+" expected, "+str(len(theta))+" provided.")
 		if len(x) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition eta: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
-		return _internal_G(theta, x)
+		#make dicts for inputs w/ defs, to ensure consistency
+		theta_dict = dict(zip(self.theta_names, theta))
+		x_dict = dict(zip(self.x_names, x))
+		return _internal_G(theta_dict, x_dict)
 	
 	def H(self, d, x=[]):
 		if x == []: #default x
@@ -69,7 +76,10 @@ class ProblemDefinition:
 			raise ValueError("Input to ProblemDefinition eta: d size "+str(self.dim_d)+" expected, "+str(len(d))+" provided.")
 		if len(x) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition eta: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
-		return _internal_H(d, x)
+		#make dicts for inputs w/ defs, to ensure consistency
+		d_dict = dict(zip(self.d_names, d))
+		x_dict = dict(zip(self.x_names, x))
+		return _internal_H(d_dict, x_dict)
 	
 	
 	_allowable_prior_types = {'gaussian': 2, #mu, sigma
@@ -142,16 +152,30 @@ class ProblemDefinition:
 if __name__ == "__main__":
     #unit testing
 	def eta(_theta, _d, _x):
+		d1 = _d["d1"]
+		d2 = _d["d2"]
+		t1 = _theta["theta1"]
+		t2 = _theta["theta2"]
+		factor = _x["y2 factor"]
+	
 		y = [0,0]
-		y[0] =  d_[0]*_theta[0] + _theta[1] + scipy.stats.norm.rvs(loc=0, scale=_d[1], size=1)[0]
-		y[1] = _x[0]*_theta[0]/_theta[1] + scipy.stats.norm.rvs(loc=0, scale=_d[0], size=1)[0]
+		y[0] =  d1*t1 + t2 + scipy.stats.norm.rvs(loc=0, scale=d2, size=1)[0]
+		y[1] = factor*t1/t2 + scipy.stats.norm.rvs(loc=0, scale=d1, size=1)[0]
 		return y
 		
 	def H(_theta, _x):
-		return _x[1]*_theta[0] + _theta[1]**2
+		t1 = _theta["theta1"]
+		t2 = _theta["theta2"]
+		K = _x["H factor"]
+		
+		return K*t1 + t2**2
 		
 	def Gamma(_d, _x):
-		return _x[2]/(_d[0]+_d[1])				   
+		d1 = _d["d1"]
+		d2 = _d["d2"]
+		C = _x["Cost factor"]
+		
+		return C/(d1+d2)				   
 	
 	toy_theta_defs = [ 
 						("theta1", ["uniform", [-2,-1]]),
