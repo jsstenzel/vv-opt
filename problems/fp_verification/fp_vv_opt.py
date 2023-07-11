@@ -34,6 +34,11 @@ fp_d_defs = [
 				"d_num", "d_max", "d_pow"  #dc
 			 ]
 	
+_temp= -90+273.15 #K
+_k = 1.380649e-23 #J / K
+_c = 299792458 #m / s
+_e0 = 22100 #eV
+_m0 = 108.9049856 * 1.66054e-27 #cd109 atomic mass in kg
 fp_x_defs = [
 				#general
 				("nx", 2048),
@@ -41,13 +46,13 @@ fp_x_defs = [
 				("sigma_dc", .5), #e-/s
 				("sigma_stray", .1) ,
 				#gain
-				("P_signal", *),
-				("P_noise", *),
-				("T_ccd", -90+273.15), #K
-				("E0", *),
-				("sigma_E", *),
-				("w", *), #i probably need to treat this as a nuisance parameter later?
-				("rate_cd109", *), #look at cd-109 sample. assume 1 gram maybe?
+				("P_signal", 0.95), #Prob. of correctly identifying signal as event #WAG for now
+				("P_noise", 0.01), #Prob. of incorrectly identifying noise/interference as event #WAG for now
+				("T_ccd", _temp), #K
+				("E0", e0), #22.1 keV Cd-109 emission line
+				("sigma_E", math.sqrt((_m0 * _c^2) / (_k*_temp*_e0^2))), #1/eV^2
+				("w", 3.66 + 0.000615*(300-_temp)), #eV/e- #this has uncertainty. i probably need to treat this as a nuisance parameter later?
+				("rate_cd109", 1.7387e-8), #1/s #based on 461.4 days Cd-109 half life
 				("grade_size", 3), #3x3 event grade sizes
 				#rn
 				("t_rn", .1), #100 ms exposure
