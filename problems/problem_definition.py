@@ -1,10 +1,12 @@
 import sys
 import os
 import scipy.stats
+import scipy.interpolate
 import numpy as np
 
 sys.path.append('../..')
 #from obed.obed import *
+
 
 class ProblemDefinition:
 	def __init__(self, _eta, _H, _G, _theta_defs, _y_defs, _d_defs, _x_defs):
@@ -12,6 +14,7 @@ class ProblemDefinition:
 		self._internal_H = _H #H(theta, x)
 		self._internal_G = _G #G(d, x)
 		
+		#get dimensions, set default parameters
 		self.dim_d = len(_d_defs)
 		self.dim_y = len(_y_defs)
 		self.dim_theta = len(_theta_defs)
@@ -29,9 +32,9 @@ class ProblemDefinition:
 				raise ValueError("Incorrect prior probability function definition: "+str(type)+" not recognized.")
 			if len(params) != self._allowable_prior_types[type]:
 				raise ValueError('Wrong number of arguments for prior type '+str(type)+'; got '+str(len(params))+' and expected '+str(self._allowable_prior_types[type]))
-			for param in params:
-				if not isinstance(param, (int, float)):
-					raise ValueError('Wrong kind of arguments for prior type '+str(type)+', need int or float.')
+			#for param in params:
+			#	if not isinstance(param, (int, float)):
+			#		raise ValueError('Wrong kind of arguments for prior type '+str(type)+', need int or float.')
 
 		#if you pass all of that,
 		self.priors = [prior for _,prior in _theta_defs]
@@ -82,8 +85,13 @@ class ProblemDefinition:
 		return _internal_H(d_dict, x_dict)
 	
 	
-	_allowable_prior_types = {'gaussian': 2, #mu, sigma
-							  'uniform': 2} #left bound, right bound
+	_allowable_prior_types = {
+		'gaussian': 2, #mu, sigma
+		#'pos_gaussian': 2, #mu, sigma
+		#'bound_gaussian': 4 #mu, sigma, left, right
+		'uniform': 2,
+		'funct_splines': 6} #knot list (x,y), order, x_stddev, y_stddev, range, steps
+		
 	
 	def prior_rvs(self, num_vals):
 		vals = [] #a list length num_vals of random numbers of size dim_theta
@@ -97,10 +105,54 @@ class ProblemDefinition:
 				mu = params[0]
 				sigma = params[1]
 				thetas_i = scipy.stats.norm.rvs(size=num_vals, loc=mu, scale=sigma)
+			#if type == 'pos_gaussian':
+			#	mu = params[0]
+			#	sigma = params[1]
+			#	thetas_i=0
+			#	while thetas_i <= 0:
+			#		thetas_i = scipy.stats.norm.rvs(size=num_vals, loc=mu, scale=sigma) #fix num_vals thing
+			#if type == 'bound_gaussian':
+			#	mu = params[0]
+			#	sigma = params[1]
+			#	thetas_i = scipy.stats.norm.rvs(size=num_vals, loc=mu, scale=sigma)
+			#	while thetas_i < params[2] or thetas_i > params[3]:
+			#		thetas_i = scipy.stats.norm.rvs(size=num_vals, loc=mu, scale=sigma) #fix num_vals thing
 			elif type == 'uniform':
 				left = params[0]
 				right = params[1]
 				thetas_i = scipy.stats.uniform.rvs(size=num_vals, loc=left, scale=right-left) #dist is [loc, loc + scale]
+			elif type == 'funct_splines':
+				for _ in range(num_vals):
+					data = params[0] #list of pairs of points to define the prior mean
+					order = params[1] #k order of spline interpolated fit
+					x_stddev = params[2]
+					y_stddev = params[3]
+					ymin = params[4][0]
+					ymax = params[4][1] #range=(ymin,ymax) boundary on the priors
+					xmin = data[0][0] #first point, first index
+					xmax = data[-1][0] #last point, first index
+					steps = params[5] #number of points in final projection onto a vector
+					
+					x, y = [], []
+					for pt in data:
+						x.append(scipy.stats.norm.rvs(size=1, loc=0, scale=x_stddev)[0])
+						y.append(scipy.stats.norm.rvs(size=1, loc=0, scale=y_stddev)[0])
+					
+					bspline = scipy.interpolate.make_interp_spline(x, y, k=order, bc_type=None, axis=0, check_finite=True)
+					print(bspline(400))
+					
+					#convert to array
+					list_funct = []
+					for _x in np.linspace(xmin, xmax, steps):
+						_y = bspline(_x)
+						#enforce boundary condition
+						if _y > ymax:
+							_y = ymax
+						elif _y < ymin:
+							_y = ymin
+						list_funct.append([_x, _y])
+					
+					thetas_i.append(list_funct)
 			else:
 				raise ValueError("prior_rvs did not expect prior type "+str(type))
 				
@@ -128,6 +180,18 @@ class ProblemDefinition:
 				mu = params[0]
 				sigma = params[1]
 				prob_i = scipy.stats.norm.pdf(theta_i, loc=mu, scale=sigma)
+			if type == 'pos_gaussian':
+				mu = params[0]
+				sigma = params[1]
+				prob_i = scipy.stats.norm.pdf(theta_i, loc=mu, scale=sigma)
+				if theta_i <= 0:
+					prob_i = 0
+			if type == 'bound_gaussian':
+				mu = params[0]
+				sigma = params[1]
+				prob_i = scipy.stats.norm.pdf(theta_i, loc=mu, scale=sigma)
+				if theta_i <= params[2] or theta_i >= params[3]:
+					prob_i = 0
 			elif type == 'uniform':
 				left = params[0]
 				right = params[1]
