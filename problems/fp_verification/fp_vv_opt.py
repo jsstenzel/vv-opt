@@ -14,14 +14,14 @@ from problems.fp_verification.fp_statistics import *
 from problems.fp_verification.fp_experiment_models import *
 
 
-#eta = fp_likelihood_fn
-#H = fp_hlva
-#Gamma = fp_cost			   
+eta = fp_likelihood_fn
+H = fp_hlva
+Gamma = fp_cost			   
 
 #these priors are based on requirements that were met, see Camera Qual Report
 theta_req_defs = [ 
 					("gain", ["gaussian", [1.0,0.2]]), #mean, stddev
-					("rn",   ["gaussian", [2.5,0.25]]),
+					("rn",   ["gaussian", [2.5,0.25]]), #these should probably be gamma fns
 					("dc",   ["gaussian", [0.001,.002]]),
 				]
 #need to update with range somehow? These can't be negative
@@ -70,9 +70,31 @@ fp_x_defs = [
 				("tau", 1800),
 				#cost
 			 ]
+			 
+if useQE = True:
+	eta = fp_qe_likelihood_fn
+	H = fp_qe_hlva
+	Gamma = fp_qe_cost			   
+
+	#these priors are based on requirements that were met, see Camera Qual Report
+	theta_req_defs.append(("qe",   ["funct_???", [0.001,.002]]) )
+
+	fp_y_defs.append("y_qe")
+
+	fp_d_defs.extend([] ) #qe design variables
+		
+	fp_x_defs.extend([
+					#general
+					#gain
+					#rn
+					#dc
+					#qe
+					#qoi
+					#cost
+				    ])
 
 
 #_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
-fp = ProblemDefinition(fp_likelihood_fn, fp_hlva, fp_cost, theta_req_defs, fp_y_defs, fp_d_defs, fp_x_defs)
+fp = ProblemDefinition(eta, H, Gamma, theta_req_defs, fp_y_defs, fp_d_defs, fp_x_defs)
 
 print(fp)

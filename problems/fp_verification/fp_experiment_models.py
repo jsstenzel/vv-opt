@@ -2,12 +2,15 @@ import math
 import numpy as np
 from scipy.stats import norm, poisson
 
+sys.path.append('../..')
+from problems.functionals import *
+
 """
 Full matrix experiment model
 """
 def fp_likelihood_fn(theta, d, x):
 	#define interest params:
-	gain = theta["gain"] #change this?
+	gain = theta["gain"]
 	rn = theta["rn"]
 	dc = theta["dc"]
 	#define design variables:
@@ -24,6 +27,32 @@ def fp_likelihood_fn(theta, d, x):
 	y3 = dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, x)
 	
 	return [y1, y2, y3]
+	
+"""
+Full matrix experiment model w/ quantum efficiency
+"""
+def fp_qe_likelihood_fn(theta, d, x):
+	#define interest params:
+	gain = theta["gain"]
+	rn = theta["rn"]
+	dc = theta["dc"]
+	qe = theta["qe"]
+	#define design variables:
+	t_gain = d["t_gain"]
+	I_gain = d["I_gain"]
+	n_meas_rn = d["n_meas_rn"]
+	d_num = d["d_num"]
+	d_max = d["d_max"]
+	d_pow = d["d_pow"]
+
+	#just pass along entire x
+	
+	y1 = gain_exp(gain, rn, dc, t_gain, I_gain, x)
+	y2 = read_noise_exp(gain, rn, n_mean_rn, x)
+	y3 = dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, x)
+	y4 = quantum_efficiency_exp(qe, x) #add more
+	
+	return [y1, y2, y3, y4]
 
 
 """
@@ -146,3 +175,7 @@ def dark_current_exp(gain, rn, dc, _d, _x):
 
 	y = m + random
 	return y
+	
+	
+def quantum_efficiency_exp(qe, x) #add more
+	return 0
