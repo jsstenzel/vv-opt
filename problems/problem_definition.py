@@ -7,6 +7,93 @@ import numpy as np
 sys.path.append('../..')
 #from obed.obed import *
 
+#I need a nice simple interface to deal with these general messy things
+#leave uncertainty handling to the prior fns!
+class Functional:
+	def __init__(self, *args):
+		if len(args) == 1:
+			xs = [point[0] for point in args[0]]
+			ys = [point[1] for point in args[0]]
+			self.size = len(args[0])
+		elif len(args) == 2:
+			xs = args[0]
+			ys = args[1]
+			if len(xs) != len(ys):
+				raise ValueError("List lengths in Functional definition don't match!", len(xs), "and". len(ys))
+			self.size = len(args[0])
+		else:
+			raise ValueError("Wrong number of Functional arguments!")
+
+		self.xpts = xs
+		self.ypts = ys
+		
+		self.xmin = xs[0]
+		self.xmax = xs[-1]
+		self.ymin = min(ys)
+		self.ymax = max(ys)
+		
+		self.bspline = None
+		
+	def set_xlim(self,xmin,xmax):
+		#risky
+		self.xmin = xmin
+		self.xmax = xmax
+	
+	def set_ylim(self,ymin,ymax):
+		self.ymin = ymin
+		self.ymax = ymax
+	
+	def spline_interp(self, order):
+		self.bspline = scipy.interpolate.make_interp_spline(self.xpts, self.ypts, k=order, bc_type=None, axis=0, check_finite=True)
+		
+	def idx(self, i):
+		return [self.xpts[i], self.ypts[i]]
+		
+	def f(self, x):
+		#enforce x boundary condition strongly
+		if x < self.xmin or x > self.xmax:
+			raise ValueError("Functional evaluated outside domain!")
+		if self.bspline == None:
+			self.spline_interp(order=1)
+			
+		y = self.bspline(x)#extrapolate=None)
+		#enforce y boundary condition softly
+		if y > self.ymax:
+			y = self.ymax
+		elif y < self.ymin:
+			y = self.ymin
+		return y
+		
+	def to_array(self, steps):
+		#convert to array
+		list_funct = []
+		for _x in np.linspace(self.xmin, self.xmax, steps):
+			_y = bspline(_x)
+			#enforce boundary condition
+			if _y > self.ymax:
+				_y = self.ymax
+			elif _y < self.ymin:
+				_y = self.ymin
+			list_funct.append([_x, _y])
+		return list_funct
+		
+	def plot(self, linecolor='k', pointcolor='k', numpoints=10000, show=True):
+		import matplotlib.pyplot as plt
+		plt.xlim(self.xmin, self.xmax)
+		plt.ylim(self.ymin, self.ymax)
+		
+		#scatter the data
+		plt.scatter(self.xpts, self.ypts, c=pointcolor)
+		
+		#plot the bspline if there is one
+		if self.bspline != None:
+			_x = np.linspace(self.xmin, self.xmax, numpoints)
+			_y = [self.f(point) for point in _x]
+			plt.plot(_x, _y, c=linecolor)
+		
+		if show:
+			plt.show()
+
 
 class ProblemDefinition:
 	def __init__(self, _eta, _H, _G, _theta_defs, _y_defs, _d_defs, _x_defs):
@@ -90,7 +177,7 @@ class ProblemDefinition:
 		#'pos_gaussian': 2, #mu, sigma
 		#'bound_gaussian': 4 #mu, sigma, left, right
 		'uniform': 2,
-		'funct_splines': 6} #knot list (x,y), order, x_stddev, y_stddev, range, steps
+		'funct_splines': 5} #knot list (x,y), order, y_stddev, domain, range
 		
 	
 	def prior_rvs(self, num_vals):
@@ -125,34 +212,21 @@ class ProblemDefinition:
 				for _ in range(num_vals):
 					data = params[0] #list of pairs of points to define the prior mean
 					order = params[1] #k order of spline interpolated fit
-					x_stddev = params[2]
-					y_stddev = params[3]
+					y_stddev = params[2]
+					xmin = params[3][0]
+					xmax = params[3][1] #domain=(xmin,xmax) boundary on the priors
 					ymin = params[4][0]
 					ymax = params[4][1] #range=(ymin,ymax) boundary on the priors
-					xmin = data[0][0] #first point, first index
-					xmax = data[-1][0] #last point, first index
-					steps = params[5] #number of points in final projection onto a vector
 					
-					x, y = [], []
-					for pt in data:
-						x.append(scipy.stats.norm.rvs(size=1, loc=0, scale=x_stddev)[0])
-						y.append(scipy.stats.norm.rvs(size=1, loc=0, scale=y_stddev)[0])
+					x = [point[0] for point in data]
+					y = [point[1] + scipy.stats.norm.rvs(size=1, loc=0, scale=y_stddev)[0] for point in data]
 					
-					bspline = scipy.interpolate.make_interp_spline(x, y, k=order, bc_type=None, axis=0, check_finite=True)
-					print(bspline(400))
+					sample = Functional(x, y)
+					sample.set_xlim(xmin, xmax)
+					sample.set_ylim(ymin, ymax)
+					sample.spline_interp(order)
 					
-					#convert to array
-					list_funct = []
-					for _x in np.linspace(xmin, xmax, steps):
-						_y = bspline(_x)
-						#enforce boundary condition
-						if _y > ymax:
-							_y = ymax
-						elif _y < ymin:
-							_y = ymin
-						list_funct.append([_x, _y])
-					
-					thetas_i.append(list_funct)
+					thetas_i.append(sample)
 			else:
 				raise ValueError("prior_rvs did not expect prior type "+str(type))
 				
@@ -180,18 +254,18 @@ class ProblemDefinition:
 				mu = params[0]
 				sigma = params[1]
 				prob_i = scipy.stats.norm.pdf(theta_i, loc=mu, scale=sigma)
-			if type == 'pos_gaussian':
-				mu = params[0]
-				sigma = params[1]
-				prob_i = scipy.stats.norm.pdf(theta_i, loc=mu, scale=sigma)
-				if theta_i <= 0:
-					prob_i = 0
-			if type == 'bound_gaussian':
-				mu = params[0]
-				sigma = params[1]
-				prob_i = scipy.stats.norm.pdf(theta_i, loc=mu, scale=sigma)
-				if theta_i <= params[2] or theta_i >= params[3]:
-					prob_i = 0
+			#if type == 'pos_gaussian':
+			#	mu = params[0]
+			#	sigma = params[1]
+			#	prob_i = scipy.stats.norm.pdf(theta_i, loc=mu, scale=sigma)
+			#	if theta_i <= 0:
+			#		prob_i = 0
+			#if type == 'bound_gaussian':
+			#	mu = params[0]
+			#	sigma = params[1]
+			#	prob_i = scipy.stats.norm.pdf(theta_i, loc=mu, scale=sigma)
+			#	if theta_i <= params[2] or theta_i >= params[3]:
+			#		prob_i = 0
 			elif type == 'uniform':
 				left = params[0]
 				right = params[1]
