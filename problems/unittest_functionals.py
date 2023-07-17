@@ -68,3 +68,11 @@ qe_mean.spline_interp(3)
 qe_mean.plot(linecolor='r', pointcolor='r', show=False)
 	
 plt.show()
+
+#Get average
+print(qe_mean.idx(0))
+list_wavelength_qe = qe_mean.to_array(10)
+print(list_wavelength_qe)
+qes = [wave_qe[1] for wave_qe in list_wavelength_qe]
+avg_qe = np.mean(qes)
+print(avg_qe)

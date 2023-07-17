@@ -63,13 +63,13 @@ class Functional:
 			y = self.ymax
 		elif y < self.ymin:
 			y = self.ymin
-		return y
+		return float(y)
 		
 	def to_array(self, steps):
 		#convert to array
 		list_funct = []
 		for _x in np.linspace(self.xmin, self.xmax, steps):
-			_y = bspline(_x)
+			_y = self.f(_x)
 			#enforce boundary condition
 			if _y > self.ymax:
 				_y = self.ymax
