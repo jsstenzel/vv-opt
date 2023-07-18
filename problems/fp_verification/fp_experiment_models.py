@@ -131,7 +131,7 @@ theta: [0] gain [1] read noise [2] dark current
 d: 
 x parameters: sigma_stray, sigma_dc, nx, ny
 """
-def dark_current_exp(gain, rn, dc, _d, _x):
+def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x):
 	#define parameters:
 	mu_stray = _x["mu_stray"]
 	sigma_stray = _x["sigma_stray"]
