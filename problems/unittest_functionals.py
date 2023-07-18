@@ -27,7 +27,7 @@ qe2.spline_interp(3)
 qe2.plot()
 """
 
-
+"""
 #unit testing
 theta_simple = [ 
 	("theta1", ["funct_splines", [[(350,.5),(1050,.5)],
@@ -76,3 +76,14 @@ print(list_wavelength_qe)
 qes = [wave_qe[1] for wave_qe in list_wavelength_qe]
 avg_qe = np.mean(qes)
 print(avg_qe)
+"""
+
+#S_pd = Functional([(200,.12),(280,.1),(300,.125),(400,.185),(500,.25),(600,.32),(633,.33),(800,.45),(900,.4875),(930,.5),(1000,.45),(1100,.15)]) #nm, A/W
+S_pd = Functional([(200,.12),(280,.1),(300,.125),(400,.185),(633,.33),(900,.4875),(930,.5),(1000,.45),(1100,.15)]) #nm, A/W
+S_pd.set_xlim(350,975)
+S_pd.set_ylim(0,1)
+S_pd.spline_interp(3)
+S_pd.plot()
+
+S_pd_new = noise_to_functional(S_pd, .05)
+S_pd_new.plot()

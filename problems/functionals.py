@@ -11,7 +11,7 @@ sys.path.append('../..')
 #I need a nice simple interface to deal with these general messy things
 #leave uncertainty handling to the prior fns!
 class Functional:
-	def __init__(self, *args):
+	def __init__(self, *args, ):
 		if len(args) == 1:
 			xs = [point[0] for point in args[0]]
 			ys = [point[1] for point in args[0]]
@@ -93,3 +93,15 @@ class Functional:
 		
 		if show:
 			plt.show()
+
+
+def noise_to_functional(funct, noise):
+	xs = funct.xpts
+	ys = [y + scipy.stats.norm.rvs(size=1, loc=0, scale=noise)[0] for y in funct.ypts]
+	
+	sample = Functional(xs, ys)
+	sample.set_xlim(funct.xmin, funct.xmax)
+	sample.set_ylim(funct.ymin, funct.ymax)
+	sample.spline_interp(funct.bspline.k)
+	
+	return sample
