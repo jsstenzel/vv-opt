@@ -77,18 +77,31 @@ if useQE = True:
 	Gamma = fp_qe_cost			   
 
 	#these priors are based on requirements that were met, see Camera Qual Report
-	theta_req_defs.append(("qe",   ["funct_???", [0.001,.002]]) )
+	theta_req_defs.append(("qe", ["funct_splines", [
+										[(400,.25),(500,.45),(650,.75),(900,.45),(975,.05)],
+										3,
+										.05,
+										[350,975], #LLAMAS spectral range
+										[0.0,1.0],
+								 ]]
+						 ))
 
 	fp_y_defs.append("y_qe")
 
-	fp_d_defs.extend([] ) #qe design variables
+	fp_d_defs.extend(["n_qe", "t_qe", "I_qe", "S_err"]) #qe design variables
 		
+	S_pd = Functional([(200,.12),(280,.1),(300,.125),(400,.185),(633,.33),(930,.5),(1000,.45),(1100,.15)]) #nm, A/W
+	S_pd.set_xlim(350,975)
+	S_pd.set_ylim(0,1)
+	S_pd.spline_interp(3)
 	fp_x_defs.extend([
 					#general
 					#gain
 					#rn
 					#dc
 					#qe
+					("S_pd", S_pd),   #representative photodiode, Hamamatsu S1337-1010BQ
+					("S_pd_err", .01)  #mA/W
 					#qoi
 					#cost
 				    ])

@@ -44,13 +44,15 @@ def fp_qe_likelihood_fn(theta, d, x):
 	d_num = d["d_num"]
 	d_max = d["d_max"]
 	d_pow = d["d_pow"]
-
+	n_qe = ["n_qe"]
+	t_qe = ["t_qe"]
+	I_qe = ["I_qe"]
 	#just pass along entire x
 	
 	y1 = gain_exp(gain, rn, dc, t_gain, I_gain, x)
 	y2 = read_noise_exp(gain, rn, n_mean_rn, x)
 	y3 = dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, x)
-	y4 = quantum_efficiency_exp(qe, x) #add more
+	y4 = quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, x)
 	
 	return [y1, y2, y3, y4]
 
@@ -177,5 +179,39 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x):
 	return y
 	
 	
-def quantum_efficiency_exp(qe, x) #add more
-	return 0
+#This experiment does not model "photon losses due to the gate structures, electron 
+#recombination within the bulk silicon itself, surface reflection, and, for very long or 
+#short wavelengths, losses due to the almost complete lack of absorption by the CCD"
+#- Howell, Handbook of CCD Astronomy - instead, it models how we might measure intrinsic QE
+def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, _x)
+	#define parameters
+	S_pd = _x["S_pd"] #functional
+	S_pd_err = _x["S_pd_err"]
+	sigma_dc = _x["sigma_dc"]
+	h = 6.62607015e-34 #J*Hz−1 #Planck's constant
+	c = 299792458 #m/s #speed of light
+	
+	#define design variables
+	#n_qe number of evenly-separated measurement points
+	#t_qe exposure time
+	#I_qe photocurrent of light source
+	
+	#Derived values
+	S_pd_sample = noise_to_functional(S_pd, S_pd_err)
+	measure_pts = np.linspace(S_pd.xmin, S_pd.xmax, n_qe)
+	
+	Signal_measure = []
+	for lambda_i in measure_pts:
+		#see Krishnamurthy et al. 2017
+		power_pd = I_qe / S_pd_sample.f(lambda_i)
+		energy = h*c / lambda_i*1e-9
+		photon_rate = power_pd / energy	
+		num_photons = photon_rate * t_qe
+		Signal = gain * qe.f(lambda_i) * num_photons
+		
+		Signal_measure.append(Signal)
+
+	measurement = Functional(measure_pts, Signal_measure)
+	err = np.sqrt(rn**2 + (sigma_dc*t)**2)
+	meas_with_error = noise_to_functional(measurement, err)
+	return 
