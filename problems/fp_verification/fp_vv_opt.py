@@ -77,14 +77,15 @@ if useQE = True:
 	Gamma = fp_qe_cost			   
 
 	#these priors are based on requirements that were met, see Camera Qual Report
-	theta_req_defs.append(("qe", ["funct_splines", [
-										[(400,.25),(500,.45),(650,.75),(900,.45),(975,.05)],
-										3,
-										.05,
-										[350,975], #LLAMAS spectral range
-										[0.0,1.0],
-								 ]]
-						 ))
+	theta_req_defs.append(
+		("qe", ["funct_splines", [
+					[(400,.25),(500,.45),(650,.75),(900,.45),(975,.05)], #measured data
+					3, #order of interpolation
+					.05, #y error on all points
+					[350,975], #LLAMAS spectral range
+					[0.0,1.0], #range of QE
+			 ]]
+		))
 
 	fp_y_defs.append("y_qe")
 

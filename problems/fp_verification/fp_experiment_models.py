@@ -1,9 +1,10 @@
+import sys
 import math
 import numpy as np
 from scipy.stats import norm, poisson
 
 sys.path.append('../..')
-from problems.functionals import *
+from functionals import *
 
 """
 Full matrix experiment model
@@ -183,7 +184,7 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x):
 #recombination within the bulk silicon itself, surface reflection, and, for very long or 
 #short wavelengths, losses due to the almost complete lack of absorption by the CCD"
 #- Howell, Handbook of CCD Astronomy - instead, it models how we might measure intrinsic QE
-def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, _x)
+def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, _x):
 	#define parameters
 	S_pd = _x["S_pd"] #functional
 	S_pd_err = _x["S_pd_err"]
@@ -204,7 +205,7 @@ def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, _x)
 	for lambda_i in measure_pts:
 		#see Krishnamurthy et al. 2017
 		power_pd = I_qe / S_pd_sample.f(lambda_i)
-		energy = h*c / lambda_i*1e-9
+		energy = h*c / (lambda_i*1e-9)
 		photon_rate = power_pd / energy	
 		num_photons = photon_rate * t_qe
 		Signal = gain * qe.f(lambda_i) * num_photons
@@ -212,6 +213,10 @@ def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, _x)
 		Signal_measure.append(Signal)
 
 	measurement = Functional(measure_pts, Signal_measure)
-	err = np.sqrt(rn**2 + (sigma_dc*t)**2)
+	measurement.spline_interp(3)
+	measurement.set_xlim(qe.xmin, qe.xmax)
+	measurement.set_ylim(0, measurement.ymax*1.5)
+	
+	err = np.sqrt(rn**2 + (sigma_dc*t_qe)**2)
 	meas_with_error = noise_to_functional(measurement, err)
-	return 
+	return meas_with_error
