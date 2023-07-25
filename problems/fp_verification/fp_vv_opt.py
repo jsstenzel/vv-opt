@@ -23,7 +23,7 @@ Gamma = fp_cost_simple
 theta_req_defs = [ 
 					("gain", ["uniform", [1.0-0.2,1.0+0.2]]), #mean, stddev
 					("rn",   ["uniform", [2.5-0.25,2.5+0.25]]), #these should probably be gamma fns
-					("dc",   ["uniform", [0.001-.002,0.001+.002]]),
+					("dc",   ["uniform", [0.001-.0002,0.001+.003]]),
 				]
 #need to update with range somehow? These can't be negative
 
@@ -84,7 +84,7 @@ if useQE == True:
 	H = fp_qe_hlva
 	Gamma = fp_qe_cost			   
 
-	#these priors are based on requirements that were met, see Camera Qual Report
+	#this prior is based on measurements for red CCD42-40
 	theta_req_defs.append(
 		("qe", ["funct_splines", [
 					[(400,.25),(500,.45),(650,.75),(900,.45),(975,.05)], #measured data
