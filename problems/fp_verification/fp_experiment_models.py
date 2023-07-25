@@ -118,7 +118,7 @@ def read_noise_exp(gain, rn, n_meas, _x):
 	#Define design variables
 	#n_meas number of measurements
 	
-	sigma_si = gain * math.sqrt(rn**2 + (sigma_dc*t)**2 + sigma_stray**2)
+	sigma_si = gain * math.sqrt(rn**2 + (sigma_dc*t)**2 + (sigma_stray*t)**2)
 	
 	n = nx * ny * n_meas
 	random_var = (2/n) * sigma_si**4
@@ -167,12 +167,12 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x):
 	dc_sum, stray_sum = 0, 0
 	for t in t_list:
 		dc_sum += dc * t**2
-		stray_sum += mu_stray * t
+		stray_sum += mu_stray * t**2
 		
-	m = dc_sum/t_2sum + stray_sum/t_2sum
-
+	m = (dc_sum + stray_sum)/t_2sum
+	
 	#calc error
-	random_var = (rn**2 * t_1halfsum + sigma_dc**2*t_3halfsum + sigma_stray**2 * t_1halfsum) / (nx**2 * ny**2 * t_2sum) #variance, not stddev
+	random_var = (rn**2 * t_1halfsum + sigma_dc**2*t_3halfsum + sigma_stray**2 * t_3halfsum) / (nx**2 * ny**2 * t_2sum) #variance, not stddev
 	random_sigma = math.sqrt(random_var)
 	random = norm.rvs(scale = random_sigma)
 
