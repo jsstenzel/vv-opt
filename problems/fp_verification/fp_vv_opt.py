@@ -13,6 +13,7 @@ from problems.problem_definition import *
 from problems.fp_verification.fp_statistics import *
 from problems.fp_verification.fp_experiment_models import *
 
+useQE = False
 
 eta = fp_likelihood_fn
 H = fp_hlva
@@ -62,16 +63,23 @@ fp_x_defs = [
 				("w", 3.66 + 0.000615*(300-_temp)), #eV/e- #this has uncertainty. nuisance parameter?
 				("rate_cd109", 1.7387e-8), #1/s #based on 461.4 days Cd-109 half life
 				("grade_size", 3), #3x3 event grade sizes
+				("t_gain_setup", )
+				("t_gain_buffer", )
 				#rn
 				("t_rn", .1), #100 ms exposure
+				("t_rn_setup", )
+				("t_rn_buffer", )
 				#dc
 				("t_0", 0.1), #100ms baseline exposure assumed
+				("t_dc_setup", )
+				("t_dc_buffer", )
 				#qoi
 				("tau", 1800),
 				#cost
+				("C_engineer", )
 			 ]
 			 
-if useQE = True:
+if useQE == True:
 	eta = fp_qe_likelihood_fn
 	H = fp_qe_hlva
 	Gamma = fp_qe_cost			   

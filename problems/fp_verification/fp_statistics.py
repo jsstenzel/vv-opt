@@ -39,11 +39,56 @@ def fp_qe_hlva(theta, x):
 """
 d: 
 x parameters: sigma_stray, sigma_dc, nx, ny
+This notional cost model just sums up the times and costs of each isolated decision
 """
-def fp_cost(d, x):
+def fp_cost_simple(d, x):
 	#define design vars:
+	t_gain = d["t_gain"]
+	I_gain = d["I_gain"]
+	n_meas_rn = d["n_meas_rn"]
+	d_num = d["d_num"]
+	d_max = d["d_max"]
+	d_pow = d["d_pow"]
+	#define parameters:
+	#gain 
+	t_gain_setup = x["t_gain_setup"]
+	t_gain_buffer = x["t_gain_buffer"]
+	#dc
+	t_dc_setup = x["t_dc_setup"]
+	t_dc_buffer = x["t_dc_buffer"]
+	dc_t0 = x["t_0"]
+	#rn
+	t_rn = x["t_rn"] #exposure time
+	t_rn_setup = x["t_rn_setup"]
+	t_rn_buffer = x["t_rn_buffer"]
+	#cost
+	C_engineer = x["C_engineer"]
 
+	cost = 0
+	#gain experiment
+	time_gain = t_gain_setup + I_gain * (t_gain + t_buffer)
+	cost += C_engineer * time_gain
 	
+	#dark current experiment
+	t_list = []
+	for x in range(d_num):
+		C = (d_max - math.exp(d_pow)) / (d_num-1)
+		t = C * x**d_pow
+		t_list.append(t)
+	t_list[0] = dc_t0 #clobber; 100ms baseline exposure assumed
+	
+	time_dc = t_dc_setup + sum([ti+t_dc_buffer for ti in t_list])
+	cost += C_engineer * time_dc
 
-	return 0
+	#read noise experiment
+	time_rn = t_rn_setup + (t_rn + t_rn_buffer) * n_meas_rn
 	
+	#time-saving trick: if time_rn = dc_t0, and n_meas_rn <= 3, 
+	#you already have the rn data from dc!
+	#but if n_meas_rn > 3, you probably want new data all together
+	if t_rn == dc_t0 and n_meas_rn <= 3:
+		time_rn = 0
+	
+	cost += C_engineer * time_rn
+	
+	return cost
