@@ -1,3 +1,5 @@
+import sys
+
 sys.path.append('../..')
 from problems.functionals import *
 	
@@ -54,22 +56,20 @@ def fp_cost_simple(d, x):
 	t_gain_setup = x["t_gain_setup"]
 	t_gain_buffer = x["t_gain_buffer"]
 	#dc
-	t_dc_setup = x["t_dc_setup"]
 	t_dc_buffer = x["t_dc_buffer"]
 	dc_t0 = x["t_0"]
 	#rn
 	t_rn = x["t_rn"] #exposure time
-	t_rn_setup = x["t_rn_setup"]
 	t_rn_buffer = x["t_rn_buffer"]
 	#cost
 	C_engineer = x["C_engineer"]
+	testbed_setup = x["testbed_setup"]
 
 	cost = 0
-	#gain experiment
-	time_gain = t_gain_setup + I_gain * (t_gain + t_buffer)
-	cost += C_engineer * time_gain
+	#gain experiment time
+	time_gain = testbed_setup + I_gain * (t_gain + t_buffer)
 	
-	#dark current experiment
+	#dark current experiment time
 	t_list = []
 	for x in range(d_num):
 		C = (d_max - math.exp(d_pow)) / (d_num-1)
@@ -77,11 +77,10 @@ def fp_cost_simple(d, x):
 		t_list.append(t)
 	t_list[0] = dc_t0 #clobber; 100ms baseline exposure assumed
 	
-	time_dc = t_dc_setup + sum([ti+t_dc_buffer for ti in t_list])
-	cost += C_engineer * time_dc
+	time_dc = sum([ti+t_dc_buffer for ti in t_list])
 
-	#read noise experiment
-	time_rn = t_rn_setup + (t_rn + t_rn_buffer) * n_meas_rn
+	#read noise experiment time
+	time_rn = (t_rn + t_rn_buffer) * n_meas_rn
 	
 	#time-saving trick: if time_rn = dc_t0, and n_meas_rn <= 3, 
 	#you already have the rn data from dc!
@@ -89,6 +88,17 @@ def fp_cost_simple(d, x):
 	if t_rn == dc_t0 and n_meas_rn <= 3:
 		time_rn = 0
 	
-	cost += C_engineer * time_rn
+	#Figure out how these experiment times fit over days
+	measurement_time = testbed_setup + time_gain + time_rn + time_dc
+	measurement_perday = measurement_time
+	measurement_days = 1
+	while measurement_perday > 8*3600: #seconds in a workday
+		#need to spend another day doing the experiment
+		measurement_days += 1
+		measurement_time += testbed_setup
+		#now see if n days is long enough to do all the experiments
+		measurement_perday = measurement_time / measurement_days
+		
 	
+	cost = C_engineer * measurement_time
 	return cost

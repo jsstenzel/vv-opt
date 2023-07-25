@@ -4,8 +4,8 @@ import scipy.stats
 import scipy.interpolate
 import numpy as np
 
-sys.path.append('../..')
-from functionals import *
+sys.path.append('..')
+from problems.functionals import *
 
 
 class ProblemDefinition:

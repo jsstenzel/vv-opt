@@ -17,13 +17,13 @@ useQE = False
 
 eta = fp_likelihood_fn
 H = fp_hlva
-Gamma = fp_cost			   
+Gamma = fp_cost_simple			   
 
 #these priors are based on requirements that were met, see Camera Qual Report
 theta_req_defs = [ 
-					("gain", ["gaussian", [1.0,0.2]]), #mean, stddev
-					("rn",   ["gaussian", [2.5,0.25]]), #these should probably be gamma fns
-					("dc",   ["gaussian", [0.001,.002]]),
+					("gain", ["uniform", [1.0-0.2,1.0+0.2]]), #mean, stddev
+					("rn",   ["uniform", [2.5-0.25,2.5+0.25]]), #these should probably be gamma fns
+					("dc",   ["uniform", [0.001-.002,0.001+.002]]),
 				]
 #need to update with range somehow? These can't be negative
 
@@ -58,25 +58,24 @@ fp_x_defs = [
 				("P_signal", 0.95), #Prob. of correctly identifying signal as event #WAG for now
 				("P_noise", 0.01), #Prob. of incorrectly identifying noise/interference as event #WAG for now
 				("T_ccd", _temp), #K
-				("E0", e0), #22.1 keV Cd-109 emission line
-				("sigma_E", math.sqrt((_m0 * _c^2) / (_k*_temp*_e0^2))), #1/eV^2
+				("E0", _e0), #22.1 keV Cd-109 emission line
+				("sigma_E", math.sqrt((_m0 * _c**2) / (_k*_temp*_e0**2))), #1/eV^2
 				("w", 3.66 + 0.000615*(300-_temp)), #eV/e- #this has uncertainty. nuisance parameter?
 				("rate_cd109", 1.7387e-8), #1/s #based on 461.4 days Cd-109 half life
 				("grade_size", 3), #3x3 event grade sizes
-				("t_gain_setup", )
-				("t_gain_buffer", )
+				("t_gain_setup", 1200), #WAG
+				("t_gain_buffer", 5), #WAG
 				#rn
 				("t_rn", .1), #100 ms exposure
-				("t_rn_setup", )
-				("t_rn_buffer", )
+				("t_rn_buffer", 5), #WAG
 				#dc
 				("t_0", 0.1), #100ms baseline exposure assumed
-				("t_dc_setup", )
-				("t_dc_buffer", )
+				("t_dc_buffer", 5), #WAG
 				#qoi
 				("tau", 1800),
 				#cost
-				("C_engineer", )
+				("testbed_setup", 1800), #WAG
+				("C_engineer", 0.00694444444) #WAG $/s, from $25/hr
 			 ]
 			 
 if useQE == True:
@@ -120,3 +119,8 @@ if useQE == True:
 fp = ProblemDefinition(eta, H, Gamma, theta_req_defs, fp_y_defs, fp_d_defs, fp_x_defs)
 
 print(fp)
+test1 = fp.prior_rvs(1)
+test3 = fp.prior_rvs(3)
+print(test1)
+print(fp.prior_pdf_unnorm(test1))
+print(test3)
