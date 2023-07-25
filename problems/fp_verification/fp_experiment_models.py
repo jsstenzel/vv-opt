@@ -24,7 +24,7 @@ def fp_likelihood_fn(theta, d, x):
 	#just pass along entire x
 	
 	y1 = gain_exp(gain, rn, dc, t_gain, I_gain, x)
-	y2 = read_noise_exp(gain, rn, n_mean_rn, x)
+	y2 = read_noise_exp(gain, rn, n_meas_rn, x)
 	y3 = dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, x)
 	
 	return [y1, y2, y3]
@@ -120,7 +120,7 @@ def read_noise_exp(gain, rn, n_meas, _x):
 	
 	sigma_si = gain * math.sqrt(rn**2 + (sigma_dc*t)**2 + sigma_stray**2)
 	
-	n = nx * ny * n_measurements
+	n = nx * ny * n_meas
 	random_var = (2/n) * sigma_si**4
 	random_sigma = math.sqrt(random_var)
 	random = norm.rvs(scale = random_sigma)
@@ -157,14 +157,14 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x):
 		t_list.append(t)
 	t_list[0] = t_0 #clobber; 100ms baseline exposure assumed
 	
-	t_2sum, t_1halfsum, t_3halfsum = 0
+	t_2sum, t_1halfsum, t_3halfsum = 0, 0, 0
 	for t in t_list:
 		t_2sum += t**2
 		t_1halfsum += t**(.5)
 		t_3halfsum += t**(1.5)
 		
 	#Start calculating slope
-	dc_sum, stray_sum = 0
+	dc_sum, stray_sum = 0, 0
 	for t in t_list:
 		dc_sum += dc * t**2
 		stray_sum += mu_stray * t

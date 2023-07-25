@@ -58,7 +58,7 @@ class ProblemDefinition:
 		theta_dict = dict(zip(self.theta_names, theta))
 		d_dict = dict(zip(self.d_names, d))
 		x_dict = dict(zip(self.x_names, x))
-		return _internal_eta(theta_dict, d_dict, x_dict)
+		return self._internal_eta(theta_dict, d_dict, x_dict)
 	
 	def G(self, theta, x=[]):
 		if x == []: #default x
@@ -70,7 +70,7 @@ class ProblemDefinition:
 		#make dicts for inputs w/ defs, to ensure consistency
 		theta_dict = dict(zip(self.theta_names, theta))
 		x_dict = dict(zip(self.x_names, x))
-		return _internal_G(theta_dict, x_dict)
+		return self._internal_G(theta_dict, x_dict)
 	
 	def H(self, d, x=[]):
 		if x == []: #default x
@@ -82,7 +82,7 @@ class ProblemDefinition:
 		#make dicts for inputs w/ defs, to ensure consistency
 		d_dict = dict(zip(self.d_names, d))
 		x_dict = dict(zip(self.x_names, x))
-		return _internal_H(d_dict, x_dict)
+		return self._internal_H(d_dict, x_dict)
 	
 	
 	_allowable_prior_types = {

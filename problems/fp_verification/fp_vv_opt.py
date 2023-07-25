@@ -53,7 +53,8 @@ fp_x_defs = [
 				("nx", 2048),
 				("ny", 2048),
 				("sigma_dc", .5), #e-/s #WAG for now
-				("sigma_stray", .1), #WAG for now
+				("mu_stray", .1), #e-/s #WAG for now
+				("sigma_stray", .005), #WAG for now
 				#gain
 				("P_signal", 0.95), #Prob. of correctly identifying signal as event #WAG for now
 				("P_noise", 0.01), #Prob. of incorrectly identifying noise/interference as event #WAG for now
@@ -118,9 +119,9 @@ if useQE == True:
 #_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
 fp = ProblemDefinition(eta, H, Gamma, theta_req_defs, fp_y_defs, fp_d_defs, fp_x_defs)
 
-print(fp)
-test1 = fp.prior_rvs(1)
-test3 = fp.prior_rvs(3)
-print(test1)
-print(fp.prior_pdf_unnorm(test1))
-print(test3)
+#print(fp)
+#test1 = fp.prior_rvs(1)
+#test3 = fp.prior_rvs(3)
+#print(test1)
+#print(fp.prior_pdf_unnorm(test1))
+#print(test3)
