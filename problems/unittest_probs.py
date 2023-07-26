@@ -119,7 +119,8 @@ if False:
 	S.plot()
 	
 	
-if False:
+#unit test for multivariate likelihood kernel
+if True:
 	"""
 	def calc_likelihood_kernel(d, exp_fn, p_theta_rvs, n1=1000, c='r', showplot=True):
 		thetas = p_theta_rvs(n1)
@@ -146,26 +147,42 @@ if False:
 			 ]
 
 	thetas = fp.prior_rvs(10)
+	print("thetas")
 	print(*thetas,sep='\n')
-	print()
 	ys = [fp.eta(theta, test_d) for theta in thetas]
+	print("\nys")
 	print(*ys,sep='\n')
-	print()
 	
-	y_theta_values = [np.concatenate([thetas[i],ys[i]]).tolist() for i,_ in enumerate(thetas)]
-	print(*y_theta_values,sep='\n')
+	y_theta_values = np.array([np.concatenate([thetas[i],ys[i]]) for i,_ in enumerate(thetas)])
+	print("\ny_theta_values")
+	print(y_theta_values)
 		
-	likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values)
-	#this is failing, either bc i have row of zeros or identical row???
+	likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values.T)
+	#needs transpose apparently for multivariate dataset. Tricky...
 	
-	#lets plot this real quick
-	if False:
-		sns.kdeplot(Y1_list, thetas, color=c, shade=True, cmap="Reds", shade_lowest=False)
-		plt.show()
-		
+	#lets test this real quick: passing in same thetas and new ys should result in high probs
+	new_ys = [fp.eta(theta, test_d) for theta in thetas] #different due to exptl. noise
+	new_ythetas = np.array([np.concatenate([thetas[i],new_ys[i]]) for i,_ in enumerate(thetas)])
+	result = likelihood_kernel(new_ythetas.T)
+	print("\nhigh likelihood results")
+	print(result)
+	
+	#resampling and checking likelihood should produce okay results?
+	_thetas = fp.prior_rvs(10)
+	_ys = [fp.eta(theta, test_d) for theta in _thetas] #different due to exptl. noise
+	_ythetas = np.array([np.concatenate([_thetas[i],_ys[i]]) for i,_ in enumerate(thetas)])
+	result = likelihood_kernel(_ythetas.T)
+	print("\nok likelihood results")
+	print(result)
+	
+	#now lets test it with a big bias on a theta?
+	bad_ythetas = np.array([ytheta+[.1,0,0,0,0,0] for ytheta in new_ythetas])
+	result = likelihood_kernel(bad_ythetas.T)
+	print("\nlow likelihood results")
+	print(result)
 
 #gain experiment testing
-if True:
+if False:
 	from scipy.stats import norm, poisson
 
 	#Assumptions:
