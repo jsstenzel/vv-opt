@@ -3,6 +3,7 @@ import os
 import scipy.stats
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 sys.path.append('../..')
 from problem_definition import *
@@ -118,7 +119,7 @@ if False:
 	S.plot()
 	
 	
-if True:
+if False:
 	"""
 	def calc_likelihood_kernel(d, exp_fn, p_theta_rvs, n1=1000, c='r', showplot=True):
 		thetas = p_theta_rvs(n1)
@@ -136,22 +137,129 @@ if True:
 	"""
 	from problems.fp_verification.fp_vv_opt import *
 	test_d = [
-				1800,#"t_gain", 
-				30,#"I_gain",        #gain
-				5,#"n_meas_rn",               #rn
-				6,#"d_num", 
-				7200,#"d_max", 
-				1#"d_pow"  #dc
+				20,   #t_gain
+				30,   #I_gain
+				5,    #n_meas_rn
+				6,    #d_num
+				7200, #d_max
+				1     #d_pow
 			 ]
 
-	thetas = fp.prior_rvs(3)
-	print(thetas)
+	thetas = fp.prior_rvs(10)
+	print(*thetas,sep='\n')
+	print()
 	ys = [fp.eta(theta, test_d) for theta in thetas]
-	print(ys)
-
+	print(*ys,sep='\n')
+	print()
 	
-	#y_theta_values = np.vstack([ys, thetas])
-	#print(y_theta_values)
+	y_theta_values = [np.concatenate([thetas[i],ys[i]]).tolist() for i,_ in enumerate(thetas)]
+	print(*y_theta_values,sep='\n')
 		
+	likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values)
+	#this is failing, either bc i have row of zeros or identical row???
 	
+	#lets plot this real quick
+	if False:
+		sns.kdeplot(Y1_list, thetas, color=c, shade=True, cmap="Reds", shade_lowest=False)
+		plt.show()
+		
+
+#gain experiment testing
+if True:
+	from scipy.stats import norm, poisson
+
+	#Assumptions:
+	#temperature is certain
+	#w is certain
+	#experiment runtimes are certain
+	_temp= -90+273.15 #K
+	_k = 1.380649e-23 #J / K
+	_c = 299792458 #m / s
+	_e0 = 22100 #eV
+	_m0 = 108.9049856 * 1.66054e-27 #cd109 atomic mass in kg
+	_An = 6.02214076e23 #avogadros constant
+	xlist = [
+			#general
+			("nx", 2048),
+			("ny", 2048),
+			("sigma_dc", .5), #e-/s #Estimate based on a consistency test performed on SN20006
+			("mu_stray", .1), #e-/s #WAG for now
+			("sigma_stray", .005), #WAG for now
+			#gain
+			("P_signal", 0.90), #Prob. of correctly identifying signal as event #WAG for now
+			("P_noise", 0.01), #Prob. of incorrectly identifying noise/interference as event #WAG for now
+			("T_ccd", _temp), #K
+			("E0", _e0), #22.1 keV Cd-109 emission line
+			("sigma_E", math.sqrt((_m0 * _c**2) / (_k*_temp*_e0**2))), #1/eV^2
+			("w", 3.66 + 0.000615*(300-_temp)), #eV/e- #this has uncertainty. nuisance parameter?
+			("activity_cd109", 5e-6), #Ci #radioactivity of sample
+			("grade_size", 3), #3x3 event grade sizes
+			("t_gain_setup", 1200), #WAG
+			("t_gain_buffer", 5), #WAG
+			#rn
+			("t_rn", .1), #100 ms exposure
+			("t_rn_buffer", 5), #WAG
+			#dc
+			("t_0", 0.1), #100ms baseline exposure assumed
+			("t_dc_buffer", 5), #WAG
+			#qoi
+			("tau", 1800),
+			#cost
+			("testbed_setup", 1800), #WAG
+			("C_engineer", 0.00694444444) #WAG $/s, from $25/hr
+		 ]
+	_x = dict(xlist)
+	#define parameters:
+	P_signal = _x["P_signal"] #probability of a signal event being correctly identified as an event; 1-P_signal is false negative rate
+	P_noise = _x["P_noise"] #probability of noise being incorrectly identified as an event; P_noise is false positive rate
+	sigma_dc = _x["sigma_dc"]
+	T_ccd = _x["T_ccd"]
+	E0 = _x["E0"]
+	sigma_E = _x["sigma_E"]
+	w = _x["w"]
+	activity_cd109 = _x["activity_cd109"] #look at cd-109 sample
+	nx = _x["nx"]
+	ny = _x["ny"]
+	grade_size = _x["grade_size"] #we are considering 3x3 event grade sizes, based on the physics of the experiment
 	
+	#define design variables
+	t=20
+	I=30
+	#other args
+	gain = 1.1
+	rn = 2.5
+	dc = 0.001
+	
+	#Sample from Poisson distribution of # particle events
+	#no, doing this non-randomly at first
+	#number of isotopes after time t: 
+	#N_t = N0_cd109 * math.exp(-rate_cd109 * t)
+	#number of decays after time t: activity = rate_cd109 * N0_cd109
+	Activity_s = activity_cd109 * 3.7e10 #convert to decay/s
+	N_decays = Activity_s * t
+	print("Activity_s", Activity_s)
+	print("N_decays", N_decays)
+	
+	#calculate derived values
+	grade_area = grade_size**2
+	n_signal = N_decays * P_signal
+	n_noise = (nx*ny/grade_area) * P_noise
+	n = n_signal + n_noise
+	p = n_signal / n
+	print("n_signal",n_signal)
+	print("n_noise",n_noise)
+	print("p", p)
+	
+	#calculate mixture distribution parameters, X = pS + (1-p)N
+	mu_x = p*E0*gain/w
+	var_x = p * (sigma_E/w)**2 + rn**2 + sigma_dc**2 + p*(1-p)*(E0/w)**2
+	#Im missing I here
+	sigma_x = math.sqrt(var_x)
+	print("sigma_x",sigma_x)
+	stddev = sigma_x/math.sqrt(I)
+	print("stddev",stddev)
+	
+	random = norm.rvs(scale = stddev)
+	y = mu_x + random
+	print("mu_x",mu_x)
+	print("random",random)

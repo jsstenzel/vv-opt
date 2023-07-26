@@ -62,6 +62,10 @@ def fp_qe_likelihood_fn(theta, d, x):
 theta: [0] gain [1] read noise [2] dark current
 d: 
 x parameters: sigma_stray, sigma_dc, nx, ny
+Assumptions:
+* All decays of the sample make it to the CCD
+* Signal and noise events will never overlap
+* w has no uncertainty
 """
 def gain_exp(gain, rn, dc, t, I, _x):
 	#define parameters:
@@ -72,7 +76,7 @@ def gain_exp(gain, rn, dc, t, I, _x):
 	E0 = _x["E0"]
 	sigma_E = _x["sigma_E"]
 	w = _x["w"]
-	rate_cd109 = _x["rate_cd109"] #look at cd-109 sample
+	activity_cd109 = _x["activity_cd109"] #look at cd-109 sample
 	nx = _x["nx"]
 	ny = _x["ny"]
 	grade_size = _x["grade_size"] #we are considering 3x3 event grade sizes, based on the physics of the experiment
@@ -82,12 +86,16 @@ def gain_exp(gain, rn, dc, t, I, _x):
 	#I number of exposures
 	
 	#Sample from Poisson distribution of # particle events
-	lambda_emis = rate_cd109 * t
-	N_t = poisson.rvs(lambda_emis)
+	#no, doing this non-randomly at first
+	#number of isotopes after time t: 
+	#N_t = N0_cd109 * math.exp(-rate_cd109 * t)
+	#number of decays after time t: activity = rate_cd109 * N0_cd109
+	Activity_s = activity_cd109 * 3.7e10 #convert to decay/s
+	N_decays = Activity_s * t
 	
 	#calculate derived values
 	grade_area = grade_size**2
-	n_signal = N_t * P_signal
+	n_signal = N_decays * P_signal
 	n_noise = (nx*ny/grade_area) * P_noise
 	n = n_signal + n_noise
 	p = n_signal / n
@@ -96,8 +104,9 @@ def gain_exp(gain, rn, dc, t, I, _x):
 	mu_x = p*E0*gain/w
 	var_x = p * (sigma_E/w)**2 + rn**2 + sigma_dc**2 + p*(1-p)*(E0/w)**2
 	sigma_x = math.sqrt(var_x)
+	stddev = sigma_x/math.sqrt(I)
 	
-	random = norm.rvs(scale = sigma_x)
+	random = norm.rvs(scale = stddev)
 	y = mu_x + random
 	return y
 	
@@ -217,6 +226,6 @@ def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, _x):
 	measurement.set_xlim(qe.xmin, qe.xmax)
 	measurement.set_ylim(0, measurement.ymax*1.5)
 	
-	err = np.sqrt(rn**2 + (sigma_dc*t_qe)**2)
+	err = math.sqrt(rn**2 + (sigma_dc*t_qe)**2)
 	meas_with_error = noise_to_functional(measurement, err)
 	return meas_with_error

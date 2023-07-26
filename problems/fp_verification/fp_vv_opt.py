@@ -52,17 +52,17 @@ fp_x_defs = [
 				#general
 				("nx", 2048),
 				("ny", 2048),
-				("sigma_dc", .5), #e-/s #WAG for now
+				("sigma_dc", .5), #e-/s #Estimate based on a consistency test performed on SN20006
 				("mu_stray", .1), #e-/s #WAG for now
 				("sigma_stray", .005), #WAG for now
 				#gain
-				("P_signal", 0.95), #Prob. of correctly identifying signal as event #WAG for now
+				("P_signal", 0.90), #Prob. of correctly identifying signal as event #WAG for now
 				("P_noise", 0.01), #Prob. of incorrectly identifying noise/interference as event #WAG for now
 				("T_ccd", _temp), #K
 				("E0", _e0), #22.1 keV Cd-109 emission line
 				("sigma_E", math.sqrt((_m0 * _c**2) / (_k*_temp*_e0**2))), #1/eV^2
 				("w", 3.66 + 0.000615*(300-_temp)), #eV/e- #this has uncertainty. nuisance parameter?
-				("rate_cd109", 1.7387e-8), #1/s #based on 461.4 days Cd-109 half life
+				("activity_cd109", 5e-6), #Ci #radioactivity of sample
 				("grade_size", 3), #3x3 event grade sizes
 				("t_gain_setup", 1200), #WAG
 				("t_gain_buffer", 5), #WAG
@@ -77,7 +77,7 @@ fp_x_defs = [
 				#cost
 				("testbed_setup", 1800), #WAG
 				("C_engineer", 0.00694444444) #WAG $/s, from $25/hr
-			 ]
+			]
 			 
 if useQE == True:
 	eta = fp_qe_likelihood_fn
