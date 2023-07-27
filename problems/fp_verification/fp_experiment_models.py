@@ -11,9 +11,14 @@ Full matrix experiment model
 """
 def fp_likelihood_fn(theta, d, x):
 	#define interest params:
-	gain = theta["gain"]
-	rn = theta["rn"]
-	dc = theta["dc"]
+	if type(theta) is dict:
+		gain = theta["gain"]
+		rn = theta["rn"]
+		dc = theta["dc"]
+	else:
+		gain = theta[0]
+		rn = theta[1]
+		dc = theta[2]
 	#define design variables:
 	t_gain = d["t_gain"]
 	I_gain = d["I_gain"]
@@ -34,10 +39,16 @@ Full matrix experiment model w/ quantum efficiency
 """
 def fp_qe_likelihood_fn(theta, d, x):
 	#define interest params:
-	gain = theta["gain"]
-	rn = theta["rn"]
-	dc = theta["dc"]
-	qe = theta["qe"]
+	if type(theta) is dict:
+		gain = theta["gain"]
+		rn = theta["rn"]
+		dc = theta["dc"]
+		qe = theta["qe"]
+	else:
+		gain = theta[0]
+		rn = theta[1]
+		dc = theta[2]
+		qe = theta[3]
 	#define design variables:
 	t_gain = d["t_gain"]
 	I_gain = d["I_gain"]

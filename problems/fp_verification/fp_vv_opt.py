@@ -12,6 +12,8 @@ sys.path.append('../..')
 from problems.problem_definition import *
 from problems.fp_verification.fp_statistics import *
 from problems.fp_verification.fp_experiment_models import *
+#snslysis
+from obed.obed_multivar import *
 
 useQE = False
 
@@ -21,7 +23,7 @@ Gamma = fp_cost_simple
 
 #these priors are based on requirements that were met, see Camera Qual Report
 theta_req_defs = [ 
-					("gain", ["uniform", [1.0-0.2,1.0+0.2]]), #mean, stddev
+					("gain", ["uniform", [1.1-0.2,1.1+0.2]]), #mean, stddev
 					("rn",   ["uniform", [2.5-0.25,2.5+0.25]]), #these should probably be gamma fns
 					("dc",   ["uniform", [0.001-.0002,0.001+.003]]),
 				]
@@ -119,9 +121,21 @@ if useQE == True:
 #_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
 fp = ProblemDefinition(eta, H, Gamma, theta_req_defs, fp_y_defs, fp_d_defs, fp_x_defs)
 
-#print(fp)
-#test1 = fp.prior_rvs(1)
-#test3 = fp.prior_rvs(3)
-#print(test1)
-#print(fp.prior_pdf_unnorm(test1))
-#print(test3)
+#nominal case
+theta_nominal = [1.1, 2.5, .001]
+QoI_nominal = fp.H(theta_nominal)
+print(QoI_nominal)
+
+#uncertainty analysis
+
+d_historical = [
+				20,   #t_gain
+				30,   #I_gain
+				1,    #n_meas_rn
+				8,    #d_num
+				9600, #d_max
+				2     #d_pow   #approx
+			]
+U, U_list = U_probreq(d_historical, fp, req=3.0, n1=100, n2=1000, burnin=0, lag=1)
+print(U)
+print(U_list)
