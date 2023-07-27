@@ -9,7 +9,7 @@ from functionals import *
 """
 Full matrix experiment model
 """
-def fp_likelihood_fn(theta, d, x):
+def fp_likelihood_fn(theta, d, x, err=True):
 	#define interest params:
 	if type(theta) is dict:
 		gain = theta["gain"]
@@ -28,16 +28,16 @@ def fp_likelihood_fn(theta, d, x):
 	d_pow = d["d_pow"]
 	#just pass along entire x
 	
-	y1 = gain_exp(gain, rn, dc, t_gain, I_gain, x)
-	y2 = read_noise_exp(gain, rn, n_meas_rn, x)
-	y3 = dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, x)
+	y1 = gain_exp(gain, rn, dc, t_gain, I_gain, x, err)
+	y2 = read_noise_exp(gain, rn, n_meas_rn, x, err)
+	y3 = dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, x, err)
 	
 	return [y1, y2, y3]
 	
 """
 Full matrix experiment model w/ quantum efficiency
 """
-def fp_qe_likelihood_fn(theta, d, x):
+def fp_qe_likelihood_fn(theta, d, x, err=True):
 	#define interest params:
 	if type(theta) is dict:
 		gain = theta["gain"]
@@ -61,10 +61,10 @@ def fp_qe_likelihood_fn(theta, d, x):
 	I_qe = ["I_qe"]
 	#just pass along entire x
 	
-	y1 = gain_exp(gain, rn, dc, t_gain, I_gain, x)
-	y2 = read_noise_exp(gain, rn, n_mean_rn, x)
-	y3 = dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, x)
-	y4 = quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, x)
+	y1 = gain_exp(gain, rn, dc, t_gain, I_gain, x, err)
+	y2 = read_noise_exp(gain, rn, n_mean_rn, x, err)
+	y3 = dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, x, err)
+	y4 = quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, x, err)
 	
 	return [y1, y2, y3, y4]
 
@@ -78,7 +78,7 @@ Assumptions:
 * Signal and noise events will never overlap
 * w has no uncertainty
 """
-def gain_exp(gain, rn, dc, t, I, _x):
+def gain_exp(gain, rn, dc, t, I, _x, err=True):
 	#define parameters:
 	P_signal = _x["P_signal"] #probability of a signal event being correctly identified as an event; 1-P_signal is false negative rate
 	P_noise = _x["P_noise"] #probability of noise being incorrectly identified as an event; P_noise is false positive rate
@@ -118,7 +118,10 @@ def gain_exp(gain, rn, dc, t, I, _x):
 	stddev = sigma_x/math.sqrt(I)
 	
 	random = norm.rvs(scale = stddev)
-	y = mu_x + random
+	if err:
+		y = mu_x + random
+	else:
+		y = mu_x
 	return y
 	
 
@@ -127,7 +130,7 @@ theta: [0] gain [1] read noise [2] dark current
 d: [0] number exposures
 x parameters: sigma_stray, sigma_dc, nx, ny
 """
-def read_noise_exp(gain, rn, n_meas, _x):
+def read_noise_exp(gain, rn, n_meas, _x, err=True):
 	#define parameters:
 	nx = _x["nx"]
 	ny = _x["ny"]
@@ -145,7 +148,10 @@ def read_noise_exp(gain, rn, n_meas, _x):
 	random_sigma = math.sqrt(random_var)
 	random = norm.rvs(scale = random_sigma)
 	
-	y = sigma_si + random
+	if err:
+		y = sigma_si + random
+	else:
+		y = sigma_si
 	return y
 	
 	
@@ -154,7 +160,7 @@ theta: [0] gain [1] read noise [2] dark current
 d: 
 x parameters: sigma_stray, sigma_dc, nx, ny
 """
-def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x):
+def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x, err=True):
 	#define parameters:
 	mu_stray = _x["mu_stray"]
 	sigma_stray = _x["sigma_stray"]
@@ -196,7 +202,10 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x):
 	random_sigma = math.sqrt(random_var)
 	random = norm.rvs(scale = random_sigma)
 
-	y = m + random
+	if err:
+		y = m + random
+	else:
+		y = m
 	return y
 	
 	
@@ -204,7 +213,7 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x):
 #recombination within the bulk silicon itself, surface reflection, and, for very long or 
 #short wavelengths, losses due to the almost complete lack of absorption by the CCD"
 #- Howell, Handbook of CCD Astronomy - instead, it models how we might measure intrinsic QE
-def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, _x):
+def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, _x, err=True):
 	#define parameters
 	S_pd = _x["S_pd"] #functional
 	S_pd_err = _x["S_pd_err"]
@@ -218,7 +227,11 @@ def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, _x):
 	#I_qe photocurrent of light source
 	
 	#Derived values
-	S_pd_sample = noise_to_functional(S_pd, S_pd_err)
+	if err:
+		S_pd_sample = noise_to_functional(S_pd, S_pd_err)
+	else:
+		#need a trick for getting the mean of the functional
+		0
 	measure_pts = np.linspace(S_pd.xmin, S_pd.xmax, n_qe)
 	
 	Signal_measure = []
@@ -237,6 +250,9 @@ def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, _x):
 	measurement.set_xlim(qe.xmin, qe.xmax)
 	measurement.set_ylim(0, measurement.ymax*1.5)
 	
-	err = math.sqrt(rn**2 + (sigma_dc*t_qe)**2)
-	meas_with_error = noise_to_functional(measurement, err)
-	return meas_with_error
+	if err:
+		error = math.sqrt(rn**2 + (sigma_dc*t_qe)**2)
+		meas_with_error = noise_to_functional(measurement, error)
+		return meas_with_error
+	else:
+		return measurement
