@@ -60,29 +60,29 @@ class ProblemDefinition:
 		x_dict = dict(zip(self.x_names, x))
 		return self._internal_eta(theta_dict, d_dict, x_dict)
 	
-	def G(self, theta, x=[]):
-		if x == []: #default x
-			x = self.x_default
-		if len(theta) != self.dim_theta:
-			raise ValueError("Input to ProblemDefinition eta: theta size "+str(self.dim_theta)+" expected, "+str(len(theta))+" provided.")
-		if len(x) != self.dim_x:
-			raise ValueError("Input to ProblemDefinition eta: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
-		#make dicts for inputs w/ defs, to ensure consistency
-		theta_dict = dict(zip(self.theta_names, theta))
-		x_dict = dict(zip(self.x_names, x))
-		return self._internal_G(theta_dict, x_dict)
-	
-	def H(self, d, x=[]):
+	def G(self, d, x=[]):
 		if x == []: #default x
 			x = self.x_default
 		if len(d) != self.dim_d:
-			raise ValueError("Input to ProblemDefinition eta: d size "+str(self.dim_d)+" expected, "+str(len(d))+" provided.")
+			raise ValueError("Input to ProblemDefinition G: theta size "+str(self.dim_d)+" expected, "+str(len(d))+" provided.")
 		if len(x) != self.dim_x:
-			raise ValueError("Input to ProblemDefinition eta: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
+			raise ValueError("Input to ProblemDefinition G: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
 		#make dicts for inputs w/ defs, to ensure consistency
 		d_dict = dict(zip(self.d_names, d))
 		x_dict = dict(zip(self.x_names, x))
-		return self._internal_H(d_dict, x_dict)
+		return self._internal_G(d_dict, x_dict)
+	
+	def H(self, theta, x=[]):
+		if x == []: #default x
+			x = self.x_default
+		if len(theta) != self.dim_theta:
+			raise ValueError("Input to ProblemDefinition H: theta size "+str(self.dim_theta)+" expected, "+str(len(theta))+" provided.")
+		if len(x) != self.dim_x:
+			raise ValueError("Input to ProblemDefinition H: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
+		#make dicts for inputs w/ defs, to ensure consistency
+		theta_dict = dict(zip(self.theta_names, theta))
+		x_dict = dict(zip(self.x_names, x))
+		return self._internal_H(theta_dict, x_dict)
 	
 	
 	_allowable_prior_types = {
