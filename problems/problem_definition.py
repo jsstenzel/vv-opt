@@ -87,9 +87,9 @@ class ProblemDefinition:
 	
 	_allowable_prior_types = {
 		'gaussian': 2, #mu, sigma
-		#'pos_gaussian': 2, #mu, sigma
-		#'bound_gaussian': 4 #mu, sigma, left, right
-		'uniform': 2,
+		'gamma_ab': 2, #alpha, beta
+		'gamma_mv': 2, #mean, variance
+		'uniform': 2, #left, right
 		'funct_splines': 5} #knot list (x,y), order, y_stddev, domain, range
 		
 	
@@ -105,18 +105,16 @@ class ProblemDefinition:
 				mu = params[0]
 				sigma = params[1]
 				thetas_i = scipy.stats.norm.rvs(size=num_vals, loc=mu, scale=sigma)
-			#if type == 'pos_gaussian':
-			#	mu = params[0]
-			#	sigma = params[1]
-			#	thetas_i=0
-			#	while thetas_i <= 0:
-			#		thetas_i = scipy.stats.norm.rvs(size=num_vals, loc=mu, scale=sigma) #fix num_vals thing
-			#if type == 'bound_gaussian':
-			#	mu = params[0]
-			#	sigma = params[1]
-			#	thetas_i = scipy.stats.norm.rvs(size=num_vals, loc=mu, scale=sigma)
-			#	while thetas_i < params[2] or thetas_i > params[3]:
-			#		thetas_i = scipy.stats.norm.rvs(size=num_vals, loc=mu, scale=sigma) #fix num_vals thing
+			if type == 'gamma_ab':
+				alpha = params[0]
+				beta = params[1]
+				thetas_i = scipy.stats.gamma.rvs(size=num_vals, a=alpha, scale=1.0/beta)
+			if type == 'gamma_mv':
+				mean = params[0]
+				variance = params[1]
+				alpha = mean**2 / variance
+				beta = mean / variance
+				thetas_i = scipy.stats.gamma.rvs(size=num_vals, a=alpha, scale=1.0/beta)
 			elif type == 'uniform':
 				left = params[0]
 				right = params[1]
@@ -168,18 +166,16 @@ class ProblemDefinition:
 				mu = params[0]
 				sigma = params[1]
 				prob_i = scipy.stats.norm.pdf(theta_i, loc=mu, scale=sigma)
-			#if type == 'pos_gaussian':
-			#	mu = params[0]
-			#	sigma = params[1]
-			#	prob_i = scipy.stats.norm.pdf(theta_i, loc=mu, scale=sigma)
-			#	if theta_i <= 0:
-			#		prob_i = 0
-			#if type == 'bound_gaussian':
-			#	mu = params[0]
-			#	sigma = params[1]
-			#	prob_i = scipy.stats.norm.pdf(theta_i, loc=mu, scale=sigma)
-			#	if theta_i <= params[2] or theta_i >= params[3]:
-			#		prob_i = 0
+			if type == 'gamma_ab':
+				alpha = params[0]
+				beta = params[1]
+				prob_i = scipy.stats.gamma.pdf(theta_i, a=alpha, scale=1.0/beta)
+			if type == 'gamma_mv':
+				mean = params[0]
+				variance = params[1]
+				alpha = mean**2 / variance
+				beta = mean / variance
+				prob_i = scipy.stats.gamma.pdf(theta_i, a=alpha, scale=1.0/beta)
 			elif type == 'uniform':
 				left = params[0]
 				right = params[1]
