@@ -154,6 +154,7 @@ class ProblemDefinition:
 		else:
 			return vals #this is a list (num_vals) of random variables (dim_theta)
 	
+	#assumes single theta, not list of thetas
 	def prior_pdf_unnorm(self, theta):
 		#evaluate and return a list of probabilities (dim_theta) for each distribution component
 		probabilities = []

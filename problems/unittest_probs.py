@@ -149,6 +149,7 @@ if True:
 	thetas = fp.prior_rvs(10)
 	print("thetas")
 	print(*thetas,sep='\n')
+	
 	ys = [fp.eta(theta, test_d) for theta in thetas]
 	print("\nys")
 	print(*ys,sep='\n')
@@ -180,6 +181,19 @@ if True:
 	result = likelihood_kernel(bad_ythetas.T)
 	print("\nlow likelihood results")
 	print(result)
+	
+	#check a single
+	theta = fp.prior_rvs(1)
+	y = fp.eta(theta, test_d)
+	ytheta = np.concatenate([theta, y])
+	print("\n ok likelihood result")
+	print(ytheta)
+	print(likelihood_kernel(ytheta))
+	print(likelihood_kernel(ytheta.T))
+	theta_pdfs = fp.prior_pdf_unnorm(theta)
+	print("theta pdfs")
+	print(theta_pdfs)
+	print(np.prod(theta_pdfs))
 
 #gain experiment testing
 if False:
