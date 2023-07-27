@@ -22,7 +22,39 @@ def multivar_likelihood_kernel(d, exp_fn, p_theta_rvs, n1, c='r', showplot=True)
 	likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values.T)
 
 	return likelihood_kernel, Y1_list
+	
 
+def mcmc_multivar(y, likelihood_kernel, prior_rvs, prior_pdf_unnorm, n2, burnin=0, lag=1):
+	N2 = n2*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
+	#I will probably have to take into account things like burn-in/convergence and lag? idk
+	
+	theta_current = prior_rvs(1)
+	mcmc_trace = []
+	for i in range(N2): #MCMC loop
+		#Propose a new value of theta from the prior
+		theta_proposal = prior_rvs(1)
+		#Compute likelihood of the "data" for both thetas - reusing the loop-1 likelihood evaluations
+		ytheta_current = np.concatenate([theta_current, y])
+		ytheta_proposal = np.concatenate([theta_proposal, y])
+		likelihood_current = likelihood_kernel(ytheta_current) #using kde to estimate pdf
+		likelihood_proposal = likelihood_kernel(ytheta_proposal) #calc probability at the data y
+		#Compute acceptance ratio
+		prior_current = np.prod(prior_pdf_unnorm(theta_current))
+		prior_proposal = np.prod(prior_pdf_unnorm(theta_proposal))
+		p_current = likelihood_current * prior_current
+		p_proposal = likelihood_proposal * prior_proposal
+		R = p_proposal / p_current
+		#Accept our new value of theta according to the acceptance probability R:
+		if np.random.random_sample() < R:
+			theta_current = theta_proposal
+		#Include theta_current in my trace according to rules
+		if i > burnin and i%lag == 0:
+			mcmc_trace.append(theta_current)
+			
+	#plt.plot(mcmc_trace)
+	#plt.show()
+	return mcmc_trace
+				
 
 """
 This function is part of the OBED problem, solving the utility for a given d
@@ -42,31 +74,7 @@ def U_probreq(d, problem, req, n1=10000, n2=1000, burnin=0, lag=1):
 	
 	U_list = []
 	for y in Y1_list: #MC loop		
-		N2 = n2*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
-		#I will probably have to take into account things like burn-in/convergence and lag? idk
-		
-		theta_current = problem.prior_rvs(1)
-		mcmc_trace = []
-		for i in range(N2): #MCMC loop
-			#Propose a new value of theta from the prior
-			theta_proposal = problem.prior_rvs(1)
-			#Compute likelihood of the "data" for both thetas - reusing the loop-1 likelihood evaluations
-			ytheta_current = np.concatenate([theta_current, y])
-			ytheta_proposal = np.concatenate([theta_proposal, y])
-			likelihood_current = likelihood_kernel(ytheta_current) #using kde to estimate pdf
-			likelihood_proposal = likelihood_kernel(ytheta_proposal) #calc probability at the data y
-			#Compute acceptance ratio
-			prior_current = np.prod(problem.prior_pdf_unnorm(theta_current))
-			prior_proposal = np.prod(problem.prior_pdf_unnorm(theta_proposal))
-			p_current = likelihood_current * prior_current
-			p_proposal = likelihood_proposal * prior_proposal
-			R = p_proposal / p_current
-			#Accept our new value of theta according to the acceptance probability R:
-			if np.random.random_sample() < R:
-				theta_current = theta_proposal
-			#Include theta_current in my trace according to rules
-			if i > burnin and i%lag == 0:
-				mcmc_trace.append(theta_current)
+		mcmc_trace = mcmc_multivar(y, likelihood_kernel, problem.prior_rvs, problem.prior_pdf_unnorm, n2, burnin, lag)
 			
 		#Now, use my posterior samples to calculate H(theta|y,d) samples
 		H_theta_posterior = [problem.H(theta) for theta in mcmc_trace]
