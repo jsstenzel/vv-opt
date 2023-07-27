@@ -41,7 +41,7 @@ def uncertainty_prop(y_j, doPlot=False, doPrint=False):
     
     return mean, stddev
     
-def uncertainty_prop_plot(y_j, mean=0):
+def uncertainty_prop_plot(y_j, mean=0, xlab="Y"):
     if mean==0:
         mean = statistics.mean(y_j)
         
@@ -49,7 +49,7 @@ def uncertainty_prop_plot(y_j, mean=0):
     plt.grid(axis='y', alpha=0.75)
     plt.ylim(ymax=np.ceil(n.max() / 10) * 10 + n.max()*0.05)
     #plt.xticks(rotation=90)
-    plt.xlabel("Y")
+    plt.xlabel(xlab)
     plt.ylabel("Frequency (N=" + str(len(y_j)) + ")")
     plt.show()
     

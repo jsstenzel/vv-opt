@@ -14,6 +14,8 @@ from problems.fp_verification.fp_statistics import *
 from problems.fp_verification.fp_experiment_models import *
 #snslysis
 from obed.obed_multivar import *
+from uq.uncertainty_propagation import *
+from uq.sensitivity_analysis import *
 
 useQE = False
 
@@ -23,9 +25,9 @@ Gamma = fp_cost_simple
 
 #these priors are based on requirements that were met, see Camera Qual Report
 theta_req_defs = [ 
-					("gain", ["uniform", [1.1-0.2,1.1+0.2]]), #mean, stddev
-					("rn",   ["uniform", [2.5-0.25,2.5+0.25]]), #these should probably be gamma fns
-					("dc",   ["uniform", [0.001-.0002,0.001+.003]]),
+					("gain", ["gamma_mv", [1.1,0.2**2]]), #mean, variance
+					("rn",   ["gamma_mv", [2.5,0.25**2]]), 
+					("dc",   ["gamma_mv", [0.001,.001**2]])
 				]
 #need to update with range somehow? These can't be negative
 
@@ -121,13 +123,37 @@ if useQE == True:
 #_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
 fp = ProblemDefinition(eta, H, Gamma, theta_req_defs, fp_y_defs, fp_d_defs, fp_x_defs)
 
-#nominal case
+###nominal case
+req = 3.0 #max noise
+print("QoI requirement:", req)
+
 theta_nominal = [1.1, 2.5, .001]
 QoI_nominal = fp.H(theta_nominal)
-print(QoI_nominal)
+print("Nominal QoI:", QoI_nominal)
 
-#uncertainty analysis
+###uncertainty analysis
+#uncertainty propagation
+thetas = fp.prior_rvs(10000)
+Qs = [fp.H(theta) for theta in thetas]
+#uncertainty_prop_plot([theta[0] for theta in thetas], xlab="Gain [ADU/e-]")
+#uncertainty_prop_plot([theta[1] for theta in thetas], xlab="Read noise [e-]")
+#uncertainty_prop_plot([theta[2] for theta in thetas], xlab="Dark current [e-/s]")
+uncertainty_prop_plot(Qs, xlab="QoI: Avg. Noise [e-]")
 
+#prob of meeting req along priors:
+count_meetreq = 0
+for Q in Qs:
+	if Q <= req:
+		count_meetreq += 1
+prob_meetreq = count_meetreq / len(Qs)
+print("Probability of meeting requirement given priors:", prob_meetreq)
+
+#sensitivity analysis
+#it'll be straightforward to see the dependence of QoI on theta
+
+#less strightforward to do it for the dependence of QoI on d
+
+###OBED analysis
 d_historical = [
 				20,   #t_gain
 				30,   #I_gain
@@ -136,6 +162,6 @@ d_historical = [
 				9600, #d_max
 				2     #d_pow   #approx
 			]
-U, U_list = U_probreq(d_historical, fp, req=3.0, n1=100, n2=1000, burnin=0, lag=1)
-print(U)
-print(U_list)
+#U, U_list = U_probreq(d_historical, fp, req=3.0, n1=100, n2=1000, burnin=0, lag=1)
+#print(U)
+#print(U_list)
