@@ -150,6 +150,13 @@ print("Probability of meeting requirement given priors:", prob_meetreq)
 
 #sensitivity analysis
 #it'll be straightforward to see the dependence of QoI on theta
+Si = sobol_saltelli(fp.H, 
+					2**5, #SALib wants powers of 2 for convergence
+					var_names=fp.theta_names, 
+					var_dists=[prior[0] for prior in fp.priors], 
+					var_bounds=[prior[1] for prior in fp.priors], 
+					conf = 0.95, doSijCalc=False, doPlot=True, doPrint=True)
+
 
 #less strightforward to do it for the dependence of QoI on d
 
