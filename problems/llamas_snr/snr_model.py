@@ -232,4 +232,55 @@ def sobol_saltelli(N):
 			writer.writerow([y])
 	
 
-	
+
+def plot_gsa_llamas_snr(filename):
+    S1, S1_conf, ST, ST_conf = [],[],[],[]
+    with open(filename) as csvfile:
+        csvreader = csv.reader(csvfile, delimiter=',')
+        for row in csvreader:
+            S1.append(float(row[0]))
+            S1_conf.append(float(row[1]))
+            ST.append(float(row[2]))
+            ST_conf.append(float(row[3]))
+            
+    varnames = ['red\nrn', 'red\ndc', 'green\nrn', 'green\ndc', 'blue\nrn', 'blue\ndc', 'frd', 'bg\nbias', 'sl\nbias', 'vph1\nred', 'vph2\nred', 'vph3\nred', 'vph1\ngreen', 'vph2\ngreen', 'vph3\ngreen', 'vph1\nblue', 'vph2\nblue', 'vph3\nblue']
+    
+    # set width of bar
+    barWidth = 0.1
+    fig = plt.subplots(figsize =(12, 8))
+     
+    # set height of bar    
+    ii = 0
+    bar_heights = [[],[],[],[],[],[],[],[]]
+    for spect in bar_heights:
+        for var in varnames:
+            spect.append(ST[ii])
+            ii += 1
+     
+    # Set position of bar on X axis
+    bar_pos = [[],[],[],[],[],[],[],[]]
+    bar_pos[0] = np.arange(len(varnames))
+    bar_pos[1] = [x + barWidth for x in bar_pos[0]]
+    bar_pos[2] = [x + barWidth for x in bar_pos[1]]
+    bar_pos[3] = [x + barWidth for x in bar_pos[2]]
+    bar_pos[4] = [x + barWidth for x in bar_pos[3]]
+    bar_pos[5] = [x + barWidth for x in bar_pos[4]]
+    bar_pos[6] = [x + barWidth for x in bar_pos[5]]
+    bar_pos[7] = [x + barWidth for x in bar_pos[6]]
+    
+    colors = ["#005f73","#0a9396","#94d2bd","#e9d8a6","#ee9b00","#ca6702","#bb3e03","#9b2226"]
+     
+    # Make the plot
+    #plt.bar(br1, IT, color ='r', width = barWidth, edgecolor ='grey', label ='IT')
+    #plt.bar(br2, ECE, color ='g', width = barWidth, edgecolor ='grey', label ='ECE')
+    #plt.bar(br3, CSE, color ='b', width = barWidth, edgecolor ='grey', label ='CSE')
+    for ii,_ in enumerate(bar_heights):
+        plt.bar(bar_pos[ii], bar_heights[ii], color=colors[ii], width = barWidth, edgecolor='grey', label = str(ii))
+     
+    # Adding Xticks
+    plt.xlabel('Parameters', fontweight ='bold', fontsize = 15)
+    plt.ylabel('S_T', fontweight ='bold', fontsize = 15)
+    plt.xticks([r + barWidth for r in range(len(varnames))], varnames)
+    #plt.tight_layout()
+    plt.yscale('log')    
+    plt.show()
