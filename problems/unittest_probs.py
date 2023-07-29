@@ -146,21 +146,21 @@ if True:
 				1     #d_pow
 			 ]
 
-	thetas = fp.prior_rvs(10)
-	print("thetas")
-	print(*thetas,sep='\n')
+	thetas = fp.prior_rvs(100000)
+	#print("thetas")
+	#print(*thetas,sep='\n')
 	
 	ys = [fp.eta(theta, test_d) for theta in thetas]
-	print("\nys")
-	print(*ys,sep='\n')
+	#print("\nys")
+	#print(*ys,sep='\n')
 	
 	y_theta_values = np.array([np.concatenate([thetas[i],ys[i]]) for i,_ in enumerate(thetas)])
-	print("\ny_theta_values")
-	print(y_theta_values)
+	#print("\ny_theta_values")
+	#print(y_theta_values)
 		
 	likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values.T)
 	#needs transpose apparently for multivariate dataset. Tricky...
-	
+	"""
 	#lets test this real quick: passing in same thetas and new ys should result in high probs
 	new_ys = [fp.eta(theta, test_d) for theta in thetas] #different due to exptl. noise
 	new_ythetas = np.array([np.concatenate([thetas[i],new_ys[i]]) for i,_ in enumerate(thetas)])
@@ -181,7 +181,7 @@ if True:
 	result = likelihood_kernel(bad_ythetas.T)
 	print("\nlow likelihood results")
 	print(result)
-	
+	"""
 	#check a single
 	theta = fp.prior_rvs(1)
 	y = fp.eta(theta, test_d)
@@ -194,6 +194,15 @@ if True:
 	print("theta pdfs")
 	print(theta_pdfs)
 	print(np.prod(theta_pdfs))
+	
+	#test with theta and y_nominal
+	theta_nominal = [1.1, 2.5, .001]
+	theta = fp.prior_rvs(1)
+	y_nominal = fp.eta(theta_nominal, test_d)
+	ytheta = np.concatenate([theta, y_nominal])
+	print("\nlikelihood result of unrelated theta and y")
+	print(ytheta)
+	print(likelihood_kernel(ytheta))
 
 #gain experiment testing
 if False:

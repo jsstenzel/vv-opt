@@ -123,52 +123,63 @@ if useQE == True:
 #_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
 fp = ProblemDefinition(eta, H, Gamma, theta_req_defs, fp_y_defs, fp_d_defs, fp_x_defs)
 
-###nominal case
-req = 3.0 #max noise
-print("QoI requirement:", req)
+if __name__ == '__main__':  
+	###nominal case
+	req = 3.0 #max noise
+	print("QoI requirement:", req)
 
-theta_nominal = [1.1, 2.5, .001]
-QoI_nominal = fp.H(theta_nominal)
-print("Nominal QoI:", QoI_nominal)
-
-###uncertainty analysis
-#uncertainty propagation
-thetas = fp.prior_rvs(10000)
-Qs = [fp.H(theta) for theta in thetas]
-#uncertainty_prop_plot([theta[0] for theta in thetas], xlab="Gain [ADU/e-]")
-#uncertainty_prop_plot([theta[1] for theta in thetas], xlab="Read noise [e-]")
-#uncertainty_prop_plot([theta[2] for theta in thetas], xlab="Dark current [e-/s]")
-uncertainty_prop_plot(Qs, xlab="QoI: Avg. Noise [e-]")
-
-#prob of meeting req along priors:
-count_meetreq = 0
-for Q in Qs:
-	if Q <= req:
-		count_meetreq += 1
-prob_meetreq = count_meetreq / len(Qs)
-print("Probability of meeting requirement given priors:", prob_meetreq)
-
-#sensitivity analysis
-#it'll be straightforward to see the dependence of QoI on theta
-Si = sobol_saltelli(fp.H, 
-					2**5, #SALib wants powers of 2 for convergence
-					var_names=fp.theta_names, 
-					var_dists=[prior[0] for prior in fp.priors], 
-					var_bounds=[prior[1] for prior in fp.priors], 
-					conf = 0.95, doSijCalc=False, doPlot=True, doPrint=True)
+	theta_nominal = [1.1, 2.5, .001]
+	QoI_nominal = fp.H(theta_nominal)
+	print("Nominal QoI:", QoI_nominal)
 
 
-#less strightforward to do it for the dependence of QoI on d
+	###uncertainty analysis
+	#uncertainty propagation
+	thetas = fp.prior_rvs(10000)
+	Qs = [fp.H(theta) for theta in thetas]
+	#uncertainty_prop_plot([theta[0] for theta in thetas], xlab="Gain [ADU/e-]")
+	#uncertainty_prop_plot([theta[1] for theta in thetas], xlab="Read noise [e-]")
+	#uncertainty_prop_plot([theta[2] for theta in thetas], xlab="Dark current [e-/s]")
+	uncertainty_prop_plot(Qs, xlab="QoI: Avg. Noise [e-]")
 
-###OBED analysis
-d_historical = [
-				20,   #t_gain
-				30,   #I_gain
-				1,    #n_meas_rn
-				8,    #d_num
-				9600, #d_max
-				2     #d_pow   #approx
-			]
-#U, U_list = U_probreq(d_historical, fp, req=3.0, n1=100, n2=1000, burnin=0, lag=1)
-#print(U)
-#print(U_list)
+	#prob of meeting req along priors:
+	count_meetreq = 0
+	for Q in Qs:
+		if Q <= req:
+			count_meetreq += 1
+	prob_meetreq = count_meetreq / len(Qs)
+	print("Probability of meeting requirement given priors:", prob_meetreq)
+
+	#sensitivity analysis
+	#it'll be straightforward to see the dependence of QoI on theta
+	Si = sobol_saltelli(fp.H, 
+						2**5, #SALib wants powers of 2 for convergence
+						var_names=fp.theta_names, 
+						var_dists=[prior[0] for prior in fp.priors], 
+						var_bounds=[prior[1] for prior in fp.priors], 
+						conf = 0.95, doSijCalc=False, doPlot=True, doPrint=True)
+
+
+	#less strightforward to do it for the dependence of QoI on d
+
+	###OBED analysis
+	d_historical = [
+					20,   #t_gain
+					30,   #I_gain
+					1,    #n_meas_rn
+					8,    #d_num
+					9600, #d_max
+					2     #d_pow   #approx
+				]
+	y_nominal = fp.eta(theta_nominal, d_historical)
+	print(y_nominal)
+
+	print("Generating kernel",flush=True)
+	likelihood_kernel, Y1_list = multivar_likelihood_kernel(d_historical, fp.eta, fp.prior_rvs, 100000)
+	print("mcmc",flush=True)
+	mcmc_multivar(y_nominal, likelihood_kernel, fp.prior_rvs, fp.prior_pdf_unnorm, 10000, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
+
+
+	#U, U_list = U_probreq(d_historical, fp, maxreq=3.0, n1=100, n2=1000, burnin=0, lag=1)
+	#print(U)
+	#print(U_list)
