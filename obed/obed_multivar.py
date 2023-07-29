@@ -14,8 +14,8 @@ import seaborn as sns
 
 		
 
-def multivar_likelihood_kernel(d, exp_fn, p_theta_rvs, n1, c='r', showplot=True):
-	thetas = p_theta_rvs(n1)
+def multivar_likelihood_kernel(d, exp_fn, prior_rvs, n1):
+	thetas = prior_rvs(n1)
 	Y1_list = [exp_fn(theta, d) for theta in thetas]
 	
 	y_theta_values = np.array([np.concatenate([thetas[i],Y1_list[i]]) for i,_ in enumerate(thetas)])
@@ -24,7 +24,7 @@ def multivar_likelihood_kernel(d, exp_fn, p_theta_rvs, n1, c='r', showplot=True)
 	return likelihood_kernel, Y1_list
 	
 
-def mcmc_multivar(y, likelihood_kernel, prior_rvs, prior_pdf_unnorm, n2, burnin=0, lag=1):
+def mcmc_multivar(y, likelihood_kernel, prior_rvs, prior_pdf_unnorm, n2, burnin=0, lag=1, doPlot=False, legend=None):
 	N2 = n2*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
 	#I will probably have to take into account things like burn-in/convergence and lag? idk
 	
@@ -36,8 +36,8 @@ def mcmc_multivar(y, likelihood_kernel, prior_rvs, prior_pdf_unnorm, n2, burnin=
 		#Compute likelihood of the "data" for both thetas - reusing the loop-1 likelihood evaluations
 		ytheta_current = np.concatenate([theta_current, y])
 		ytheta_proposal = np.concatenate([theta_proposal, y])
-		likelihood_current = likelihood_kernel(ytheta_current) #using kde to estimate pdf
-		likelihood_proposal = likelihood_kernel(ytheta_proposal) #calc probability at the data y
+		likelihood_current = float(likelihood_kernel(ytheta_current.T)[0]) #using kde to estimate pdf
+		likelihood_proposal = float(likelihood_kernel(ytheta_proposal.T)[0]) #calc probability at the data y
 		#Compute acceptance ratio
 		prior_current = np.prod(prior_pdf_unnorm(theta_current))
 		prior_proposal = np.prod(prior_pdf_unnorm(theta_proposal))
@@ -51,8 +51,12 @@ def mcmc_multivar(y, likelihood_kernel, prior_rvs, prior_pdf_unnorm, n2, burnin=
 		if i > burnin and i%lag == 0:
 			mcmc_trace.append(theta_current)
 			
-	#plt.plot(mcmc_trace)
-	#plt.show()
+		exit()
+			
+	if doPlot:
+		plt.plot(mcmc_trace)
+		plt.legend(legend)
+		plt.show()
 	return mcmc_trace
 				
 
@@ -65,7 +69,12 @@ A higher function must optimize over the outputs of this model to find d*, the d
 #This is like U_brute_varH, except we're reusing loop 1 samples in loop 3, like Huan & Marzouk
 #Here, we're using straightforward Metropolis-Hastings to solve the multivariate MCMC problem
 #This calculates the probability of meeting the requirement in distribution - used as constraint for the cost-optimization
-def U_probreq(d, problem, req, n1=10000, n2=1000, burnin=0, lag=1):   
+def U_probreq(d, problem, minreq=None, maxreq=None, n1=10000, n2=1000, burnin=0, lag=1):   
+	#requirement: do min, max, or both, but not neither
+	if minreq==None and maxreq==None:
+		print("U_probreq needs a requirement on the QoI in order to determine probability")
+		exit()
+	
 	#Generate a list of y's sampled from likelihood fn, p(y|theta,d)p(theta)
 	
 	#Then i want to use my y|d,theta that I generated to create an estimated pdf of y as a fn of theta
@@ -83,7 +92,14 @@ def U_probreq(d, problem, req, n1=10000, n2=1000, burnin=0, lag=1):
 		#easily calculated with sample probability, just count em up and find the ratio
 		num_true = 0
 		for h in H_theta_posterior:
-			num_true += int(h >= req)
+			#check if requirement is satisfied, ignoring None's:
+			#if (minreq==None and h <= maxreq) or (h >= minreq and maxreq==None) or (h >= minreq and h <= maxreq):
+			if minreq==None:
+				num_true += int(h <= maxreq)
+			elif maxreq==None:
+				num_true += int(h >= minreq)
+			else:
+				num_true += int(h <= maxreq and h >= minreq)
 		prob = num_true / len(H_theta_posterior) #is this the best estimator for a probability?
 		u = prob
 
