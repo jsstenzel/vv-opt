@@ -23,6 +23,19 @@ def multivar_likelihood_kernel(d, exp_fn, prior_rvs, n1):
 
 	return likelihood_kernel, Y1_list
 	
+	
+#if you want to set the ythetas manually, use this
+def general_likelihood_kernel(*params):
+	#first ensure all lists have equal length
+	if False in [len(i) == len(params[0]) for i in params]:
+		print("general_likelihood_kernel failure: all inputs must have same length,", [len(i) for i in params])
+		
+	#then put lists together
+	y_theta_values = np.array([np.concatenate([param[i] for param in params]) for i,_ in enumerate(params[0])])
+
+	likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values.T)			
+	return likelihood_kernel
+	
 
 def mcmc_multivar(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unnorm, n2, burnin=0, lag=1, doPlot=False, legend=None):
 	N2 = n2*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
@@ -35,7 +48,7 @@ def mcmc_multivar(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unno
 		#The key here is that we want to generate a new theta randomly, and only dependent on the previous theta
 		#Usual approach is a gaussian centered on theta_current with some efficient proposal_width, but that doesnt work on all domains
 		#I'll keep it general: have an proposal distribution as an argument, which takes theta_current as a mean/argument itself
-		theta_proposal = proposal_dist(theta_current)		
+		theta_proposal = proposal_dist(theta_current)
 		
 		#Compute likelihood of the "data" for both thetas - reusing the loop-1 likelihood evaluations
 		ytheta_current = np.concatenate([theta_current, y])
@@ -56,8 +69,6 @@ def mcmc_multivar(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unno
 		if i > burnin and i%lag == 0:
 			mcmc_trace.append(theta_current)
 			
-		exit()
-			
 	if doPlot:
 		plt.plot(mcmc_trace)
 		plt.legend(legend)
@@ -74,21 +85,25 @@ A higher function must optimize over the outputs of this model to find d*, the d
 #This is like U_brute_varH, except we're reusing loop 1 samples in loop 3, like Huan & Marzouk
 #Here, we're using straightforward Metropolis-Hastings to solve the multivariate MCMC problem
 #This calculates the probability of meeting the requirement in distribution - used as constraint for the cost-optimization
-def U_probreq(d, problem, mcmc_proposal, minreq=None, maxreq=None, n1=10000, n2=1000, burnin=0, lag=1):   
+def U_probreq(d, problem, mcmc_proposal, theta_domains, minreq=None, maxreq=None, n_mc=10**4, n_mcmc=10**3, n_kde=10**4, burnin=0, lag=1):   
 	#requirement: do min, max, or both, but not neither
 	if minreq==None and maxreq==None:
 		print("U_probreq needs a requirement on the QoI in order to determine probability")
 		exit()
 	
 	#Generate a list of y's sampled from likelihood fn, p(y|theta,d)p(theta)
+	pthetas = prior_rvs(n_mc)
+	Y1_list = [problem.eta(theta, d) for theta in pthetas]
 	
-	#Then i want to use my y|d,theta that I generated to create an estimated pdf of y as a fn of theta
-	#this is a little more complicated than just a pdf of y like i do originally. Can kde do this?
-	likelihood_kernel, Y1_list = multivar_likelihood_kernel(d, problem.eta, problem.prior_rvs, n1, showplot=False)
+	#Then i want to create an estimated pdf of y as a fn of theta
+	#I'll generate thetas uniformly across the domain (theta_domains), and sample ys from that
+	kde_thetas = [[scipy.stats.uniform.rvs(size=1, loc=left, scale=right-left)[0] for left,right in theta_domains] for _ in range(n_kde)]
+	kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
+	likelihood_kernel = general_likelihood_kernel(kde_thetas, kde_ys)
 	
 	U_list = []
 	for y in Y1_list: #MC loop		
-		mcmc_trace = mcmc_multivar(y, likelihood_kernel, mcmc_proposal, problem.prior_rvs, problem.prior_pdf_unnorm, n2, burnin, lag)
+		mcmc_trace = mcmc_multivar(y, likelihood_kernel, mcmc_proposal, problem.prior_rvs, problem.prior_pdf_unnorm, n_mcmc, burnin, lag)
 			
 		#Now, use my posterior samples to calculate H(theta|y,d) samples
 		H_theta_posterior = [problem.H(theta) for theta in mcmc_trace]

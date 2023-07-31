@@ -186,15 +186,29 @@ if __name__ == '__main__':
 		return theta_prop
 		
 	print("Generating kernel",flush=True)
-	likelihood_kernel, Y1_list = multivar_likelihood_kernel(d_historical, fp.eta, fp.prior_rvs, 100000)
+	n_kde = 10**6
+	theta_domains = [[0,3],[1,4],[0,.01]]
+	kde_thetas = [[scipy.stats.uniform.rvs(size=1, loc=left, scale=right-left)[0] for left,right in theta_domains] for _ in range(n_kde)]
+	kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
+	likelihood_kernel = general_likelihood_kernel(kde_thetas, kde_ys)
 	
-	print(proposal_fn(fp.prior_rvs(1)))
-	print(proposal_fn(fp.prior_rvs(1)))
-	print(proposal_fn(fp.prior_rvs(1)))
+	#check a single val
+	theta = fp.prior_rvs(1)
+	y = fp.eta(theta, d_historical)
+	ytheta = np.concatenate([theta, y])
+	print("\n ok likelihood result")
+	print(ytheta)
+	print(likelihood_kernel(ytheta))
+	print(likelihood_kernel(ytheta.T))
+	theta_pdfs = fp.prior_pdf_unnorm(theta)
+	print("theta pdfs")
+	print(theta_pdfs)
+	print(np.prod(theta_pdfs))
+	
 	print("mcmc",flush=True)
 	mcmc_multivar(y_nominal, likelihood_kernel, proposal_fn, fp.prior_rvs, fp.prior_pdf_unnorm, 10000, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
 
 
-	U, U_list = U_probreq(d_historical, fp, maxreq=3.0, n1=100, n2=1000, burnin=0, lag=1)
-	print(U)
-	print(U_list)
+	#U, U_list = U_probreq(d_historical, fp, maxreq=3.0, n_mc=100, n_mcmc=1000, burnin=0, lag=1)
+	#print(U)
+	#print(U_list)
