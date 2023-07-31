@@ -161,8 +161,9 @@ if __name__ == '__main__':
 
 
 	#less strightforward to do it for the dependence of QoI on d
-
-	###OBED analysis
+	
+	
+	#While we're here, let's look at model uncertainty of the experiment models
 	d_historical = [
 					20,   #t_gain
 					30,   #I_gain
@@ -170,9 +171,17 @@ if __name__ == '__main__':
 					8,    #d_num
 					9600, #d_max
 					2     #d_pow   #approx
-				]
-	y_nominal = fp.eta(theta_nominal, d_historical)
+				   ]
+	print("Likelihood distribtion for nominal historical case:",flush=True)
+	ysample_nominal = [fp.eta(theta_nominal, d_historical) for _ in range(10000)]
+	uncertainty_prop_plot([y[0] for y in ysample_nominal], xlab="Y0")
+	uncertainty_prop_plot([y[1] for y in ysample_nominal], xlab="Y1")
+	uncertainty_prop_plot([y[2] for y in ysample_nominal], xlab="Y2")
+
+	###mcmc analysis
+	y_nominal = fp_likelihood_fn(dict(zip(fp.theta_names, theta_nominal)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)
 	print(y_nominal)
+	
 	def proposal_fn(theta_curr):
 		theta_prop = [0] * len(theta_curr)
 		proposal_width = [.2**2,.2**2,.001**2]
@@ -185,30 +194,32 @@ if __name__ == '__main__':
 			theta_prop[i] = scipy.stats.gamma.rvs(size=1, a=alpha, scale=1.0/beta)[0]
 		return theta_prop
 		
-	print("Generating kernel",flush=True)
-	n_kde = 10**6
-	theta_domains = [[0,3],[1,4],[0,.01]]
-	kde_thetas = [[scipy.stats.uniform.rvs(size=1, loc=left, scale=right-left)[0] for left,right in theta_domains] for _ in range(n_kde)]
-	kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
-	likelihood_kernel = general_likelihood_kernel(kde_thetas, kde_ys)
+	if False: #play with mcmc_multivar
+		print("Generating kernel",flush=True)
+		n_kde = 10**6
+		theta_domains = [[0,3],[1,4],[0,.01]]
+		kde_thetas = [[scipy.stats.uniform.rvs(size=1, loc=left, scale=right-left)[0] for left,right in theta_domains] for _ in range(n_kde)]
+		kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
+		likelihood_kernel = general_likelihood_kernel(kde_thetas, kde_ys)
+		
+		#check a single val
+		theta = fp.prior_rvs(1)
+		y = fp.eta(theta, d_historical)
+		ytheta = np.concatenate([theta, y])
+		print("\n ok likelihood result")
+		print(ytheta)
+		print(likelihood_kernel(ytheta))
+		print(likelihood_kernel(ytheta.T))
+		theta_pdfs = fp.prior_pdf_unnorm(theta)
+		print("theta pdfs")
+		print(theta_pdfs)
+		print(np.prod(theta_pdfs))
+		
+		print("mcmc",flush=True)
+		mcmc_multivar(y_nominal, likelihood_kernel, proposal_fn, fp.prior_rvs, fp.prior_pdf_unnorm, 10000, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
 	
-	#check a single val
-	theta = fp.prior_rvs(1)
-	y = fp.eta(theta, d_historical)
-	ytheta = np.concatenate([theta, y])
-	print("\n ok likelihood result")
-	print(ytheta)
-	print(likelihood_kernel(ytheta))
-	print(likelihood_kernel(ytheta.T))
-	theta_pdfs = fp.prior_pdf_unnorm(theta)
-	print("theta pdfs")
-	print(theta_pdfs)
-	print(np.prod(theta_pdfs))
 	
-	print("mcmc",flush=True)
-	mcmc_multivar(y_nominal, likelihood_kernel, proposal_fn, fp.prior_rvs, fp.prior_pdf_unnorm, 10000, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
-
-
+	#obed analysis
 	#U, U_list = U_probreq(d_historical, fp, maxreq=3.0, n_mc=100, n_mcmc=1000, burnin=0, lag=1)
 	#print(U)
 	#print(U_list)
