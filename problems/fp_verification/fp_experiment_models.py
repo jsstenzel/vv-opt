@@ -182,31 +182,31 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x, err=True):
 		t = C * x**d_pow
 		t_list.append(t)
 	t_list[0] = t_0 #clobber; 100ms baseline exposure assumed
-	
-	t_2sum, t_1halfsum, t_3halfsum = 0, 0, 0
-	for t in t_list:
-		t_2sum += t**2
-		t_1halfsum += t**(.5)
-		t_3halfsum += t**(1.5)
 		
-	#Start calculating slope
-	dc_sum, stray_sum = 0, 0
-	for t in t_list:
-		dc_sum += dc * t**2
-		stray_sum += mu_stray * t**2
-		
-	m = (dc_sum + stray_sum)/t_2sum
+	#Calculate mean signal at each datapoint
+	signal_list = [0]*len(t_list)
+	for i,_ in enumerate(signal_list):
+		signal_list[i] = gain * (dc + mu_stray) * t_list[i]
 	
-	#calc error
-	random_var = (rn**2 * t_1halfsum + sigma_dc**2*t_3halfsum + sigma_stray**2 * t_3halfsum) / (nx**2 * ny**2 * t_2sum) #variance, not stddev
-	random_sigma = math.sqrt(random_var)
-	random = norm.rvs(scale = random_sigma)
-
+	#Apply error to each datapoint - you could do it at the end, but why not here.
 	if err:
-		y = m + random
-	else:
-		y = m
-	return y
+		for i,_ in enumerate(signal_list):
+			ti = t_list[i]
+			random_var = gain**2 * (rn**2 + (sigma_dc*ti)**2 + (sigma_stray*ti)**2) / np.sqrt(nx**2 * ny**2)
+			random_sigma = math.sqrt(random_var)
+			signal_list[i] += norm.rvs(scale = random_sigma) #apply error to mean
+		
+	#Calculate slope (assume an intercept but don't worry abot it)
+	Sxy, Sx2 = 0,0
+	xmean = np.mean(t_list)
+	ymean = np.mean(signal_list)
+	for i,xi in enumerate(t_list):
+		yi = signal_list[i]
+		Sxy += (xi - xmean)*(yi - ymean)
+		Sx2 += (xi - xmean)**2
+	
+	m = Sxy / Sx2
+	return m
 	
 	
 #This experiment does not model "photon losses due to the gate structures, electron 

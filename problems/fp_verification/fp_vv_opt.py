@@ -57,7 +57,7 @@ fp_x_defs = [
 				("nx", 2048),
 				("ny", 2048),
 				("sigma_dc", .5), #e-/s #Estimate based on a consistency test performed on SN20006
-				("mu_stray", .1), #e-/s #WAG for now
+				("mu_stray", 0), #e-/s #WAG for now
 				("sigma_stray", .005), #WAG for now
 				#gain
 				("P_signal", 0.90), #Prob. of correctly identifying signal as event #WAG for now
