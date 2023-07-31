@@ -24,26 +24,31 @@ def multivar_likelihood_kernel(d, exp_fn, prior_rvs, n1):
 	return likelihood_kernel, Y1_list
 	
 
-def mcmc_multivar(y, likelihood_kernel, prior_rvs, prior_pdf_unnorm, n2, burnin=0, lag=1, doPlot=False, legend=None):
+def mcmc_multivar(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unnorm, n2, burnin=0, lag=1, doPlot=False, legend=None):
 	N2 = n2*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
 	#I will probably have to take into account things like burn-in/convergence and lag? idk
 	
 	theta_current = prior_rvs(1)
 	mcmc_trace = []
 	for i in range(N2): #MCMC loop
-		#Propose a new value of theta from the prior
-		theta_proposal = prior_rvs(1)
+		#Propose a new value of theta with Markov chain
+		#The key here is that we want to generate a new theta randomly, and only dependent on the previous theta
+		#Usual approach is a gaussian centered on theta_current with some efficient proposal_width, but that doesnt work on all domains
+		#I'll keep it general: have an proposal distribution as an argument, which takes theta_current as a mean/argument itself
+		theta_proposal = proposal_dist(theta_current)		
+		
 		#Compute likelihood of the "data" for both thetas - reusing the loop-1 likelihood evaluations
 		ytheta_current = np.concatenate([theta_current, y])
 		ytheta_proposal = np.concatenate([theta_proposal, y])
-		likelihood_current = float(likelihood_kernel(ytheta_current.T)[0]) #using kde to estimate pdf
-		likelihood_proposal = float(likelihood_kernel(ytheta_proposal.T)[0]) #calc probability at the data y
+		loglikelihood_current = np.log(likelihood_kernel(ytheta_current.T)[0]) #using kde to estimate pdf
+		loglikelihood_proposal = np.log(likelihood_kernel(ytheta_proposal.T)[0]) #calc probability at the data y
 		#Compute acceptance ratio
-		prior_current = np.prod(prior_pdf_unnorm(theta_current))
-		prior_proposal = np.prod(prior_pdf_unnorm(theta_proposal))
-		p_current = likelihood_current * prior_current
-		p_proposal = likelihood_proposal * prior_proposal
-		R = p_proposal / p_current
+		logprior_current = np.log(np.prod(prior_pdf_unnorm(theta_current)))
+		logprior_proposal = np.log(np.prod(prior_pdf_unnorm(theta_proposal)))
+		logp_current = loglikelihood_current + logprior_current
+		logp_proposal = loglikelihood_proposal + logprior_proposal
+		logR = logp_proposal - logp_current
+		R = np.exp(logR)
 		#Accept our new value of theta according to the acceptance probability R:
 		if np.random.random_sample() < R:
 			theta_current = theta_proposal
@@ -69,7 +74,7 @@ A higher function must optimize over the outputs of this model to find d*, the d
 #This is like U_brute_varH, except we're reusing loop 1 samples in loop 3, like Huan & Marzouk
 #Here, we're using straightforward Metropolis-Hastings to solve the multivariate MCMC problem
 #This calculates the probability of meeting the requirement in distribution - used as constraint for the cost-optimization
-def U_probreq(d, problem, minreq=None, maxreq=None, n1=10000, n2=1000, burnin=0, lag=1):   
+def U_probreq(d, problem, mcmc_proposal, minreq=None, maxreq=None, n1=10000, n2=1000, burnin=0, lag=1):   
 	#requirement: do min, max, or both, but not neither
 	if minreq==None and maxreq==None:
 		print("U_probreq needs a requirement on the QoI in order to determine probability")
@@ -83,7 +88,7 @@ def U_probreq(d, problem, minreq=None, maxreq=None, n1=10000, n2=1000, burnin=0,
 	
 	U_list = []
 	for y in Y1_list: #MC loop		
-		mcmc_trace = mcmc_multivar(y, likelihood_kernel, problem.prior_rvs, problem.prior_pdf_unnorm, n2, burnin, lag)
+		mcmc_trace = mcmc_multivar(y, likelihood_kernel, mcmc_proposal, problem.prior_rvs, problem.prior_pdf_unnorm, n2, burnin, lag)
 			
 		#Now, use my posterior samples to calculate H(theta|y,d) samples
 		H_theta_posterior = [problem.H(theta) for theta in mcmc_trace]

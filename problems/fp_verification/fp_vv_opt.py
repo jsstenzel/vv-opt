@@ -173,13 +173,28 @@ if __name__ == '__main__':
 				]
 	y_nominal = fp.eta(theta_nominal, d_historical)
 	print(y_nominal)
-
+	def proposal_fn(theta_curr):
+		theta_prop = [0] * len(theta_curr)
+		proposal_width = [.2**2,.2**2,.001**2]
+		for i,_ in enumerate(theta_prop):
+			#proposal dists are gammas, to match
+			mean = theta_curr[i]
+			variance = proposal_width[i]
+			alpha = mean**2 / variance
+			beta = mean / variance
+			theta_prop[i] = scipy.stats.gamma.rvs(size=1, a=alpha, scale=1.0/beta)[0]
+		return theta_prop
+		
 	print("Generating kernel",flush=True)
 	likelihood_kernel, Y1_list = multivar_likelihood_kernel(d_historical, fp.eta, fp.prior_rvs, 100000)
+	
+	print(proposal_fn(fp.prior_rvs(1)))
+	print(proposal_fn(fp.prior_rvs(1)))
+	print(proposal_fn(fp.prior_rvs(1)))
 	print("mcmc",flush=True)
-	mcmc_multivar(y_nominal, likelihood_kernel, fp.prior_rvs, fp.prior_pdf_unnorm, 10000, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
+	mcmc_multivar(y_nominal, likelihood_kernel, proposal_fn, fp.prior_rvs, fp.prior_pdf_unnorm, 10000, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
 
 
-	#U, U_list = U_probreq(d_historical, fp, maxreq=3.0, n1=100, n2=1000, burnin=0, lag=1)
-	#print(U)
-	#print(U_list)
+	U, U_list = U_probreq(d_historical, fp, maxreq=3.0, n1=100, n2=1000, burnin=0, lag=1)
+	print(U)
+	print(U_list)
