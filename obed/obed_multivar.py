@@ -52,20 +52,20 @@ def likelihood_plot(likelihood, sample):
 	#ax.scatter3D(xdata, ydata, zdata, c=zdata, cmap='Greens')
 	
 	xs = np.linspace(min(xdata), max(xdata), len(xdata))
-	plt.plot(xs, [likelihood([x,np.mean(ydata),np.mean(zdata)]) for x in xs]    )
+	plt.plot(xs, [likelihood([x,np.mean(ydata),np.mean(zdata)]) for x in xs])
 	plt.show()
 	
 	ys = np.linspace(min(ydata), max(ydata), len(ydata))
-	plt.plot(ys, [likelihood([np.mean(xdata),y,np.mean(zdata)]) for y in ys]    )
+	plt.plot(ys, [likelihood([np.mean(xdata),y,np.mean(zdata)]) for y in ys])
 	plt.show()
 	
 	zs = np.linspace(min(zdata), max(zdata), len(zdata))
-	plt.plot(zs, [likelihood([np.mean(xdata),np.mean(ydata),z]) for z in zs]    )
+	plt.plot(zs, [likelihood([np.mean(xdata),np.mean(ydata),z]) for z in zs])
 	plt.show()
 
-#y                 - single data point
+#y				 - single data point
 #likelihood_kernel - function that you can evaluate to determine the likelihood fn at theta, y
-#proposal_dist     - distribution fn used to propose new data points; takes a mean as argument
+#proposal_dist	 - distribution fn used to propose new data points; takes a mean as argument
 def mcmc_multivar(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unnorm, n, burnin=0, lag=1, doPlot=False, legend=None):
 	N = n*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
 	#I will probably have to take into account things like burn-in/convergence and lag? idk
@@ -103,6 +103,70 @@ def mcmc_multivar(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unno
 		plt.legend(legend)
 		plt.show()
 	return mcmc_trace
+
+
+#y				 - single data point
+#proposal_dist	 - distribution fn used to propose new data points; takes a mean as argument
+#eta			   - model function which samples from the conditional distribution p(y|theta,d)
+def mcmc_nolikelihood(y, d, eta, proposal_dist, prior_rvs, prior_pdf_unnorm, n_mcmc, n_kde, burnin=0, lag=1, doPlot=False, legend=None):
+	N = n_mcmc*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
+	#I will probably have to take into account things like burn-in/convergence and lag? idk
+	
+	theta_current = prior_rvs(1)
+	#need to estimate probability dists p(y|theta=theta_current,d=d)
+	ysample_current = [eta(theta_current, d) for _ in range(n_kde)]
+	#print("ycurr",np.mean(ysample_current, axis=0))
+	likelihoodfn_current = general_likelihood_kernel(ysample_current)
+	
+	mcmc_trace = []
+	acceptance_count = 0
+	randwalk_count = 0
+	for i in range(N): #MCMC loop
+		#Propose a new value of theta with Markov chain
+		#The key here is that we want to generate a new theta randomly, and only dependent on the previous theta
+		#Usual approach is a gaussian centered on theta_current with some efficient proposal_width, but that doesnt work on all domains
+		#I'll keep it general: have an proposal distribution as an argument, which takes theta_current as a mean/argument itself
+		theta_proposal = proposal_dist(theta_current)
+		
+		#Compute likelihood of the "data" y for both thetas
+		#So i need to estimate probability dist p(y|theta=theta_proposal,d=d)
+		ysample_proposal = [eta(theta_proposal, d) for _ in range(n_kde)]
+		#print("yprop",np.mean(ysample_proposal, axis=0))
+		likelihoodfn_proposal = general_likelihood_kernel(ysample_proposal)
+
+		likelihood_current = likelihoodfn_current(y)
+		likelihood_proposal = likelihoodfn_proposal(y)
+		if(likelihood_current == 0):
+			#Crazy idea: for R=nan, random walk until you get to suitable region
+			R = 1
+			randwalk_count += 1
+		else:
+			#Compute acceptance ratio
+			prior_current = np.prod(prior_pdf_unnorm(theta_current))
+			prior_proposal = np.prod(prior_pdf_unnorm(theta_proposal))
+			p_current = likelihood_current * prior_current
+			p_proposal = likelihood_proposal * prior_proposal
+			
+			R = p_proposal / p_current
+
+		#Accept our new value of theta according to the acceptance probability R:
+		if np.random.random_sample() < R:
+			theta_current = theta_proposal
+			likeihood_current = likelihood_proposal
+			acceptance_count += 1
+		#Include theta_current in my trace according to rules
+		if i > burnin and i%lag == 0:
+			mcmc_trace.append(theta_current)
+		print(i,"/",N, theta_current, end='\r', flush=True)
+			
+	acceptance_rate = acceptance_count / N
+	randwalk_rate = randwalk_count / N
+	
+	if doPlot:
+		plt.plot(mcmc_trace)
+		plt.legend(legend)
+		plt.show()
+	return mcmc_trace, acceptance_rate, randwalk_rate
 
 
 """
