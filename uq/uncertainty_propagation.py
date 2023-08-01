@@ -41,11 +41,11 @@ def uncertainty_prop(y_j, doPlot=False, doPrint=False):
     
     return mean, stddev
     
-def uncertainty_prop_plot(y_j, mean=0, xlab="Y"):
+def uncertainty_prop_plot(y_j, mean=0, xlab="Y", c='#21aad3'):
     if mean==0:
         mean = statistics.mean(y_j)
         
-    n, bins, patches = plt.hist(x=y_j, bins='auto', color='#21aad3', alpha=1.0, rwidth=0.85)
+    n, bins, patches = plt.hist(x=y_j, bins='auto', color=c, alpha=1.0, rwidth=0.85)
     plt.grid(axis='y', alpha=0.75)
     plt.ylim(ymax=np.ceil(n.max() / 10) * 10 + n.max()*0.05)
     #plt.xticks(rotation=90)
