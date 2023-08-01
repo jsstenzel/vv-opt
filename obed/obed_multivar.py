@@ -66,12 +66,14 @@ def likelihood_plot(likelihood, sample):
 #y				 - single data point
 #likelihood_kernel - function that you can evaluate to determine the likelihood fn at theta, y
 #proposal_dist	 - distribution fn used to propose new data points; takes a mean as argument
-def mcmc_multivar(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unnorm, n, burnin=0, lag=1, doPlot=False, legend=None):
+def mcmc_kernel(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unnorm, n, burnin=0, lag=1, doPlot=False, legend=None):
 	N = n*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
 	#I will probably have to take into account things like burn-in/convergence and lag? idk
 	
 	theta_current = prior_rvs(1)
 	mcmc_trace = []
+	acceptance_count = 0
+	randwalk_count = 0
 	for i in range(N): #MCMC loop
 		#Propose a new value of theta with Markov chain
 		#The key here is that we want to generate a new theta randomly, and only dependent on the previous theta
@@ -79,18 +81,24 @@ def mcmc_multivar(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unno
 		#I'll keep it general: have an proposal distribution as an argument, which takes theta_current as a mean/argument itself
 		theta_proposal = proposal_dist(theta_current)
 		
-		#Compute likelihood of the "data" for both thetas - reusing the loop-1 likelihood evaluations
+		#Compute likelihood of the "data" for both thetas with the provided kernel
 		ytheta_current = np.concatenate([theta_current, y])
 		ytheta_proposal = np.concatenate([theta_proposal, y])
-		loglikelihood_current = np.log(likelihood_kernel(ytheta_current.T)[0]) #using kde to estimate pdf
-		loglikelihood_proposal = np.log(likelihood_kernel(ytheta_proposal.T)[0]) #calc probability at the data y
+		likelihood_current = likelihood_kernel(ytheta_current.T)[0] #using kde to estimate pdf
+		likelihood_proposal = likelihood_kernel(ytheta_proposal.T)[0] #calc probability at the data y
+		
 		#Compute acceptance ratio
-		logprior_current = np.log(np.prod(prior_pdf_unnorm(theta_current)))
-		logprior_proposal = np.log(np.prod(prior_pdf_unnorm(theta_proposal)))
-		logp_current = loglikelihood_current + logprior_current
-		logp_proposal = loglikelihood_proposal + logprior_proposal
-		logR = logp_proposal - logp_current
-		R = np.exp(logR)
+		prior_current = np.prod(prior_pdf_unnorm(theta_current))
+		p_current = likelihood_current * prior_current
+		if(p_current == 0):
+			#Crazy idea: for R=nan, random walk until you get to suitable region
+			R = 1 #dont even check p_proposal, just accept it
+			randwalk_count += 1
+		else:
+			prior_proposal = np.prod(prior_pdf_unnorm(theta_proposal))
+			p_proposal = likelihood_proposal * prior_proposal
+			R = p_proposal / p_current
+		
 		#Accept our new value of theta according to the acceptance probability R:
 		if np.random.random_sample() < R:
 			theta_current = theta_proposal
@@ -98,11 +106,18 @@ def mcmc_multivar(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unno
 		if i > burnin and i%lag == 0:
 			mcmc_trace.append(theta_current)
 			
+		acceptance_rate = acceptance_count / (i+1)
+		randwalk_rate = randwalk_count / (i+1)
+		print(str(i+1)+"/"+str(N), acceptance_rate, randwalk_rate, theta_current, '\t', end='\r', flush=True)
+		
+	acceptance_rate = acceptance_count / N
+	randwalk_rate = randwalk_count / N
+		
 	if doPlot:
 		plt.plot(mcmc_trace)
 		plt.legend(legend)
 		plt.show()
-	return mcmc_trace
+	return mcmc_trace, acceptance_rate, randwalk_rate
 
 
 #y				 - single data point
@@ -134,19 +149,18 @@ def mcmc_nolikelihood(y, d, eta, proposal_dist, prior_rvs, prior_pdf_unnorm, n_m
 		#print("yprop",np.mean(ysample_proposal, axis=0))
 		likelihoodfn_proposal = general_likelihood_kernel(ysample_proposal)
 
-		likelihood_current = likelihoodfn_current(y)
-		likelihood_proposal = likelihoodfn_proposal(y)
-		if(likelihood_current == 0):
+		likelihood_current = likelihoodfn_current(y)[0]
+		likelihood_proposal = likelihoodfn_proposal(y)[0]
+		#Compute acceptance ratio
+		prior_current = np.prod(prior_pdf_unnorm(theta_current))
+		p_current = likelihood_current * prior_current
+		if(p_current == 0):
 			#Crazy idea: for R=nan, random walk until you get to suitable region
-			R = 1
+			R = 1 #dont even check p_proposal, just accept it
 			randwalk_count += 1
 		else:
-			#Compute acceptance ratio
-			prior_current = np.prod(prior_pdf_unnorm(theta_current))
 			prior_proposal = np.prod(prior_pdf_unnorm(theta_proposal))
-			p_current = likelihood_current * prior_current
 			p_proposal = likelihood_proposal * prior_proposal
-			
 			R = p_proposal / p_current
 
 		#Accept our new value of theta according to the acceptance probability R:
@@ -157,7 +171,10 @@ def mcmc_nolikelihood(y, d, eta, proposal_dist, prior_rvs, prior_pdf_unnorm, n_m
 		#Include theta_current in my trace according to rules
 		if i > burnin and i%lag == 0:
 			mcmc_trace.append(theta_current)
-		print(i,"/",N, theta_current, end='\r', flush=True)
+			
+		acceptance_rate = acceptance_count / (i+1)
+		randwalk_rate = randwalk_count / (i+1)
+		print(str(i+1)+"/"+str(N), acceptance_rate, randwalk_rate, theta_current, '\t', end='\r', flush=True)
 			
 	acceptance_rate = acceptance_count / N
 	randwalk_rate = randwalk_count / N
