@@ -5,6 +5,9 @@
 #https://twiecki.io/blog/2015/11/10/mcmc-sampling/
 #https://towardsdatascience.com/bayesian-inference-and-markov-chain-monte-carlo-sampling-in-python-bada1beabca7
 
+#Not a code reference, but provides a nice example for how to tune and fiddle mcmc params:
+#https://github.com/gmcgoldr/pymcmc
+
 import numpy as np
 import scipy.stats
 
@@ -35,15 +38,41 @@ def general_likelihood_kernel(*params):
 
 	likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values.T)			
 	return likelihood_kernel
-	
 
-def mcmc_multivar(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unnorm, n2, burnin=0, lag=1, doPlot=False, legend=None):
-	N2 = n2*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
+#likelihood is the kde generated from sample
+#this assumes 3 elements in 7 - i can generalize this easily later
+def likelihood_plot(likelihood, sample):
+	xdata = [y[0] for y in sample]
+	ydata = [y[1] for y in sample]
+	zdata = [y[2] for y in sample]
+	
+	#3d plot
+	#fig = plt.figure()
+	#ax = plt.axes(projection='3d')
+	#ax.scatter3D(xdata, ydata, zdata, c=zdata, cmap='Greens')
+	
+	xs = np.linspace(min(xdata), max(xdata), len(xdata))
+	plt.plot(xs, [likelihood([x,np.mean(ydata),np.mean(zdata)]) for x in xs]    )
+	plt.show()
+	
+	ys = np.linspace(min(ydata), max(ydata), len(ydata))
+	plt.plot(ys, [likelihood([np.mean(xdata),y,np.mean(zdata)]) for y in ys]    )
+	plt.show()
+	
+	zs = np.linspace(min(zdata), max(zdata), len(zdata))
+	plt.plot(zs, [likelihood([np.mean(xdata),np.mean(ydata),z]) for z in zs]    )
+	plt.show()
+
+#y                 - single data point
+#likelihood_kernel - function that you can evaluate to determine the likelihood fn at theta, y
+#proposal_dist     - distribution fn used to propose new data points; takes a mean as argument
+def mcmc_multivar(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unnorm, n, burnin=0, lag=1, doPlot=False, legend=None):
+	N = n*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
 	#I will probably have to take into account things like burn-in/convergence and lag? idk
 	
 	theta_current = prior_rvs(1)
 	mcmc_trace = []
-	for i in range(N2): #MCMC loop
+	for i in range(N): #MCMC loop
 		#Propose a new value of theta with Markov chain
 		#The key here is that we want to generate a new theta randomly, and only dependent on the previous theta
 		#Usual approach is a gaussian centered on theta_current with some efficient proposal_width, but that doesnt work on all domains
@@ -74,7 +103,7 @@ def mcmc_multivar(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unno
 		plt.legend(legend)
 		plt.show()
 	return mcmc_trace
-				
+
 
 """
 This function is part of the OBED problem, solving the utility for a given d
