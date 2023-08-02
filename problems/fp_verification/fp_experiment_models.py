@@ -19,11 +19,11 @@ def fp_likelihood_fn(theta, d, x, err=True):
 		gain = theta[0]
 		rn = theta[1]
 		dc = theta[2]
-	#define design variables:
+	#define design variables, enforcing discreteness:
 	t_gain = d["t_gain"]
-	I_gain = d["I_gain"]
-	n_meas_rn = d["n_meas_rn"]
-	d_num = d["d_num"]
+	I_gain = math.floor(d["I_gain"])
+	n_meas_rn = math.floor(d["n_meas_rn"])
+	d_num = math.floor(d["d_num"])
 	d_max = d["d_max"]
 	d_pow = d["d_pow"]
 	#just pass along entire x
@@ -49,14 +49,14 @@ def fp_qe_likelihood_fn(theta, d, x, err=True):
 		rn = theta[1]
 		dc = theta[2]
 		qe = theta[3]
-	#define design variables:
+	#define design variables, enforcing discreteness:
 	t_gain = d["t_gain"]
-	I_gain = d["I_gain"]
-	n_meas_rn = d["n_meas_rn"]
-	d_num = d["d_num"]
+	I_gain = math.floor(d["I_gain"])
+	n_meas_rn = math.floor(d["n_meas_rn"])
+	d_num = math.floor(d["d_num"])
 	d_max = d["d_max"]
 	d_pow = d["d_pow"]
-	n_qe = ["n_qe"]
+	n_qe = math.floor(["n_qe"])
 	t_qe = ["t_qe"]
 	I_qe = ["I_qe"]
 	#just pass along entire x
