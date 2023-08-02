@@ -24,7 +24,7 @@ class ProblemDefinition:
 		#priors is a list of defintions of prior distributions on the vector of thetas
 		#so it's a list of pairs, first is type and second is the list of corresponding parameters
 		#type checks:
-		for _,prior in _theta_defs:
+		for _,prior in _theta_defs + _d_defs:
 			type = prior[0]
 			params = prior[1]
 			
@@ -38,11 +38,12 @@ class ProblemDefinition:
 
 		#if you pass all of that,
 		self.priors = [prior for _,prior in _theta_defs]
+		self.d_dists = [dist for _,dist in _d_defs]
 	
 		#for documentation:
 		self.theta_names=[name for name,_ in _theta_defs]
 		self.y_names=_y_defs
-		self.d_names=_d_defs
+		self.d_names=[name for name,_ in _d_defs]
 		self.x_names=[name for name,_ in _x_defs]
 	
 	def eta(self, theta, d, x=[]):
@@ -89,16 +90,23 @@ class ProblemDefinition:
 		'gaussian': 2, #mu, sigma
 		'gamma_ab': 2, #alpha, beta
 		'gamma_mv': 2, #mean, variance
+		'lognorm': 2, #mean, variance
 		'uniform': 2, #left, right
 		'funct_splines': 5} #knot list (x,y), order, y_stddev, domain, range
 		
 	
 	def prior_rvs(self, num_vals):
+		return self._dist_rvs(num_vals, self.priors)
+		
+	def sample_d(self, num_vals):
+		return self._dist_rvs(num_vals, self.d_dists)
+	
+	def _dist_rvs(self, num_vals, dist_def):
 		vals = [] #a list length num_vals of random numbers of size dim_theta
-		for prior in self.priors: ###iterate over dim_theta
+		for prior in dist_def: ###iterate over dim_theta
 			type = prior[0]
 			params = prior[1]
-			thetas_i = [] #wait. i might have to do this weird.
+			thetas_i = [] #need to do this carefully, we have multiple thetas and multiple samples
 	
 			#generate the rvs for this one particular theta
 			if type == 'gaussian':
@@ -115,6 +123,10 @@ class ProblemDefinition:
 				alpha = mean**2 / variance
 				beta = mean / variance
 				thetas_i = scipy.stats.gamma.rvs(size=num_vals, a=alpha, scale=1.0/beta)
+			if type == 'lognorm':
+				mu = params[0]
+				sigma = params[1]
+				thetas_i = scipy.stats.lognorm.rvs(size=num_vals, s=sigma, scale=np.exp(mu))
 			elif type == 'uniform':
 				left = params[0]
 				right = params[1]
@@ -139,7 +151,7 @@ class ProblemDefinition:
 					
 					thetas_i.append(sample)
 			else:
-				raise ValueError("prior_rvs did not expect prior type "+str(type))
+				raise ValueError("_dist_rvs did not expect prior type "+str(type))
 				
 			vals.append(thetas_i)
 	
@@ -176,6 +188,10 @@ class ProblemDefinition:
 				alpha = mean**2 / variance
 				beta = mean / variance
 				prob_i = scipy.stats.gamma.pdf(theta_i, a=alpha, scale=1.0/beta)
+			if type == 'lognorm':
+				mu = params[0]
+				sigma = params[1]
+				thetas_i = scipy.stats.lognorm.pdf(theta_i, s=sigma, scale=np.exp(mu))
 			elif type == 'uniform':
 				left = params[0]
 				right = params[1]
@@ -232,7 +248,10 @@ if __name__ == "__main__":
 	
 	toy_y_defs = ["y1", "y2"]
 	
-	toy_d_defs = ["d1", "d2"]
+	toy_d_defs = 	[
+						("d1", ["uniform", [0.01, 10]] ),
+						("d2", ["uniform", [0.01, 1]] )
+					]
 	
 	toy_x_defs = [("y2 factor", 1),("H factor", 10),("Cost factor", 10)]
 
@@ -243,3 +262,4 @@ if __name__ == "__main__":
 	print(toy.prior_pdf_unnorm([-1.5,1.5]))
 	print(toy.prior_rvs(5))
 	print(toy.prior_rvs(1))
+	print(toy.sample_d(1))

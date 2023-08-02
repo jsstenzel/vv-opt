@@ -42,10 +42,13 @@ theta_req_defs = [
 fp_y_defs = ["y_gain", "y_rn", "y_dc"]
 
 fp_d_defs = [
-				"t_gain", "I_gain",		   #gain
-				"n_meas_rn",			   #rn
-				"d_num", "d_max", "d_pow"  #dc
-			 ]
+				("t_gain", ['uniform', [.1, 600]]), #gain
+				("I_gain", ['uniform', [1, 100]]),  #gain
+				("n_meas_rn", ['uniform', [1, 50]]),#rn
+				("d_num", ['uniform', [2, 25]]),    #dc
+				("d_max", ['uniform', [1, 12000]]), #dc
+				("d_pow", ['lognorm', [0,1]])       #dc
+			]
 	
 _temp= -90+273.15 #K
 _k = 1.380649e-23 #J / K
@@ -101,7 +104,11 @@ if useQE == True:
 
 	fp_y_defs.append("y_qe")
 
-	fp_d_defs.extend(["n_qe", "t_qe", "I_qe", "S_err"]) #qe design variables
+	fp_d_defs.append([
+						("n_qe", ['uniform', [0, 100]]),  #qe
+						("t_qe", ['uniform', [.1, 300]]), #qe
+						("I_qe", ['uniform', [1, 10]])    #qe  #WAG, check value
+					])
 		
 	S_pd = Functional([(200,.12),(280,.1),(300,.125),(400,.185),(633,.33),(930,.5),(1000,.45),(1100,.15)]) #nm, A/W
 	S_pd.set_xlim(350,975)
@@ -215,25 +222,10 @@ if __name__ == '__main__':
 			d = paramlist[fp.dim_theta:fp.dim_theta+fp.dim_d]
 			y = fp.eta(theta, d)
 			return y[2]
-		d_dists = 	[
-						'unif', #"t_gain", #gain
-						'unif', #"I_gain",
-						'unif', #"n_meas_rn", #rn
-						'unif', #"d_num", #dc
-						'unif', #"d_max",
-						'lognorm'  #"d_pow"
-					]
-		d_bounds =  [
-						[.1, 600], #"t_gain", #gain
-						[1, 100], #"I_gain",
-						[1, 50], #"n_meas_rn", #rn
-						[2, 25], #"d_num", #dc
-						[1, 12000], #"d_max",
-						[0,1], #"d_pow"
-					]
+
 		expvar_names = fp.theta_names + fp.d_names
-		expvar_dists = [prior[0] for prior in fp.priors] + d_dists
-		expvar_bounds=[prior[1] for prior in fp.priors] + d_bounds
+		expvar_dists = [prior[0] for prior in fp.priors] + [prior[0] for prior in fp.d_dists]
+		expvar_bounds=[prior[1] for prior in fp.priors] + [prior[1] for prior in fp.d_dists]
 			
 		Si_1 = sobol_saltelli(eta_1, 
 							2**6, #SALib wants powers of 2 for convergence
