@@ -68,7 +68,6 @@ def likelihood_plot(likelihood, sample):
 #proposal_dist	 - distribution fn used to propose new data points; takes a mean as argument
 def mcmc_kernel(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unnorm, n, burnin=0, lag=1, doPlot=False, legend=None):
 	N = n*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
-	#I will probably have to take into account things like burn-in/convergence and lag? idk
 	
 	theta_current = prior_rvs(1)
 	mcmc_trace = []
@@ -84,31 +83,37 @@ def mcmc_kernel(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unnorm
 		#Compute likelihood of the "data" for both thetas with the provided kernel
 		ytheta_current = np.concatenate([theta_current, y])
 		ytheta_proposal = np.concatenate([theta_proposal, y])
-		likelihood_current = likelihood_kernel(ytheta_current.T)[0] #using kde to estimate pdf
-		likelihood_proposal = likelihood_kernel(ytheta_proposal.T)[0] #calc probability at the data y
+		loglikelihood_current = likelihood_kernel.logpdf(ytheta_current.T)[0] #using kde to estimate pdf
+		loglikelihood_proposal = likelihood_kernel.logpdf(ytheta_proposal.T)[0] #calc probability at the data y
 		
 		#Compute acceptance ratio
 		prior_current = np.prod(prior_pdf_unnorm(theta_current))
-		p_current = likelihood_current * prior_current
-		if(p_current == 0):
+		logp_current = loglikelihood_current + np.log(prior_current)
+		if(not np.isfinite(logp_current) or prior_current==0):
 			#Crazy idea: for R=nan, random walk until you get to suitable region
 			R = 1 #dont even check p_proposal, just accept it
 			randwalk_count += 1
 		else:
 			prior_proposal = np.prod(prior_pdf_unnorm(theta_proposal))
-			p_proposal = likelihood_proposal * prior_proposal
-			R = p_proposal / p_current
+			if prior_proposal==0:
+				R=0
+			else:
+				logp_proposal = loglikelihood_proposal + np.log(prior_proposal)
+				logR = logp_proposal - logp_current
+				R = np.exp(logR)
+		#print(R)
 		
 		#Accept our new value of theta according to the acceptance probability R:
 		if np.random.random_sample() < R:
 			theta_current = theta_proposal
+			acceptance_count += 1
 		#Include theta_current in my trace according to rules
 		if i > burnin and i%lag == 0:
 			mcmc_trace.append(theta_current)
 			
 		acceptance_rate = acceptance_count / (i+1)
 		randwalk_rate = randwalk_count / (i+1)
-		print(str(i+1)+"/"+str(N), acceptance_rate, randwalk_rate, theta_current, '\t', end='\r', flush=True)
+		print(str(i+1)+"/"+str(N), acceptance_count, randwalk_count, theta_current, '\t', end='\r', flush=True)
 		
 	acceptance_rate = acceptance_count / N
 	randwalk_rate = randwalk_count / N
@@ -125,7 +130,6 @@ def mcmc_kernel(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unnorm
 #eta			   - model function which samples from the conditional distribution p(y|theta,d)
 def mcmc_nolikelihood(y, d, eta, proposal_dist, prior_rvs, prior_pdf_unnorm, n_mcmc, n_kde, burnin=0, lag=1, doPlot=False, legend=None):
 	N = n_mcmc*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
-	#I will probably have to take into account things like burn-in/convergence and lag? idk
 	
 	theta_current = prior_rvs(1)
 	#need to estimate probability dists p(y|theta=theta_current,d=d)
@@ -149,24 +153,29 @@ def mcmc_nolikelihood(y, d, eta, proposal_dist, prior_rvs, prior_pdf_unnorm, n_m
 		#print("yprop",np.mean(ysample_proposal, axis=0))
 		likelihoodfn_proposal = general_likelihood_kernel(ysample_proposal)
 
-		likelihood_current = likelihoodfn_current(y)[0]
-		likelihood_proposal = likelihoodfn_proposal(y)[0]
+		loglikelihood_current = likelihoodfn_current.logpdf(y)[0]
+		loglikelihood_proposal = likelihoodfn_proposal.logpdf(y)[0]
 		#Compute acceptance ratio
 		prior_current = np.prod(prior_pdf_unnorm(theta_current))
-		p_current = likelihood_current * prior_current
-		if(p_current == 0):
+		logp_current = loglikelihood_current + np.log(prior_current)
+		if(not np.isfinite(logp_current) or prior_current==0):
 			#Crazy idea: for R=nan, random walk until you get to suitable region
 			R = 1 #dont even check p_proposal, just accept it
 			randwalk_count += 1
 		else:
 			prior_proposal = np.prod(prior_pdf_unnorm(theta_proposal))
-			p_proposal = likelihood_proposal * prior_proposal
-			R = p_proposal / p_current
+			if prior_proposal==0:
+				R=0
+			else:
+				logp_proposal = loglikelihood_proposal + np.log(prior_proposal)
+				logR = logp_proposal - logp_current
+				R = np.exp(logR)
+		#print(R)
 
 		#Accept our new value of theta according to the acceptance probability R:
 		if np.random.random_sample() < R:
 			theta_current = theta_proposal
-			likeihood_current = likelihood_proposal
+			likeihoodfn_current = likelihoodfn_proposal
 			acceptance_count += 1
 		#Include theta_current in my trace according to rules
 		if i > burnin and i%lag == 0:
@@ -174,7 +183,7 @@ def mcmc_nolikelihood(y, d, eta, proposal_dist, prior_rvs, prior_pdf_unnorm, n_m
 			
 		acceptance_rate = acceptance_count / (i+1)
 		randwalk_rate = randwalk_count / (i+1)
-		print(str(i+1)+"/"+str(N), acceptance_rate, randwalk_rate, theta_current, '\t', end='\r', flush=True)
+		print(str(i+1)+"/"+str(N), acceptance_count, randwalk_count, theta_current, '\t', end='\r', flush=True)
 			
 	acceptance_rate = acceptance_count / N
 	randwalk_rate = randwalk_count / N
@@ -185,6 +194,32 @@ def mcmc_nolikelihood(y, d, eta, proposal_dist, prior_rvs, prior_pdf_unnorm, n_m
 		plt.show()
 	return mcmc_trace, acceptance_rate, randwalk_rate
 
+
+def mcmc_analyze(trace, burnin=0, lag=1, doPlot=False):
+	#optionally perform more burnin and lag here
+	#a[start_index:end_index:step]
+	tr = np.array(trace[burnin::lag])
+	data = np.transpose(tr)
+	
+	data_i = []
+	means = []
+	stddevs = []	
+	
+	for i,_ in enumerate(tr[0]):
+		data_i = [point[i] for point in tr]
+		means.append(np.mean(data_i))
+		stddevs.append(np.std(data_i, ddof=1))
+		if doPlot: #plotting the trace of the data, the mean, and the stddev
+			plt.xscale('log')
+			plt.plot(range(1,len(data_i)+1), data_i, c='r')
+			plt.plot([np.mean(data_i[0:n]) for n in range(len(data_i))], c='g')
+			plt.plot([np.std(data_i[0:n], ddof=1) for n in range(len(data_i))], c='b')
+			plt.legend(["trace","mean trace","stddev trace"])
+			plt.xlabel("n runs")
+			plt.title("MCMC Trace for theta["+str(i)+"]")
+			plt.show()
+	
+	return means, stddevs
 
 """
 This function is part of the OBED problem, solving the utility for a given d
