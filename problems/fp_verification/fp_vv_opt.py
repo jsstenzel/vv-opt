@@ -215,7 +215,7 @@ if __name__ == '__main__':
 		
 	def proposal_fn_norm(theta_curr):
 		theta_prop = [0] * len(theta_curr)
-		proposal_width = [.2,.1,.0005]
+		proposal_width = [.1,.05,.0001]
 		for i,_ in enumerate(theta_prop):
 			#proposal dists are gammas, to match
 			mean = abs(theta_curr[i])
@@ -223,9 +223,9 @@ if __name__ == '__main__':
 			theta_prop[i] = scipy.stats.norm.rvs(size=1, loc=mean, scale=stddev)[0]
 		return theta_prop
 		
-	if True: #play with mcmc_multivar
+	if False: #play with mcmc_multivar
 		print("Generating kernel",flush=True)
-		n_kde = 10**5
+		n_kde = 10**6
 		theta_domains = [[0,3],[1,4],[0,.01]]
 		kde_thetas = [[scipy.stats.uniform.rvs(size=1, loc=left, scale=right-left)[0] for left,right in theta_domains] for _ in range(n_kde)]
 		kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
@@ -233,13 +233,26 @@ if __name__ == '__main__':
 		#likelihood_plot(likelihood_kernel, kde_ys) this guy is 6d, i need to generalize that algorithm first
 		
 		print("mcmc",flush=True)
-		n_mcmc = 10**2
+		n_mcmc = 10**5
 		mcmc_trace, arate, rrate = mcmc_kernel(y_nominal, likelihood_kernel, proposal_fn_norm, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
 		print(arate, rrate)
-		print("mean, stddev of posterior sample:")
-		print(mcmc_analyze(mcmc_trace,doPlot=True))
+		
+		#save data, do analysis and plots
+		with open('mcmc.csv', 'w', newline='') as csvfile:
+			csvwriter = csv.writer(csvfile, delimiter=' ')
+			for theta in mcmc_trace:
+				csvwriter.writerow(theta)
+		print("mean, stddev, covariance of posterior sample:")
+		means, stddevs, cov = mcmc_analyze(mcmc_trace,doPlot=True)
+		print(means)
+		print(stddevs)
+		print(cov)
+		uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Gain [ADU/e-]")
+		uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
+		uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
 	
 	if False: #play with mcmc_nolikelihood
+		#This is really too slow, so I want to stay away from it
 		print("mcmc",flush=True)
 		n_kde = 10**4
 		n_mcmc = 10**2

@@ -200,13 +200,12 @@ def mcmc_analyze(trace, burnin=0, lag=1, doPlot=False):
 	#a[start_index:end_index:step]
 	tr = np.array(trace[burnin::lag])
 	data = np.transpose(tr)
+	covariance = np.cov(data, ddof=1)
 	
-	data_i = []
 	means = []
 	stddevs = []	
 	
-	for i,_ in enumerate(tr[0]):
-		data_i = [point[i] for point in tr]
+	for i,data_i in enumerate(data):
 		means.append(np.mean(data_i))
 		stddevs.append(np.std(data_i, ddof=1))
 		if doPlot: #plotting the trace of the data, the mean, and the stddev
@@ -219,7 +218,7 @@ def mcmc_analyze(trace, burnin=0, lag=1, doPlot=False):
 			plt.title("MCMC Trace for theta["+str(i)+"]")
 			plt.show()
 	
-	return means, stddevs
+	return means, stddevs, covariance
 
 """
 This function is part of the OBED problem, solving the utility for a given d
