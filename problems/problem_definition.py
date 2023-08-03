@@ -126,17 +126,17 @@ class ProblemDefinition:
 				mu = params[0]
 				sigma = params[1]
 				thetas_i = scipy.stats.norm.rvs(size=num_vals, loc=mu, scale=sigma)
-			if type == 'gamma_ab':
+			elif type == 'gamma_ab':
 				alpha = params[0]
 				beta = params[1]
 				thetas_i = scipy.stats.gamma.rvs(size=num_vals, a=alpha, scale=1.0/beta)
-			if type == 'gamma_mv':
+			elif type == 'gamma_mv':
 				mean = params[0]
 				variance = params[1]
 				alpha = mean**2 / variance
 				beta = mean / variance
 				thetas_i = scipy.stats.gamma.rvs(size=num_vals, a=alpha, scale=1.0/beta)
-			if type == 'lognorm':
+			elif type == 'lognorm':
 				mu = params[0]
 				sigma = params[1]
 				thetas_i = scipy.stats.lognorm.rvs(size=num_vals, s=sigma, scale=np.exp(mu))
@@ -191,17 +191,17 @@ class ProblemDefinition:
 				mu = params[0]
 				sigma = params[1]
 				prob_i = scipy.stats.norm.pdf(theta_i, loc=mu, scale=sigma)
-			if type == 'gamma_ab':
+			elif type == 'gamma_ab':
 				alpha = params[0]
 				beta = params[1]
 				prob_i = scipy.stats.gamma.pdf(theta_i, a=alpha, scale=1.0/beta)
-			if type == 'gamma_mv':
+			elif type == 'gamma_mv':
 				mean = params[0]
 				variance = params[1]
 				alpha = mean**2 / variance
 				beta = mean / variance
 				prob_i = scipy.stats.gamma.pdf(theta_i, a=alpha, scale=1.0/beta)
-			if type == 'lognorm':
+			elif type == 'lognorm':
 				mu = params[0]
 				sigma = params[1]
 				thetas_i = scipy.stats.lognorm.pdf(theta_i, s=sigma, scale=np.exp(mu))
