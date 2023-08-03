@@ -3,6 +3,7 @@ import os
 import scipy.stats
 import scipy.interpolate
 import numpy as np
+import math
 
 sys.path.append('..')
 from problems.functionals import *
@@ -24,7 +25,7 @@ class ProblemDefinition:
 		#priors is a list of defintions of prior distributions on the vector of thetas
 		#so it's a list of pairs, first is type and second is the list of corresponding parameters
 		#type checks:
-		for _,prior in _theta_defs + _d_defs:
+		for _,prior,mask in _theta_defs + _d_defs:
 			type = prior[0]
 			params = prior[1]
 			
@@ -32,18 +33,23 @@ class ProblemDefinition:
 				raise ValueError("Incorrect prior probability function definition: "+str(type)+" not recognized.")
 			if len(params) != self._allowable_prior_types[type]:
 				raise ValueError('Wrong number of arguments for prior type '+str(type)+'; got '+str(len(params))+' and expected '+str(self._allowable_prior_types[type]))
+			if not (mask in ['continuous','discrete']):
+				raise ValueError('Variable mask not an expected value: '+str(mask))
 			#for param in params:
 			#	if not isinstance(param, (int, float)):
 			#		raise ValueError('Wrong kind of arguments for prior type '+str(type)+', need int or float.')
 
 		#if you pass all of that,
-		self.priors = [prior for _,prior in _theta_defs]
-		self.d_dists = [dist for _,dist in _d_defs]
+		self.priors = [prior for _,prior,_ in _theta_defs]
+		self.d_dists = [dist for _,dist,_ in _d_defs]
+		
+		self.theta_masks = [mask for _,_,mask in _theta_defs]
+		self.d_masks     = [mask for _,_,mask in _d_defs]
 	
 		#for documentation:
-		self.theta_names=[name for name,_ in _theta_defs]
+		self.theta_names=[name for name,_,_ in _theta_defs]
 		self.y_names=_y_defs
-		self.d_names=[name for name,_ in _d_defs]
+		self.d_names=[name for name,_,_ in _d_defs]
 		self.x_names=[name for name,_ in _x_defs]
 	
 	def eta(self, theta, d, x=[]):
@@ -55,9 +61,12 @@ class ProblemDefinition:
 			raise ValueError("Input to ProblemDefinition eta: d size "+str(self.dim_d)+" expected, "+str(len(d))+" provided.")
 		if len(x) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition eta: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
+		#apply discrete mask to theta and d
+		theta_masked = [(math.floor(tt) if self.theta_masks[i]=='discrete' else tt) for i,tt in enumerate(theta)]
+		d_masked = [(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
 		#make dicts for inputs w/ defs, to ensure consistency
-		theta_dict = dict(zip(self.theta_names, theta))
-		d_dict = dict(zip(self.d_names, d))
+		theta_dict = dict(zip(self.theta_names, theta_masked))
+		d_dict = dict(zip(self.d_names, d_masked))
 		x_dict = dict(zip(self.x_names, x))
 		return self._internal_eta(theta_dict, d_dict, x_dict)
 	
@@ -68,8 +77,10 @@ class ProblemDefinition:
 			raise ValueError("Input to ProblemDefinition G: theta size "+str(self.dim_d)+" expected, "+str(len(d))+" provided.")
 		if len(x) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition G: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
+		#apply discrete mask to d
+		d_masked = [(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
 		#make dicts for inputs w/ defs, to ensure consistency
-		d_dict = dict(zip(self.d_names, d))
+		d_dict = dict(zip(self.d_names, d_masked))
 		x_dict = dict(zip(self.x_names, x))
 		return self._internal_G(d_dict, x_dict)
 	
@@ -80,8 +91,10 @@ class ProblemDefinition:
 			raise ValueError("Input to ProblemDefinition H: theta size "+str(self.dim_theta)+" expected, "+str(len(theta))+" provided.")
 		if len(x) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition H: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
+		#apply discrete mask to theta
+		theta_masked = [(math.floor(tt) if self.theta_masks[i]=='discrete' else tt) for i,tt in enumerate(theta)]
 		#make dicts for inputs w/ defs, to ensure consistency
-		theta_dict = dict(zip(self.theta_names, theta))
+		theta_dict = dict(zip(self.theta_names, theta_masked))
 		x_dict = dict(zip(self.x_names, x))
 		return self._internal_H(theta_dict, x_dict)
 	
@@ -242,15 +255,15 @@ if __name__ == "__main__":
 		return C/(d1+d2)				   
 	
 	toy_theta_defs = [ 
-						("theta1", ["uniform", [-2,-1]]),
-						("theta2", ["uniform", [1, 21]])
+						["theta1", ["uniform", [-2,-1]], "continuous"],
+						["theta2", ["uniform", [1, 21]], "continuous"]
 					 ]
 	
 	toy_y_defs = ["y1", "y2"]
 	
 	toy_d_defs = 	[
-						("d1", ["uniform", [0.01, 10]] ),
-						("d2", ["uniform", [0.01, 1]] )
+						["d1", ["uniform", [1, 10]], "discrete" ],
+						["d2", ["uniform", [0.01, 1]], "continuous" ]
 					]
 	
 	toy_x_defs = [("y2 factor", 1),("H factor", 10),("Cost factor", 10)]

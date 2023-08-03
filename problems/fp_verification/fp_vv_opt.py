@@ -25,9 +25,9 @@ Gamma = fp_cost_simple
 
 #these priors are based on requirements that were met, see Camera Qual Report
 theta_req_defs = [ 
-					("gain", ["gamma_mv", [1.1,0.2**2]]), #mean, variance
-					("rn",   ["gamma_mv", [2.5,0.25**2]]), 
-					("dc",   ["gamma_mv", [0.001,.001**2]])
+					["gain", ["gamma_mv", [1.1,0.2**2]], "continuous"], #mean, variance
+					["rn",   ["gamma_mv", [2.5,0.25**2]], "continuous"], 
+					["dc",   ["gamma_mv", [0.001,.001**2]], "continuous"]
 				]
 #need to update with range somehow? These can't be negative
 
@@ -42,12 +42,12 @@ theta_req_defs = [
 fp_y_defs = ["y_gain", "y_rn", "y_dc"]
 
 fp_d_defs = [
-				("t_gain", ['uniform', [.1, 600]]), #gain
-				("I_gain", ['uniform', [1, 100]]),  #gain
-				("n_meas_rn", ['uniform', [1, 50]]),#rn
-				("d_num", ['uniform', [2, 25]]),    #dc
-				("d_max", ['uniform', [1, 12000]]), #dc
-				("d_pow", ['lognorm', [0,1]])       #dc
+				["t_gain", ['uniform', [.1, 600]], "continuous"], #gain
+				["I_gain", ['uniform', [1, 100]], "discrete"],    #gain
+				["n_meas_rn", ['uniform', [1, 50]], "discrete"],  #rn
+				["d_num", ['uniform', [2, 25]], "discrete"],     #dc
+				["d_max", ['uniform', [1, 12000]], "continuous"], #dc
+				["d_pow", ['lognorm', [0,1]], "continuous"]       #dc
 			]
 	
 _temp= -90+273.15 #K
@@ -105,9 +105,9 @@ if useQE == True:
 	fp_y_defs.append("y_qe")
 
 	fp_d_defs.append([
-						("n_qe", ['uniform', [0, 100]]),  #qe
-						("t_qe", ['uniform', [.1, 300]]), #qe
-						("I_qe", ['uniform', [1, 10]])    #qe  #WAG, check value
+						["n_qe", ['uniform', [0, 100]], "discrete"],   #qe
+						["t_qe", ['uniform', [.1, 300]], "continuous"],#qe
+						["I_qe", ['uniform', [1, 10]], "continuous"]   #qe  #WAG, check value
 					])
 		
 	S_pd = Functional([(200,.12),(280,.1),(300,.125),(400,.185),(633,.33),(930,.5),(1000,.45),(1100,.15)]) #nm, A/W
