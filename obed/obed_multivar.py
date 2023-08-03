@@ -65,8 +65,8 @@ def likelihood_plot(likelihood, sample):
 
 #y				 - single data point
 #likelihood_kernel - function that you can evaluate to determine the likelihood fn at theta, y
-#proposal_dist	 - distribution fn used to propose new data points; takes a mean as argument
-def mcmc_kernel(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unnorm, n, burnin=0, lag=1, doPlot=False, legend=None):
+#prop_fn	 - distribution fn used to propose new data points; takes a mean as argument
+def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_width, prior_rvs, prior_pdf_unnorm, n, burnin=0, lag=1, doPlot=False, legend=None):
 	N = n*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
 	
 	theta_current = prior_rvs(1)
@@ -78,7 +78,7 @@ def mcmc_kernel(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unnorm
 		#The key here is that we want to generate a new theta randomly, and only dependent on the previous theta
 		#Usual approach is a gaussian centered on theta_current with some efficient proposal_width, but that doesnt work on all domains
 		#I'll keep it general: have an proposal distribution as an argument, which takes theta_current as a mean/argument itself
-		theta_proposal = proposal_dist(theta_current)
+		theta_proposal = prop_fn(theta_current, prop_width)
 		
 		#Compute likelihood of the "data" for both thetas with the provided kernel
 		ytheta_current = np.concatenate([theta_current, y])
@@ -128,7 +128,7 @@ def mcmc_kernel(y, likelihood_kernel, proposal_dist, prior_rvs, prior_pdf_unnorm
 #y				 - single data point
 #proposal_dist	 - distribution fn used to propose new data points; takes a mean as argument
 #eta			   - model function which samples from the conditional distribution p(y|theta,d)
-def mcmc_nolikelihood(y, d, eta, proposal_dist, prior_rvs, prior_pdf_unnorm, n_mcmc, n_kde, burnin=0, lag=1, doPlot=False, legend=None):
+def mcmc_nolikelihood(y, d, eta, prop_fn, prop_width, prior_rvs, prior_pdf_unnorm, n_mcmc, n_kde, burnin=0, lag=1, doPlot=False, legend=None):
 	N = n_mcmc*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
 	
 	theta_current = prior_rvs(1)
@@ -145,7 +145,7 @@ def mcmc_nolikelihood(y, d, eta, proposal_dist, prior_rvs, prior_pdf_unnorm, n_m
 		#The key here is that we want to generate a new theta randomly, and only dependent on the previous theta
 		#Usual approach is a gaussian centered on theta_current with some efficient proposal_width, but that doesnt work on all domains
 		#I'll keep it general: have an proposal distribution as an argument, which takes theta_current as a mean/argument itself
-		theta_proposal = proposal_dist(theta_current)
+		theta_proposal = prop_fn(theta_current, prop_width)
 		
 		#Compute likelihood of the "data" y for both thetas
 		#So i need to estimate probability dist p(y|theta=theta_proposal,d=d)

@@ -200,7 +200,7 @@ if __name__ == '__main__':
 		uncertainty_prop_plot([y[2] for y in uq_ys], xlab="Y2 (joint distribution)", c='orchid')
 		
 	#sensitivity analysis of the experiment models
-	if True:
+	if False:
 		#we want to see sensitivity of each yi to their inputs, theta and d
 		#this is a different framework from before, now theta and d are freewheeling variables
 		#(could maybe include some of x in the future...)
@@ -253,21 +253,20 @@ if __name__ == '__main__':
 	y_nominal = fp_likelihood_fn(dict(zip(fp.theta_names, theta_nominal)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)
 	print(y_nominal)
 	
-	def proposal_fn_gamma(theta_curr):
+	def proposal_fn_gamma(theta_curr, proposal_width):
 		theta_prop = [0] * len(theta_curr)
-		proposal_width = [.3**2,.3**2,.002**2]
 		for i,_ in enumerate(theta_prop):
 			#proposal dists are gammas, to match
 			mean = abs(theta_curr[i])
-			variance = proposal_width[i]
+			stddev = proposal_width
+			variance = [w**2 for w in stddev]
 			alpha = mean**2 / variance
 			beta = mean / variance
 			theta_prop[i] = scipy.stats.gamma.rvs(size=1, a=alpha, scale=1.0/beta)[0]
 		return theta_prop
 		
-	def proposal_fn_norm(theta_curr):
+	def proposal_fn_norm(theta_curr, proposal_width):
 		theta_prop = [0] * len(theta_curr)
-		proposal_width = [.1,.05,.0001]
 		for i,_ in enumerate(theta_prop):
 			#proposal dists are gammas, to match
 			mean = abs(theta_curr[i])
@@ -275,18 +274,23 @@ if __name__ == '__main__':
 			theta_prop[i] = scipy.stats.norm.rvs(size=1, loc=mean, scale=stddev)[0]
 		return theta_prop
 		
-	if False: #play with mcmc_multivar
+	if False: #convergence study with mcmc_multivar
 		print("Generating kernel",flush=True)
-		n_kde = 10**6
+		n_kde = 10**5
 		theta_domains = [[0,3],[1,4],[0,.01]]
 		kde_thetas = [[scipy.stats.uniform.rvs(size=1, loc=left, scale=right-left)[0] for left,right in theta_domains] for _ in range(n_kde)]
 		kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
 		likelihood_kernel = general_likelihood_kernel(kde_thetas, kde_ys)
 		#likelihood_plot(likelihood_kernel, kde_ys) this guy is 6d, i need to generalize that algorithm first
 		
-		print("mcmc",flush=True)
+		print("mcmc convergence study",flush=True)
+		#crucially, this is being evaluated at y=y_nominal. Good and representative, but we'll have to check robustness after.
 		n_mcmc = 10**5
-		mcmc_trace, arate, rrate = mcmc_kernel(y_nominal, likelihood_kernel, proposal_fn_norm, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
+		prop_fn = proposal_fn_norm
+		#prop_width = [.1,.05,.0001] #rough guess from looking at prior + a few short runs - did 10**5 run
+		#prop_width = [5.17612361e-05, 2.53953018e-02, 3.24906620e-07] #from covariance of the above study #this led to 89% acceptance rate, too high! #whoops, used variance instead of stddev
+		prop_width = [0.0071945282048228735, 0.15935903430820628, 0.0005700058073427601] #stddev from first study
+		mcmc_trace, arate, rrate = mcmc_kernel(y_nominal, likelihood_kernel, prop_fn, prop_width, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
 		print(arate, rrate)
 		
 		#save data, do analysis and plots
@@ -303,14 +307,15 @@ if __name__ == '__main__':
 		uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
 		uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
 	
-	if False: #play with mcmc_nolikelihood
-		#This is really too slow, so I want to stay away from it
-		print("mcmc",flush=True)
-		n_kde = 10**4
-		n_mcmc = 10**2
-		mcmc_trace, arate, rrate = mcmc_nolikelihood(y_nominal, d_historical, fp.eta, proposal_fn_norm, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, n_kde, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
-		print("acceptance rate",arate, "randomwalk rate", rrate)
-		
+	#if False: #play with mcmc_nolikelihood
+	#	#This is really too slow, so I want to stay away from it
+	#	print("mcmc",flush=True)
+	#	n_kde = 10**4
+	#	n_mcmc = 10**2
+	#	prop_fn = proposal_fn_gamma
+	#	prop_width = [.3,.3,.002]
+	#	mcmc_trace, arate, rrate = mcmc_nolikelihood(y_nominal, d_historical, fp.eta, proposal_fn_norm, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, n_kde, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
+	#	print("acceptance rate",arate, "randomwalk rate", rrate)
 	
 	#obed analysis
 	#U, U_list = U_probreq(d_historical, fp, maxreq=3.0, n_mc=100, n_mcmc=1000, burnin=0, lag=1)
