@@ -316,6 +316,34 @@ if __name__ == '__main__':
 	#	prop_width = [.3,.3,.002]
 	#	mcmc_trace, arate, rrate = mcmc_nolikelihood(y_nominal, d_historical, fp.eta, proposal_fn_norm, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, n_kde, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
 	#	print("acceptance rate",arate, "randomwalk rate", rrate)
+		
+	###mcmc robustness study
+	if True:
+		#this value should be a good one derived from the above
+		prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282]
+
+		print("Generating kernel",flush=True)
+		n_kde = 10**5
+		theta_domains = [[0,2.5],[1.25,4],[0,.006]] #refined a little
+		kde_thetas = [[scipy.stats.uniform.rvs(size=1, loc=left, scale=right-left)[0] for left,right in theta_domains] for _ in range(n_kde)]
+		kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
+		likelihood_kernel = general_likelihood_kernel(kde_thetas, kde_ys)
+		
+		print("mcmc convergence robustness study",flush=True)
+		for ysample in [fp.eta(tt, d_historical) for tt in fp.prior_rvs(5)]:
+			print("ysample mcmc test:",ysample)
+			n_mcmc = 6000
+			prop_fn = proposal_fn_norm
+			mcmc_trace, arate, rrate = mcmc_kernel(ysample, likelihood_kernel, proposal_fn_norm, prop_width, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, burnin=300, lag=1, doPlot=True, legend=fp.theta_names)
+			print(arate, rrate, "            ")
+			means, stddevs, cov = mcmc_analyze(mcmc_trace,doPlot=True)
+			print("mean of posterior sample", means)
+			print("stddev of posterior sample", stddevs)
+			print("covariance of posterior sample")
+			print(cov)
+			uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Gain [ADU/e-]")
+			uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
+			uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
 	
 	#obed analysis
 	#U, U_list = U_probreq(d_historical, fp, maxreq=3.0, n_mc=100, n_mcmc=1000, burnin=0, lag=1)
