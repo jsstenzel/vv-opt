@@ -52,6 +52,16 @@ def uncertainty_prop_plot(y_j, mean=0, xlab="Y", c='#21aad3'):
     plt.xlabel(xlab)
     plt.ylabel("Frequency (N=" + str(len(y_j)) + ")")
     plt.show()
+	
+def uncertainty_prop_plots(Y, xlabs=None, c='#21aad3', transpose=True):
+	if transpose==True:
+		Y = np.transpose(Y)
+
+	if xlabs == None:
+		xlabs = ["data"+str(i) for i,_ in enumerate(Y)]
+		
+	for i,y in enumerate(Y):
+		uncertainty_prop_plot(y, xlab=xlabs[i])
     
 if __name__ == '__main__':  
     print("uncertainty_propagation.py: Use me to analyze and plot the results of model samples!")
