@@ -162,7 +162,7 @@ if __name__ == '__main__':
 			theta_prop[i] = scipy.stats.norm.rvs(size=1, loc=mean, scale=stddev)[0]
 		return theta_prop
 		
-	if True: #convergence study with mcmc_multivar
+	if False: #convergence study with mcmc_multivar
 		print("Generating kernel",flush=True)
 		n_kde_axis = 47 #47^3 equals about 10^5
 		kde_gains = np.linspace(0,3,n_kde_axis)
@@ -210,16 +210,18 @@ if __name__ == '__main__':
 	#	print("acceptance rate",arate, "randomwalk rate", rrate)
 		
 	###mcmc robustness study
-	if False:
+	if True:
 		#this value should be a good one derived from the above
 		prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282]
 
 		print("Generating kernel",flush=True)
-		n_kde = 10**5
-		theta_domains = [[0,2.5],[1.25,4],[0,.006]] #refined a little
-		kde_thetas = [[scipy.stats.uniform.rvs(size=1, loc=left, scale=right-left)[0] for left,right in theta_domains] for _ in range(n_kde)]
+		n_kde_axis = 47 #47^3 equals about 10^5
+		kde_gains = np.linspace(0,3,n_kde_axis)
+		kde_rn = np.linspace(1,4,n_kde_axis)
+		kde_dc = np.linspace(0,.01,n_kde_axis)
+		kde_thetas = np.vstack((np.meshgrid(kde_gains, kde_rn, kde_dc))).reshape(3,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
 		kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
-		likelihood_kernel, _ = general_likelihood_kernel(kde_thetas, kde_ys)
+		likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys)
 		
 		print("mcmc convergence robustness study",flush=True)
 		for ysample in [fp.eta(tt, d_historical) for tt in fp.prior_rvs(5)]:
