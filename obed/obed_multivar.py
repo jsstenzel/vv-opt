@@ -34,7 +34,7 @@ def U_probreq(d, problem, mcmc_proposal, theta_domains, minreq=None, maxreq=None
 	#I'll generate thetas uniformly across the domain (theta_domains), and sample ys from that
 	kde_thetas = [[scipy.stats.uniform.rvs(size=1, loc=left, scale=right-left)[0] for left,right in theta_domains] for _ in range(n_kde)]
 	kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
-	likelihood_kernel = general_likelihood_kernel(kde_thetas, kde_ys)
+	likelihood_kernel, _ = general_likelihood_kernel(kde_thetas, kde_ys)
 	
 	U_list = []
 	for y in Y1_list: #MC loop		

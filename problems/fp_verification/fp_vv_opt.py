@@ -164,13 +164,16 @@ if __name__ == '__main__':
 		
 	if True: #convergence study with mcmc_multivar
 		print("Generating kernel",flush=True)
-		n_kde = 10**5
-		theta_domains = [[0,3],[1,4],[0,.01]]
-		kde_thetas = [[scipy.stats.uniform.rvs(size=1, loc=left, scale=right-left)[0] for left,right in theta_domains] for _ in range(n_kde)]
+		n_kde_axis = 47 #47^3 equals about 10^5
+		kde_gains = np.linspace(0,3,n_kde_axis)
+		kde_rn = np.linspace(1,4,n_kde_axis)
+		kde_dc = np.linspace(0,.01,n_kde_axis)
+		kde_thetas = np.vstack((np.meshgrid(kde_gains, kde_rn, kde_dc))).reshape(3,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
+		#uncertainty_prop_plots(kde_thetas, xlabs=['gain','rn','dc'])
 		kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
-		likelihood_kernel = general_likelihood_kernel(kde_thetas, kde_ys)
-		#kde_plot(likelihood_kernel, kde_ys, plotStyle='together') #this guy is 6d? or 3d? dont know how to plot it
-		exit()
+		#uncertainty_prop_plots(kde_ys, xlabs=['Y0','Y1','Y2'])
+		likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys)
+		kde_plot(likelihood_kernel, kde_ythetas, plotStyle='together', ynames=['gain','rn','dc','y1','y2','y3']) #this guy is 6d? or 3d? dont know how to plot it
 		
 		print("mcmc convergence study",flush=True)
 		#crucially, this is being evaluated at y=y_nominal. Good and representative, but we'll have to check robustness after.
@@ -216,7 +219,7 @@ if __name__ == '__main__':
 		theta_domains = [[0,2.5],[1.25,4],[0,.006]] #refined a little
 		kde_thetas = [[scipy.stats.uniform.rvs(size=1, loc=left, scale=right-left)[0] for left,right in theta_domains] for _ in range(n_kde)]
 		kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
-		likelihood_kernel = general_likelihood_kernel(kde_thetas, kde_ys)
+		likelihood_kernel, _ = general_likelihood_kernel(kde_thetas, kde_ys)
 		
 		print("mcmc convergence robustness study",flush=True)
 		for ysample in [fp.eta(tt, d_historical) for tt in fp.prior_rvs(5)]:
