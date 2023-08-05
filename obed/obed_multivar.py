@@ -20,26 +20,24 @@ A higher function must optimize over the outputs of this model to find d*, the d
 #This is like U_brute_varH, except we're reusing loop 1 samples in loop 3, like Huan & Marzouk
 #Here, we're using straightforward Metropolis-Hastings to solve the multivariate MCMC problem
 #This calculates the probability of meeting the requirement in distribution - used as constraint for the cost-optimization
-def U_probreq(d, problem, mcmc_proposal, theta_domains, minreq=None, maxreq=None, n_mc=10**4, n_mcmc=10**3, n_kde=10**4, burnin=0, lag=1):   
+def U_probreq(d, problem, mcmc_proposal, prop_width, likelihood_kernel, minreq=None, maxreq=None, n_mc=10**4, n_mcmc=10**3, burnin=0, lag=1, doPrint=False):   
 	#requirement: do min, max, or both, but not neither
 	if minreq==None and maxreq==None:
 		print("U_probreq needs a requirement on the QoI in order to determine probability")
 		exit()
 	
 	#Generate a list of y's sampled from likelihood fn, p(y|theta,d)p(theta)
-	pthetas = prior_rvs(n_mc)
+	pthetas = problem.prior_rvs(n_mc)
 	Y1_list = [problem.eta(theta, d) for theta in pthetas]
 	
 	#Then i want to create an estimated pdf of y as a fn of theta
 	#I'll generate thetas uniformly across the domain (theta_domains), and sample ys from that
-	kde_thetas = [[scipy.stats.uniform.rvs(size=1, loc=left, scale=right-left)[0] for left,right in theta_domains] for _ in range(n_kde)]
-	kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
-	likelihood_kernel, _ = general_likelihood_kernel(kde_thetas, kde_ys)
+	#likelihood_kernel
 	
 	U_list = []
-	for y in Y1_list: #MC loop		
-		mcmc_trace = mcmc_multivar(y, likelihood_kernel, mcmc_proposal, problem.prior_rvs, problem.prior_pdf_unnorm, n_mcmc, burnin, lag)
-			
+	for i,y in enumerate(Y1_list): #MC loop		
+		mcmc_trace,_,_ = mcmc_kernel(y, likelihood_kernel, mcmc_proposal, prop_width, problem.prior_rvs, problem.prior_pdf_unnorm, n_mcmc, burnin, lag, doPlot=False, doPrint=False)
+	
 		#Now, use my posterior samples to calculate H(theta|y,d) samples
 		H_theta_posterior = [problem.H(theta) for theta in mcmc_trace]
 		
@@ -59,10 +57,10 @@ def U_probreq(d, problem, mcmc_proposal, theta_domains, minreq=None, maxreq=None
 		u = prob
 
 		U_list.append(u)
+		if doPrint:
+			print(str(i+1)+"/"+str(n_mc),str(u), flush=True)
 		
 	#compute an in-distribution probability
 	U = np.average(U_list)
-	#is mean the best thing for this? For most problems we'll be bounded by the high end much more than the low...
-	#itll be interesting to see the U_list i guess
 	return U, U_list
 

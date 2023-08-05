@@ -162,7 +162,7 @@ if __name__ == '__main__':
 			theta_prop[i] = scipy.stats.norm.rvs(size=1, loc=mean, scale=stddev)[0]
 		return theta_prop
 		
-	if True: #convergence study with mcmc_multivar
+	if False: #convergence study with mcmc_multivar
 		print("Generating kernel",flush=True)
 		n_kde_axis = 47 #47^3 equals about 10^5
 		kde_gains = np.linspace(0,3,n_kde_axis)
@@ -182,7 +182,7 @@ if __name__ == '__main__':
 		#prop_width = [.1,.05,.0001] #rough guess from looking at prior + a few short runs - did 10**5 run
 		#prop_width = [5.17612361e-05, 2.53953018e-02, 3.24906620e-07] #from covariance of the above study #this led to 89% acceptance rate, too high! #whoops, used variance instead of stddev
 		prop_width = [0.0071945282048228735, 0.15935903430820628, 0.0005700058073427601] #stddev from first study
-		mcmc_trace, arate, rrate = mcmc_kernel(y_nominal, likelihood_kernel, prop_fn, prop_width, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
+		mcmc_trace, arate, rrate = mcmc_kernel(y_nominal, likelihood_kernel, prop_fn, prop_width, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, burnin=0, lag=1, doPlot=True, legend=fp.theta_names, doPrint=True)
 		print(arate, rrate)
 		
 		#save data, do analysis and plots
@@ -226,8 +226,8 @@ if __name__ == '__main__':
 			print("ysample mcmc test:",ysample)
 			n_mcmc = 6000
 			prop_fn = proposal_fn_norm
-			mcmc_trace, arate, rrate = mcmc_kernel(ysample, likelihood_kernel, proposal_fn_norm, prop_width, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, burnin=300, lag=1, doPlot=True, legend=fp.theta_names)
-			print(arate, rrate, "            ")
+			mcmc_trace, arate, rrate = mcmc_kernel(ysample, likelihood_kernel, proposal_fn_norm, prop_width, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, burnin=300, lag=1, doPlot=True, legend=fp.theta_names, doPrint=True)
+			print(arate, rrate, "			")
 			means, stddevs, cov = mcmc_analyze(mcmc_trace,doPlot=True)
 			print("mean of posterior sample", means)
 			print("stddev of posterior sample", stddevs)
@@ -237,7 +237,21 @@ if __name__ == '__main__':
 			uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
 			uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
 	
-	#obed analysis
-	#U, U_list = U_probreq(d_historical, fp, maxreq=3.0, n_mc=100, n_mcmc=1000, burnin=0, lag=1)
-	#print(U)
-	#print(U_list)
+	###obed analysis
+	if True:
+		print("Generating kernel",flush=True)
+		n_kde_axis = 47 #47^3 equals about 10^5
+		kde_gains = np.linspace(0,3,n_kde_axis)
+		kde_rn = np.linspace(1,4,n_kde_axis)
+		kde_dc = np.linspace(0,.01,n_kde_axis)
+		kde_thetas = np.vstack((np.meshgrid(kde_gains, kde_rn, kde_dc))).reshape(3,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
+		kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
+		likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys)
+
+		print("starting obed",flush=True)
+		prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282] #stddev from last study
+
+		U, U_list = U_probreq(d_historical, fp, proposal_fn_norm, prop_width, likelihood_kernel, maxreq=3.0, n_mc=1000, n_mcmc=6000, burnin=300, lag=1, doPrint=True)
+		print(U)
+		print(U_list)
+		uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")

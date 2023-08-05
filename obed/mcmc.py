@@ -17,7 +17,7 @@ from obed.pdf_estimation import *
 #y				 - single data point
 #likelihood_kernel - function that you can evaluate to determine the likelihood fn at theta, y
 #prop_fn	 - distribution fn used to propose new data points; takes a mean as argument
-def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_width, prior_rvs, prior_pdf_unnorm, n, burnin=0, lag=1, doPlot=False, legend=None):
+def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_width, prior_rvs, prior_pdf_unnorm, n, burnin=0, lag=1, doPlot=False, legend=None, doPrint=False):
 	N = n*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
 	
 	theta_current = prior_rvs(1)
@@ -64,7 +64,8 @@ def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_width, prior_rvs, prior_pdf_
 			
 		acceptance_rate = acceptance_count / (i+1)
 		randwalk_rate = randwalk_count / (i+1)
-		print(str(i+1)+"/"+str(N), acceptance_count, randwalk_count, theta_current, '\t', end='\r', flush=True)
+		if doPrint:
+			print(str(i+1)+"/"+str(N), acceptance_count, randwalk_count, theta_current, '\t', end='\r', flush=True)
 		
 	acceptance_rate = acceptance_count / N
 	randwalk_rate = randwalk_count / N
@@ -79,7 +80,7 @@ def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_width, prior_rvs, prior_pdf_
 #y				 - single data point
 #proposal_dist	 - distribution fn used to propose new data points; takes a mean as argument
 #eta			   - model function which samples from the conditional distribution p(y|theta,d)
-def mcmc_nolikelihood(y, d, eta, prop_fn, prop_width, prior_rvs, prior_pdf_unnorm, n_mcmc, n_kde, burnin=0, lag=1, doPlot=False, legend=None):
+def mcmc_nolikelihood(y, d, eta, prop_fn, prop_width, prior_rvs, prior_pdf_unnorm, n_mcmc, n_kde, burnin=0, lag=1, doPlot=False, legend=None, doPrint=False):
 	N = n_mcmc*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
 	
 	theta_current = prior_rvs(1)
@@ -134,7 +135,8 @@ def mcmc_nolikelihood(y, d, eta, prop_fn, prop_width, prior_rvs, prior_pdf_unnor
 			
 		acceptance_rate = acceptance_count / (i+1)
 		randwalk_rate = randwalk_count / (i+1)
-		print(str(i+1)+"/"+str(N), acceptance_count, randwalk_count, theta_current, '\t', end='\r', flush=True)
+		if doPrint:
+			print(str(i+1)+"/"+str(N), acceptance_count, randwalk_count, theta_current, '\t', end='\r', flush=True)
 			
 	acceptance_rate = acceptance_count / N
 	randwalk_rate = randwalk_count / N
