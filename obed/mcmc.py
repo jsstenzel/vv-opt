@@ -9,7 +9,6 @@ import sys
 import numpy as np
 import scipy.stats
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 sys.path.append('..')
 from obed.pdf_estimation import *
