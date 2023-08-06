@@ -340,7 +340,7 @@ if True:
 					9600, #d_max
 					2	 #d_pow   #approx
 				   ]
-	"""
+	
 	n_kde_axis = 47
 	kde_gains = np.linspace(0,3,n_kde_axis)
 	kde_rn = np.linspace(1,4,n_kde_axis)
@@ -363,7 +363,7 @@ if True:
 		kde_plot(likelihood_kernel, kde_ythetas, plotStyle='together', ynames=['gain','rn','dc','y1','y2','y3'], center=c, plot_xyz=[3,4,5])
 		
 	plot_likelihood_dist([1.1,2.5,.001])
-	"""
+	
 	#this should match what you see from evaluations of p(y|theta=theta_nominal,d):
 	ysample_nominal = [fp.eta([1.1,2.5,.001], d_historical) for _ in range(10000)]
 	uncertainty_prop_plots(ysample_nominal)

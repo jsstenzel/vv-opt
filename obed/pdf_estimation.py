@@ -4,8 +4,6 @@ import sys
 import numpy as np
 import scipy.stats
 import matplotlib.pyplot as plt
-import seaborn as sns
-
 
 
 def multivar_likelihood_kernel(d, exp_fn, prior_rvs, n1):
