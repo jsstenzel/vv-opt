@@ -41,7 +41,7 @@ def uncertainty_prop(y_j, doPlot=False, doPrint=False):
 	
 	return mean, stddev
 	
-def uncertainty_prop_plot(y_j, mean=0, xlab="Y", c='#21aad3'):
+def uncertainty_prop_plot(y_j, mean=0, xlab="Y", c='#21aad3', saveFig=''):
 	if mean==0:
 		mean = statistics.mean(y_j)
 		
@@ -52,17 +52,29 @@ def uncertainty_prop_plot(y_j, mean=0, xlab="Y", c='#21aad3'):
 	plt.xlabel(xlab)
 	plt.ylabel("Frequency (N=" + str(len(y_j)) + ")")
 	
-	plt.show()
+	if saveFig=='':
+		plt.show()
+	else:
+		if saveFig[-4:] != '.png':
+			saveFig += '.png'
+		plt.savefig(saveFig, format='png', bbox_inches='tight')
+		plt.clf()
+		plt.close()
 	
-def uncertainty_prop_plots(Y, xlabs=None, c='#21aad3', transpose=True):
+def uncertainty_prop_plots(Y, xlabs=None, c='#21aad3', transpose=True, saveFig=''):
 	if transpose==True:
 		Y = np.transpose(Y)
 
 	if xlabs == None:
 		xlabs = ["data"+str(i) for i,_ in enumerate(Y)]
 		
+	if saveFig == '':
+		fignames = ['' for i,_ in enumerate(Y)]
+	else:
+		fignames = [saveFig+"_"+str(i) for i,_ in enumerate(Y)]
+		
 	for i,y in enumerate(Y):
-		uncertainty_prop_plot(y, xlab=xlabs[i])
+		uncertainty_prop_plot(y, xlab=xlabs[i], c=c, saveFig=fignames[i])
 	
 if __name__ == '__main__':  
 	print("uncertainty_propagation.py: Use me to analyze and plot the results of model samples!")
