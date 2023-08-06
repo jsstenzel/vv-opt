@@ -17,6 +17,26 @@ from obed.pdf_estimation import *
 from uq.uncertainty_propagation import *
 from uq.sensitivity_analysis import *
 
+def proposal_fn_gamma(theta_curr, proposal_width):
+	theta_prop = [0] * len(theta_curr)
+	for i,_ in enumerate(theta_prop):
+		#proposal dists are gammas, to match
+		mean = abs(theta_curr[i])
+		stddev = proposal_width
+		variance = [w**2 for w in stddev]
+		alpha = mean**2 / variance
+		beta = mean / variance
+		theta_prop[i] = scipy.stats.gamma.rvs(size=1, a=alpha, scale=1.0/beta)[0]
+	return theta_prop
+	
+def proposal_fn_norm(theta_curr, proposal_width):
+	theta_prop = [0] * len(theta_curr)
+	for i,_ in enumerate(theta_prop):
+		#proposal dists are gammas, to match
+		mean = abs(theta_curr[i])
+		stddev = proposal_width[i]
+		theta_prop[i] = scipy.stats.norm.rvs(size=1, loc=mean, scale=stddev)[0]
+	return theta_prop
 
 if __name__ == '__main__':  
 	###nominal case
@@ -140,27 +160,6 @@ if __name__ == '__main__':
 	###mcmc analysis
 	y_nominal = fp_likelihood_fn(dict(zip(fp.theta_names, theta_nominal)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)
 	print(y_nominal)
-	
-	def proposal_fn_gamma(theta_curr, proposal_width):
-		theta_prop = [0] * len(theta_curr)
-		for i,_ in enumerate(theta_prop):
-			#proposal dists are gammas, to match
-			mean = abs(theta_curr[i])
-			stddev = proposal_width
-			variance = [w**2 for w in stddev]
-			alpha = mean**2 / variance
-			beta = mean / variance
-			theta_prop[i] = scipy.stats.gamma.rvs(size=1, a=alpha, scale=1.0/beta)[0]
-		return theta_prop
-		
-	def proposal_fn_norm(theta_curr, proposal_width):
-		theta_prop = [0] * len(theta_curr)
-		for i,_ in enumerate(theta_prop):
-			#proposal dists are gammas, to match
-			mean = abs(theta_curr[i])
-			stddev = proposal_width[i]
-			theta_prop[i] = scipy.stats.norm.rvs(size=1, loc=mean, scale=stddev)[0]
-		return theta_prop
 		
 	if False: #convergence study with mcmc_multivar
 		print("Generating kernel",flush=True)
@@ -251,7 +250,7 @@ if __name__ == '__main__':
 		print("starting obed",flush=True)
 		prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282] #stddev from last study
 
-		U, U_list = U_probreq(d_historical, fp, proposal_fn_norm, prop_width, likelihood_kernel, maxreq=3.0, n_mc=1000, n_mcmc=6000, burnin=300, lag=1, doPrint=True)
+		U, U_list = U_probreq_multi(d_historical, fp, proposal_fn_norm, prop_width, likelihood_kernel, maxreq=3.0, n_mc=100, n_mcmc=100, burnin=300, lag=1, doPrint=True)
 		print(U)
 		print(U_list)
 		uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")

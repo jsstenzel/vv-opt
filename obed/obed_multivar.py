@@ -4,7 +4,8 @@ import sys
 import numpy as np
 import scipy.stats
 import matplotlib.pyplot as plt
-import seaborn as sns
+import multiprocessing as mp
+from functools import partial
 
 sys.path.append('..')
 from obed.mcmc import *
@@ -64,3 +65,55 @@ def U_probreq(d, problem, mcmc_proposal, prop_width, likelihood_kernel, minreq=N
 	U = np.average(U_list)
 	return U, U_list
 
+
+def U_probreq_multi(d, problem, mcmc_proposal, prop_width, likelihood_kernel, minreq=None, maxreq=None, n_mc=10**4, n_mcmc=10**3, burnin=0, lag=1, doPrint=False):   
+	#requirement: do min, max, or both, but not neither
+	if minreq==None and maxreq==None:
+		print("U_probreq needs a requirement on the QoI in order to determine probability")
+		exit()
+	
+	#Generate a list of y's sampled from likelihood fn, p(y|theta,d)p(theta)
+	pthetas = problem.prior_rvs(n_mc)
+	Y1_list = [problem.eta(theta, d) for theta in pthetas]
+	
+	#Then i want to create an estimated pdf of y as a fn of theta
+	#I'll generate thetas uniformly across the domain (theta_domains), and sample ys from that
+	#likelihood_kernel
+	
+	U_list = []
+	#Define the mcmc loop as a function of one step
+	#see _task_mcmc_y	
+
+	#Run the map that calls all of the n_MC MCMC's
+	print("U_probreq_multi running on ",mp.cpu_count(),"processors.")
+	with mp.Pool() as pool:
+		task = partial(_task_mcmc_y, kernel=likelihood_kernel, proposal=mcmc_proposal, width=prop_width, prob=problem, minreq=minreq, maxreq=maxreq, n=n_mcmc, burnin=burnin, lag=lag)
+		U_list = pool.map(task, Y1_list)
+	
+	#compute an in-distribution probability
+	U = np.average(U_list)
+	return U, U_list
+	
+	
+def _task_mcmc_y(y, kernel, proposal, width, prob, minreq, maxreq, n, burnin, lag):
+	mcmc_trace,_,_ = mcmc_kernel(y, kernel, proposal, width, prob.prior_rvs, prob.prior_pdf_unnorm, n, burnin, lag, doPlot=False, doPrint=False)
+
+	#Now, use my posterior samples to calculate H(theta|y,d) samples
+	H_theta_posterior = [prob.H(theta) for theta in mcmc_trace]
+	
+	#compute a specific probability P(H > req)
+	#easily calculated with sample probability, just count em up and find the ratio
+	num_true = 0
+	for h in H_theta_posterior:
+		#check if requirement is satisfied, ignoring None's:
+		#if (minreq==None and h <= maxreq) or (h >= minreq and maxreq==None) or (h >= minreq and h <= maxreq):
+		if minreq==None:
+			num_true += int(h <= maxreq)
+		elif maxreq==None:
+			num_true += int(h >= minreq)
+		else:
+			num_true += int(h <= maxreq and h >= minreq)
+	prob = num_true / len(H_theta_posterior) #is this the best estimator for a probability?
+	u = prob
+	print("Ran mcmc on",str(y),"for u =",str(u), flush=True)
+	return u
