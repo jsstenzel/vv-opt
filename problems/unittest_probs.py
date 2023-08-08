@@ -368,3 +368,44 @@ if True:
 	ysample_nominal = [fp.eta([1.1,2.5,.001], d_historical) for _ in range(10000)]
 	uncertainty_prop_plots(ysample_nominal)
 	#but it doesnt!
+	
+if True: #slightly different, test where i reuse thetas to see the eta uncertainty better hopefully?
+	from fp_verification.fp_problem import *
+	d_historical = [
+					20,   #t_gain
+					30,   #I_gain
+					1,	#n_meas_rn
+					8,	#d_num
+					9600, #d_max
+					2	 #d_pow   #approx
+				   ]
+	
+	n_kde_axis = 20
+	kde_gains = np.linspace(0,3,n_kde_axis)
+	kde_rn = np.linspace(1,4,n_kde_axis)
+	kde_dc = np.linspace(0,.01,n_kde_axis)
+	kde_thetas = np.vstack((np.meshgrid(kde_gains, kde_rn, kde_dc))).reshape(3,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
+	kde_thetas = np.repeat(kde_thetas, n_kde_axis, axis=0)
+	print(len(kde_thetas))
+	kde_ys = kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
+	
+	likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys, bw_method=.15)
+	#kde_plot(likelihood_kernel, kde_ythetas, plotStyle='3d', ynames=['gain','rn','dc','y1','y2','y3'])
+	#kde_plot(likelihood_kernel, kde_ythetas, plotStyle='3d', ynames=['gain','rn','dc','y1','y2','y3'], plot_xyz=[3,4,5])
+	#kde_plot(likelihood_kernel, kde_ythetas, plotStyle='together', ynames=['gain','rn','dc','y1','y2','y3'])
+	
+	#for tt in fp.prior_rvs(5):
+	#	_ytheta = np.concatenate([tt, fp.eta(tt, d_historical)])
+	#	kde_plot(likelihood_kernel, kde_ythetas, plotStyle='together', ynames=['gain','rn','dc','y1','y2','y3'], center=_ytheta)
+		
+	#weird i dont feel good about this
+	def plot_likelihood_dist(theta):
+		c = np.concatenate([theta, fp_likelihood_fn(dict(zip(fp.theta_names, theta)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)])
+		kde_plot(likelihood_kernel, kde_ythetas, plotStyle='together', ynames=['gain','rn','dc','y1','y2','y3'], center=c, plot_xyz=[3,4,5])
+		
+	plot_likelihood_dist([1.1,2.5,.001])
+	
+	#this should match what you see from evaluations of p(y|theta=theta_nominal,d):
+	ysample_nominal = [fp.eta([1.1,2.5,.001], d_historical) for _ in range(10000)]
+	uncertainty_prop_plots(ysample_nominal)
+	#but it doesnt!
