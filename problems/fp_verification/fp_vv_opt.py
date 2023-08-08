@@ -15,7 +15,7 @@ from obed.obed_multivar import *
 from obed.mcmc import *
 from obed.pdf_estimation import *
 from uq.uncertainty_propagation import *
-from uq.sensitivity_analysis import *
+#from uq.sensitivity_analysis import *
 
 def proposal_fn_gamma(theta_curr, proposal_width):
 	theta_prop = [0] * len(theta_curr)
@@ -47,7 +47,7 @@ if __name__ == '__main__':
 	QoI_nominal = fp.H(theta_nominal)
 	print("Nominal QoI:", QoI_nominal)
 
-
+	"""
 	###uncertainty analysis
 	if False:
 		#uncertainty propagation of HLVA
@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
 
 		#less strightforward to do it for the dependence of QoI on d
-	
+	"""	
 	d_historical = [
 					20,   #t_gain
 					30,   #I_gain
@@ -87,9 +87,9 @@ if __name__ == '__main__':
 					9600, #d_max
 					2	 #d_pow   #approx
 				   ]
-	
+	"""
 	#Uncertainty analysis of the experiment models
-	if True:
+	if False:
 		print("Likelihood distribution for nominal historical case:",flush=True)
 		tt = fp.prior_rvs(1); print(tt)
 		ysample_nominal = [fp.eta(tt, d_historical) for _ in range(10000)]
@@ -235,7 +235,7 @@ if __name__ == '__main__':
 			uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Gain [ADU/e-]")
 			uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
 			uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
-	
+	"""
 	###obed analysis
 	if True:
 		print("Generating kernel",flush=True)
@@ -250,7 +250,7 @@ if __name__ == '__main__':
 		print("starting obed",flush=True)
 		prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282] #stddev from last study
 
-		U, U_list = U_probreq_multi(d_historical, fp, proposal_fn_norm, prop_width, likelihood_kernel, maxreq=3.0, n_mc=100, n_mcmc=100, burnin=300, lag=1, doPrint=True)
+		U, U_list = U_probreq_multi(d_historical, fp, proposal_fn_norm, prop_width, likelihood_kernel, maxreq=3.0, n_mc=1000, n_mcmc=2000, burnin=300, lag=1, doPrint=True)
 		print(U)
 		print(U_list)
-		uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")
+		uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U", saveFig='OBEDresult')

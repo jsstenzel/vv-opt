@@ -1,0 +1,15 @@
+#!/bin/bash
+#SBATCH -c 1 #Request CPUs per node
+#SBATCH -N 1 #Request nodes
+#SBATCH -t 0-05:00 #Request time
+#SBATCH -p newnodes
+#SBATCH --mem-per-cpu=1000 #Request .1G's of memory per CPU
+#SBATCH -o output_%j.txt #redirect output to output_JOBID.txt
+#SBATCH -e error_%j.txt #redirect errors to error_JOBID.txt
+#SBATCH --mail-type=BEGIN,END #Mail when job starts and ends
+#SBATCH --mail-user=jstenzel@mit.com #email recipient
+python3 --version
+srun python3 fp_vv_opt.py -c 1
+
+#to make cores available to the one srun task, use SBATCH -c 8 #Request CPUs per node
+#to use cores to srun the task many times, use SBATCH -n 8 #Request tasks (cores) per node
