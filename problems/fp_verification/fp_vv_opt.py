@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import csv
+import dill
 
 sys.path.append('../..')
 #focal plane
@@ -41,13 +42,13 @@ def proposal_fn_norm(theta_curr, proposal_width):
 if __name__ == '__main__':  
 	###nominal case
 	req = 3.0 #max noise
-	print("QoI requirement:", req)
+	#print("QoI requirement:", req)
 
 	theta_nominal = [1.1, 2.5, .001]
 	QoI_nominal = fp.H(theta_nominal)
-	print("Nominal QoI:", QoI_nominal)
+	#print("Nominal QoI:", QoI_nominal)
 
-	"""
+
 	###uncertainty analysis
 	if False:
 		#uncertainty propagation of HLVA
@@ -66,6 +67,7 @@ if __name__ == '__main__':
 		prob_meetreq = count_meetreq / len(Qs)
 		print("Probability of meeting requirement given priors:", prob_meetreq)
 
+	"""
 	#sensitivity analysis of HLVA
 	if False:
 		#it'll be straightforward to see the dependence of QoI on theta
@@ -75,10 +77,10 @@ if __name__ == '__main__':
 							var_dists=[prior[0] for prior in fp.priors], 
 							var_bounds=[prior[1] for prior in fp.priors], 
 							conf = 0.95, doSijCalc=False, doPlot=True, doPrint=True)
-
+	"""
 
 		#less strightforward to do it for the dependence of QoI on d
-	"""	
+
 	d_historical = [
 					20,   #t_gain
 					30,   #I_gain
@@ -87,7 +89,7 @@ if __name__ == '__main__':
 					9600, #d_max
 					2	 #d_pow   #approx
 				   ]
-	"""
+
 	#Uncertainty analysis of the experiment models
 	if False:
 		print("Likelihood distribution for nominal historical case:",flush=True)
@@ -104,7 +106,8 @@ if __name__ == '__main__':
 		uncertainty_prop_plot([y[0] for y in uq_ys], xlab="Y0 (joint distribution)", c='orchid', saveFig='UP_joint_y0')
 		uncertainty_prop_plot([y[1] for y in uq_ys], xlab="Y1 (joint distribution)", c='orchid', saveFig='UP_joint_y1.png')
 		uncertainty_prop_plot([y[2] for y in uq_ys], xlab="Y2 (joint distribution)", c='orchid', saveFig='UP_joint_y2')
-		
+	
+	"""	
 	#sensitivity analysis of the experiment models
 	if False:
 		#we want to see sensitivity of each yi to their inputs, theta and d
@@ -153,7 +156,7 @@ if __name__ == '__main__':
 							var_dists=expvar_dists, 
 							var_bounds=expvar_bounds, 
 							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)
-							
+	"""						
 
 	###mcmc analysis
 	y_nominal = fp_likelihood_fn(dict(zip(fp.theta_names, theta_nominal)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)
@@ -235,9 +238,24 @@ if __name__ == '__main__':
 			uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Gain [ADU/e-]")
 			uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
 			uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
-	"""
-	###obed analysis
-	if True:
+
+	###pickle the kernel!
+	if False:
+		print("Generating kernel",flush=True)
+		n_kde_axis = 50 #47^3 equals about 10^5
+		kde_gains = np.linspace(0,3,n_kde_axis)
+		kde_rn = np.linspace(1,4,n_kde_axis)
+		kde_dc = np.linspace(0,.01,n_kde_axis)
+		kde_thetas = np.vstack((np.meshgrid(kde_gains, kde_rn, kde_dc))).reshape(3,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
+		kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
+		likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys)
+		
+		print("pickle it!")
+		with open('likelihood_kernel.pkl', 'wb') as f:
+			dill.dump(likelihood_kernel, f)
+	
+	###obed analysis -- naive multiprocessing approach
+	if False:
 		print("Generating kernel",flush=True)
 		n_kde_axis = 47 #47^3 equals about 10^5
 		kde_gains = np.linspace(0,3,n_kde_axis)
@@ -254,3 +272,10 @@ if __name__ == '__main__':
 		print(U)
 		print(U_list)
 		uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U", saveFig='OBEDresult')
+		
+	###obed analysis -- robust for sbatch, one step of the monte carlo
+	if True:
+		print("starting obed",flush=True)
+		prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282] #stddev from last study
+
+		U = U_probreq_1step(d_historical, fp, proposal_fn_norm, prop_width, "likelihood_kernel.pkl", maxreq=3.0, n_mcmc=2000, burnin=300, lag=1, doPrint=True)
