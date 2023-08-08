@@ -51,35 +51,37 @@ _k = 1.380649e-23 #J / K
 _c = 299792458 #m / s
 _e0 = 22100 #eV
 _m0 = 108.9049856 * 1.66054e-27 #cd109 atomic mass in kg
+_sigmaE = math.sqrt((_m0 * _c**2) / (_k*_temp*_e0**2))
+_w = 3.66 + 0.000615*(300-_temp)
 fp_x_defs = [
 				#general
-				("nx", 2048),
-				("ny", 2048),
-				("sigma_dc", .5), #e-/s #Estimate based on a consistency test performed on SN20006
-				("mu_stray", 0), #e-/s #WAG for now
-				("sigma_stray", .005), #WAG for now
+				["nx", ["nonrandom", [2048]], "discrete", 2048],
+				["ny", ["nonrandom", [2048]], "discrete", 2048],
+				["sigma_dc", ["uniform", [.3,.7]], "continuous", .5], #e-/s #WAGish based on a consistency test performed on SN20006
+				["mu_stray", ["nonrandom", [0]], "continuous", 0], #e-/s #WAG for now
+				["sigma_stray", ["uniform", [.001,.01]], "continuous", .005], #WAG for now
 				#gain
-				("P_signal", 0.90), #Prob. of correctly identifying signal as event #WAG for now
-				("P_noise", 0.01), #Prob. of incorrectly identifying noise/interference as event #WAG for now
-				("T_ccd", _temp), #K
-				("E0", _e0), #22.1 keV Cd-109 emission line
-				("sigma_E", math.sqrt((_m0 * _c**2) / (_k*_temp*_e0**2))), #1/eV^2
-				("w", 3.66 + 0.000615*(300-_temp)), #eV/e- #this has uncertainty. nuisance parameter?
-				("activity_cd109", 5e-6), #Ci #radioactivity of sample
-				("grade_size", 3), #3x3 event grade sizes
-				("t_gain_setup", 1200), #WAG
-				("t_gain_buffer", 5), #WAG
+				["P_signal", ["uniform", [.8,.95]], "continuous", 0.90], #Prob. of correctly identifying signal as event #WAG for now
+				["P_noise", ["uniform", [.01,.1]], "continuous", 0.01], #Prob. of incorrectly identifying noise/interference as event #WAG for now
+				["T_ccd", ["uniform", [_temp-1,_temp+1]], "continuous",  _temp], #K
+				["E0", ["nonrandom", [_e0]], "continuous", _e0], #22.1 keV Cd-109 emission line
+				["sigma_E", ["uniform", [math.sqrt((_m0 * _c**2) / (_k*(_temp+1)*_e0**2)),math.sqrt((_m0 * _c**2) / (_k*(_temp-1)*_e0**2))]], "continuous", _sigmaE], #1/eV^2
+				["w", ["uniform", [3.64 + (2.12*.00025)*(300-_temp-1),3.70 + (2.80*.00025)*(300-_temp+1)]], "continuous", _w], #eV/e- #uncertainty in T, w(300K), a
+				["activity_cd109", ["uniform", [1e-6,10e-6]], "continuous", 5e-6], #Ci #radioactivity of sample
+				["grade_size", ["nonrandom", [3]], "discrete", 3], #3x3 event grade sizes
+				["t_gain_setup", ["nonrandom", [1200]], "continuous", 1200], #WAG
+				["t_gain_buffer", ["nonrandom", [5]], "continuous", 5], #WAG
 				#rn
-				("t_rn", .1), #100 ms exposure
-				("t_rn_buffer", 5), #WAG
+				["t_rn", ["nonrandom", [.1]], "continuous", .1], #100 ms exposure
+				["t_rn_buffer", ["nonrandom", [5]], "continuous", 5], #WAG
 				#dc
-				("t_0", 0.1), #100ms baseline exposure assumed
-				("t_dc_buffer", 5), #WAG
+				["t_0", ["nonrandom", [.1]], "continuous", 0.1], #100ms baseline exposure assumed
+				["t_dc_buffer", ["nonrandom", [5]], "continuous", 5], #WAG
 				#qoi
-				("tau", 1800),
+				["tau", ["nonrandom", [1800]], "continuous", 1800],
 				#cost
-				("testbed_setup", 1800), #WAG
-				("C_engineer", 0.00694444444) #WAG $/s, from $25/hr
+				["testbed_setup", ["nonrandom", [1800]], "continuous", 1800], #WAG
+				["C_engineer", ["nonrandom", [0.00694444444]], "continuous", 0.00694444444] #WAG $/s, from $25/hr
 			]
 			 
 if useQE == True:
@@ -116,8 +118,8 @@ if useQE == True:
 					#rn
 					#dc
 					#qe
-					("S_pd", S_pd),   #representative photodiode, Hamamatsu S1337-1010BQ
-					("S_pd_err", .01)  #mA/W
+					["S_pd", S_pd],   #representative photodiode, Hamamatsu S1337-1010BQ
+					["S_pd_err", .01]  #mA/W
 					#qoi
 					#cost
 					])

@@ -20,12 +20,12 @@ class ProblemDefinition:
 		self.dim_y = len(_y_defs)
 		self.dim_theta = len(_theta_defs)
 		self.dim_x = len(_x_defs)
-		self.x_default = [default for name,default in _x_defs]
+		self.x_default = [default for name,dist,mask,default in _x_defs]
 		
 		#priors is a list of defintions of prior distributions on the vector of thetas
 		#so it's a list of pairs, first is type and second is the list of corresponding parameters
 		#type checks:
-		for _,prior,mask in _theta_defs + _d_defs:
+		for _,prior,mask in _theta_defs + _d_defs + [x[:-1] for x in _x_defs]:
 			type = prior[0]
 			params = prior[1]
 			
@@ -35,22 +35,21 @@ class ProblemDefinition:
 				raise ValueError('Wrong number of arguments for prior type '+str(type)+'; got '+str(len(params))+' and expected '+str(self._allowable_prior_types[type]))
 			if not (mask in ['continuous','discrete']):
 				raise ValueError('Variable mask not an expected value: '+str(mask))
-			#for param in params:
-			#	if not isinstance(param, (int, float)):
-			#		raise ValueError('Wrong kind of arguments for prior type '+str(type)+', need int or float.')
 
 		#if you pass all of that,
-		self.priors = [prior for _,prior,_ in _theta_defs]
+		self.priors  = [prior for _,prior,_ in _theta_defs]
 		self.d_dists = [dist for _,dist,_ in _d_defs]
+		self.x_dists = [dist for _,dist,_,_ in _x_defs]
 		
 		self.theta_masks = [mask for _,_,mask in _theta_defs]
 		self.d_masks     = [mask for _,_,mask in _d_defs]
+		self.x_masks     = [mask for _,_,mask,_ in _x_defs]
 	
 		#for documentation:
 		self.theta_names=[name for name,_,_ in _theta_defs]
 		self.y_names=_y_defs
 		self.d_names=[name for name,_,_ in _d_defs]
-		self.x_names=[name for name,_ in _x_defs]
+		self.x_names=[name for name,default,dist,mask in _x_defs]
 	
 	def eta(self, theta, d, x=[]):
 		if x == []: #default x
@@ -61,7 +60,7 @@ class ProblemDefinition:
 			raise ValueError("Input to ProblemDefinition eta: d size "+str(self.dim_d)+" expected, "+str(len(d))+" provided.")
 		if len(x) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition eta: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
-		#apply discrete mask to theta and d
+		#apply discrete mask to theta and d and x
 		theta_masked = [(math.floor(tt) if self.theta_masks[i]=='discrete' else tt) for i,tt in enumerate(theta)]
 		d_masked = [(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
 		#make dicts for inputs w/ defs, to ensure consistency
@@ -77,7 +76,7 @@ class ProblemDefinition:
 			raise ValueError("Input to ProblemDefinition G: theta size "+str(self.dim_d)+" expected, "+str(len(d))+" provided.")
 		if len(x) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition G: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
-		#apply discrete mask to d
+		#apply discrete mask to d and x
 		d_masked = [(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
 		#make dicts for inputs w/ defs, to ensure consistency
 		d_dict = dict(zip(self.d_names, d_masked))
@@ -91,7 +90,7 @@ class ProblemDefinition:
 			raise ValueError("Input to ProblemDefinition H: theta size "+str(self.dim_theta)+" expected, "+str(len(theta))+" provided.")
 		if len(x) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition H: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
-		#apply discrete mask to theta
+		#apply discrete mask to theta and x
 		theta_masked = [(math.floor(tt) if self.theta_masks[i]=='discrete' else tt) for i,tt in enumerate(theta)]
 		#make dicts for inputs w/ defs, to ensure consistency
 		theta_dict = dict(zip(self.theta_names, theta_masked))
@@ -105,6 +104,7 @@ class ProblemDefinition:
 		'gamma_mv': 2, #mean, variance
 		'lognorm': 2, #mean, variance
 		'uniform': 2, #left, right
+		'nonrandom': 1, #return value
 		'funct_splines': 5} #knot list (x,y), order, y_stddev, domain, range
 		
 	
@@ -113,6 +113,9 @@ class ProblemDefinition:
 		
 	def sample_d(self, num_vals):
 		return self._dist_rvs(num_vals, self.d_dists)
+		
+	def sample_x(self, num_vals):
+		return self._dist_rvs(num_vals, self.x_dists)
 	
 	def _dist_rvs(self, num_vals, dist_def):
 		vals = [] #a list length num_vals of random numbers of size dim_theta
@@ -144,6 +147,8 @@ class ProblemDefinition:
 				left = params[0]
 				right = params[1]
 				thetas_i = scipy.stats.uniform.rvs(size=num_vals, loc=left, scale=right-left) #dist is [loc, loc + scale]
+			elif type == 'nonrandom':
+				thetas_i = [param[0] for _ in range(num_vals)]
 			elif type == 'funct_splines':
 				for _ in range(num_vals):
 					data = params[0] #list of pairs of points to define the prior mean
@@ -204,7 +209,9 @@ class ProblemDefinition:
 			elif type == 'lognorm':
 				mu = params[0]
 				sigma = params[1]
-				thetas_i = scipy.stats.lognorm.pdf(theta_i, s=sigma, scale=np.exp(mu))
+				prob_i = scipy.stats.lognorm.pdf(theta_i, s=sigma, scale=np.exp(mu))
+			elif type == 'nonrandom':
+				prob_i = (theta_i == params[0])
 			elif type == 'uniform':
 				left = params[0]
 				right = params[1]
@@ -266,7 +273,11 @@ if __name__ == "__main__":
 						["d2", ["uniform", [0.01, 1]], "continuous" ]
 					]
 	
-	toy_x_defs = [("y2 factor", 1),("H factor", 10),("Cost factor", 10)]
+	toy_x_defs = [
+					["y2 factor", ["uniform", [.1, 2]], "continuous", 1],
+					["H factor", ["uniform", [1, 12]], "discrete", 10],
+					["Cost factor", ["uniform", [5, 15]], "continuous", 10]
+				 ]
 
 	
 	#_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
