@@ -69,7 +69,7 @@ if __name__ == '__main__':
 				   ]
 	
 	#Uncertainty analysis of the experiment models
-	if True:
+	if False:
 		print("Likelihood distribution for nominal historical case:",flush=True)
 		tt = fp.prior_rvs(1); print(tt)
 		ysample_nominal = [fp.eta(tt, d_historical) for _ in range(10000)]
@@ -237,6 +237,36 @@ if __name__ == '__main__':
 			uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
 			uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
 	
+	###look at mcmc posterior
+	if True:
+		#this value should be a good one derived from the above
+		prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282]
+		
+		print("Generating kernel",flush=True)
+		n_kde_axis = 47 #47^3 equals about 10^5
+		kde_gains = np.linspace(0,3,n_kde_axis)
+		kde_rn = np.linspace(1,4,n_kde_axis)
+		kde_dc = np.linspace(0,.01,n_kde_axis)
+		kde_thetas = np.vstack((np.meshgrid(kde_gains, kde_rn, kde_dc))).reshape(3,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
+		kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
+		likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys)
+	
+		print("running mcmc")
+		n_mcmc = 6000
+		prop_fn = proposal_fn_norm
+		mcmc_trace, arate, rrate = mcmc_kernel(y_nominal, likelihood_kernel, proposal_fn_norm, prop_width, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, burnin=300, lag=1, doPlot=True, legend=fp.theta_names)
+	
+		print("check H posterior")
+		H_theta_posterior = [fp.H(theta) for theta in mcmc_trace]
+		uncertainty_prop_plot(H_theta_posterior, c='orangered', xlab="Posterior QoI: Avg. Noise [e-]")
+		
+		num_true = 0
+		for h in H_theta_posterior:
+			num_true += int(h <= req)
+		prob = num_true / len(H_theta_posterior) #is this the best estimator for a probability?
+		print("Posterior probability of meeting requirement:", prob)
+
+
 	#obed analysis
 	#U, U_list = U_probreq(d_historical, fp, maxreq=3.0, n_mc=100, n_mcmc=1000, burnin=0, lag=1)
 	#print(U)
