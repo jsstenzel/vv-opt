@@ -280,6 +280,17 @@ if __name__ == '__main__':
 		prob = num_true / len(H_theta_posterior) #is this the best estimator for a probability?
 		print("Posterior probability of meeting requirement:", prob)
 
+	if True:
+		H_theta_posterior = []
+		with open("output_50549287.txt") as csvfile:
+			csvreader = csv.reader(csvfile, delimiter=',')
+			for row in csvreader:
+				H_theta_posterior.append(float(row[0]))
+		
+		uncertainty_prop_plot(H_theta_posterior, c='royalblue', xlab="specific U")
+		print(np.mean(H_theta_posterior))
+
+
 	#obed analysis
 	#U, U_list = U_probreq(d_historical, fp, maxreq=3.0, n_mc=100, n_mcmc=1000, burnin=0, lag=1)
 	#print(U)
