@@ -60,6 +60,10 @@ def sobol_saltelli(function, N, var_names, var_dists, var_bounds, conf = 0.95, d
 			dists[j] = 'norm'
 		elif dist == 'lognorm' or dist == 'lognormal':
 			dists[j] = 'lognorm'
+		elif dist == 'nonrandom':
+			dists[j] = 'unif'
+			val = bounds[j][0]
+			bounds[j] = [val,val+1e-6]
 		else:
 			print("sobol_saltelli dist not recognized:",dist)
 			exit()
@@ -88,6 +92,8 @@ def sobol_saltelli(function, N, var_names, var_dists, var_bounds, conf = 0.95, d
 			alpha = var_bounds[j][0]
 			beta = bounds[j][1]
 			param_values[:,j] = scipy.stats.gamma.ppf(param_values[:,j], a=alpha, scale=1.0/beta)
+		if dist == 'nonrandom':
+			param_values[:,j] = np.repeat(var_bounds[j][0], len(param_values[:,j]))
 	
 	###run model
 	Y = np.array([function(x) for x in param_values])
@@ -175,7 +181,7 @@ def plot_gsa(varnames, Si=None, filename=None, logplot=False):
 				
 	
 	# set width of bar
-	barWidth = 0.1
+	barWidth = 0.2
 	#fig = plt.subplots(figsize =(10, 5))
 
 	# Make the plot
@@ -190,6 +196,9 @@ def plot_gsa(varnames, Si=None, filename=None, logplot=False):
 		plt.yscale('log')	
 		
 	#add whiskers for conf interval	
+	plt.errorbar(varnames, ST, yerr=ST_conf, fmt='|', color='k')
+	plt.grid(axis = 'y')
+	
 	plt.show()
 	
 

@@ -28,9 +28,8 @@ if __name__ == '__main__':
 	print("Nominal QoI:", QoI_nominal)
 
 
-	###uncertainty analysis
+	#uncertainty propagation of HLVA
 	if False:
-		#uncertainty propagation of HLVA
 		uq_thetas = fp.prior_rvs(10000)
 		Qs = [fp.H(theta) for theta in uq_thetas]
 		uncertainty_prop_plot([theta[0] for theta in uq_thetas], xlab="Gain [ADU/e-]")
@@ -68,7 +67,7 @@ if __name__ == '__main__':
 					2	 #d_pow   #approx
 				   ]
 	
-	#Uncertainty analysis of the experiment models
+	#Uncertainty propagation of the experiment models
 	if False:
 		print("Likelihood distribution for nominal historical case:",flush=True)
 		tt = fp.prior_rvs(1); print(tt)
@@ -87,53 +86,68 @@ if __name__ == '__main__':
 		
 	#sensitivity analysis of the experiment models
 	if False:
-		#we want to see sensitivity of each yi to their inputs, theta and d
-		#this is a different framework from before, now theta and d are freewheeling variables
-		#(could maybe include some of x in the future...)
+		#we want to see sensitivity of each yi to their inputs, theta and x
 		#instead of trying to break eta into its constitutent experiments, i think i want to just use all of eta,
-		#and doing separate sensitivity analysis on each of the y[i] coming from theta, over entire d and h span
+		#and doing separate sensitivity analysis on each of the y[i] coming from theta, over entire x and theta span
 		#sobol_saltelli expects a function that takes a single list of parameters
-		def eta_1(paramlist): #gain
-			theta = paramlist[0:fp.dim_theta]
-			d = paramlist[fp.dim_theta:fp.dim_theta+fp.dim_d]
-			y = fp.eta(theta, d)
-			return y[0]
-		def eta_2(paramlist): #rn
-			theta = paramlist[0:fp.dim_theta]
-			d = paramlist[fp.dim_theta:fp.dim_theta+fp.dim_d]
-			y = fp.eta(theta, d)
-			return y[1]
-		def eta_3(paramlist): #dc
-			theta = paramlist[0:fp.dim_theta]
-			d = paramlist[fp.dim_theta:fp.dim_theta+fp.dim_d]
-			y = fp.eta(theta, d)
-			return y[2]
+		def eta_1(param): #gain
+			gain = param[0]
+			rn = param[1]
+			dc = param[2]
+			_x = dict(zip(fp.x_names, fp.x_default)) 
+			_x["sigma_dc"] = param[3]
+			_x["P_signal"] = param[4]
+			_x["P_noise"] = param[5]
+			_x["T_ccd"] = param[6]
+			_x["sigma_E"] = param[7]
+			_x["w"] = param[8]
+			_x["activity_cd109"] = param[9]
+			y = gain_exp(gain, rn, dc, d_historical[0], d_historical[1], _x, err=True)
+			return y
+		def eta_2(param): #rn
+			gain = param[0]
+			rn = param[1]
+			_x = dict(zip(fp.x_names, fp.x_default)) 
+			_x["sigma_stray"] = param[2]
+			_x["sigma_dc"] = param[3]
+			y = read_noise_exp(gain, rn, d_historical[2], _x, err=True)
+			return y
+		def eta_3(param): #dc
+			gain = param[0]
+			rn = param[1]
+			dc = param[2]
+			_x = dict(zip(fp.x_names, fp.x_default)) 
+			_x["sigma_stray"] = param[3]
+			_x["sigma_dc"] = param[4]
+			y = dark_current_exp(gain, rn, dc, d_historical[3], d_historical[4], d_historical[5], _x, err=True)
+			return y
+		#use partials to define these later?
 
-		expvar_names = fp.theta_names + fp.d_names
-		expvar_dists = [prior[0] for prior in fp.priors] + [prior[0] for prior in fp.d_dists]
-		expvar_bounds=[prior[1] for prior in fp.priors] + [prior[1] for prior in fp.d_dists]
+		expvar_names = fp.theta_names + fp.x_names
+		expvar_dists = [prior[0] for prior in fp.priors] + [prior[0] for prior in fp.x_dists]
+		expvar_bounds=[prior[1] for prior in fp.priors] + [prior[1] for prior in fp.x_dists]
 			
+		#so ugly!!!
 		Si_1 = sobol_saltelli(eta_1, 
-							2**6, #SALib wants powers of 2 for convergence
-							var_names=expvar_names, 
-							var_dists=expvar_dists, 
-							var_bounds=expvar_bounds, 
+							2**8, #SALib wants powers of 2 for convergence
+							var_names=[x for i,x in enumerate(expvar_names) if i in [0,1,2,5,8,9,10,12,13,14]], 
+							var_dists=[x for i,x in enumerate(expvar_dists) if i in [0,1,2,5,8,9,10,12,13,14]], 
+							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in [0,1,2,5,8,9,10,12,13,14]], 
 							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)
-							
-		Si_1 = sobol_saltelli(eta_2, 
-							2**6, #SALib wants powers of 2 for convergence
-							var_names=expvar_names, 
-							var_dists=expvar_dists, 
-							var_bounds=expvar_bounds, 
+		
+		Si_2 = sobol_saltelli(eta_2, 
+							2**8, #SALib wants powers of 2 for convergence
+							var_names=[x for i,x in enumerate(expvar_names) if i in [0,1,5,7]], 
+							var_dists=[x for i,x in enumerate(expvar_dists) if i in [0,1,5,7]], 
+							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in [0,1,5,7]], 
 							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)
-							
-		Si_1 = sobol_saltelli(eta_3, 
-							2**6, #SALib wants powers of 2 for convergence
-							var_names=expvar_names, 
-							var_dists=expvar_dists, 
-							var_bounds=expvar_bounds, 
-							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)
-							
+		
+		Si_3 = sobol_saltelli(eta_3, 
+							2**8, #SALib wants powers of 2 for convergence
+							var_names=[x for i,x in enumerate(expvar_names) if i in [0,1,2,5,7]], 
+							var_dists=[x for i,x in enumerate(expvar_dists) if i in [0,1,2,5,7]], 
+							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in [0,1,2,5,7]], 
+							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)		
 
 	###mcmc analysis
 	y_nominal = fp_likelihood_fn(dict(zip(fp.theta_names, theta_nominal)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)
@@ -238,7 +252,7 @@ if __name__ == '__main__':
 			uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
 	
 	###look at mcmc posterior
-	if True:
+	if False:
 		#this value should be a good one derived from the above
 		prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282]
 		
@@ -265,7 +279,6 @@ if __name__ == '__main__':
 			num_true += int(h <= req)
 		prob = num_true / len(H_theta_posterior) #is this the best estimator for a probability?
 		print("Posterior probability of meeting requirement:", prob)
-
 
 	#obed analysis
 	#U, U_list = U_probreq(d_historical, fp, maxreq=3.0, n_mc=100, n_mcmc=1000, burnin=0, lag=1)
