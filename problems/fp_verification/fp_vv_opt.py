@@ -89,6 +89,24 @@ if __name__ == '__main__':
 					9600, #d_max
 					2	 #d_pow   #approx
 				   ]
+				   
+	d_best = [
+					600,   #t_gain
+					100,   #I_gain
+					50,	#n_meas_rn
+					100,	#d_num
+					12000, #d_max
+					1	 #d_pow   #approx
+			]
+				   
+	d_worst = [
+					1,   #t_gain
+					1,   #I_gain
+					1,	#n_meas_rn
+					2,	#d_num
+					100, #d_max
+					1	 #d_pow   #approx
+			]
 
 	#Uncertainty analysis of the experiment models
 	if False:
