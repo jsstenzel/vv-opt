@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import csv
+import dill
 
 sys.path.append('../..')
 #focal plane
@@ -15,299 +16,315 @@ from obed.obed_multivar import *
 from obed.mcmc import *
 from obed.pdf_estimation import *
 from uq.uncertainty_propagation import *
-from uq.sensitivity_analysis import *
+#from uq.sensitivity_analysis import *
 
+################################
+#Useful definitions
+################################
 
-if __name__ == '__main__':  
-	###nominal case
-	req = 3.0 #max noise
+def proposal_fn_gamma(theta_curr, proposal_width):
+	theta_prop = [0] * len(theta_curr)
+	for i,_ in enumerate(theta_prop):
+		#proposal dists are gammas, to match
+		mean = abs(theta_curr[i])
+		stddev = proposal_width
+		variance = [w**2 for w in stddev]
+		alpha = mean**2 / variance
+		beta = mean / variance
+		theta_prop[i] = scipy.stats.gamma.rvs(size=1, a=alpha, scale=1.0/beta)[0]
+	return theta_prop
+	
+def proposal_fn_norm(theta_curr, proposal_width):
+	theta_prop = [0] * len(theta_curr)
+	for i,_ in enumerate(theta_prop):
+		#proposal dists are gammas, to match
+		mean = abs(theta_curr[i])
+		stddev = proposal_width[i]
+		theta_prop[i] = scipy.stats.norm.rvs(size=1, loc=mean, scale=stddev)[0]
+	return theta_prop
+
+req = 3.0 #max noise
+
+theta_nominal = [1.1, 2.5, .001]
+QoI_nominal = fp.H(theta_nominal)
+
+d_historical = [
+				20,   #t_gain
+				30,   #I_gain
+				1,	#n_meas_rn
+				8,	#d_num
+				9600, #d_max
+				2	 #d_pow   #approx
+			   ]
+			   
+d_best = [
+				600,   #t_gain
+				100,   #I_gain
+				50,	#n_meas_rn
+				100,	#d_num
+				12000, #d_max
+				1	 #d_pow   #approx
+		]
+			   
+d_worst = [
+				1,   #t_gain
+				1,   #I_gain
+				1,	#n_meas_rn
+				2,	#d_num
+				100, #d_max
+				1	 #d_pow   #approx
+		]
+		
+y_nominal = fp_likelihood_fn(dict(zip(fp.theta_names, theta_nominal)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)
+print(y_nominal)
+
+################################
+#Analysis functions
+################################
+
+def fp_vv_nominal():
 	print("QoI requirement:", req)
-
-	theta_nominal = [1.1, 2.5, .001]
-	QoI_nominal = fp.H(theta_nominal)
 	print("Nominal QoI:", QoI_nominal)
 
 
+###uncertainty analysis
+def fp_vv_UP_QoI():
 	#uncertainty propagation of HLVA
-	if False:
-		uq_thetas = fp.prior_rvs(10000)
-		Qs = [fp.H(theta) for theta in uq_thetas]
-		uncertainty_prop_plot([theta[0] for theta in uq_thetas], xlab="Gain [ADU/e-]")
-		uncertainty_prop_plot([theta[1] for theta in uq_thetas], xlab="Read noise [e-]")
-		uncertainty_prop_plot([theta[2] for theta in uq_thetas], xlab="Dark current [e-/s]")
-		uncertainty_prop_plot(Qs, xlab="QoI: Avg. Noise [e-]")
+	uq_thetas = fp.prior_rvs(10000)
+	Qs = [fp.H(theta) for theta in uq_thetas]
+	uncertainty_prop_plot([theta[0] for theta in uq_thetas], xlab="Gain [ADU/e-]")
+	uncertainty_prop_plot([theta[1] for theta in uq_thetas], xlab="Read noise [e-]")
+	uncertainty_prop_plot([theta[2] for theta in uq_thetas], xlab="Dark current [e-/s]")
+	uncertainty_prop_plot(Qs, xlab="QoI: Avg. Noise [e-]")
 
-		#prob of meeting req along priors:
-		count_meetreq = 0
-		for Q in Qs:
-			if Q <= req:
-				count_meetreq += 1
-		prob_meetreq = count_meetreq / len(Qs)
-		print("Probability of meeting requirement given priors:", prob_meetreq)
+	#prob of meeting req along priors:
+	count_meetreq = 0
+	for Q in Qs:
+		if Q <= req:
+			count_meetreq += 1
+	prob_meetreq = count_meetreq / len(Qs)
+	print("Probability of meeting requirement given priors:", prob_meetreq)
 
-	#sensitivity analysis of HLVA
-	if False:
-		#it'll be straightforward to see the dependence of QoI on theta
-		Si = sobol_saltelli(fp.H, 
-							2**5, #SALib wants powers of 2 for convergence
-							var_names=fp.theta_names, 
-							var_dists=[prior[0] for prior in fp.priors], 
-							var_bounds=[prior[1] for prior in fp.priors], 
-							conf = 0.95, doSijCalc=False, doPlot=True, doPrint=True)
+"""
+#sensitivity analysis of HLVA
+def fp_vv_SA_QoI():
+	#it'll be straightforward to see the dependence of QoI on theta
+	Si = sobol_saltelli(fp.H, 
+						2**5, #SALib wants powers of 2 for convergence
+						var_names=fp.theta_names, 
+						var_dists=[prior[0] for prior in fp.priors], 
+						var_bounds=[prior[1] for prior in fp.priors], 
+						conf = 0.95, doSijCalc=False, doPlot=True, doPrint=True)
+"""
 
-
-		#less strightforward to do it for the dependence of QoI on d
+#Uncertainty analysis of the experiment models
+def fp_vv_UP_exp():
+	print("Likelihood distribution for nominal historical case:",flush=True)
+	tt = fp.prior_rvs(1); print(tt)
+	ysample_nominal = [fp.eta(tt, d_historical) for _ in range(10000)]
+	uncertainty_prop_plots(ysample_nominal, xlabs=["Y0","Y1","Y2"], saveFig='UP_exp_nominal')
+	likelihood,_ = general_likelihood_kernel(ysample_nominal)
+	#kde_plot(likelihood, ysample_nominal, plotStyle='together') #needs fixing?
 	
-	d_historical = [
-					20,   #t_gain
-					30,   #I_gain
-					1,	#n_meas_rn
-					8,	#d_num
-					9600, #d_max
-					2	 #d_pow   #approx
-				   ]
-	
-	#Uncertainty propagation of the experiment models
-	if False:
-		print("Likelihood distribution for nominal historical case:",flush=True)
-		ysample_nominal = [fp.eta(theta_nominal, d_historical) for _ in range(10000)]
-		uncertainty_prop_plots(ysample_nominal, xlabs=["Y0","Y1","Y2"], saveFig='UP_exp_nominal')
-		#likelihood,_ = general_likelihood_kernel(ysample_nominal)
-		#kde_plot(likelihood, ysample_nominal, plotStyle='together') #needs fixing?
-		print("UP_exp stddev:", np.std(ysample_nominal, ddof=1, axis=0))
-		
-		#Also plot the y's generated by the joint distribution p(y|theta,d)p(theta)
-		print("Experiments simulated from the joint distribution:",flush=True)
-		uq_thetas = fp.prior_rvs(10000)
-		uq_ys = [fp.eta(theta, d_historical) for theta in uq_thetas]
-		uncertainty_prop_plots(uq_ys, xlabs=["Y0 (joint distribution)","Y1 (joint distribution)","Y2 (joint distribution)"], c='orchid', saveFig='UP_joint_y')
-		print("UP_joint stddev:", np.std(uq_ys, ddof=1, axis=0))
-		
-	#Uncertainty propagation of the experiment models - over d
-	if False:
-		#Also plot the y's generated by the joint distribution p(y|theta,d)p(theta)
-		print("Experiments for theta_nominal, simulated across the d distributions:",flush=True)
-		uq_ds = fp.sample_d(10000)
-		uq_ys = [fp.eta(theta_nominal, d) for d in uq_ds]
-		uncertainty_prop_plots(uq_ys, xlabs=["Y0 (theta_nominal, p(d))","Y1 (theta_nominal, p(d))","Y2 (theta_nominal, p(d))"], c='teal')
-		print("UP_exp_d stddev:", np.std(uq_ys, ddof=1, axis=0))
-		
-		#Also plot the y's generated by the joint distribution p(y|theta,d)p(theta)
-		print("Experiments for theta_nominal, simulated jointly across d and theta:",flush=True)
-		uq_ds = fp.sample_d(30000)
-		uq_thetas = fp.prior_rvs(30000)
-		uq_ys = [fp.eta(uq_thetas[i], uq_ds[i]) for i,_ in enumerate(uq_ds)]
-		uncertainty_prop_plots(uq_ys, xlabs=["Y0 (joint across theta,d)","Y1 (joint across theta,d)","Y2 (joint across theta,d)"], c='magenta')
-		print("UP_exp_fulljoint stddev:", np.std(uq_ys, ddof=1, axis=0))
-		
-	#sensitivity analysis of the experiment models
-	if False:
-		#we want to see sensitivity of each yi to their inputs, theta and x
-		#instead of trying to break eta into its constitutent experiments, i think i want to just use all of eta,
-		#and doing separate sensitivity analysis on each of the y[i] coming from theta, over entire x and theta span
-		#sobol_saltelli expects a function that takes a single list of parameters
-		def eta_1(param): #gain
-			gain = param[0]
-			rn = param[1]
-			dc = param[2]
-			_x = dict(zip(fp.x_names, fp.x_default)) 
-			_x["sigma_dc"] = param[3]
-			_x["P_signal"] = param[4]
-			_x["P_noise"] = param[5]
-			_x["T_ccd"] = param[6]
-			_x["sigma_E"] = param[7]
-			_x["w"] = param[8]
-			_x["activity_cd109"] = param[9]
-			y = gain_exp(gain, rn, dc, d_historical[0], d_historical[1], _x, err=True)
-			return y
-		def eta_2(param): #rn
-			gain = param[0]
-			rn = param[1]
-			_x = dict(zip(fp.x_names, fp.x_default)) 
-			_x["sigma_stray"] = param[2]
-			_x["sigma_dc"] = param[3]
-			y = read_noise_exp(gain, rn, d_historical[2], _x, err=True)
-			return y
-		def eta_3(param): #dc
-			gain = param[0]
-			rn = param[1]
-			dc = param[2]
-			_x = dict(zip(fp.x_names, fp.x_default)) 
-			_x["sigma_stray"] = param[3]
-			_x["sigma_dc"] = param[4]
-			y = dark_current_exp(gain, rn, dc, d_historical[3], d_historical[4], d_historical[5], _x, err=True)
-			return y
-		#use partials to define these later?
+	#Also plot the y's generated by the joint distribution p(y|theta,d)p(theta)
+	print("Experiments simulated from the joint distribution:",flush=True)
+	uq_thetas = fp.prior_rvs(10000)
+	uq_ys = [fp.eta(theta, d_historical) for theta in uq_thetas]
+	uncertainty_prop_plot([y[0] for y in uq_ys], xlab="Y0 (joint distribution)", c='orchid', saveFig='UP_joint_y0')
+	uncertainty_prop_plot([y[1] for y in uq_ys], xlab="Y1 (joint distribution)", c='orchid', saveFig='UP_joint_y1.png')
+	uncertainty_prop_plot([y[2] for y in uq_ys], xlab="Y2 (joint distribution)", c='orchid', saveFig='UP_joint_y2')
 
-		expvar_names = fp.theta_names + fp.x_names
-		expvar_dists = [prior[0] for prior in fp.priors] + [prior[0] for prior in fp.x_dists]
-		expvar_bounds=[prior[1] for prior in fp.priors] + [prior[1] for prior in fp.x_dists]
-			
-		#so ugly!!!
-		Si_1 = sobol_saltelli(eta_1, 
-							2**8, #SALib wants powers of 2 for convergence
-							var_names=[x for i,x in enumerate(expvar_names) if i in [0,1,2,5,8,9,10,12,13,14]], 
-							var_dists=[x for i,x in enumerate(expvar_dists) if i in [0,1,2,5,8,9,10,12,13,14]], 
-							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in [0,1,2,5,8,9,10,12,13,14]], 
-							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)
-		
-		Si_2 = sobol_saltelli(eta_2, 
-							2**8, #SALib wants powers of 2 for convergence
-							var_names=[x for i,x in enumerate(expvar_names) if i in [0,1,5,7]], 
-							var_dists=[x for i,x in enumerate(expvar_dists) if i in [0,1,5,7]], 
-							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in [0,1,5,7]], 
-							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)
-		
-		Si_3 = sobol_saltelli(eta_3, 
-							2**8, #SALib wants powers of 2 for convergence
-							var_names=[x for i,x in enumerate(expvar_names) if i in [0,1,2,5,7]], 
-							var_dists=[x for i,x in enumerate(expvar_dists) if i in [0,1,2,5,7]], 
-							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in [0,1,2,5,7]], 
-							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)		
+"""	These cause problems on eofe8
+#sensitivity analysis of the experiment models
+def fp_vv_SA_exp():
+	#we want to see sensitivity of each yi to their inputs, theta and d
+	#this is a different framework from before, now theta and d are freewheeling variables
+	#(could maybe include some of x in the future...)
+	#instead of trying to break eta into its constitutent experiments, i think i want to just use all of eta,
+	#and doing separate sensitivity analysis on each of the y[i] coming from theta, over entire d and h span
+	#sobol_saltelli expects a function that takes a single list of parameters
+	def eta_1(paramlist): #gain
+		theta = paramlist[0:fp.dim_theta]
+		d = paramlist[fp.dim_theta:fp.dim_theta+fp.dim_d]
+		y = fp.eta(theta, d)
+		return y[0]
+	def eta_2(paramlist): #rn
+		theta = paramlist[0:fp.dim_theta]
+		d = paramlist[fp.dim_theta:fp.dim_theta+fp.dim_d]
+		y = fp.eta(theta, d)
+		return y[1]
+	def eta_3(paramlist): #dc
+		theta = paramlist[0:fp.dim_theta]
+		d = paramlist[fp.dim_theta:fp.dim_theta+fp.dim_d]
+		y = fp.eta(theta, d)
+		return y[2]
 
-	###mcmc analysis
-	y_nominal = fp_likelihood_fn(dict(zip(fp.theta_names, theta_nominal)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)
-	print(y_nominal)
+	expvar_names = fp.theta_names + fp.d_names
+	expvar_dists = [prior[0] for prior in fp.priors] + [prior[0] for prior in fp.d_dists]
+	expvar_bounds=[prior[1] for prior in fp.priors] + [prior[1] for prior in fp.d_dists]
+		
+	Si_1 = sobol_saltelli(eta_1, 
+						2**6, #SALib wants powers of 2 for convergence
+						var_names=expvar_names, 
+						var_dists=expvar_dists, 
+						var_bounds=expvar_bounds, 
+						conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)
+						
+	Si_1 = sobol_saltelli(eta_2, 
+						2**6, #SALib wants powers of 2 for convergence
+						var_names=expvar_names, 
+						var_dists=expvar_dists, 
+						var_bounds=expvar_bounds, 
+						conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)
+						
+	Si_1 = sobol_saltelli(eta_3, 
+						2**6, #SALib wants powers of 2 for convergence
+						var_names=expvar_names, 
+						var_dists=expvar_dists, 
+						var_bounds=expvar_bounds, 
+						conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)
+"""						
+
+
+def fp_vv_mcmc_convergence(): #convergence study with mcmc_multivar
+	print("Generating kernel",flush=True)
+	n_kde_axis = 47 #47^3 equals about 10^5
+	kde_gains = np.linspace(0,3,n_kde_axis)
+	kde_rn = np.linspace(1,4,n_kde_axis)
+	kde_dc = np.linspace(0,.01,n_kde_axis)
+	kde_thetas = np.vstack((np.meshgrid(kde_gains, kde_rn, kde_dc))).reshape(3,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
+	#uncertainty_prop_plots(kde_thetas, xlabs=['gain','rn','dc'])
+	kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
+	#uncertainty_prop_plots(kde_ys, xlabs=['Y0','Y1','Y2'])
+	likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys)
+	kde_plot(likelihood_kernel, kde_ythetas, plotStyle='together', ynames=['gain','rn','dc','y1','y2','y3']) #this guy is 6d? or 3d? dont know how to plot it
 	
-	def proposal_fn_gamma(theta_curr, proposal_width):
-		theta_prop = [0] * len(theta_curr)
-		for i,_ in enumerate(theta_prop):
-			#proposal dists are gammas, to match
-			mean = abs(theta_curr[i])
-			stddev = proposal_width
-			variance = [w**2 for w in stddev]
-			alpha = mean**2 / variance
-			beta = mean / variance
-			theta_prop[i] = scipy.stats.gamma.rvs(size=1, a=alpha, scale=1.0/beta)[0]
-		return theta_prop
-		
-	def proposal_fn_norm(theta_curr, proposal_width):
-		theta_prop = [0] * len(theta_curr)
-		for i,_ in enumerate(theta_prop):
-			#proposal dists are gammas, to match
-			mean = abs(theta_curr[i])
-			stddev = proposal_width[i]
-			theta_prop[i] = scipy.stats.norm.rvs(size=1, loc=mean, scale=stddev)[0]
-		return theta_prop
-		
-	if False: #convergence study with mcmc_multivar
-		print("Generating kernel",flush=True)
-		n_kde_axis = 47 #47^3 equals about 10^5
-		kde_gains = np.linspace(0,3,n_kde_axis)
-		kde_rn = np.linspace(1,4,n_kde_axis)
-		kde_dc = np.linspace(0,.01,n_kde_axis)
-		kde_thetas = np.vstack((np.meshgrid(kde_gains, kde_rn, kde_dc))).reshape(3,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
-		#uncertainty_prop_plots(kde_thetas, xlabs=['gain','rn','dc'])
-		kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
-		#uncertainty_prop_plots(kde_ys, xlabs=['Y0','Y1','Y2'])
-		likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys)
-		kde_plot(likelihood_kernel, kde_ythetas, plotStyle='together', ynames=['gain','rn','dc','y1','y2','y3']) #this guy is 6d? or 3d? dont know how to plot it
-		
-		print("mcmc convergence study",flush=True)
-		#crucially, this is being evaluated at y=y_nominal. Good and representative, but we'll have to check robustness after.
-		n_mcmc = 10**5
+	print("mcmc convergence study",flush=True)
+	#crucially, this is being evaluated at y=y_nominal. Good and representative, but we'll have to check robustness after.
+	n_mcmc = 10**5
+	prop_fn = proposal_fn_norm
+	#prop_width = [.1,.05,.0001] #rough guess from looking at prior + a few short runs - did 10**5 run
+	#prop_width = [5.17612361e-05, 2.53953018e-02, 3.24906620e-07] #from covariance of the above study #this led to 89% acceptance rate, too high! #whoops, used variance instead of stddev
+	prop_width = [0.0071945282048228735, 0.15935903430820628, 0.0005700058073427601] #stddev from first study
+	mcmc_trace, arate, rrate = mcmc_kernel(y_nominal, likelihood_kernel, prop_fn, prop_width, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, burnin=0, lag=1, doPlot=True, legend=fp.theta_names, doPrint=True)
+	print(arate, rrate)
+	
+	#save data, do analysis and plots
+	with open('mcmc.csv', 'w', newline='') as csvfile:
+		csvwriter = csv.writer(csvfile, delimiter=' ')
+		for theta in mcmc_trace:
+			csvwriter.writerow(theta)
+	print("mean, stddev, covariance of posterior sample:")
+	means, stddevs, cov = mcmc_analyze(mcmc_trace,doPlot=True)
+	print(means)
+	print(stddevs)
+	print(cov)
+	uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Gain [ADU/e-]")
+	uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
+	uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
+
+#if False: #play with mcmc_nolikelihood
+#	#This is really too slow, so I want to stay away from it
+#	print("mcmc",flush=True)
+#	n_kde = 10**4
+#	n_mcmc = 10**2
+#	prop_fn = proposal_fn_gamma
+#	prop_width = [.3,.3,.002]
+#	mcmc_trace, arate, rrate = mcmc_nolikelihood(y_nominal, d_historical, fp.eta, proposal_fn_norm, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, n_kde, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
+#	print("acceptance rate",arate, "randomwalk rate", rrate)
+	
+###mcmc robustness study
+def fp_vv_mcmc_robustness():
+	#this value should be a good one derived from the above
+	prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282]
+
+	print("Generating kernel",flush=True)
+	n_kde_axis = 47 #47^3 equals about 10^5
+	kde_gains = np.linspace(0,3,n_kde_axis)
+	kde_rn = np.linspace(1,4,n_kde_axis)
+	kde_dc = np.linspace(0,.01,n_kde_axis)
+	kde_thetas = np.vstack((np.meshgrid(kde_gains, kde_rn, kde_dc))).reshape(3,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
+	kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
+	likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys)
+	
+	print("mcmc convergence robustness study",flush=True)
+	for ysample in [fp.eta(tt, d_historical) for tt in fp.prior_rvs(5)]:
+		print("ysample mcmc test:",ysample)
+		n_mcmc = 6000
 		prop_fn = proposal_fn_norm
-		#prop_width = [.1,.05,.0001] #rough guess from looking at prior + a few short runs - did 10**5 run
-		#prop_width = [5.17612361e-05, 2.53953018e-02, 3.24906620e-07] #from covariance of the above study #this led to 89% acceptance rate, too high! #whoops, used variance instead of stddev
-		prop_width = [0.0071945282048228735, 0.15935903430820628, 0.0005700058073427601] #stddev from first study
-		mcmc_trace, arate, rrate = mcmc_kernel(y_nominal, likelihood_kernel, prop_fn, prop_width, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
-		print(arate, rrate)
-		
-		#save data, do analysis and plots
-		with open('mcmc.csv', 'w', newline='') as csvfile:
-			csvwriter = csv.writer(csvfile, delimiter=' ')
-			for theta in mcmc_trace:
-				csvwriter.writerow(theta)
-		print("mean, stddev, covariance of posterior sample:")
+		mcmc_trace, arate, rrate = mcmc_kernel(ysample, likelihood_kernel, proposal_fn_norm, prop_width, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, burnin=300, lag=1, doPlot=True, legend=fp.theta_names, doPrint=True)
+		print(arate, rrate, "			")
 		means, stddevs, cov = mcmc_analyze(mcmc_trace,doPlot=True)
-		print(means)
-		print(stddevs)
+		print("mean of posterior sample", means)
+		print("stddev of posterior sample", stddevs)
+		print("covariance of posterior sample")
 		print(cov)
 		uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Gain [ADU/e-]")
 		uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
 		uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
-	
-	#if False: #play with mcmc_nolikelihood
-	#	#This is really too slow, so I want to stay away from it
-	#	print("mcmc",flush=True)
-	#	n_kde = 10**4
-	#	n_mcmc = 10**2
-	#	prop_fn = proposal_fn_gamma
-	#	prop_width = [.3,.3,.002]
-	#	mcmc_trace, arate, rrate = mcmc_nolikelihood(y_nominal, d_historical, fp.eta, proposal_fn_norm, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, n_kde, burnin=0, lag=1, doPlot=True, legend=fp.theta_names)
-	#	print("acceptance rate",arate, "randomwalk rate", rrate)
-		
-	###mcmc robustness study
-	if False:
-		#this value should be a good one derived from the above
-		prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282]
 
-		print("Generating kernel",flush=True)
-		n_kde_axis = 47 #47^3 equals about 10^5
-		kde_gains = np.linspace(0,3,n_kde_axis)
-		kde_rn = np.linspace(1,4,n_kde_axis)
-		kde_dc = np.linspace(0,.01,n_kde_axis)
-		kde_thetas = np.vstack((np.meshgrid(kde_gains, kde_rn, kde_dc))).reshape(3,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
-		kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
-		likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys)
-		
-		print("mcmc convergence robustness study",flush=True)
-		for ysample in [fp.eta(tt, d_historical) for tt in fp.prior_rvs(5)]:
-			print("ysample mcmc test:",ysample)
-			n_mcmc = 6000
-			prop_fn = proposal_fn_norm
-			mcmc_trace, arate, rrate = mcmc_kernel(ysample, likelihood_kernel, proposal_fn_norm, prop_width, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, burnin=300, lag=1, doPlot=True, legend=fp.theta_names)
-			print(arate, rrate, "            ")
-			means, stddevs, cov = mcmc_analyze(mcmc_trace,doPlot=True)
-			print("mean of posterior sample", means)
-			print("stddev of posterior sample", stddevs)
-			print("covariance of posterior sample")
-			print(cov)
-			uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Gain [ADU/e-]")
-			uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
-			uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
+###pickle the kernel!
+def fp_vv_kernel_pickle(dd, name='likelihood_kernel.pkl'):
+	print("Generating kernel",flush=True)
+	n_kde_axis = 50 #47^3 equals about 10^5
+	kde_gains = np.linspace(0,3,n_kde_axis)
+	kde_rn = np.linspace(1,4,n_kde_axis)
+	kde_dc = np.linspace(0,.01,n_kde_axis)
+	kde_thetas = np.vstack((np.meshgrid(kde_gains, kde_rn, kde_dc))).reshape(3,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
+	kde_ys = [fp.eta(theta, dd) for theta in kde_thetas]
+	likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys)
 	
-	###look at mcmc posterior
-	if False:
-		#this value should be a good one derived from the above
-		prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282]
-		
-		print("Generating kernel",flush=True)
-		n_kde_axis = 47 #47^3 equals about 10^5
-		kde_gains = np.linspace(0,3,n_kde_axis)
-		kde_rn = np.linspace(1,4,n_kde_axis)
-		kde_dc = np.linspace(0,.01,n_kde_axis)
-		kde_thetas = np.vstack((np.meshgrid(kde_gains, kde_rn, kde_dc))).reshape(3,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
-		kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
-		likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys)
+	print("pickle it!")
+	with open(name, 'wb') as f:
+		dill.dump(likelihood_kernel, f)
+
+###obed analysis -- naive multiprocessing approach
+def fp_vv_obed_1machine():
+	print("Generating kernel",flush=True)
+	n_kde_axis = 47 #47^3 equals about 10^5
+	kde_gains = np.linspace(0,3,n_kde_axis)
+	kde_rn = np.linspace(1,4,n_kde_axis)
+	kde_dc = np.linspace(0,.01,n_kde_axis)
+	kde_thetas = np.vstack((np.meshgrid(kde_gains, kde_rn, kde_dc))).reshape(3,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
+	kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
+	likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys)
+
+	print("starting obed",flush=True)
+	prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282] #stddev from last study
+
+	U, U_list = U_probreq_multi(d_historical, fp, proposal_fn_norm, prop_width, likelihood_kernel, maxreq=3.0, n_mc=1000, n_mcmc=2000, burnin=300, lag=1, doPrint=True)
+	print(U)
+	print(U_list)
+	uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U", saveFig='OBEDresult')
 	
-		print("running mcmc")
-		n_mcmc = 6000
-		prop_fn = proposal_fn_norm
-		mcmc_trace, arate, rrate = mcmc_kernel(y_nominal, likelihood_kernel, proposal_fn_norm, prop_width, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc, burnin=300, lag=1, doPlot=True, legend=fp.theta_names)
+###obed analysis -- robust for sbatch, one step of the monte carlo
+def fp_vv_obed_cluster(d, kernel_pkl):
+	print("starting obed",flush=True)
+	prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282] #stddev from last study
+
+	U = U_probreq_1step(d_historical, fp, proposal_fn_norm, prop_width, kernel_pkl, maxreq=3.0, n_mcmc=2000, burnin=300, lag=1, doPrint=True)
+
+def fp_vv_plot_obed_results(file)
+	H_theta_posterior = []
+	with open(file) as csvfile:
+		csvreader = csv.reader(csvfile, delimiter=',')
+		for row in csvreader:
+			H_theta_posterior.append(float(row[0]))
 	
-		print("check H posterior")
-		H_theta_posterior = [fp.H(theta) for theta in mcmc_trace]
-		uncertainty_prop_plot(H_theta_posterior, c='orangered', xlab="Posterior QoI: Avg. Noise [e-]")
-		
-		num_true = 0
-		for h in H_theta_posterior:
-			num_true += int(h <= req)
-		prob = num_true / len(H_theta_posterior) #is this the best estimator for a probability?
-		print("Posterior probability of meeting requirement:", prob)
+	uncertainty_prop_plot(H_theta_posterior, c='royalblue', xlab="specific U")
+	print(np.mean(H_theta_posterior))
 
-	if False:
-		H_theta_posterior = []
-		with open("output_50549287.txt") as csvfile:
-			csvreader = csv.reader(csvfile, delimiter=',')
-			for row in csvreader:
-				H_theta_posterior.append(float(row[0]))
-		
-		uncertainty_prop_plot(H_theta_posterior, c='royalblue', xlab="specific U")
-		print(np.mean(H_theta_posterior))
-
-
-	#obed analysis
-	#U, U_list = U_probreq(d_historical, fp, maxreq=3.0, n_mc=100, n_mcmc=1000, burnin=0, lag=1)
-	#print(U)
-	#print(U_list)
+if __name__ == '__main__':  
+	#fp_vv_nominal()
+	#fp_vv_UP_QoI()
+	#fp_vv_SA_QoI()
+	#fp_vv_UP_exp()
+	#fp_vv_SA_exp()
+	#fp_vv_mcmc_convergence()
+	#fp_vv_mcmc_robustness()
+	#fp_vv_kernel_pickle(d_historical, name='likelihood_kernel_dhistorical.pkl')
+	#fp_vv_kernel_pickle(d_best, name='likelihood_kernel_dbest.pkl')
+	#fp_vv_kernel_pickle(d_worst, name='likelihood_kernel_dworst.pkl')
+	#fp_vv_obed_1machine()
+	fp_vv_obed_cluster(d_historical, "likelihood_kernel.pkl")
+	#fp_vv_plot_obed_results(xxx)
