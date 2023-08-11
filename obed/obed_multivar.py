@@ -160,3 +160,40 @@ def U_probreq_1step(d, problem, mcmc_proposal, prop_width, kernel_pickle, minreq
 		
 	#compute an in-distribution probability
 	return u
+	
+	
+def U_probreq_1step_nokernel(d, problem, mcmc_proposal, prop_width, minreq=None, maxreq=None, n_mcmc=10**3, n_pde=1000, burnin=0, lag=1, doPrint=True):   
+	#requirement: do min, max, or both, but not neither
+	if minreq==None and maxreq==None:
+		print("U_probreq needs a requirement on the QoI in order to determine probability")
+		exit()
+	
+	#Generate one y sampled from likelihood fn, p(y|theta,d)p(theta)
+	ptheta = problem.prior_rvs(1)
+	Y1 = problem.eta(ptheta, d)
+	
+	mcmc_trace,_,_ = mcmc_multigauss_likelihood(Y1, d, mcmc_proposal, prop_width, problem.eta, problem.prior_rvs, problem.prior_pdf_unnorm, n_mcmc, n_pde, burnin, lag, doPlot=False, doPrint=False)
+
+	#Now, use my posterior samples to calculate H(theta|y,d) samples
+	H_theta_posterior = [problem.H(theta) for theta in mcmc_trace]
+	
+	#compute a specific probability P(H > req)
+	#easily calculated with sample probability, just count em up and find the ratio
+	num_true = 0
+	for h in H_theta_posterior:
+		#check if requirement is satisfied, ignoring None's:
+		#if (minreq==None and h <= maxreq) or (h >= minreq and maxreq==None) or (h >= minreq and h <= maxreq):
+		if minreq==None:
+			num_true += int(h <= maxreq)
+		elif maxreq==None:
+			num_true += int(h >= minreq)
+		else:
+			num_true += int(h <= maxreq and h >= minreq)
+	prob = num_true / len(H_theta_posterior)
+	u = prob
+
+	if doPrint:
+		print(str(u)+",",str(Y1),flush=True)
+		
+	#compute an in-distribution probability
+	return u
