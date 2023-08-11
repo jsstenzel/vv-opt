@@ -97,5 +97,20 @@ def kde_plot(likelihood, sample, plotStyle='separate', center=[], res=1000, ynam
 #runs eta(theta,d) many times,
 #grabs the histograms of y of those evaluations
 #and coarsely estimates pdf(y) from that
+#(This kinda assumes that theres no covariance in the data...)
 def eta_histogram_pdf(y, theta, d, eta):
 	0
+	
+#this function assumes that there will be a gaussian form of the likelihood.
+#runs eta(theta,d) many times,
+#runs np.mean and np.cov on each dimension,
+#and calculates returns pdf(y) for the multivariate gaussian
+def eta_multigaussian_logpdf(y, theta, d, eta, n_pde=1000):
+	ysample = [eta(theta, d) for _ in range(n_pde)]
+	means = np.mean(ysample, axis=0)
+	
+	conditioned_ysample = [[yi/means[i] for i,yi in enumerate(yy)] for yy in ysample]
+	conditioned_y = [yi/means[i] for i,yi in enumerate(y)]
+	
+	covs = np.cov(conditioned_ysample, rowvar=False, ddof=1)
+	return scipy.stats.multivariate_normal.logpdf(conditioned_y, mean=[1 for _ in means], cov=covs)
