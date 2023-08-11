@@ -151,6 +151,8 @@ def mcmc_multigauss_likelihood(y, d, prop_fn, prop_width, eta, prior_rvs, prior_
 	N = n_mcmc*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
 	
 	theta_current = prior_rvs(1)
+	loglikelihood_current = eta_multigaussian_logpdf(y, theta_current, d, eta, n_pde)
+
 	mcmc_trace = []
 	acceptance_count = 0
 	randwalk_count = 0
@@ -162,7 +164,6 @@ def mcmc_multigauss_likelihood(y, d, prop_fn, prop_width, eta, prior_rvs, prior_
 		theta_proposal = prop_fn(theta_current, prop_width)
 		
 		#Compute likelihood of the "data" for both thetas with the provided kernel
-		loglikelihood_current = eta_multigaussian_logpdf(y, theta_current, d, eta, n_pde) #using kde to estimate pdf
 		loglikelihood_proposal = eta_multigaussian_logpdf(y, theta_proposal, d, eta, n_pde) #calc probability at the data y
 		
 		#Compute acceptance ratio
@@ -185,6 +186,7 @@ def mcmc_multigauss_likelihood(y, d, prop_fn, prop_width, eta, prior_rvs, prior_
 		#Accept our new value of theta according to the acceptance probability R:
 		if np.random.random_sample() < R:
 			theta_current = theta_proposal
+			loglikelihood_current = loglikelihood_proposal
 			acceptance_count += 1
 		#Include theta_current in my trace according to rules
 		if i > burnin and i%lag == 0:

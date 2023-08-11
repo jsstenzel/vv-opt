@@ -76,7 +76,6 @@ d_worst = [
 		]
 		
 y_nominal = fp_likelihood_fn(dict(zip(fp.theta_names, theta_nominal)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)
-print(y_nominal)
 
 ################################
 #Analysis functions
@@ -340,10 +339,10 @@ def fp_vv_test_mcmc_multigauss():
 	uncertainty_prop_plots(mcmc_trace, c='limegreen', xlabs=["Gain [ADU/e-]","Read noise [e-]","Dark current [e-/s]"])
 	
 def fp_vv_obed_nokernel_cluster(d):
-	print("starting obed",flush=True)
+	#print("starting obed",flush=True)
 	prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282] #stddev from last study
 
-	U = U_probreq_1step(d_historical, fp, proposal_fn_norm, prop_width, maxreq=3.0, n_mcmc=2000, n_pde=1000, burnin=300, lag=1, doPrint=True)
+	U = U_probreq_1step_nokernel(d_historical, fp, proposal_fn_norm, prop_width, maxreq=3.0, n_mcmc=2000, n_pde=1000, burnin=300, lag=1, doPrint=True)
 
 
 if __name__ == '__main__':  
@@ -374,4 +373,4 @@ if __name__ == '__main__':
 	#fp_vv_plot_obed_results(xxx)
 	
 	#fp_vv_test_mcmc_multigauss()
-	#fp_vv_obed_nokernel_cluster(d_historical)
+	fp_vv_obed_nokernel_cluster(d_historical)
