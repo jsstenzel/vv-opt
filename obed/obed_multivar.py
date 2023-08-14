@@ -193,7 +193,7 @@ def U_probreq_1step_nokernel(d, problem, mcmc_proposal, prop_width, minreq=None,
 	u = prob
 
 	if doPrint:
-		print(str(u)+",",str(Y1),flush=True)
+		print(str(u)+",",str(Y1)+",",str(np.mean(H_theta_posterior))+",",str(np.std(H_theta_posterior, ddof=1)), flush=True)
 		
 	#compute an in-distribution probability
 	return u
