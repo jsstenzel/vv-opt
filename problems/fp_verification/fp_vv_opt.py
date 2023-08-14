@@ -76,6 +76,7 @@ d_worst = [
 		]
 		
 y_nominal = fp_likelihood_fn(dict(zip(fp.theta_names, theta_nominal)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)
+print(y_nominal)
 
 ################################
 #Analysis functions
@@ -329,20 +330,31 @@ def fp_vv_plot_obed_results(file):
 	uncertainty_prop_plot(H_theta_posterior, c='royalblue', xlab="specific U")
 	print(np.mean(H_theta_posterior))
 	
-def fp_vv_test_mcmc_multigauss():
-	print("likelihood for ynominal given d_historical, theta_nominal:",eta_multigaussian_logpdf(y_nominal, theta_nominal, d_historical, fp.eta, n_pde=1000))
-	print("likelihood for ynominal given d_best, theta_nominal:",eta_multigaussian_logpdf(y_nominal, theta_nominal, d_best, fp.eta, n_pde=1000))
-	print("likelihood for ynominal given d_worst, theta_nominal:",eta_multigaussian_logpdf(y_nominal, theta_nominal, d_worst, fp.eta, n_pde=1000))
+def fp_vv_test_mcmc_multigauss(yy, dd):
+	print("likelihood for ynominal given d_historical, theta_nominal:",eta_multigaussian_logpdf(yy, theta_nominal, d_historical, fp.eta, n_pde=1000))
+	print("likelihood for ynominal given d_best, theta_nominal:",eta_multigaussian_logpdf(yy, theta_nominal, d_best, fp.eta, n_pde=1000))
+	print("likelihood for ynominal given d_worst, theta_nominal:",eta_multigaussian_logpdf(yy, theta_nominal, d_worst, fp.eta, n_pde=1000))
 	
-	prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282] #stddev from last study
-	mcmc_trace,_,_ = mcmc_multigauss_likelihood(y_nominal, d_historical, proposal_fn_norm, prop_width, fp.eta, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc=10, n_pde=1000, burnin=0, lag=1, doPlot=True, legend=fp.theta_names, doPrint=True)
-	uncertainty_prop_plots(mcmc_trace, c='limegreen', xlabs=["Gain [ADU/e-]","Read noise [e-]","Dark current [e-/s]"])
+	#prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282] #stddev from last study
+	#prop_width = [0.041611630365979, 0.10940214095948413, 0.000450389972410815] #stddev from last study
+	#prop_width = [0.006926202819087436, 0.015325690043958649, 0.00019200217277796547]
+	prop_width = [0.007931095589546992, 0.018919515987306634, 0.00017949891623054683]
+	mcmc_trace,_,_ = mcmc_multigauss_likelihood(yy, dd, proposal_fn_norm, prop_width, fp.eta, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc=5000, n_pde=1000, burnin=300, lag=1, doPlot=True, legend=fp.theta_names, doPrint=True)
 	
-def fp_vv_obed_nokernel_cluster(d):
-	#print("starting obed",flush=True)
-	prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282] #stddev from last study
+	print("mean, stddev, covariance of posterior sample:")
+	means, stddevs, cov = mcmc_analyze(mcmc_trace,doPlot=True)
+	print(means)
+	print(stddevs)
+	print(cov)
+	uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Gain [ADU/e-]")
+	uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
+	uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
+	
+def fp_vv_obed_nokernel_cluster(dd):
+	print("starting obed",flush=True)
+	prop_width = [0.007931095589546992, 0.018919515987306634, 0.00017949891623054683] #stddev from multigauss mcmc study
 
-	U = U_probreq_1step_nokernel(d_historical, fp, proposal_fn_norm, prop_width, maxreq=3.0, n_mcmc=2000, n_pde=1000, burnin=300, lag=1, doPrint=True)
+	U = U_probreq_1step(dd, fp, proposal_fn_norm, prop_width, maxreq=3.0, n_mcmc=3000, n_pde=1000, burnin=300, lag=1, doPrint=True)
 
 
 if __name__ == '__main__':  
@@ -356,7 +368,7 @@ if __name__ == '__main__':
 	#fp_vv_UP_exp(d_best, False)
 	#fp_vv_UP_exp(d_worst, False)
 	
-	fp_vv_SA_exp(d_historical)
+	#fp_vv_SA_exp(d_historical)
 	
 	#fp_vv_mcmc_convergence()
 	
@@ -372,5 +384,5 @@ if __name__ == '__main__':
 	
 	#fp_vv_plot_obed_results(xxx)
 	
-	#fp_vv_test_mcmc_multigauss()
+	#fp_vv_test_mcmc_multigauss(y_nominal, d_historical)
 	fp_vv_obed_nokernel_cluster(d_historical)
