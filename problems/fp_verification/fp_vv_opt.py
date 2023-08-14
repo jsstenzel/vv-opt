@@ -16,7 +16,7 @@ from obed.obed_multivar import *
 from obed.mcmc import *
 from obed.pdf_estimation import *
 from uq.uncertainty_propagation import *
-from uq.sensitivity_analysis import *
+#from uq.sensitivity_analysis import *
 
 ################################
 #Useful definitions
@@ -76,7 +76,7 @@ d_worst = [
 		]
 		
 y_nominal = fp_likelihood_fn(dict(zip(fp.theta_names, theta_nominal)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)
-print(y_nominal)
+#print(y_nominal)
 
 ################################
 #Analysis functions
@@ -351,11 +351,10 @@ def fp_vv_test_mcmc_multigauss(yy, dd):
 	uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
 	
 def fp_vv_obed_nokernel_cluster(dd):
-	print("starting obed",flush=True)
+	#print("starting obed",flush=True)
 	prop_width = [0.007931095589546992, 0.018919515987306634, 0.00017949891623054683] #stddev from multigauss mcmc study
 
-	U = U_probreq_1step(dd, fp, proposal_fn_norm, prop_width, maxreq=3.0, n_mcmc=3000, n_pde=1000, burnin=300, lag=1, doPrint=True)
-
+	U = U_probreq_1step_nokernel(d_historical, fp, proposal_fn_norm, prop_width, maxreq=3.0, n_mcmc=2000, n_pde=1000, burnin=300, lag=1, doPrint=True)
 
 if __name__ == '__main__':  
 	#fp_vv_nominal()

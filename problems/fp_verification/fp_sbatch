@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --ntasks-per-node=20
-#SBATCH --nodes=2 #--nodes #Request nodes
+#SBATCH --nodes=4 #Request nodes
 #SBATCH -t 0-06:00 #Request time
 #SBATCH -p newnodes
 #SBATCH --mem-per-cpu=1000 #Request .1G's of memory per CPU
