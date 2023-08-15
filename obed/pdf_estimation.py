@@ -113,6 +113,7 @@ def eta_multigaussian_logpdf(y, theta, d, eta, n_pde=1000):
 	conditioned_y = [yi/means[i] - 1.0 for i,yi in enumerate(y)]
 	
 	covs = np.cov(conditioned_ysample, rowvar=False, ddof=1)
-	for i,_ in enumerate(covs):
-		covs[i][i] += 1e-6
+	if len(y) > 1:
+		for i,_ in enumerate(covs):
+			covs[i][i] += 1e-6
 	return scipy.stats.multivariate_normal.logpdf(conditioned_y, mean=[0 for _ in means], cov=covs, allow_singular=True)
