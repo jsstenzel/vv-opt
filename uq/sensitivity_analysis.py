@@ -56,7 +56,7 @@ def sobol_saltelli(function, N, var_names, var_dists, var_bounds, conf = 0.95, d
 			dists[j] = 'unif'
 		elif dist == 'triang' or dist == 'triangle':
 			dists[j] = 'triang'
-		elif dist == 'norm' or dist == 'normal':
+		elif dist == 'norm' or dist == 'normal' or dist == 'gaussian':
 			dists[j] = 'norm'
 		elif dist == 'lognorm' or dist == 'lognormal':
 			dists[j] = 'lognorm'
