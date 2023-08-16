@@ -1,0 +1,19 @@
+#!/bin/bash
+#SBATCH --ntasks-per-node=20
+#SBATCH --nodes=2 #Request nodes
+#SBATCH -t 0-02:00 #Request time
+#SBATCH -p newnodes
+#SBATCH --mem-per-cpu=1000 #Request .1G's of memory per CPU
+#SBATCH -o output_%j.txt #redirect output to output_JOBID.txt
+#SBATCH -e error_%j.txt #redirect errors to error_JOBID.txt
+#SBATCH --mail-type=BEGIN,END #Mail when job starts and ends
+#SBATCH --mail-user=jstenzel@mit.com #email recipient
+
+for i in {1..1000}
+do
+  srun -N1 -n1 -c1 --exclusive python3 toy_vv_opt.py &
+
+done
+
+wait
+

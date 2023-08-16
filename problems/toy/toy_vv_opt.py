@@ -311,7 +311,7 @@ def toy_vv_test_mcmc_multigauss(yy, dd):
 
 
 
-def toy_vv_obed_nokernel_cluster(dd):
+def toy_vv_obed_nokernel_cluster(dd=d_historical):
 	#print("starting obed",flush=True)
 	prop_width = [0.17449416794749348] #stddev from multigauss mcmc study
 
@@ -319,7 +319,7 @@ def toy_vv_obed_nokernel_cluster(dd):
 
 
 if __name__ == '__main__':  
-	toy_vv_nominal()
+	#toy_vv_nominal()
 	
 	#toy_vv_UP_QoI()
 	
@@ -343,9 +343,13 @@ if __name__ == '__main__':
 	#toy_vv_obed_cluster(d_historical, "likelihood_kernel.pkl")
 	"""
 	
-	toy_vv_test_mcmc_multigauss(y_nominal, d_historical)
+	#toy_vv_test_mcmc_multigauss(y_nominal, d_historical)
 	
-	#for i in range(1):
-	#	toy_vv_obed_nokernel_cluster(d_historical)
+	toy_vv_obed_nokernel_cluster(d_historical)
+	
+	#print("toy_vv_obed_nokernel_cluster running on ",mp.cpu_count(),"processors.")
+	#with mp.Pool() as pool:
+	#	do_list = range(10)
+	#	OBED_list = pool.map(toy_vv_obed_nokernel_cluster, do_list)
 
 	#toy_vv_plot_obed_results('output_multigauss_fulldata.txt')
