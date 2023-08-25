@@ -321,14 +321,26 @@ def fp_vv_obed_cluster(d, kernel_pkl):
 	U = U_probreq_1step(d_historical, fp, proposal_fn_norm, prop_width, kernel_pkl, maxreq=3.0, n_mcmc=2000, burnin=300, lag=1, doPrint=True)
 
 def fp_vv_plot_obed_results(file):
-	H_theta_posterior = []
+	u = []
+	H_mean = []
+	H_stddev = []
 	with open(file) as csvfile:
 		csvreader = csv.reader(csvfile, delimiter=',')
 		for row in csvreader:
-			H_theta_posterior.append(float(row[0]))
+			u.append(float(row[0]))
+			H_mean.append(float(row[4]))
+			H_stddev.append(float(row[5]))
 	
-	uncertainty_prop_plot(H_theta_posterior, c='royalblue', xlab="specific U")
-	print(np.mean(H_theta_posterior))
+	uncertainty_prop_plot(u, c='royalblue', xlab="specific U from MC")
+	uncertainty_prop_plot(H_mean, c='royalblue', xlab="H means from MC")
+	uncertainty_prop_plot(H_stddev, c='royalblue', xlab="H stddevs from MC")
+	print("MC-mean probability of meeting requirement:",np.mean(u))
+	print("MC-mean of H_posterior mean:",np.mean(H_mean))
+	print("   Probability of MC-mean meeting requirement:",len([1 for hmean in H_mean if hmean<3.0])/len(H_mean))
+	print("MC-mean of H_posterior stddev:",np.mean(H_stddev))
+	
+	plt.scatter(H_mean, H_stddev)
+	plt.show()
 	
 def fp_vv_test_mcmc_multigauss(yy, dd):
 	print("likelihood for ynominal given d_historical, theta_nominal:",eta_multigaussian_logpdf(yy, theta_nominal, d_historical, fp.eta, n_pde=1000))
