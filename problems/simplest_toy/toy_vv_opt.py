@@ -94,22 +94,33 @@ def __reloop_u_plot_pareto():
     G_list = []
     for d in d_list:
         print("d =",d,'...',flush=True)
-        u, _ = U_reloop_varH(d, eta, H, empty, Ptheta_rvs, Ptheta_pdf, n1=3000, n2=1000, burnin=0, lag=1)
-        u_list.append(u)
+        #u, _ = U_reloop_varH(d, eta, H, empty, Ptheta_rvs, Ptheta_pdf, n1=3000, n2=1000, burnin=0, lag=1)
+        #u_list.append(u)
         G_list.append(Gamma(d))
         
-    with open('reloop_u_plot_pareto.csv', 'w+', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(u_list)
+    #with open('reloop_u_plot_pareto.csv', 'w+', newline='') as csvfile:
+    #    writer = csv.writer(csvfile)
+    #    writer.writerow(u_list)
         
+    """        
     plt.plot(d_list, u_list, 'g')
+    plt.xlabel("d")
+    plt.ylabel("u")
+    plt.show()
     plt.plot(d_list, G_list, 'r')
     plt.xlabel("d")
-    plt.ylabel("u, Γ")
+    plt.ylabel("Γ")
     plt.show()
     plt.plot(G_list,u_list)
     plt.xlabel("Γ")
     plt.ylabel("u")
+    plt.show()
+    """    
+
+    varH_list = [0.032763696,0.171052169,0.493077308,1.051631679,1.656978345,2.119889808,2.749410664,3.871913955,4.961750993,]
+    plt.plot(d_list,varH_list, c='orange')
+    plt.xlabel("d")
+    plt.ylabel("Var(H_posterior)")
     plt.show()
     
     
@@ -342,4 +353,4 @@ def __loop2_convergence():
 	print("N for convergence is", len(U_trace), ", mean U is", np.mean(U_trace))
 	
     
-__reloop_u_plot_pareto()
+calc_likelihood_kernel(0.1, eta, Ptheta_rvs, n1=10000, c='r', showplot=True)
