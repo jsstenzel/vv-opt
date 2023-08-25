@@ -43,7 +43,7 @@ def proposal_fn_norm(theta_curr, proposal_width):
 		theta_prop[i] = scipy.stats.norm.rvs(size=1, loc=mean, scale=stddev)[0]
 	return theta_prop
 
-req = 3.0 #max noise
+req = 4.0 #max noise
 
 theta_nominal = [1.1, 2.5, .001]
 QoI_nominal = fp.H(theta_nominal)
@@ -235,6 +235,8 @@ def fp_vv_mcmc_convergence(): #convergence study with mcmc_multivar
 	print(means)
 	print(stddevs)
 	print(cov)
+	H_posterior = [fp.H(tt) for tt in mcmc_trace]
+	print("Posterior probability of meeting the requirement: ", np.sum([int(h <= maxreq) for h in H_posterior])/len(H_posterior))
 	uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Gain [ADU/e-]")
 	uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
 	uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
@@ -358,6 +360,8 @@ def fp_vv_test_mcmc_multigauss(yy, dd):
 	print(means)
 	print(stddevs)
 	print(cov)
+	H_posterior = [fp.H(tt) for tt in mcmc_trace]
+	print("Posterior probability of meeting the requirement: ", np.sum([int(h <= maxreq) for h in H_posterior])/len(H_posterior))
 	uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Gain [ADU/e-]")
 	uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
 	uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
@@ -369,9 +373,9 @@ def fp_vv_obed_nokernel_cluster(dd):
 	U = U_probreq_1step_nokernel(d_historical, fp, proposal_fn_norm, prop_width, maxreq=3.0, n_mcmc=2000, n_pde=1000, burnin=300, lag=1, doPrint=True)
 
 if __name__ == '__main__':  
-	#fp_vv_nominal()
+	fp_vv_nominal()
 	
-	#fp_vv_UP_QoI()
+	fp_vv_UP_QoI()
 	
 	#fp_vv_SA_QoI()
 	
@@ -393,7 +397,10 @@ if __name__ == '__main__':
 	
 	#fp_vv_obed_cluster(d_historical, "likelihood_kernel.pkl")
 	
-	#fp_vv_plot_obed_results(xxx)
+	#fp_vv_plot_obed_results('output_51032713_dinsane.txt')
 	
-	#fp_vv_test_mcmc_multigauss(y_nominal, d_historical)
-	fp_vv_obed_nokernel_cluster(d_historical)
+	fp_vv_test_mcmc_multigauss(y_nominal, d_historical)
+	fp_vv_test_mcmc_multigauss(y_nominal, d_worst)
+	fp_vv_test_mcmc_multigauss(y_nominal, d_best)
+	#for i in range(1000):
+	#	fp_vv_obed_nokernel_cluster(d_historical)
