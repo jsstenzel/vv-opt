@@ -319,15 +319,15 @@ def toy_vv_obed_nokernel_cluster(dd=d_historical):
 
 
 if __name__ == '__main__':  
-	#toy_vv_nominal()
+	toy_vv_nominal()
 	
-	#toy_vv_UP_QoI()
+	toy_vv_UP_QoI()
 	
-	#toy_vv_SA_QoI()
+	toy_vv_SA_QoI()
 	
-	#toy_vv_UP_exp(d_historical, False)
+	toy_vv_UP_exp(d_historical, False)
 	
-	#toy_vv_SA_exp(d_historical)
+	toy_vv_SA_exp(d_historical)
 	
 	"""
 	#toy_vv_mcmc_convergence()
