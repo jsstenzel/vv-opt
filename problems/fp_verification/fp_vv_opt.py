@@ -43,7 +43,7 @@ def proposal_fn_norm(theta_curr, proposal_width):
 		theta_prop[i] = scipy.stats.norm.rvs(size=1, loc=mean, scale=stddev)[0]
 	return theta_prop
 
-req = 4.0 #max noise
+req = 5.0 #max noise
 
 theta_nominal = [1.1, 2.5, .001]
 QoI_nominal = fp.H(theta_nominal)
@@ -236,7 +236,7 @@ def fp_vv_mcmc_convergence(): #convergence study with mcmc_multivar
 	print(stddevs)
 	print(cov)
 	H_posterior = [fp.H(tt) for tt in mcmc_trace]
-	print("Posterior probability of meeting the requirement: ", np.sum([int(h <= maxreq) for h in H_posterior])/len(H_posterior))
+	print("Posterior probability of meeting the requirement: ", np.sum([int(h <= req) for h in H_posterior])/len(H_posterior))
 	uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Gain [ADU/e-]")
 	uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
 	uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
@@ -310,7 +310,7 @@ def fp_vv_obed_1machine():
 	print("starting obed",flush=True)
 	prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282] #stddev from last study
 
-	U, U_list = U_probreq_multi(d_historical, fp, proposal_fn_norm, prop_width, likelihood_kernel, maxreq=3.0, n_mc=1000, n_mcmc=2000, burnin=300, lag=1, doPrint=True)
+	U, U_list = U_probreq_multi(d_historical, fp, proposal_fn_norm, prop_width, likelihood_kernel, req=3.0, n_mc=1000, n_mcmc=2000, burnin=300, lag=1, doPrint=True)
 	print(U)
 	print(U_list)
 	uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U", saveFig='OBEDresult')
@@ -320,7 +320,7 @@ def fp_vv_obed_cluster(d, kernel_pkl):
 	print("starting obed",flush=True)
 	prop_width = [0.007167594573520732, 0.17849464019335232, 0.0006344271319903282] #stddev from last study
 
-	U = U_probreq_1step(d_historical, fp, proposal_fn_norm, prop_width, kernel_pkl, maxreq=3.0, n_mcmc=2000, burnin=300, lag=1, doPrint=True)
+	U = U_probreq_1step(d_historical, fp, proposal_fn_norm, prop_width, kernel_pkl, req=3.0, n_mcmc=2000, burnin=300, lag=1, doPrint=True)
 
 def fp_vv_plot_obed_results(file):
 	u = []
@@ -353,7 +353,7 @@ def fp_vv_test_mcmc_multigauss(yy, dd):
 	#prop_width = [0.041611630365979, 0.10940214095948413, 0.000450389972410815] #stddev from last study
 	#prop_width = [0.006926202819087436, 0.015325690043958649, 0.00019200217277796547]
 	prop_width = [0.007931095589546992, 0.018919515987306634, 0.00017949891623054683]
-	mcmc_trace,_,_ = mcmc_multigauss_likelihood(yy, dd, proposal_fn_norm, prop_width, fp.eta, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc=5000, n_pde=1000, burnin=300, lag=1, doPlot=True, legend=fp.theta_names, doPrint=True)
+	mcmc_trace,_,_ = mcmc_multigauss_likelihood(yy, dd, proposal_fn_norm, prop_width, fp.eta, fp.prior_rvs, fp.prior_pdf_unnorm, n_mcmc=6000, n_pde=1000, burnin=300, lag=1, doPlot=True, legend=fp.theta_names, doPrint=True)
 	
 	print("mean, stddev, covariance of posterior sample:")
 	means, stddevs, cov = mcmc_analyze(mcmc_trace,doPlot=True)
@@ -361,10 +361,11 @@ def fp_vv_test_mcmc_multigauss(yy, dd):
 	print(stddevs)
 	print(cov)
 	H_posterior = [fp.H(tt) for tt in mcmc_trace]
-	print("Posterior probability of meeting the requirement: ", np.sum([int(h <= maxreq) for h in H_posterior])/len(H_posterior))
+	print("Posterior probability of meeting the requirement: ", np.sum([int(h <= req) for h in H_posterior])/len(H_posterior))
 	uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Gain [ADU/e-]")
 	uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
 	uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
+	uncertainty_prop_plot(H_posterior, c='orangered', xlab="Posterior QoI: Avg. Noise [e-]")
 	
 def fp_vv_obed_nokernel_cluster(dd):
 	#print("starting obed",flush=True)
@@ -373,9 +374,9 @@ def fp_vv_obed_nokernel_cluster(dd):
 	U = U_probreq_1step_nokernel(d_historical, fp, proposal_fn_norm, prop_width, maxreq=3.0, n_mcmc=2000, n_pde=1000, burnin=300, lag=1, doPrint=True)
 
 if __name__ == '__main__':  
-	fp_vv_nominal()
+	#fp_vv_nominal()
 	
-	fp_vv_UP_QoI()
+	#fp_vv_UP_QoI()
 	
 	#fp_vv_SA_QoI()
 	
@@ -397,10 +398,10 @@ if __name__ == '__main__':
 	
 	#fp_vv_obed_cluster(d_historical, "likelihood_kernel.pkl")
 	
-	#fp_vv_plot_obed_results('output_51032713_dinsane.txt')
+	fp_vv_plot_obed_results('output_51819142.txt')
 	
-	fp_vv_test_mcmc_multigauss(y_nominal, d_historical)
-	fp_vv_test_mcmc_multigauss(y_nominal, d_worst)
-	fp_vv_test_mcmc_multigauss(y_nominal, d_best)
+	#fp_vv_test_mcmc_multigauss(y_nominal, d_historical)
+	#fp_vv_test_mcmc_multigauss(y_nominal, d_worst)
+	#fp_vv_test_mcmc_multigauss(y_nominal, d_best)
 	#for i in range(1000):
 	#	fp_vv_obed_nokernel_cluster(d_historical)
