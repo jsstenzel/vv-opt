@@ -10,7 +10,7 @@ from sklearn.mixture import GaussianMixture
 sys.path.append('..')
 	
 #offline, train the model based on provided samples
-def gbi_train_model(theta_samples, qoi_samples, y_samples, verbose=0):
+def gbi_train_model(theta_samples, qoi_samples, y_samples, verbose=0, ncomp=0):
 	#step 1: train 
 	#Get a a Gaussian mixture model from the push-forward of the prior through yd and yp
 	print("getting data...",flush=True) if verbose else 0
@@ -28,24 +28,32 @@ def gbi_train_model(theta_samples, qoi_samples, y_samples, verbose=0):
 	#or, a "number of components to balance the maximization of likelihood of data and the Bayesian information criterion [4]"
 	#which one??? the latter seems fine
 	#ok, generally to do this, we'll search bottom-up, increasing n_comp until we find a minimal BIC
-	print("calculating ideal ncomp...",flush=True) if verbose else 0
-	curr_gmm = GaussianMixture(n_components=1).fit(data)
-	curr_bic = curr_gmm.bic(data)
-	print(curr_bic, flush=True) if verbose==2 else 0
-	next_gmm = GaussianMixture(n_components=2).fit(data)
-	next_bic = next_gmm.bic(data)
-	print(next_bic, flush=True) if verbose==2 else 0
-	ncomp = 1
-	while next_bic < curr_bic:
-		curr_bic = next_bic
-		curr_gmm = next_gmm
-		ncomp += 1
-		next_gmm = GaussianMixture(n_components=ncomp+1).fit(data)
+	gmm = None
+	if ncomp == 0:
+		print("calculating ideal ncomp...",flush=True) if verbose else 0
+		curr_gmm = GaussianMixture(n_components=1).fit(data)
+		curr_bic = curr_gmm.bic(data)
+		print(curr_bic, flush=True) if verbose==2 else 0
+		next_gmm = GaussianMixture(n_components=2).fit(data)
 		next_bic = next_gmm.bic(data)
-		print(next_bic, flush=True) if verbose else 0
+		print(next_bic, flush=True) if verbose==2 else 0
+		ncomp = 1
+		while next_bic < curr_bic:
+			curr_bic = next_bic
+			curr_gmm = next_gmm
+			ncomp += 1
+			next_gmm = GaussianMixture(n_components=ncomp+1).fit(data)
+			next_bic = next_gmm.bic(data)
+			print(next_bic, flush=True) if verbose else 0
 
-	print("Number of components that minimizes BIC is",ncomp, flush=True) if verbose else 0
-	gmm = curr_gmm
+		print("Number of components that minimizes BIC is",ncomp, flush=True) if verbose else 0
+		gmm = curr_gmm
+		
+	else:
+		#Allow someone to override this process if they think they know how many components they want
+		gmm = GaussianMixture(n_components=ncomp).fit(data)
+		print("Using provided number of components,",ncomp,flush=True) if verbose else 0
+		
 	return gmm
 
 #online, condition the joint gmm on the data to get the posterior predictive

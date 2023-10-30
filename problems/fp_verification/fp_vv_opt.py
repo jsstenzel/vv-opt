@@ -379,7 +379,7 @@ def fp_vv_gbi_test(d, Yd, N):
 	qoi_train = [fp.H(theta) for theta in theta_train]
 	y_train = [fp.eta(theta, d) for theta in theta_train]
 	
-	gmm = gbi_train_model(theta_train, qoi_train, y_train, verbose=2)
+	gmm = gbi_train_model(theta_train, qoi_train, y_train, verbose=2, ncomp=8)
 	
 	a,b,c = gbi_condition_model(gmm, Yd, verbose=2)
 	
@@ -424,6 +424,6 @@ if __name__ == '__main__':
 	#for i in range(1000):
 	#	fp_vv_obed_nokernel_cluster(d_historical)
 	
-	fp_vv_gbi_test(d_historical, y_nominal, 10**5)
+	fp_vv_gbi_test(d_historical, y_nominal, 10**6)
 	
-	fp_vv_obed_gbi(d_historical)
+	#fp_vv_obed_gbi(d_historical)
