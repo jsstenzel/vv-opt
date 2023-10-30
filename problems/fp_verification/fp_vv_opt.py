@@ -14,6 +14,7 @@ from problems.fp_verification.fp_problem import *
 #analysis
 from obed.obed_multivar import *
 from obed.mcmc import *
+from obed.obed_gbi import *
 from obed.pdf_estimation import *
 from uq.uncertainty_propagation import *
 #from uq.sensitivity_analysis import *
@@ -373,6 +374,23 @@ def fp_vv_obed_nokernel_cluster(dd):
 
 	U = U_probreq_1step_nokernel(d_historical, fp, proposal_fn_norm, prop_width, maxreq=3.0, n_mcmc=2000, n_pde=1000, burnin=300, lag=1, doPrint=True)
 
+def fp_vv_gbi_test(d, Yd, N):		
+	theta_train = fp.prior_rvs(N)
+	qoi_train = [fp.H(theta) for theta in theta_train]
+	y_train = [fp.eta(theta, d) for theta in theta_train]
+	
+	gmm = gbi_train_model(theta_train, qoi_train, y_train, verbose=2)
+	
+	a,b,c = gbi_condition_model(gmm, Yd, verbose=2)
+	
+	plot_predictive_posterior(a, b, c, 0, 7, drawplot=True)
+
+def fp_vv_obed_gbi(d):
+	U, U_list = U_varH_gbi(d, fp, n_mc=10**5, n_gmm=10**5, doPrint=True)
+	print(U)
+	#print(U_list)
+	uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")#, saveFig='OBEDresult')
+
 if __name__ == '__main__':  
 	#fp_vv_nominal()
 	
@@ -398,10 +416,14 @@ if __name__ == '__main__':
 	
 	#fp_vv_obed_cluster(d_historical, "likelihood_kernel.pkl")
 	
-	fp_vv_plot_obed_results('output_51819142.txt')
+	#fp_vv_plot_obed_results('output_51819142.txt')
 	
 	#fp_vv_test_mcmc_multigauss(y_nominal, d_historical)
 	#fp_vv_test_mcmc_multigauss(y_nominal, d_worst)
 	#fp_vv_test_mcmc_multigauss(y_nominal, d_best)
 	#for i in range(1000):
 	#	fp_vv_obed_nokernel_cluster(d_historical)
+	
+	fp_vv_gbi_test(d_historical, y_nominal, 10**5)
+	
+	fp_vv_obed_gbi(d_historical)

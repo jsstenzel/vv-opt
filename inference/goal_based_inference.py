@@ -1,6 +1,7 @@
 #trying to implement the ideas in Lieberman & Willcos 2014
 
 import sys
+import math
 import numpy as np
 import scipy.stats
 import matplotlib.pyplot as plt
@@ -68,8 +69,8 @@ def gbi_condition_model(gmm, Yd, verbose=0):
 	Sig_dd = np.array([Sig_k[p_dimension:, p_dimension:] for Sig_k in Sig])
 	
 	if verbose==2:
-		print("ymean_p:", ymean_p)
-		print("ymean_d:", ymean_d)
+		print("ymean_p:\n", ymean_p)
+		print("ymean_d:\n", ymean_d)
 		print("Sig_pp:\n", Sig_pp)
 		print("Sig_pd:\n", Sig_pd)
 		print("Sig_dp:\n", Sig_dp)
@@ -102,4 +103,25 @@ def gbi_pdf_posterior_predictive(beta, mu_Yd, Sig_Yd, yp, verbose=0):
 	pdf = np.sum(np.array(pdfs))
 
 	return pdf
+	
+def gbi_gmm_variance(beta, mu_Yd, Sig_Yd):
+	moment1 = np.sum([b*mu for b,mu in zip(beta, mu_Yd)])
+	moment2 = np.sum([b*(var + mu**2) for b,mu,var in zip(beta, mu_Yd, Sig_Yd)])
+	var = moment2 - moment1**2
+	return var
 
+def plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound, rbound, drawplot=True):
+	#p is one-dimensional, give it a plot
+	x = np.linspace(lbound, rbound, 10000)
+
+	pdfs = np.array([p * scipy.stats.norm.pdf(x=x, loc=mu, scale=np.sqrt(sd)) for mu, sd, p in zip(mu_Yd, Sig_Yd, beta)])
+	pdfs = np.array([pdf[0] for pdf in pdfs])
+	density = np.sum(np.array(pdfs), axis=0)
+
+	for pdf in pdfs:
+		plt.plot(x, pdf, '--', c='gray')#c=np.random.rand(3))
+	plt.plot(x, density, '-k')
+	plt.xlabel('$y_p$')
+	plt.ylabel('$f(y_p | y_d)$')
+	if drawplot:
+		plt.show()
