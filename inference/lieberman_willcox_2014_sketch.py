@@ -83,7 +83,6 @@ def inference_predictive_posterior(expt_process, pred_process, theta_prior_sampl
 	beta = np.array([B1[k] / B0 for k in range(ncomp)])
 	mu_Yd = np.array([ymean_p[k] + Sig_pd[k] @ np.linalg.inv(Sig_dd[k]) @ (Yd - ymean_d[k]) for k in range(ncomp)])
 	Sig_Yd = np.array([Sig_pp[k] - Sig_pd[k] @ np.linalg.inv(Sig_dd[k]) @ Sig_dp[k] for k in range(ncomp)])
-	print(Sig_pp[0], Sig_pd[0] @ np.linalg.inv(Sig_dd[0]) @ Sig_dp[0])
 	
 	if verbose==2:
 		print("beta:", beta)
@@ -92,7 +91,7 @@ def inference_predictive_posterior(expt_process, pred_process, theta_prior_sampl
 	
 	return beta, mu_Yd, Sig_Yd
 	
-def plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound, rbound):
+def plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound, rbound, drawplot=True):
 	#p is one-dimensional, give it a plot
 	x = np.linspace(lbound, rbound, 10000)
 
@@ -105,7 +104,8 @@ def plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound, rbound):
 	plt.plot(x, density, '-k')
 	plt.xlabel('$y_p$')
 	plt.ylabel('$f(y_p | y_d)$')
-	plt.show()
+	if drawplot:
+		plt.show()
 
 ###Validate this algorithm - check [17], original thesis, linear model 5.5.1:
 def linear_expt(theta):
@@ -121,47 +121,13 @@ def linear_pred(theta):
 def linear_prior(num):
 	return [scipy.stats.norm.rvs(size=2) for _ in range(num)]
 
+if __name__ == '__main__': 
+	theta_true = [.25,.25]#linear_expt(linear_prior(1)[0])
+	Yd = [1.25,0] #linear_expt(theta_true)
+	print(Yd)
+	a,b,c = inference_predictive_posterior(linear_expt, linear_pred, linear_prior, Yd, nsamples=50000, verbose=2)
 
-theta_true = [.25,.25]#linear_expt(linear_prior(1)[0])
-Yd = [1.25,0] #linear_expt(theta_true)
-print(Yd)
-a,b,c = inference_predictive_posterior(linear_expt, linear_pred, linear_prior, Yd, nsamples=50000, verbose=2)
-
-x = np.linspace(0, 1, 10000)
-y = scipy.stats.norm.pdf(x, .4*Yd[0] - .2*Yd[1], np.sqrt(.0005)) #do the math, punk!
-plt.plot(x,y,c='red')
-plot_predictive_posterior(a, b, c, -1, 1)
-
-
-"""
-###Now try the focal plane case:
-d_historical = [
-				20,   #t_gain
-				30,   #I_gain
-				1,	#n_meas_rn
-				8,	#d_num
-				9600, #d_max
-				2	 #d_pow   #approx
-			   ]
-
-def expt_fp(theta):
-	yd = fp.eta(theta, d_historical)
-	return yd
-
-def pred_fp(theta):
-	yp = fp.H(theta)
-	return yp
-	
-def theta_prior_fp(num):
-	return fp.prior_rvs(num)
-	
-theta_nominal = [1.1, 2.5, .001]
-y_nominal = fp_likelihood_fn(dict(zip(fp.theta_names, theta_nominal)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)
-Yd = y_nominal
-print("Simulated data:", Yd, flush=True)
-print("QoI prediction given that data assuming no error:", pred_fp(theta_nominal), flush=True)
-
-a,b,c = inference_predictive_posterior(expt_fp, pred_fp, theta_prior_fp, Yd, nsamples=100000, verbose=2)
-plot_predictive_posterior(a, b, c, 0, 7)
-"""
-
+	x = np.linspace(0, 1, 10000)
+	y = scipy.stats.norm.pdf(x, .4*Yd[0] - .2*Yd[1], np.sqrt(.0005)) #do the math, punk!
+	plt.plot(x,y,c='red')
+	plot_predictive_posterior(a, b, c, -1, 1)
