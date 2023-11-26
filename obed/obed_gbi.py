@@ -22,7 +22,7 @@ And we find the variance of that posterior H, wich is our u that we sum up
 #This is like U_brute_varH, except we're reusing loop 1 samples in loop 3, like Huan & Marzouk
 #Here, we're using straightforward Metropolis-Hastings to solve the multivariate MCMC problem
 #This calculates the probability of meeting the requirement in distribution - used as constraint for the cost-optimization
-def U_varH_gbi(d, problem, n_mc=10**5, n_gmm=10**4, doPrint=False):   
+def U_varH_gbi(d, problem, n_mc=10**5, n_gmm=10**4, ncomp=0, doPrint=False):   
 	#Generate a list of y's sampled from likelihood fn, p(y|theta,d)p(theta)
 	pthetas = problem.prior_rvs(n_mc)
 	Y1_list = [problem.eta(theta, d) for theta in pthetas]
@@ -33,7 +33,7 @@ def U_varH_gbi(d, problem, n_mc=10**5, n_gmm=10**4, doPrint=False):
 	theta_train = problem.prior_rvs(n_gmm)
 	qoi_train = [problem.H(theta) for theta in theta_train]
 	y_train = [problem.eta(theta, d) for theta in theta_train]
-	gmm = gbi_train_model(theta_train, qoi_train, y_train)
+	gmm = gbi_train_model(theta_train, qoi_train, y_train, ncomp=ncomp)
 	
 	U_list = []
 	for i,y in enumerate(Y1_list): #MC loop		
