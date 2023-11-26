@@ -118,7 +118,7 @@ def gbi_gmm_variance(beta, mu_Yd, Sig_Yd):
 	var = moment2 - moment1**2
 	return var
 
-def plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound, rbound, drawplot=True):
+def plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound, rbound, drawplot=True, plotmean=False):
 	#p is one-dimensional, give it a plot
 	x = np.linspace(lbound, rbound, 10000)
 
@@ -131,5 +131,8 @@ def plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound, rbound, drawplot=True
 	plt.plot(x, density, '-k')
 	plt.xlabel('$y_p$')
 	plt.ylabel('$f(y_p | y_d)$')
+	if plotmean:
+		mean = np.sum([b*mu for b,mu in zip(beta,mu_Yd)])
+		plt.axvline(mean, c='red')
 	if drawplot:
 		plt.show()
