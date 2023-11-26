@@ -43,7 +43,7 @@ fp_d_defs = [
 				["n_meas_rn", ['uniform', [1, 50]], "discrete"],  #rn
 				["d_num", ['uniform', [2, 25]], "discrete"],     #dc
 				["d_max", ['uniform', [1, 12000]], "continuous"], #dc
-				["d_pow", ['lognorm', [0,1]], "continuous"]       #dc
+				["d_pow", ['uniform', [0,3]], "continuous"]       #dc
 			]
 	
 _temp= -90+273.15 #K
@@ -81,7 +81,8 @@ fp_x_defs = [
 				["tau", ["nonrandom", [1800]], "continuous", 1800],
 				#cost
 				["testbed_setup", ["nonrandom", [1800]], "continuous", 1800], #WAG
-				["C_engineer", ["nonrandom", [0.00694444444]], "continuous", 0.00694444444] #WAG $/s, from $25/hr
+				#["C_engineer", ["nonrandom", [0.00694444444]], "continuous", 0.00694444444] #WAG $/s, from $25/hr
+				["C_engineer", ["nonrandom", [1]], "continuous", 1] #just count time
 			]
 			 
 if useQE == True:
