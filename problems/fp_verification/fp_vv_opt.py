@@ -18,6 +18,7 @@ from obed.obed_gbi import *
 from obed.pdf_estimation import *
 from uq.uncertainty_propagation import *
 #from uq.sensitivity_analysis import *
+from opt.ngsa import *
 
 ################################
 #Useful definitions
@@ -44,7 +45,7 @@ def proposal_fn_norm(theta_curr, proposal_width):
 		theta_prop[i] = scipy.stats.norm.rvs(size=1, loc=mean, scale=stddev)[0]
 	return theta_prop
 
-req = 5.0 #max noise
+req = 4.38 #max noise
 
 theta_nominal = [1.1, 2.5, .001]
 QoI_nominal = fp.H(theta_nominal)
@@ -89,14 +90,14 @@ def fp_vv_nominal():
 
 
 ###uncertainty analysis
-def fp_vv_UP_QoI():
+def fp_vv_UP_QoI(req):
 	#uncertainty propagation of HLVA
 	uq_thetas = fp.prior_rvs(10000)
 	Qs = [fp.H(theta) for theta in uq_thetas]
 	uncertainty_prop_plot([theta[0] for theta in uq_thetas], xlab="Gain [ADU/e-]")
 	uncertainty_prop_plot([theta[1] for theta in uq_thetas], xlab="Read noise [e-]")
 	uncertainty_prop_plot([theta[2] for theta in uq_thetas], xlab="Dark current [e-/s]")
-	uncertainty_prop_plot(Qs, xlab="QoI: Avg. Noise [e-]")
+	uncertainty_prop_plot(Qs, xlab="QoI: Avg. Noise [e-]", vline=[req])
 
 	#prob of meeting req along priors:
 	count_meetreq = 0
@@ -384,17 +385,34 @@ def fp_vv_gbi_test(d, Yd, N):
 	a,b,c = gbi_condition_model(gmm, Yd, verbose=2)
 	
 	plot_predictive_posterior(a, b, c, 0, 7, drawplot=True)
+	
+def fp_vv_gbi_rand_test(d, N):		
+	theta_train = fp.prior_rvs(N)
+	qoi_train = [fp.H(theta) for theta in theta_train]
+	y_train = [fp.eta(theta, d) for theta in theta_train]
+	
+	gmm = gbi_train_model(theta_train, qoi_train, y_train, verbose=0, ncomp=8)
+	
+	truth_theta = fp.prior_rvs(1)
+	measured_y = fp.eta(truth_theta, d)
+	a,b,c = gbi_condition_model(gmm, measured_y, verbose=0)
+	
+	plot_predictive_posterior(a, b, c, 0, 7, drawplot=False, plotmean=True)
+	plt.axvline(fp.H(truth_theta), c='blue')
+	plt.show()
 
 def fp_vv_obed_gbi(d):
 	U, U_list = U_varH_gbi(d, fp, n_mc=10**5, n_gmm=10**5, doPrint=True)
 	print(U)
 	#print(U_list)
 	uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")#, saveFig='OBEDresult')
+	return U
+	
 
 if __name__ == '__main__':  
 	#fp_vv_nominal()
 	
-	#fp_vv_UP_QoI()
+	#fp_vv_UP_QoI(4.38)
 	
 	#fp_vv_SA_QoI()
 	
@@ -424,6 +442,16 @@ if __name__ == '__main__':
 	#for i in range(1000):
 	#	fp_vv_obed_nokernel_cluster(d_historical)
 	
-	fp_vv_gbi_test(d_historical, y_nominal, 10**6)
+	#fp_vv_gbi_test(d_historical, y_nominal, 10**6)
 	
-	#fp_vv_obed_gbi(d_historical)
+	#fp_vv_gbi_rand_test(d_historical, 10**4)
+	
+	#U_hist = fp_vv_obed_gbi(d_historical)
+	U_hist = 4.06834256919
+	C_hist = fp.G(d_historical)
+	
+	costs, utilities, designs = ngsa2_problem(fp, nGenerations=200, popSize=20, nMonteCarlo=5*10**3, nGMM=10**4)
+	#costs = [4.23713683e+07,4.23860227e+07,4.23841811e+07,4.23890356e+07,4.23890683e+07,4.23891276e+07,4.23891364e+07,4.23891323e+07]
+	#utilities = [1.06424209e+00, 2.93936466e+00, 2.82467126e+00,3.03336092e+00,3.35722153e+00,3.42608371e+00,3.73403443e+00,3.46282949e+00]
+
+	plot_ngsa2(costs, utilities, design_pts=[[C_hist, U_hist]], showPlot=True, savePlot=False, logPlotXY=[True,False])
