@@ -1,4 +1,5 @@
 import sys
+import math
 
 sys.path.append('../..')
 from problems.functionals import *
@@ -78,7 +79,7 @@ def fp_cost_simple(d, x):
 
 	cost = 0
 	#gain experiment time
-	time_gain = t_gain_setup + (I_gain + 1) * (t_gain + t_buffer) #additional dark exposure on top of I_gain
+	time_gain = t_gain_setup + (I_gain + 1) * (t_gain + t_gain_buffer) #additional dark exposure on top of I_gain
 	
 	#dark current experiment time
 	t_list = []
