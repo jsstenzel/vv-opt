@@ -41,7 +41,7 @@ def uncertainty_prop(y_j, doPlot=False, doPrint=False):
 	
 	return mean, stddev
 	
-def uncertainty_prop_plot(y_j, mean=0, xlab="Y", c='#21aad3', saveFig='', rescaled=False):
+def uncertainty_prop_plot(y_j, mean=0, xlab="Y", c='#21aad3', saveFig='', rescaled=False, vline=[]):
 	if mean==0:
 		mean = statistics.mean(y_j)
 		
@@ -54,6 +54,10 @@ def uncertainty_prop_plot(y_j, mean=0, xlab="Y", c='#21aad3', saveFig='', rescal
 	#plt.xticks(rotation=90)
 	plt.xlabel(xlab)
 	plt.ylabel("Frequency (N=" + str(len(y_j)) + ")")
+	
+	if vline:
+		for v in vline:
+			plt.axvline(vline, c='k')
 	
 	if saveFig=='':
 		plt.show()
