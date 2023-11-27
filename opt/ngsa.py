@@ -20,7 +20,7 @@ from pymoo.optimize import minimize
 from pymoo.core.problem import ElementwiseProblem
 from multiprocessing.pool import ThreadPool
 from pymoo.core.problem import *
-from pymoo.termination import get_termination
+from pymoo.factory import get_termination
 
 sys.path.append('..')
 from problems.problem_definition import *
@@ -62,13 +62,8 @@ def ngsa2_problem(n_threads, prob, nGenerations=100, popSize=100, nMonteCarlo=10
 		
 			out["F"] = np.column_stack([cost_list, utility_list])
 			#out["G"] = np.column_stack([...,...,...])
-	
-	# initialize the thread pool and create the runner
-	pool = ThreadPool(n_threads)
-	runner = StarmapParallelization(pool.starmap)
-
-	# define the problem by passing the starmap interface of the thread pool
-	ngsa_problem = MyProblem(elementwise_runner=runner)
+			
+	ngsa_problem = VerificationProblemSingle()
 
 	###2. Run NGSA-II
 	algorithm = NSGA2(pop_size=popSize,
@@ -83,8 +78,6 @@ def ngsa2_problem(n_threads, prob, nGenerations=100, popSize=100, nMonteCarlo=10
 				   ('n_gen', nGenerations),
 				   #seed=1,
 				   verbose=True)
-				   
-	pool.close()
 	
 	#flip cost back
 	pareto_costs = [-f[0] for f in res.F]
@@ -123,8 +116,7 @@ def plot_ngsa2(costs, utilities, design_pts, showPlot=False, savePlot=False, log
 	#plt.clf()
 	#plt.close()	
 	
-	
-def ngsa2_problem_parallel(prob, hours, minutes, popSize, nMonteCarlo, nGMM):
+def ngsa2_problem_parallel(n_threads, prob, hours, minutes, popSize, nMonteCarlo, nGMM):
 	###1. Define the utility fn as an NGSA-II problem
 	###Define the pymoo Problem class
 	class VerificationProblemSingle(ElementwiseProblem):
@@ -154,7 +146,12 @@ def ngsa2_problem_parallel(prob, hours, minutes, popSize, nMonteCarlo, nGMM):
 			out["F"] = np.column_stack([-cost, U])
 			#out["G"] = np.column_stack([...,...,...])
 			
-	ngsa_problem = VerificationProblemSingle()
+	# initialize the thread pool and create the runner
+	pool = ThreadPool(n_threads)
+	runner = StarmapParallelization(pool.starmap)
+
+	# define the problem by passing the starmap interface of the thread pool
+	ngsa_problem = MyProblem(elementwise_runner=runner)
 
 	###2. Run NGSA-II
 	algorithm = NSGA2(pop_size=popSize,
@@ -171,6 +168,8 @@ def ngsa2_problem_parallel(prob, hours, minutes, popSize, nMonteCarlo, nGMM):
 				   termination=get_termination("time", time_string),
 				   #seed=1,
 				   verbose=True)
+				   
+	pool.close()
 	
 	#flip cost back
 	pareto_costs = [-f[0] for f in res.F]

@@ -455,4 +455,4 @@ if __name__ == '__main__':
 	#utilities = [1.06424209e+00, 2.93936466e+00, 2.82467126e+00,3.03336092e+00,3.35722153e+00,3.42608371e+00,3.73403443e+00,3.46282949e+00]
 
 	#plot_ngsa2(costs, utilities, design_pts=[[C_hist, U_hist]], showPlot=True, savePlot=False, logPlotXY=[True,False])
-	costs, utilities, designs = ngsa2_problem(fp, hours=0, minutes=1, popSize=1, nMonteCarlo=10**2, nGMM=10**4)
+	costs, utilities, designs = ngsa2_problem_parallel(4, fp, hours=0, minutes=2, popSize=1, nMonteCarlo=10**2, nGMM=10**4)
