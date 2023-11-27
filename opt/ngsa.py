@@ -16,6 +16,12 @@ from pymoo.optimize import minimize
 #from pymoo.operators.mutation.bitflip import BitflipMutation
 #from pymoo.operators.sampling.rnd import BinaryRandomSampling
 
+#parallel:
+from pymoo.core.problem import ElementwiseProblem
+from multiprocessing.pool import ThreadPool
+from pymoo.core.problem import *
+from pymoo.termination import get_termination
+
 sys.path.append('..')
 from problems.problem_definition import *
 
@@ -23,7 +29,7 @@ from problems.problem_definition import *
 from obed.obed_gbi import *
 
 
-def ngsa2_problem(prob, nGenerations=100, popSize=100, nMonteCarlo=10**5, nGMM=10**5):
+def ngsa2_problem(n_threads, prob, nGenerations=100, popSize=100, nMonteCarlo=10**5, nGMM=10**5):
 	###1. Define the utility fn as an NGSA-II problem
 	###Define the pymoo Problem class
 	class VerificationProblem(Problem):
@@ -56,8 +62,13 @@ def ngsa2_problem(prob, nGenerations=100, popSize=100, nMonteCarlo=10**5, nGMM=1
 		
 			out["F"] = np.column_stack([cost_list, utility_list])
 			#out["G"] = np.column_stack([...,...,...])
-			
-	ngsa_problem = VerificationProblem()
+	
+	# initialize the thread pool and create the runner
+	pool = ThreadPool(n_threads)
+	runner = StarmapParallelization(pool.starmap)
+
+	# define the problem by passing the starmap interface of the thread pool
+	ngsa_problem = MyProblem(elementwise_runner=runner)
 
 	###2. Run NGSA-II
 	algorithm = NSGA2(pop_size=popSize,
@@ -70,6 +81,94 @@ def ngsa2_problem(prob, nGenerations=100, popSize=100, nMonteCarlo=10**5, nGMM=1
 	res = minimize(ngsa_problem,
 				   algorithm,
 				   ('n_gen', nGenerations),
+				   #seed=1,
+				   verbose=True)
+				   
+	pool.close()
+	
+	#flip cost back
+	pareto_costs = [-f[0] for f in res.F]
+	pareto_utilities = [f[1] for f in res.F]
+	pareto_designs = res.X
+	pareto_costs, pareto_utilities, pareto_designs = zip(*sorted(zip(pareto_costs, pareto_utilities, pareto_designs)))
+	
+	print(pareto_costs)
+	print(pareto_utilities)
+	print(res.X) #all of the pareto front points
+	#print(res.history) #idk, returns None
+		
+	return pareto_costs, pareto_utilities, res.X
+	
+def plot_ngsa2(costs, utilities, design_pts, showPlot=False, savePlot=False, logPlotXY=[False,False]):
+	plt.scatter(costs, utilities, s=80, facecolors='none', edgecolors='r')
+	plt.plot(costs, utilities, c='k', alpha=0.7)
+	plt.xlabel("cost")
+	plt.ylabel("utility")
+	
+	if logPlotXY[0]:
+		plt.xscale('log')
+	if logPlotXY[1]:
+		plt.yscale('log')
+		
+	for pt in design_pts:
+		plt.scatter(pt[0],pt[1], s=80, facecolors='b', edgecolors='b')
+		
+	if savePlot:
+		#name = "ngsa_" + str(nGenerations) + '_' + str(popSize) + '_' + str(nMonteCarlo) + '_' + str(nGMM) +'.png'
+		plt.savefig("ngsa.png", format='png', bbox_inches='tight')
+			
+	if showPlot:
+		plt.show()
+		
+	#plt.clf()
+	#plt.close()	
+	
+	
+def ngsa2_problem_parallel(prob, hours, minutes, popSize, nMonteCarlo, nGMM):
+	###1. Define the utility fn as an NGSA-II problem
+	###Define the pymoo Problem class
+	class VerificationProblemSingle(ElementwiseProblem):
+		param = {}
+	
+		def __init__(self, aux_matrix=None):
+			d_lowers = [d_dist[1][0] for d_dist in prob.d_dists]
+			d_uppers = [d_dist[1][1] for d_dist in prob.d_dists]
+			param_types = [float if (dmask=="continuous") else int for dmask in prob.d_masks]
+
+			#translate the key problem parameters here
+			#2 objectives, utility and cost
+			#For now, we won't consider that cost or utility or anything else are constrained
+			super().__init__(n_var=prob.dim_d, n_obj=2, n_constr=0, xl=d_lowers, xu=d_uppers, vtype=param_types)
+			
+		def _evaluate(self, design, out, *args, **kwargs):
+			print(flush=True, end="")
+			utility_list = []
+			cost_list = []
+
+			#print(design, flush=True)
+			#Construct dictionaries
+			
+			U, _ = U_varH_gbi(design, prob, n_mc=nMonteCarlo, n_gmm=nGMM, ncomp=5, doPrint=False)
+			cost = prob.G(design)
+			
+			out["F"] = np.column_stack([-cost, U])
+			#out["G"] = np.column_stack([...,...,...])
+			
+	ngsa_problem = VerificationProblemSingle()
+
+	###2. Run NGSA-II
+	algorithm = NSGA2(pop_size=popSize,
+					  #sampling=BinaryRandomSampling(), #what
+					  #crossover=TwoPointCrossover(), #what
+					  #mutation=BitflipMutation(), #what
+					  eliminate_duplicates=True)
+
+	time_string = f"{hours:02}"+":"+f"{minutes:02}"+":03"
+	print(time_string)
+	res = minimize(ngsa_problem,
+				   algorithm,
+				   #('n_gen', nGenerations),
+				   termination=get_termination("time", time_string),
 				   #seed=1,
 				   verbose=True)
 	
@@ -109,3 +208,4 @@ def plot_ngsa2(costs, utilities, design_pts, showPlot=False, savePlot=False, log
 		
 	#plt.clf()
 	#plt.close()	
+
