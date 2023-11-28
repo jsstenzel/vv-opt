@@ -21,6 +21,7 @@ from pymoo.core.problem import ElementwiseProblem
 from multiprocessing.pool import ThreadPool
 from pymoo.core.problem import *
 from pymoo.factory import get_termination
+#from pymoo.termination.default import DefaultMultiObjectiveTermination
 
 sys.path.append('..')
 from problems.problem_definition import *
@@ -29,7 +30,7 @@ from problems.problem_definition import *
 from obed.obed_gbi import *
 
 
-def ngsa2_problem(n_threads, prob, nGenerations=100, popSize=100, nMonteCarlo=10**5, nGMM=10**5):
+def ngsa2_problem(prob, nGenerations=100, popSize=100, nMonteCarlo=10**5, nGMM=10**5):
 	###1. Define the utility fn as an NGSA-II problem
 	###Define the pymoo Problem class
 	class VerificationProblem(Problem):
@@ -55,15 +56,15 @@ def ngsa2_problem(n_threads, prob, nGenerations=100, popSize=100, nMonteCarlo=10
 				#Construct dictionaries
 				
 				U, _ = U_varH_gbi(design, prob, n_mc=nMonteCarlo, n_gmm=nGMM, ncomp=5, doPrint=False)
-				cost = prob.G(design)
+				cost = np.log(prob.G(design))
 				
 				utility_list.append(U)
-				cost_list.append(-cost) #set it negative here, to minimize
+				cost_list.append(cost)
 		
 			out["F"] = np.column_stack([cost_list, utility_list])
 			#out["G"] = np.column_stack([...,...,...])
 			
-	ngsa_problem = VerificationProblemSingle()
+	ngsa_problem = VerificationProblem()
 
 	###2. Run NGSA-II
 	algorithm = NSGA2(pop_size=popSize,
@@ -72,15 +73,22 @@ def ngsa2_problem(n_threads, prob, nGenerations=100, popSize=100, nMonteCarlo=10
 					  #mutation=BitflipMutation(), #what
 					  eliminate_duplicates=True)
 
+	"""
+	termination = DefaultMultiObjectiveTermination(
+		f_tol=0.0025,
+		period=30,
+		n_max_gen=nGenerations
+	)"""
 
-	res = minimize(ngsa_problem,
+	res = minimize(ngsa_problem, #minimize the Hvar, minimize the cost
 				   algorithm,
+				   #termination,
 				   ('n_gen', nGenerations),
 				   #seed=1,
 				   verbose=True)
 	
 	#flip cost back
-	pareto_costs = [-f[0] for f in res.F]
+	pareto_costs = [f[0] for f in res.F]
 	pareto_utilities = [f[1] for f in res.F]
 	pareto_designs = res.X
 	pareto_costs, pareto_utilities, pareto_designs = zip(*sorted(zip(pareto_costs, pareto_utilities, pareto_designs)))
@@ -95,8 +103,8 @@ def ngsa2_problem(n_threads, prob, nGenerations=100, popSize=100, nMonteCarlo=10
 def plot_ngsa2(costs, utilities, design_pts, showPlot=False, savePlot=False, logPlotXY=[False,False]):
 	plt.scatter(costs, utilities, s=80, facecolors='none', edgecolors='r')
 	plt.plot(costs, utilities, c='k', alpha=0.7)
-	plt.xlabel("cost")
-	plt.ylabel("utility")
+	plt.xlabel("log cost")
+	plt.ylabel(r"Var $[p(Q|\mathbf{y})]$")
 	
 	if logPlotXY[0]:
 		plt.xscale('log')
@@ -116,6 +124,7 @@ def plot_ngsa2(costs, utilities, design_pts, showPlot=False, savePlot=False, log
 	#plt.clf()
 	#plt.close()	
 	
+"""
 def ngsa2_problem_parallel(n_threads, prob, hours, minutes, popSize, nMonteCarlo, nGMM):
 	###1. Define the utility fn as an NGSA-II problem
 	###Define the pymoo Problem class
@@ -172,7 +181,7 @@ def ngsa2_problem_parallel(n_threads, prob, hours, minutes, popSize, nMonteCarlo
 	pool.close()
 	
 	#flip cost back
-	pareto_costs = [-f[0] for f in res.F]
+	pareto_costs = [f[0] for f in res.F]
 	pareto_utilities = [f[1] for f in res.F]
 	pareto_designs = res.X
 	pareto_costs, pareto_utilities, pareto_designs = zip(*sorted(zip(pareto_costs, pareto_utilities, pareto_designs)))
@@ -207,4 +216,4 @@ def plot_ngsa2(costs, utilities, design_pts, showPlot=False, savePlot=False, log
 		
 	#plt.clf()
 	#plt.close()	
-
+"""

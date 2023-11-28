@@ -450,9 +450,8 @@ if __name__ == '__main__':
 	U_hist = 4.06834256919
 	C_hist = fp.G(d_historical)
 	
-	#costs, utilities, designs = ngsa2_problem(fp, nGenerations=200, popSize=20, nMonteCarlo=5*10**3, nGMM=10**4)
+	costs, utilities, designs = ngsa2_problem(fp, nGenerations=50, popSize=10, nMonteCarlo=5*10**3, nGMM=10**3)
 	#costs = [4.23713683e+07,4.23860227e+07,4.23841811e+07,4.23890356e+07,4.23890683e+07,4.23891276e+07,4.23891364e+07,4.23891323e+07]
 	#utilities = [1.06424209e+00, 2.93936466e+00, 2.82467126e+00,3.03336092e+00,3.35722153e+00,3.42608371e+00,3.73403443e+00,3.46282949e+00]
 
-	#plot_ngsa2(costs, utilities, design_pts=[[C_hist, U_hist]], showPlot=True, savePlot=False, logPlotXY=[True,False])
-	costs, utilities, designs = ngsa2_problem_parallel(4, fp, hours=0, minutes=2, popSize=1, nMonteCarlo=10**2, nGMM=10**4)
+	plot_ngsa2(costs, utilities, design_pts=[[C_hist, U_hist]], showPlot=True, savePlot=False, logPlotXY=[False,False])

@@ -41,7 +41,7 @@ def U_varH_gbi(d, problem, n_mc=10**5, n_gmm=10**4, ncomp=0, doPrint=False):
 	
 		#Now, use my posterior predictive to calculate the utility
 		H_var = gbi_gmm_variance(betas, mus, Sigs)
-		u = 1/H_var
+		u = H_var
 		U_list.append(u)
 		if doPrint:
 			print(str(i+1)+"/"+str(n_mc),str(u)+'\t', flush=True, end='\r')
