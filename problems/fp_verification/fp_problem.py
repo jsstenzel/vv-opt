@@ -29,23 +29,12 @@ theta_req_defs = [
 
 fp_y_defs = ["y_gain", "y_rn", "y_dc"]
 
-"""
 fp_d_defs = [
 				["t_gain", ['uniform', [.1, 600]], "continuous"], #gain
 				["I_gain", ['uniform', [1, 100]], "discrete"],    #gain
 				["n_meas_rn", ['uniform', [1, 50]], "discrete"],  #rn
 				["d_num", ['uniform', [2, 25]], "discrete"],     #dc
 				["d_max", ['uniform', [1, 12000]], "continuous"], #dc
-				["d_pow", ['uniform', [0,3]], "continuous"]       #dc
-			]
-"""
-
-fp_d_defs = [
-				["t_gain", ['uniform', [1, 50]], "continuous"], #gain
-				["I_gain", ['uniform', [1, 5]], "discrete"],    #gain
-				["n_meas_rn", ['uniform', [1, 50]], "discrete"],  #rn
-				["d_num", ['uniform', [2, 25]], "discrete"],     #dc
-				["d_max", ['uniform', [1, 20]], "continuous"], #dc
 				["d_pow", ['uniform', [0,3]], "continuous"]       #dc
 			]
 	
@@ -131,12 +120,3 @@ if useQE == True:
 
 #_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
 fp = ProblemDefinition(eta, H, Gamma, theta_req_defs, fp_y_defs, fp_d_defs, fp_x_defs)
-
-def dark_current_time_fn(i, tmin, dmax, dpow, dnum):
-	i = i+1
-	if i > dmax or i < 1:
-		print("Bad dark current times! Sheesh!")
-		quit
-	b = (dmax - tmin*(dnum**dpow))/(1-dnum**dpow)
-	a = tmin - b
-	return a * (i**dpow) + b

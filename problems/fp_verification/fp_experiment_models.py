@@ -154,6 +154,17 @@ def read_noise_exp(gain, rn, n_meas, _x, err=True):
 		y = sigma_si
 	return y
 	
+"""
+helper fn for dark current experiment
+"""
+def dark_current_time_fn(i, tmin, dmax, dpow, dnum):
+	i = i+1
+	if i > dnum or i < 1:
+		print("Bad dark current times! Sheesh!", i, dmax)
+		#quit
+	b = (dmax - tmin*(dnum**dpow))/(1-dnum**dpow)
+	a = tmin - b
+	return a * (i**dpow) + b
 	
 """
 theta: [0] gain [1] read noise [2] dark current
@@ -176,12 +187,9 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x, err=True):
 	
 	#handle design-derived variables
 	t_list = []
-
-	for x in range(d_num):
-		C = (d_max - math.exp(d_pow)) / (d_num-1)
-		t = C * x**d_pow
+	for i in range(d_num):
+		t = dark_current_time_fn(i, tmin=t_0, dmax=d_max, dpow=d_pow, dnum=d_num)
 		t_list.append(t)
-	t_list[0] = t_0 #clobber; 100ms baseline exposure assumed
 		
 	#Calculate mean signal at each datapoint
 	signal_list = [0]*len(t_list)

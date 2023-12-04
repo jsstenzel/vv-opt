@@ -65,7 +65,7 @@ d_best = [
 				50,	#n_meas_rn
 				100,	#d_num
 				12000, #d_max
-				1	 #d_pow   #approx
+				3	 #d_pow   #approx
 		]
 			   
 d_worst = [
@@ -73,8 +73,8 @@ d_worst = [
 				1,   #I_gain
 				1,	#n_meas_rn
 				2,	#d_num
-				100, #d_max
-				1	 #d_pow   #approx
+				1, #d_max
+				0.1	 #d_pow   #approx
 		]
 		
 y_nominal = fp_likelihood_fn(dict(zip(fp.theta_names, theta_nominal)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)
@@ -408,6 +408,80 @@ def fp_vv_obed_gbi(d):
 	uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")#, saveFig='OBEDresult')
 	return U
 	
+def optimality_study():
+	#U_hist = fp_vv_obed_gbi(d_historical)
+	U_hist = 0.4981609760099987
+	C_hist = np.log(fp.G(d_historical))
+	print(C_hist, flush=True)
+	
+	#U_best = fp_vv_obed_gbi(d_best)
+	U_best = 0.48310825880372715
+	C_best = np.log(fp.G(d_best))
+	
+	#U_worst = fp_vv_obed_gbi(d_worst)
+	U_worst = 1.2584888138976271
+	C_worst = np.log(fp.G(d_worst))
+		
+	pts = [[C_hist, U_hist, "d_hist"], [C_best, U_best, "d_max"], [C_worst, U_worst, "d_min"]]
+	plot_ngsa2([C_hist], [U_hist], design_pts=pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
+	
+	#costs, utilities, designs = ngsa2_problem(fp, nGenerations=200, popSize=30, nMonteCarlo=5*10**3, nGMM=10**3)
+	#costs, utilities, designs = ngsa2_problem(fp, nGenerations=10, popSize=2, nMonteCarlo=5*10**3, nGMM=10**3)
+	#costs, utilities, designs = ngsa2_problem_parallel(8, fp, hours=0, minutes=0, popSize=12, nMonteCarlo=5*10**3, nGMM=10**3)
+	costs, utilities, designs = ngsa2_problem_parallel(8, fp, hours=0, minutes=0, popSize=12, nMonteCarlo=5*10**3, nGMM=5*10**3)
+
+	pts = [[C_hist, U_hist, "d_hist"], [C_best, U_best, "d_max"], [C_worst, U_worst, "d_min"]]
+	plot_ngsa2(costs, utilities, design_pts=pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
+	
+def replot_optimal_points():
+	#U_hist = fp_vv_obed_gbi(d_historical)
+	U_hist = 0.4950101158
+	C_hist = np.log(fp.G(d_historical))
+	
+	#U_best = fp_vv_obed_gbi(d_best)
+	U_best = 0.48206003
+	C_best = np.log(fp.G(d_best))
+	
+	#U_worst = fp_vv_obed_gbi(d_worst)
+	U_worst = 1.6773693263
+	C_worst = np.log(fp.G(d_worst))
+	
+	#t_gain
+	#I_gain
+	#n_meas_rn
+	#d_num
+	#d_max
+	#d_pow
+	d1 = [34.24242879,  1, 6,  24, 1.00236049,  2.17136203]
+	d2 = [14.34365321,  3, 19, 24, 1.00236047,  2.24834641]
+	d3 = [9.03012734,   1, 32, 2,  10.6248672,  0.251100910]
+
+	U1 = 0.48891192#fp_vv_obed_gbi(d1)
+	C1 = np.log(fp.G(d1))
+	U2 = 0.49705924#fp_vv_obed_gbi(d2)
+	C2 = np.log(fp.G(d2))
+	U3 = 0.53882345#fp_vv_obed_gbi(d3)
+	C3 = np.log(fp.G(d3))
+	
+	pts = [[C_hist, U_hist, "d_hist"], 
+			[C_best, U_best, "d_max"], 
+			[C_worst, U_worst, "d_min"],
+			[C1, U1, "d_1"],
+			[C2, U2, "d_2"],
+			[C3, U3, "d_3"]
+			]
+	
+	plot_ngsa2([C_hist], [U_hist], design_pts=pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
+	
+def uncertainty_mc():
+	util_samples = []
+	for ii in range(1000):
+		print(ii, flush=True)
+		util = U_varH_gbi(d_historical, fp, n_mc=5*10**3, n_gmm=10**3, ncomp=5, doPrint=False)
+		util_samples.append(util)
+		
+	uncertainty_prop_plot(util_samples, c='purple', xlab="utility for d=d_hist")
+	print(statistics.variance(util_samples))
 
 if __name__ == '__main__':  
 	#fp_vv_nominal()
@@ -447,11 +521,39 @@ if __name__ == '__main__':
 	#fp_vv_gbi_rand_test(d_historical, 10**4)
 	
 	#U_hist = fp_vv_obed_gbi(d_historical)
-	U_hist = 4.06834256919
-	C_hist = fp.G(d_historical)
 	
-	costs, utilities, designs = ngsa2_problem(fp, nGenerations=50, popSize=10, nMonteCarlo=5*10**3, nGMM=10**3)
-	#costs = [4.23713683e+07,4.23860227e+07,4.23841811e+07,4.23890356e+07,4.23890683e+07,4.23891276e+07,4.23891364e+07,4.23891323e+07]
-	#utilities = [1.06424209e+00, 2.93936466e+00, 2.82467126e+00,3.03336092e+00,3.35722153e+00,3.42608371e+00,3.73403443e+00,3.46282949e+00]
+	#optimality_study()
+	#replot_optimal_points()
+	
+	#uncertainty_mc()
+	
+	"""
+	histcost = fp.G(d_historical)
+	bestcost = fp.G([14.34365321,  3, 19, 24, 1.00236047,  2.24834641])
+	print("historical design:",histcost, "seconds or",histcost/(3600),"hours")
+	print("best design:",bestcost, "seconds or",bestcost/(3600),"hours")
+	"""
+	
+	#U_hist = fp_vv_obed_gbi(d_historical)
+	U_hist = 0.4981609760099987
+	C_hist = np.log(fp.G(d_historical))
+	
+	#U_best = fp_vv_obed_gbi(d_best)
+	U_best = 0.48310825880372715
+	C_best = np.log(fp.G(d_best))
+	
+	#U_worst = fp_vv_obed_gbi(d_worst)
+	U_worst = 1.2584888138976271
+	C_worst = np.log(fp.G(d_worst))
+		
+	pts = [[C_hist, U_hist, "d_hist"], [C_best, U_best, "d_max"], [C_worst, U_worst, "d_min"]]
+	#plot_ngsa2([C_hist], [U_hist], design_pts=pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
+	
+	#costs, utilities, designs = ngsa2_problem(fp, nGenerations=200, popSize=30, nMonteCarlo=5*10**3, nGMM=10**3)
+	#costs, utilities, designs = ngsa2_problem(fp, nGenerations=10, popSize=2, nMonteCarlo=5*10**3, nGMM=10**3)
+	#costs, utilities, designs = ngsa2_problem_parallel(8, fp, hours=0, minutes=0, popSize=12, nMonteCarlo=5*10**3, nGMM=10**3)
+	costs, utilities, designs = ngsa2_problem_parallel(8, fp, hours=0, minutes=0, popSize=12, nMonteCarlo=5*10**3, nGMM=5*10**3)
 
-	plot_ngsa2(costs, utilities, design_pts=[[C_hist, U_hist]], showPlot=True, savePlot=False, logPlotXY=[False,False])
+	pts = [[C_hist, U_hist, "d_hist"], [C_best, U_best, "d_max"], [C_worst, U_worst, "d_min"]]
+	plot_ngsa2(costs, utilities, design_pts=pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
+	

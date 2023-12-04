@@ -178,7 +178,7 @@ def ngsa2_problem_parallel(n_threads, prob, hours, minutes, popSize, nMonteCarlo
 		#	period=30,
 		#	n_max_gen=500
 		#)	
-		termination = RobustTermination(MultiObjectiveSpaceTermination(tol=0.01, n_skip=5), period=10)
+		termination = RobustTermination(MultiObjectiveSpaceTermination(tol=0.05, n_skip=5), period=10)
 	else:
 		time_string = f"{hours:02}"+":"+f"{minutes:02}"+":00"
 		print(time_string)

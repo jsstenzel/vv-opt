@@ -2,6 +2,7 @@ import sys
 import math
 
 sys.path.append('../..')
+from problems.fp_verification.fp_experiment_models import *
 from problems.functionals import *
 	
 """
@@ -83,11 +84,9 @@ def fp_cost_simple(d, x):
 	
 	#dark current experiment time
 	t_list = []
-	for x in range(d_num):
-		C = (d_max - math.exp(d_pow)) / (d_num-1)
-		t = C * x**d_pow
+	for i in range(d_num):
+		t = dark_current_time_fn(i, tmin=dc_t0, dmax=d_max, dpow=d_pow, dnum=d_num)
 		t_list.append(t)
-	t_list[0] = dc_t0 #clobber; 100ms baseline exposure assumed
 	
 	time_dc = sum([ti+t_dc_buffer for ti in t_list])
 
@@ -110,7 +109,6 @@ def fp_cost_simple(d, x):
 		measurement_time += testbed_setup
 		#now see if n days is long enough to do all the experiments
 		measurement_perday = measurement_time / measurement_days
-		
 	
 	cost = C_engineer * measurement_time
 	return cost
