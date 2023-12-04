@@ -45,6 +45,7 @@ def U_varH_gbi(d, problem, n_mc=10**5, n_gmm=10**4, ncomp=0, doPrint=False):
 		U_list.append(u)
 		if doPrint:
 			print(str(i+1)+"/"+str(n_mc),str(u)+'\t', flush=True, end='\r')
+	print('')
 		
 	#compute an in-distribution probability
 	U = np.average(U_list)
