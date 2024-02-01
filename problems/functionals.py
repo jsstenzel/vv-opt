@@ -5,6 +5,8 @@ import scipy.interpolate
 import numpy as np
 import matplotlib.pyplot as plt
 
+import pymc
+
 sys.path.append('../..')
 #from obed.obed import *
 
@@ -105,3 +107,17 @@ def noise_to_functional(funct, noise):
 	sample.spline_interp(funct.bspline.k)
 	
 	return sample
+	
+	
+	
+########## Now I need to do Gaussian process
+#https://www.pymc.io/projects/docs/en/v3/Gaussian_Processes.html
+
+if __name__ == "__main__":
+	with pymc.Model() as model:
+		cov_func = pymc.gp.cov.ExpQuad(input_dim=1, ls=0.1)
+		theta_gp = pymc.gp.Latent(cov_func=cov_func)
+		
+		X = np.linspace(0, 1, 10)[:, None]
+		f = theta_gp.prior("f", X)
+		print(f)

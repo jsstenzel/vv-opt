@@ -105,6 +105,7 @@ class ProblemDefinition:
 		'lognorm': 2, #mean, variance
 		'uniform': 2, #left, right
 		'nonrandom': 1, #return value
+		'gp_expquad': 3, #mean_fn, variance, ls
 		'funct_splines': 5} #knot list (x,y), order, y_stddev, domain, range
 		
 	
