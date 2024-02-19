@@ -113,7 +113,9 @@ class ProblemDefinition:
 		return self._dist_rvs(num_vals, self.priors)
 		
 	def sample_d(self, num_vals):
-		return self._dist_rvs(num_vals, self.d_dists)
+		d = self._dist_rvs(num_vals, self.d_dists)
+		d_masked = [(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
+		return d_masked
 		
 	def sample_x(self, num_vals):
 		return self._dist_rvs(num_vals, self.x_dists)
