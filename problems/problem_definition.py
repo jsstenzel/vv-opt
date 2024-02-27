@@ -152,6 +152,8 @@ class ProblemDefinition:
 				thetas_i = scipy.stats.uniform.rvs(size=num_vals, loc=left, scale=right-left) #dist is [loc, loc + scale]
 			elif type == 'nonrandom':
 				thetas_i = [param[0] for _ in range(num_vals)]
+			elif type == 'gp_expquad':
+				
 			elif type == 'funct_splines':
 				for _ in range(num_vals):
 					data = params[0] #list of pairs of points to define the prior mean
@@ -186,6 +188,7 @@ class ProblemDefinition:
 			return vals #this is a list (num_vals) of random variables (dim_theta)
 	
 	#assumes single theta, not list of thetas
+	"""
 	def prior_pdf_unnorm(self, theta):
 		#evaluate and return a list of probabilities (dim_theta) for each distribution component
 		probabilities = []
@@ -227,6 +230,7 @@ class ProblemDefinition:
 		#need to renormalize the pdf right?
 		#but unnormalized may be ok for MCMC?
 		return probabilities
+	"""
 		
 	def __str__(self): #handsome little format for printing the object
 		printout = "ProblemDefinition printout:\n"
@@ -286,7 +290,7 @@ if __name__ == "__main__":
 	#_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
 	toy = ProblemDefinition(eta, H, Gamma, toy_theta_defs, toy_y_defs, toy_d_defs, toy_x_defs)
 	print(toy)
-	print(toy.prior_pdf_unnorm([-1.5,1.5]))
+	"""print(toy.prior_pdf_unnorm([-1.5,1.5]))"""
 	print(toy.prior_rvs(5))
 	print(toy.prior_rvs(1))
 	print(toy.sample_d(1))

@@ -74,7 +74,7 @@ def Gamma(d, x):
 
 
 #_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
-llamas_snr = ProblemDefinition(eta, H, Gamma, theta_defs, y_defs, d_defs, x_defs)
+gp_test = ProblemDefinition(eta, H, Gamma, theta_defs, y_defs, d_defs, x_defs)
 
 
 def update_gp_problem(problem, d):
@@ -110,11 +110,11 @@ def update_gp_problem(problem, d):
 	
 	
 if __name__ == "__main__":
-	print(llamas_snr)
+	print(gp_test)
 	
-	d = llamas_snr.sample_d(1)
+	d = gp_test.sample_d(1)
 	print('\n',d,'\n')
 	
-	llamas_snr_new = update_gp_problem(llamas_snr, d)
+	llamas_snr_new = update_gp_problem(gp_test, d)
 	
 	print(llamas_snr_new)

@@ -10,7 +10,7 @@ import dill
 
 sys.path.append('../..')
 #focal plane
-from problems.verification.problem import *
+from problems.gp_test.gp_test_problem import *
 #analysis
 from obed.obed_multivar import *
 from obed.obed_gbi import *
@@ -47,12 +47,11 @@ def proposal_fn_norm(theta_curr, proposal_width):
 req = 4.38 #max noise
 
 theta_nominal = []
-QoI_nominal = problem.H(theta_nominal)
 
 d_historical = [
 			   ]
 		
-y_nominal = likelihood_fn(dict(zip(problem.theta_names, theta_nominal)), dict(zip(problem.d_names, d_historical)), dict(zip(problem.x_names, problem.x_default)), err=False)
+#y_nominal = likelihood_fn(dict(zip(problem.theta_names, theta_nominal)), dict(zip(problem.d_names, d_historical)), dict(zip(problem.x_names, problem.x_default)), err=False)
 #print(y_nominal)
 
 ################################
@@ -61,6 +60,7 @@ y_nominal = likelihood_fn(dict(zip(problem.theta_names, theta_nominal)), dict(zi
 
 def vv_nominal(problem):
 	print("QoI requirement:", req)
+	QoI_nominal = problem.H(theta_nominal)
 	print("Nominal QoI:", QoI_nominal)
 
 
@@ -223,35 +223,32 @@ def uncertainty_mc(problem):
 
 if __name__ == '__main__':  
 	###Problem Definition
-	alphas = [1,1,1,10,10,10,100,100,100]
-	betas = [.1,1,10,.1,1,10,.1,1,10]
-	problem = simple_mass_problem_def(alphas, betas)
+	d_example = gp_test.sample_d(1)
 	
-	d_best = [0.001]*len(alphas)
-	d_worst = [10]*len(alphas)
+	problem = update_gp_problem(gp_test, d_example)
 
 	###Uncertainty Quantification
-	vv_nominal(problem)
+	#vv_nominal(problem)
 	
 	vv_UP_QoI(problem, 350)
 	
-	vv_SA_QoI(problem)
+	#vv_SA_QoI(problem)
 	
-	vv_UP_exp(problem, d_best)
+	#vv_UP_exp(problem, d_example)
 	
-	vv_SA_exp(problem, d_best)
+	#vv_SA_exp(problem, d_example)
 	
 
 	###Optimal Bayesian Experimental Design
-	vv_gbi_test(problem, d_best, y_nominal, 10**6)
+	#vv_gbi_test(problem, d_example, y_nominal, 10**6)
 	
-	vv_gbi_rand_test(problem, d_best, 10**4)
+	#vv_gbi_rand_test(problem, d_example, 10**4)
 	
-	U_hist = vv_obed_gbi(problem, d_best)
+	#U_hist = vv_obed_gbi(problem, d_example)
 	
-	uncertainty_mc(problem)
+	#uncertainty_mc(problem)
 		
 		
-	costs, utilities, designs = ngsa2_problem_parallel(8, problem, hours=0, minutes=0, popSize=12, nMonteCarlo=5*10**3, nGMM=5*10**3)
-	plot_ngsa2(costs, utilities, showPlot=True, savePlot=False, logPlotXY=[False,False])
+	#costs, utilities, designs = ngsa2_problem_parallel(8, problem, hours=0, minutes=0, popSize=12, nMonteCarlo=5*10**3, nGMM=5*10**3)
+	#plot_ngsa2(costs, utilities, showPlot=True, savePlot=False, logPlotXY=[False,False])
 	

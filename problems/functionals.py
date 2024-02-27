@@ -111,13 +111,59 @@ def noise_to_functional(funct, noise):
 	
 	
 ########## Now I need to do Gaussian process
-#https://www.pymc.io/projects/docs/en/v3/Gaussian_Processes.html
+#https://www.pymc.io/projects/docs/en/stable/api/gp.html
+
+#the prior is returned as a TensorVariable, see https://github.com/pymc-devs/pytensor/blob/e8693bdbebca0757ab11353f121eed0c9b3acf66/pytensor/tensor/variable.py#L25
 
 if __name__ == "__main__":
+	"""
 	with pymc.Model() as model:
 		cov_func = pymc.gp.cov.ExpQuad(input_dim=1, ls=0.1)
 		theta_gp = pymc.gp.Latent(cov_func=cov_func)
 		
 		X = np.linspace(0, 1, 10)[:, None]
-		f = theta_gp.prior("f", X)
-		print(f)
+		samples = []
+		for i in range(10):
+			f = theta_gp.prior("f"+str(i), X) #one sample of the GP
+			samples.append(f.eval())
+	"""
+		
+	#for sample in samples:
+	#	plt.plot(sample)
+	#plt.show()
+		
+	#ok, now how do i update a prior? Do i use the Latent.conditional method?
+	#Once i have this, i can do the experiment model i think...
+	
+	#define a prior in the shape of a parabola
+	prior_y = []
+	prior_x = np.linspace(0, 1, 10)[:, None]
+	prior2_x = np.linspace(0, 1, 20)[:, None]
+	for x in prior_x:
+		prior_y.append(-(x-5)**2 + 20)
+	prior_pts = [[x,p] for x,p in zip(prior_x[:],prior_y)]
+	print(prior_pts)
+	
+	#https://www.pymc.io/projects/docs/en/stable/learn/core_notebooks/Gaussian_Processes.html#additive-gp
+	with pymc.Model() as model:
+		cov_func = pymc.gp.cov.ExpQuad(input_dim=1, ls=0.01)
+		theta_gp = pymc.gp.Latent(cov_func=cov_func) #mean_func=
+		prior = theta_gp.prior("prior", prior_x)
+		prior2 = theta_gp.prior("prior2", prior2_x)
+		x_data = np.array([.15,.75])[:, None]
+		posterior = theta_gp.conditional("posterior", Xnew=x_data) #???
+	
+	print(prior.eval())
+	print(posterior.eval())
+	plt.plot(prior_x, prior.eval(),'r')
+	plt.plot(prior2_x, prior2.eval(),'g')
+	plt.scatter(x_data, posterior.eval())
+	plt.show()
+	#this experiment shows that calling prior newly sets the prior of the gp
+	#then, when you call the conditional, its kind of like taking measurements at those points, and it gives you noisy measurements around that prior
+	#so now, all i have to do is create a class that systematizes this into something that lets me define a prior and an eta,
+	#and also includes the option to set any kind of mean prior as a function
+		
+	
+	#and how do i evaluate the probability density of the GP? Is this actually necessary for doing goal-based inference?
+	#nah!
