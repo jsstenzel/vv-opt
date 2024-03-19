@@ -230,7 +230,7 @@ if __name__ == '__main__':
 	###Uncertainty Quantification
 	#vv_nominal(problem)
 	
-	vv_UP_QoI(problem, 350)
+	#vv_UP_QoI(problem, 350)
 	
 	#vv_SA_QoI(problem)
 	

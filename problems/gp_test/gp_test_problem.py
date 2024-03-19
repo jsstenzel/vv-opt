@@ -9,7 +9,7 @@ import csv
 
 sys.path.append('../..')
 from problems.problem_definition import *
-from problems.functionals import *
+from problems.gaussian_process import *
 
 _wave_min = 350
 _wave_max = 975

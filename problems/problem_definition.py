@@ -6,7 +6,7 @@ import numpy as np
 import math
 
 sys.path.append('..')
-from problems.functionals import *
+from problems.gaussian_process import *
 
 
 class ProblemDefinition:
@@ -105,8 +105,8 @@ class ProblemDefinition:
 		'lognorm': 2, #mean, variance
 		'uniform': 2, #left, right
 		'nonrandom': 1, #return value
-		'gp_expquad': 3, #mean_fn, variance, ls
-		'funct_splines': 5} #knot list (x,y), order, y_stddev, domain, range
+		'gp_expquad': 4 #variance, ls, prior_pts, mean_fn
+		} #knot list (x,y), order, y_stddev, domain, range
 		
 	
 	def prior_rvs(self, num_vals):
@@ -153,26 +153,11 @@ class ProblemDefinition:
 			elif type == 'nonrandom':
 				thetas_i = [param[0] for _ in range(num_vals)]
 			elif type == 'gp_expquad':
-				
-			elif type == 'funct_splines':
-				for _ in range(num_vals):
-					data = params[0] #list of pairs of points to define the prior mean
-					order = params[1] #k order of spline interpolated fit
-					y_stddev = params[2]
-					xmin = params[3][0]
-					xmax = params[3][1] #domain=(xmin,xmax) boundary on the priors
-					ymin = params[4][0]
-					ymax = params[4][1] #range=(ymin,ymax) boundary on the priors
-					
-					x = [point[0] for point in data]
-					y = [point[1] + scipy.stats.norm.rvs(size=1, loc=0, scale=y_stddev)[0] for point in data]
-					
-					sample = Functional(x, y)
-					sample.set_xlim(xmin, xmax)
-					sample.set_ylim(ymin, ymax)
-					sample.spline_interp(order)
-					
-					thetas_i.append(sample)
+				variance = params[0]
+				ls = params[1]
+				prior_pts = params[2]
+				mean_fn = params[3]
+				thetas_i = [sample_gp_prior(variance, ls, prior_pts, mean_fn) for _ in range(num_vals)]
 			else:
 				raise ValueError("_dist_rvs did not expect prior type "+str(type))
 				

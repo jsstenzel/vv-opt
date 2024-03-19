@@ -1,8 +1,10 @@
 astropy==4.1
-matplotlib==3.3.3
+matplotlib
 multiprocess==0.70.12.2
-numpy==1.19.5
+numpy
+pytensor==2.12.3
+pymc==5.6.1
 SALib==1.4.5
-scipy==1.5.4
+scipy
 seaborn==0.11.2
 statsmodels==0.12.2
