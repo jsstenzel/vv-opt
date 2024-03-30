@@ -45,7 +45,10 @@ class GaussianProcess1D:
 		with pymc.Model() as model:
 			posterior = self.gp.conditional("meas"+str(time.time()), Xnew=np.array(meas_pts)[:, None])
 			posterior_data = posterior.eval()
-		meas_data = [y + self.mean_fn(meas_pts[i]) + scipy.stats.norm.rvs(scale=noise) for i,y in enumerate(posterior_data)]
+		if noise > 0:
+			meas_data = [y + self.mean_fn(meas_pts[i]) + scipy.stats.norm.rvs(scale=noise) for i,y in enumerate(posterior_data)]
+		else:
+			meas_data = [y + self.mean_fn(meas_pts[i]) for i,y in enumerate(posterior_data)]
 		return meas_data
 	
 	#I think this is true...
