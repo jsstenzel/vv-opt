@@ -51,7 +51,7 @@ class ProblemDefinition:
 		self.d_names=[name for name,_,_ in _d_defs]
 		self.x_names=[name for name,default,dist,mask in _x_defs]
 	
-	def eta(self, theta, d, x=[]):
+	def eta(self, theta, d, x=[], err=True):
 		if x == []: #default x
 			x = self.x_default
 		if len(theta) != self.dim_theta:
@@ -67,7 +67,7 @@ class ProblemDefinition:
 		theta_dict = dict(zip(self.theta_names, theta_masked))
 		d_dict = dict(zip(self.d_names, d_masked))
 		x_dict = dict(zip(self.x_names, x))
-		return self._internal_eta(theta_dict, d_dict, x_dict)
+		return self._internal_eta(theta_dict, d_dict, x_dict, err)
 	
 	def G(self, d, x=[]):
 		if x == []: #default x

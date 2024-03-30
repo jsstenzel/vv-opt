@@ -22,8 +22,10 @@ def prior_mean_vph_red(t):
 	f = scipy.interpolate.interp1d(np.array(wasach_llamas2200_red).T[0], np.array(wasach_llamas2200_red).T[1], kind='quadratic')
 	return f(t)
 
-
-prior_gp_vph_red = ["gp_expquad", [.05, (0.05*_bandpass)**2, [pt[0] for pt in wasach_llamas2200_red], prior_mean_vph_red]]  
+vph_red_var = .05
+vph_red_ls = (0.05*_bandpass)**2
+vph_red_pts = [pt[0] for pt in wasach_llamas2200_red]
+prior_gp_vph_red = ["gp_expquad", [vph_red_var, vph_red_ls, vph_red_pts, prior_mean_vph_red]]  
 #variance, ls, prior_pts, mean_fn
 
 
@@ -48,12 +50,15 @@ x_defs = 	[
 			]
 
 
-def eta(theta, d, x):
+def eta(theta, d, x, err=True):
 	vph_thru_red = theta["vph_thru_red"]
 	d_vph_n_pts = d["d_vph_n_pts"]
 	wave_min = x["wave_min"]
 	wave_max = x["wave_max"]
-	measurement_stddev = x["measurement_stddev"]
+	if err:
+		measurement_stddev = x["measurement_stddev"]
+	else:
+		measurement_stddev = 0
 	
 	#choose the measurement points
 	measurement_pts = np.linspace(wave_min, wave_max, num=d_vph_n_pts)
@@ -142,3 +147,7 @@ if __name__ == "__main__":
 	plt.plot(gp_test_d.priors[0][1][2], gp, 'g') #annoying way to plot the smapled prior
 	plt.plot(np.linspace(_wave_min, _wave_max, num=d[0]), y, 'r') #annoying way to plot the measurement
 	plt.show()
+	
+	#check QoI
+	q = gp_test_d.H(theta)
+	print(q)
