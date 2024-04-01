@@ -19,9 +19,12 @@ sys.path.append('../..')
 #the prior is returned as a TensorVariable, see https://github.com/pymc-devs/pytensor/blob/e8693bdbebca0757ab11353f121eed0c9b3acf66/pytensor/tensor/variable.py#L25
 """	
 
-def sample_gp_prior(variance, ls, prior_pts, mean_fn):
+def _zero_mean(x):
+	return 0
+
+def sample_gp_prior(variance, ls, prior_pts, mean_fn=_zero_mean):
 	with pymc.Model() as model:
-		cov_func = variance**2 * pymc.gp.cov.ExpQuad(input_dim=1, ls=ls)
+		cov_func = variance * pymc.gp.cov.ExpQuad(input_dim=1, ls=ls)
 		theta_gp = pymc.gp.Latent(cov_func=cov_func)
 		#this defines the prior for the theta_gp:
 		prior = theta_gp.prior("prior"+str(time.time()), np.array(prior_pts)[:, None])
@@ -64,7 +67,7 @@ class GaussianProcess1D:
 		data = self.evaluate()
 		plt.plot(self.prior_pts, self.evaluate(),'r')
 		if plotMean:
-			plt.plot(self.prior_pts, [self.mean_fn(xi) for xi in prior_pts],'g-')
+			plt.plot(self.prior_pts, [self.mean_fn(xi) for xi in self.prior_pts],'g-')
 		if plotDataX and plotDataY:
 			plt.scatter(plotDataX, plotDataY, c='b')
 		plt.show()
