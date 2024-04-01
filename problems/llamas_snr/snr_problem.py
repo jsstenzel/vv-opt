@@ -96,7 +96,7 @@ fp_x_defs = [
 				["sigma_dc", ["uniform", [.3,.7]], "continuous", .5], #e-/s #WAGish based on a consistency test performed on SN20006
 				["mu_stray", ["nonrandom", [0]], "continuous", 0], #e-/s #WAG for now
 				["sigma_stray", ["uniform", [.001,.01]], "continuous", .005], #WAG for now
-				#gain
+				#gain exp
 				["P_signal", ["uniform", [.8,.95]], "continuous", 0.90], #Prob. of correctly identifying signal as event #WAG for now
 				["P_noise", ["uniform", [.01,.1]], "continuous", 0.01], #Prob. of incorrectly identifying noise/interference as event #WAG for now
 				["T_ccd", ["uniform", [_temp-1,_temp+1]], "continuous",  _temp], #K
@@ -107,18 +107,42 @@ fp_x_defs = [
 				["grade_size", ["nonrandom", [3]], "discrete", 3], #3x3 event grade sizes
 				["t_gain_setup", ["nonrandom", [1200]], "continuous", 1200], #WAG
 				["t_gain_buffer", ["nonrandom", [5]], "continuous", 5], #WAG
-				#rn
-				["t_rn", ["nonrandom", [.1]], "continuous", .1], #100 ms exposure
-				["t_rn_buffer", ["nonrandom", [5]], "continuous", 5], #WAG
-				#dc
-				["t_0", ["nonrandom", [.1]], "continuous", 0.1], #100ms baseline exposure assumed
-				["t_dc_buffer", ["nonrandom", [5]], "continuous", 5], #WAG
+				#rn exp
+				["t_rn", [], "continuous", .1], #100 ms exposure
+				["t_rn_buffer", [], "continuous", 5], #WAG
+				#dc exp
+				["t_0", [], "continuous", 0.1], #100ms baseline exposure assumed
+				["t_dc_buffer", [], "continuous", 5], #WAG
 				#qoi
-				["tau", ["nonrandom", [1800]], "continuous", 1800],
-				#spectrograph
-				
+				["tau", [], "continuous", 1800],
 				#llamas
-				
+				["resolution", [], "continuous", 2200.0],
+				["wave_min", [], "continuous", _wave_min],
+				["wave_max", [], "continuous", _wave_max],
+				["f_collimator", [], "continuous", 200.0],
+				["f_camera", [], "continuous", 70.0],
+				["fratio_collimator", [], "continuous", 4.0],
+				["fratio_camera", [], "continuous", 1.28],
+				["blade_obscure", [], "continuous", 0.9],
+				["d_beam", [], "continuous", 50.0],
+				#fiber
+				["fiber_theta", [], "continuous", 0.75],
+				["fiber_dcore", [], "continuous", 110],
+				["microlens"],
+				["fiber_ar"],
+				["fiber_internal"],
+				#spectrograph
+				["collimator"],
+				["prism"],
+				["lens1"],
+				["lens2"],
+				["lens3"],
+				["lens4"],
+				["lens5"],
+				["lens6"],
+				["lens7"],
+				["sensor_window"],
+				["sensor_glass"],
 				#cost
 				["testbed_setup", ["nonrandom", [1800]], "continuous", 1800], #WAG
 				#["C_engineer", ["nonrandom", [0.00694444444]], "continuous", 0.00694444444] #WAG $/s, from $25/hr

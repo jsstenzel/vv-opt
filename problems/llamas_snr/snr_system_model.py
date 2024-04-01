@@ -81,27 +81,21 @@ def make_vph_tab(points,errors,color):
 ################################
 
 #Wrapper function for model call
-def sensitivity_hlva(x, d, col, config_table, spectrograph_models, skyspec):
+def sensitivity_hlva(x, d, col, config_table, spectrograph_models):
 	spect_models = deepcopy(spectrograph_models)
     
     #Expected format for x: 
-    x_names = ["resolution","f_col","f_cam","fratio_col","fratio_cam","blade_obscure","d_beam","fiber_theta","fiber_core_d","fiber_frd","microlens_thru","fiber_ar_thru","fiber_internal_thru","collimator_thru","sl_thru","bg_thru","red_vph","green_vph","blue_vph","red_prism","green_prism","blue_prism","l1_red_thru","l2_red_thru","l3_red_thru","l4_red_thru","l5_red_thru","l6_red_thru","l7_red_thru","red_window_thru","l1_green_thru","l2_green_thru","l3_green_thru","l4_green_thru","l5_green_thru","l6_green_thru","l7_green_thru","green_window_thru","l1_blue_thru","l2_blue_thru","l3_blue_thru","l4_blue_thru","l5_blue_thru","l6_blue_thru","l7_blue_thru","blue_window_thru","red_internal_thru","green_internal_thru","blue_internal_thru","red_rn","red_dc","green_rn","green_dc","blue_rn","blue_dc","skyfile"]
+    #x_names = ["resolution","f_col","f_cam","fratio_col","fratio_cam","blade_obscure","d_beam","fiber_theta","fiber_core_d","fiber_frd","microlens_thru","fiber_ar_thru","fiber_internal_thru","collimator_thru","sl_thru","bg_thru","red_vph","green_vph","blue_vph","red_prism","green_prism","blue_prism","l1_red_thru","l2_red_thru","l3_red_thru","l4_red_thru","l5_red_thru","l6_red_thru","l7_red_thru","red_window_thru","l1_green_thru","l2_green_thru","l3_green_thru","l4_green_thru","l5_green_thru","l6_green_thru","l7_green_thru","green_window_thru","l1_blue_thru","l2_blue_thru","l3_blue_thru","l4_blue_thru","l5_blue_thru","l6_blue_thru","l7_blue_thru","blue_window_thru","red_internal_thru","green_internal_thru","blue_internal_thru","red_rn","red_dc","green_rn","green_dc","blue_rn","blue_dc","skyfile"]
 ]
-    make a map
-
-    #Expected format for d:
-    d_names = 
-    make a map
+    ##############################
+    ###Break down theta
+	##############################
+	
+	
     
-    ###Take in copied x values
-    x_u = deepcopy(x)
-    
-    ###Simulate experiments w/ d to find uncertainties
-    ###Apply uncertainties to x
-    exp_
-    
+	##############################
     ###Load in the new values to the spect_models
-    """
+	##############################
 	#update frd
 	llamas_red.fiber.frd_loss += frd_error
 	llamas_green.fiber.frd_loss += frd_error
@@ -141,13 +135,15 @@ def sensitivity_hlva(x, d, col, config_table, spectrograph_models, skyspec):
 	llamas_red.fiber.dFib += fiber_core_d_err
 	llamas_green.fiber.dFib += fiber_core_d_err
 	llamas_blue.fiber.dFib += fiber_core_d_err
-    """
+	
 
 	llamas_red.throughput = llamas_red.calc_throughput(waves)
 	llamas_green.throughput = llamas_green.calc_throughput(waves)
 	llamas_blue.throughput = llamas_blue.calc_throughput(waves)
     
+	##############################
     ###Run model
+	##############################
 	run_snrs = []
 	
 	texp=600

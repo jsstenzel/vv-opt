@@ -18,8 +18,6 @@ import numpy as np
 import itertools
 import multiprocessing as mp
 import math
-from SALib.sample import saltelli, fast_sampler
-from SALib.analyze import sobol, fast
 from copy import deepcopy
 import scipy.optimize as optimization
 

@@ -44,7 +44,12 @@ class ProblemDefinition:
 		self.theta_masks = [mask for _,_,mask in _theta_defs]
 		self.d_masks     = [mask for _,_,mask in _d_defs]
 		self.x_masks     = [mask for _,_,mask,_ in _x_defs]
-	
+		
+		#hack the x_defs to save wasted effort:
+		for xdist in self.x_dists:
+			if xdist[1] == []:
+				xdist[1] = ["nonrandom", [xdist[3]]]
+		
 		#for documentation:
 		self.theta_names=[name for name,_,_ in _theta_defs]
 		self.y_names=_y_defs
@@ -123,36 +128,36 @@ class ProblemDefinition:
 	def _dist_rvs(self, num_vals, dist_def):
 		vals = [] #a list length num_vals of random numbers of size dim_theta
 		for prior in dist_def: ###iterate over dim_theta
-			type = prior[0]
+			dtype = prior[0]
 			params = prior[1]
 			thetas_i = [] #need to do this carefully, we have multiple thetas and multiple samples
 	
 			#generate the rvs for this one particular theta
-			if type == 'gaussian':
+			if dtype == 'gaussian':
 				mu = params[0]
 				sigma = params[1]
 				thetas_i = scipy.stats.norm.rvs(size=num_vals, loc=mu, scale=sigma)
-			elif type == 'gamma_ab':
+			elif dtype == 'gamma_ab':
 				alpha = params[0]
 				beta = params[1]
 				thetas_i = scipy.stats.gamma.rvs(size=num_vals, a=alpha, scale=1.0/beta)
-			elif type == 'gamma_mv':
+			elif dtype == 'gamma_mv':
 				mean = params[0]
 				variance = params[1]
 				alpha = mean**2 / variance
 				beta = mean / variance
 				thetas_i = scipy.stats.gamma.rvs(size=num_vals, a=alpha, scale=1.0/beta)
-			elif type == 'lognorm':
+			elif dtype == 'lognorm':
 				mu = params[0]
 				sigma = params[1]
 				thetas_i = scipy.stats.lognorm.rvs(size=num_vals, s=sigma, scale=np.exp(mu))
-			elif type == 'uniform':
+			elif dtype == 'uniform':
 				left = params[0]
 				right = params[1]
 				thetas_i = scipy.stats.uniform.rvs(size=num_vals, loc=left, scale=right-left) #dist is [loc, loc + scale]
-			elif type == 'nonrandom':
+			elif dtype == 'nonrandom':
 				thetas_i = [param[0] for _ in range(num_vals)]
-			elif type == 'gp_expquad':
+			elif dtype == 'gp_expquad':
 				variance = params[0]
 				ls = params[1]
 				prior_pts = params[2]
