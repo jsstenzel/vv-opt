@@ -144,7 +144,7 @@ def vv_SA_exp(problem, dd):
 							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)	
 #"""						
 
-def vv_gbi_test(problem, d, Yd, N, ncomp=0):		
+def vv_gbi_test(problem, d, N, Yd=[], ncomp=0):		
 	print("Training...")
 	theta_train = problem.prior_rvs(N)
 	qoi_train = [problem.H(theta) for theta in theta_train]
@@ -152,28 +152,23 @@ def vv_gbi_test(problem, d, Yd, N, ncomp=0):
 	
 	gmm = gbi_train_model(theta_train, qoi_train, y_train, verbose=2, ncomp=ncomp)
 	
+	if Yd==[]:
+		print("Determining random measurement Yd...")
+		truth_theta = problem.prior_rvs(1)
+		Yd = problem.eta(truth_theta, d)
+	
 	print("Conditioning...")
 	a,b,c = gbi_condition_model(gmm, Yd, verbose=2)
 	
-	plot_predictive_posterior(a, b, c, 0, 7, drawplot=True)
-	
-def vv_gbi_rand_test(problem, d, N):		
-	theta_train = problem.prior_rvs(N)
-	qoi_train = [problem.H(theta) for theta in theta_train]
-	y_train = [problem.eta(theta, d) for theta in theta_train]
-	
-	gmm = gbi_train_model(theta_train, qoi_train, y_train, verbose=0, ncomp=8)
-	
-	truth_theta = problem.prior_rvs(1)
-	measured_y = problem.eta(truth_theta, d)
-	a,b,c = gbi_condition_model(gmm, measured_y, verbose=0)
-	
-	plot_predictive_posterior(a, b, c, 0, 7, drawplot=False, plotmean=True)
-	plt.axvline(problem.H(truth_theta), c='blue')
-	plt.show()
+	if Yd==[]:
+		plot_predictive_posterior(a, b, c, 0, 7, drawplot=True)
+	else:
+		plot_predictive_posterior(a, b, c, 0, 7, drawplot=False, plotmean=True)
+		plt.axvline(problem.H(truth_theta), c='blue')
+		plt.show()
 
 def vv_obed_gbi(problem, d):
-	U, U_list = U_varH_gbi(d, fp, n_mc=10**5, n_gmm=10**5, doPrint=True)
+	U, U_list = U_varH_gbi(d, problem, n_mc=10**3, n_gmm=10**3, doPrint=True)
 	print(U)
 	#print(U_list)
 	uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")#, saveFig='OBEDresult')
@@ -190,6 +185,11 @@ def uncertainty_mc(problem):
 	print(statistics.variance(util_samples))
 
 if __name__ == '__main__':  
+	import argparse
+	parser = argparse.ArgumentParser()
+	parser.add_argument('--run', metavar='string', required=True, help='Functions to run for this vvopt analysis')
+	args = parser.parse_args()
+	
 	###Problem Definition
 	d_example = [3]#gp_test.sample_d(1)
 	problem = update_gp_problem(gp_test, d_example)
@@ -199,26 +199,32 @@ if __name__ == '__main__':
 	y_nominal = problem.eta(theta_nominal, d_example, err=False)
 
 	###Uncertainty Quantification
-	vv_nominal(problem, req, theta_nominal, y_nominal)
+	if args.run == "nominal":
+		vv_nominal(problem, req, theta_nominal, y_nominal)
 	
-	#vv_UP_QoI(problem, req)
+	if args.run == "UP_QoI":
+		vv_UP_QoI(problem, req)
 	
-	#vv_SA_QoI(problem)
+	if args.run == "SA_QoI":
+		vv_SA_QoI(problem)
 	
-	#vv_UP_exp(problem, d_example)
+	if args.run == "UP_exp":
+		vv_UP_exp(problem, d_example)
 	
-	#vv_SA_exp(problem, d_example)
-	
+	if args.run == "SA_exp":
+		vv_SA_exp(problem, d_example)
 
 	###Optimal Bayesian Experimental Design
-	vv_gbi_test(problem, d_example, y_nominal, 10**2, ncomp=1)
+	if args.run == "gbi_test":
+		vv_gbi_test(problem, d_example, 10**1, ncomp=1)
+	if args.run == "gbi_test_rand":
+		vv_gbi_test(problem, d_example, 10**2, y_nominal, ncomp=1)
 	
-	#vv_gbi_rand_test(problem, d_example, 10**4)
+	if args.run == "obed_gbi":
+		U_hist = vv_obed_gbi(problem, d_example)
 	
-	#U_hist = vv_obed_gbi(problem, d_example)
-	
-	#uncertainty_mc(problem)
-		
+	if args.run == "uncertainty_mc":
+		uncertainty_mc(problem)
 		
 	#costs, utilities, designs = ngsa2_problem_parallel(8, problem, hours=0, minutes=0, popSize=12, nMonteCarlo=5*10**3, nGMM=5*10**3)
 	#plot_ngsa2(costs, utilities, showPlot=True, savePlot=False, logPlotXY=[False,False])
