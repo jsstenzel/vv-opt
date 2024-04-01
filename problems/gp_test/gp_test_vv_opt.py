@@ -77,7 +77,7 @@ def vv_UP_exp(problem, dd, savefig=False):
 	uq_ys = [problem.eta(theta, dd) for theta in uq_thetas]
 	uncertainty_prop_plots(uq_ys, c='orchid', saveFig='UP_joint_y0' if savefig else '')
 
-#"""	These cause problems on eofe8
+"""	These cause problems on eofe8. Also, need to generalize
 #sensitivity analysis of the experiment models
 def vv_SA_exp(problem, dd):
 		#we want to see sensitivity of each yi to their inputs, theta and x
@@ -142,7 +142,7 @@ def vv_SA_exp(problem, dd):
 							var_dists=[x for i,x in enumerate(expvar_dists) if i in [0,1,2,5,7]], 
 							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in [0,1,2,5,7]], 
 							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)	
-#"""						
+"""						
 
 def vv_gbi_test(problem, d, N, Yd=[], ncomp=0):		
 	print("Training...")
@@ -195,7 +195,7 @@ if __name__ == '__main__':
 	problem = update_gp_problem(gp_test, d_example)
 	
 	req = 0.65
-	theta_nominal = [sample_gp_prior(.0001, 100000, vph_red_pts, prior_mean_vph_red)]
+	theta_nominal = [define_gp_static(vph_red_pts, prior_mean_vph_red)]
 	y_nominal = problem.eta(theta_nominal, d_example, err=False)
 
 	###Uncertainty Quantification

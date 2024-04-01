@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import scipy.stats
+import scipy.interpolate
 
 import pymc
 
@@ -31,6 +32,10 @@ def sample_gp_prior(variance, ls, prior_pts, mean_fn=_zero_mean):
 
 	sample = GaussianProcess1D(theta_gp, prior_pts, mean_fn, prior)
 	return sample
+	
+def define_gp_static(prior_pts, mean_fn=_zero_mean):
+	sample = GaussianProcess1D(None, prior_pts, mean_fn, None)
+	return sample
 
 #This class is intended to work with the sample_gp_prior function
 #Usually, that function is used to specify & sample a prior, returning this object
@@ -42,12 +47,20 @@ class GaussianProcess1D:
 		self.mean_fn = mean_fn
 		self.prior = prior
 		
+		if gp==None and prior==None:
+			self.static_flag = True
+		else:
+			self.static_flag = False
+		
 	#Takes the GP, measurement points and noise, and returns measured values
 	#This is useful for 
 	def eval_gp_cond(self, meas_pts, noise):
-		with pymc.Model() as model:
-			posterior = self.gp.conditional("meas"+str(time.time()), Xnew=np.array(meas_pts)[:, None])
-			posterior_data = posterior.eval()
+		if not self.static_flag:		
+			with pymc.Model() as model:
+				posterior = self.gp.conditional("meas"+str(time.time()), Xnew=np.array(meas_pts)[:, None])
+				posterior_data = posterior.eval()
+		else:
+			posterior_data = [0]*len(meas_pts)
 		if noise > 0:
 			meas_data = [y + self.mean_fn(meas_pts[i]) + scipy.stats.norm.rvs(scale=noise) for i,y in enumerate(posterior_data)]
 		else:
@@ -57,7 +70,10 @@ class GaussianProcess1D:
 	#I think this is true...
 	#just doing a conditional at the same prior points, with no noise applied
 	def evaluate(self):
-		data = self.prior.eval()
+		if not self.static_flag:
+			data = self.prior.eval()
+		else:
+			data = [0]*len(self.prior_pts)
 		#apply mean fn?
 		for i,pt in enumerate(data):
 			data[i] += self.mean_fn(self.prior_pts[i])
