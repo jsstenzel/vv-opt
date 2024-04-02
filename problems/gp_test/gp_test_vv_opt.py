@@ -195,7 +195,7 @@ if __name__ == '__main__':
 	problem = update_gp_problem(gp_test, d_example)
 	
 	req = 0.65
-	theta_nominal = [define_gp_static(vph_red_pts, prior_mean_vph_red)]
+	theta_nominal = [define_functional(vph_red_pts, prior_mean_vph_red)]
 	y_nominal = problem.eta(theta_nominal, d_example, err=False)
 
 	###Uncertainty Quantification

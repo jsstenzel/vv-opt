@@ -22,6 +22,10 @@ sys.path.append('../..')
 
 def _zero_mean(x):
 	return 0
+	
+#######################################
+# Generators for GaussianProcess1D
+#######################################
 
 def sample_gp_prior(variance, ls, prior_pts, mean_fn=_zero_mean):
 	with pymc.Model() as model:
@@ -33,9 +37,62 @@ def sample_gp_prior(variance, ls, prior_pts, mean_fn=_zero_mean):
 	sample = GaussianProcess1D(theta_gp, prior_pts, mean_fn, prior)
 	return sample
 	
-def define_gp_static(prior_pts, mean_fn=_zero_mean):
+def define_functional(prior_pts, mean_fn=_zero_mean):
 	sample = GaussianProcess1D(None, prior_pts, mean_fn, None)
 	return sample
+	
+#######################################
+# Helper fns to do it from files
+#######################################
+	
+def get_ppts_file(filename):
+	prior_pts = []
+	with open(filename, "r") as f:
+		for line in f:
+			prior_pts.append(line[0])
+	return prior_pts
+
+def get_meanfn_file(filename):
+	prior_pts = []
+	mean_pts = []
+	with open(filename, "r") as f:
+		for line in f:
+			prior_pts.append(line[0])
+			mean_pts.append(line[1])
+
+	def mean_fn_from_file(t):
+		f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(mean_pts), kind='quadratic')
+		return f(t)
+
+	return mean_fn_from_file
+	
+def sample_gp_from_file(filename, variance, ls):
+	prior_pts = []
+	mean_pts = []
+	with open(filename, "r") as f:
+		for line in f:
+			prior_pts.append(line[0])
+			mean_pts.append(line[1])
+
+	def mean_fn_from_file(t):
+		f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(mean_pts), kind='quadratic')
+		return f(t)
+
+	return sample_gp_prior(variance, ls, prior_pts, mean_fn_from_file)
+	
+def define_functional_from_file(filename):
+	prior_pts = []
+	mean_pts = []
+	with open(filename, "r") as f:
+		for line in f:
+			prior_pts.append(line[0])
+			mean_pts.append(line[1])
+
+	def mean_fn_from_file(t):
+		f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(mean_pts), kind='quadratic')
+		return f(t)
+
+	return define_functional(prior_pts, mean_fn_from_file)
 
 #This class is intended to work with the sample_gp_prior function
 #Usually, that function is used to specify & sample a prior, returning this object
