@@ -8,10 +8,12 @@ import seaborn as sns
 import csv
 
 sys.path.append('../..')
-from problems.functionals import *
+from problems.gaussian_process import *
 #llamas
-from problems.snr_exp_models import *
-from problems.snr_system_model import *
+from problems.llamas_snr.snr_exp_models import *
+from problems.llamas_snr.snr_system_model import *
+
+_dir = "llamas-etc/COATINGS/"
 
 _wave_min = 350.0
 _wave_max = 975.0
@@ -21,11 +23,16 @@ prior_gain = ["gamma_mv",  [1.1,0.2**2]] #mean, variance
 prior_rn = ["gamma_mv", [2.5,0.25**2]]
 prior_dc = ["gamma_mv", [0.001,.001**2]]
 #the red ones might need a different prior than blue&green, based on the 2 test cameras
-prior_gp_vph_red = ["gp_expquad", [prior_mean_vph_red, .0267, (_bandpass)**2]]  #mean_fn, variance, ls
-prior_gp_vph_gre = ["gp_expquad", [prior_mean_vph_gre, .0267, (_bandpass)**2]]
-prior_gp_vph_blu = ["gp_expquad", [prior_mean_vph_blu, .0267, (_bandpass)**2]]
-prior_gp_sl = ["gp_expquad", [prior_mean_sl, .1, 1]]
-prior_gp_bg = ["gp_expquad", [prior_mean_bg, .1, 1]]
+prior_gp_vph_red = ["gp_expquad", [.0267, (_bandpass)**2, 
+	get_ppts_file(_dir+"wasach_llamas2200_red.txt"), get_meanfn_file(_dir+"wasach_llamas2200_red.txt")]]
+prior_gp_vph_gre = ["gp_expquad", [.0267, (_bandpass)**2, 
+	get_ppts_file(_dir+"wasach_llamas2200_green.txt"), get_meanfn_file(_dir+"wasach_llamas2200_green.txt")]]
+prior_gp_vph_blu = ["gp_expquad", [.0267, (_bandpass)**2, 
+	get_ppts_file(_dir+"wasach_llamas2200_blue.txt"), get_meanfn_file(_dir+"wasach_llamas2200_blue.txt")]]
+prior_gp_sl = ["gp_expquad", [.1, (_bandpass)**2, 
+	get_ppts_file(_dir+"Dichroic_SL/Actual_transmission_reflection(Witness_sample_coating_lot_A).txt"), get_meanfn_file(_dir+"Dichroic_SL/Actual_transmission_reflection(Witness_sample_coating_lot_A).txt")]]
+prior_gp_bg = ["gp_expquad", [.1, (_bandpass)**2, 
+	get_ppts_file(_dir+"Dichroic_BG/witness_sample_LLAMAS_dichroic_BG.txt"), get_meanfn_file(_dir+"Dichroic_BG/witness_sample_LLAMAS_dichroic_BG.txt")]]
 prior_frd = ["gamma_mv", [0.077,0.022**2]]
 
 
@@ -41,11 +48,11 @@ theta_req_defs = [                             #mean, variance
 					["dc_gre", prior_dc, "continuous"],
 					["dc_blu", prior_dc, "continuous"],
 					
-					["vph_thru_red", prior_gp_vph_red, "continuous"],
-					["vph_thru_gre", prior_gp_vph_gre, "continuous"],
-					["vp_thruh_blu", prior_gp_vph_blu, "continuous"],
-					["sl_thru_dichroic", prior_gp_sl, "continuous"],
-					["bg_thru_dichroic", prior_gp_bg, "continuous"],
+					["vph_thru_red", prior_gp_vph_red, "functional"],
+					["vph_thru_gre", prior_gp_vph_gre, "functional"],
+					["vp_thruh_blu", prior_gp_vph_blu, "functional"],
+					["sl_thru_dichroic", prior_gp_sl, "functional"],
+					["bg_thru_dichroic", prior_gp_bg, "functional"],
 					["fiber_frd", prior_frd, "continuous"]
 				]
 #need to update with range somehow? These can't be negative
@@ -61,11 +68,11 @@ fp_y_defs = [
 				"y_dc_gre", 
 				"y_dc_blu", 
 				
-				"y_vph_red_pts", #expands?
-				"y_vph_gre_pts", #expands?
-				"y_vph_blu_pts", #expands?
-				"y_sl_pts", #expands?
-				"y_bg_pts", #expands?
+				"y_vph_red_pts", #expands
+				"y_vph_gre_pts", #expands
+				"y_vph_blu_pts", #expands
+				"y_sl_pts", #expands
+				"y_bg_pts", #expands
 				"y_frd"
 			]
 
@@ -128,21 +135,23 @@ fp_x_defs = [
 				#fiber
 				["fiber_theta", [], "continuous", 0.75],
 				["fiber_dcore", [], "continuous", 110],
-				["microlens"],
-				["fiber_ar"],
-				["fiber_internal"],
+				["microlens", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
+				["fiber_ar", [], "functional", define_functional_from_file(_dir+"fiber_ar.txt")],
+				["fiber_internal", [], "functional", define_functional_from_file(_dir+"Polymicro_FBPI_8m.txt")],
 				#spectrograph
-				["collimator"],
-				["prism"],
-				["lens1"],
-				["lens2"],
-				["lens3"],
-				["lens4"],
-				["lens5"],
-				["lens6"],
-				["lens7"],
-				["sensor_window"],
-				["sensor_glass"],
+				["collimator", [], "functional", define_functional_from_file(_dir+"dielectric_mirror.txt")],
+				["prism", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
+				["lens1", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
+				["lens2", [], "functional", define_functional_from_file(_dir+"ECI_PBM8Y.txt")],
+				["lens3", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
+				["lens4", [], "functional", define_functional_from_file(_dir+"ECI_PBM8Y.txt")],
+				["lens5", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
+				["lens6", [], "functional", define_functional_from_file(_dir+"ECI_PBM8Y.txt")],
+				["lens7", [], "functional", define_functional_from_file(_dir+"ECI_PBM8Y.txt")],
+				["sensor_window", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
+				["sensor_glass_red", [], "functional", define_functional_from_file(_dir+"llamas_internal_red.txt")],
+				["sensor_glass_gre", [], "functional", define_functional_from_file(_dir+"llamas_internal.txt")],
+				["sensor_glass_blu", [], "functional", define_functional_from_file(_dir+"llamas_internal_blue.txt")],
 				#cost
 				["testbed_setup", ["nonrandom", [1800]], "continuous", 1800], #WAG
 				#["C_engineer", ["nonrandom", [0.00694444444]], "continuous", 0.00694444444] #WAG $/s, from $25/hr
