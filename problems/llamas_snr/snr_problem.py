@@ -8,12 +8,13 @@ import seaborn as sns
 import csv
 
 sys.path.append('../..')
+from problems.problem_definition import *
 from problems.gaussian_process import *
 #llamas
 from problems.llamas_snr.snr_exp_models import *
-from problems.llamas_snr.snr_system_model import *
+#from problems.llamas_snr.snr_system_model import *
 
-_dir = "llamas-etc/COATINGS/"
+_dir = "./llamas-etc/COATINGS/"
 
 _wave_min = 350.0
 _wave_max = 975.0
@@ -23,16 +24,23 @@ prior_gain = ["gamma_mv",  [1.1,0.2**2]] #mean, variance
 prior_rn = ["gamma_mv", [2.5,0.25**2]]
 prior_dc = ["gamma_mv", [0.001,.001**2]]
 #the red ones might need a different prior than blue&green, based on the 2 test cameras
-prior_gp_vph_red = ["gp_expquad", [.0267, (_bandpass)**2, 
-	get_ppts_file(_dir+"wasach_llamas2200_red.txt"), get_meanfn_file(_dir+"wasach_llamas2200_red.txt")]]
-prior_gp_vph_gre = ["gp_expquad", [.0267, (_bandpass)**2, 
-	get_ppts_file(_dir+"wasach_llamas2200_green.txt"), get_meanfn_file(_dir+"wasach_llamas2200_green.txt")]]
-prior_gp_vph_blu = ["gp_expquad", [.0267, (_bandpass)**2, 
-	get_ppts_file(_dir+"wasach_llamas2200_blue.txt"), get_meanfn_file(_dir+"wasach_llamas2200_blue.txt")]]
-prior_gp_sl = ["gp_expquad", [.1, (_bandpass)**2, 
-	get_ppts_file(_dir+"Dichroic_SL/Actual_transmission_reflection(Witness_sample_coating_lot_A).txt"), get_meanfn_file(_dir+"Dichroic_SL/Actual_transmission_reflection(Witness_sample_coating_lot_A).txt")]]
-prior_gp_bg = ["gp_expquad", [.1, (_bandpass)**2, 
-	get_ppts_file(_dir+"Dichroic_BG/witness_sample_LLAMAS_dichroic_BG.txt"), get_meanfn_file(_dir+"Dichroic_BG/witness_sample_LLAMAS_dichroic_BG.txt")]]
+ppts, meanfn = get_meanfn_file(_dir+"CCD55-30_QE.txt", 3)
+prior_qe = ["gp_expquad", [.05, (_bandpass)**2, ppts, meanfn]]
+ppts, meanfn = get_meanfn_file(_dir+"CCD55-30_DD_QE.txt", 3)
+prior_qe_dd = ["gp_expquad", [.05, (_bandpass)**2, ppts, meanfn]]
+	
+ppts, meanfn = get_meanfn_file(_dir+"wasach_llamas2200_red.txt", 2)
+prior_gp_vph_red = ["gp_expquad", [.0267, (_bandpass)**2, ppts, meanfn]]
+ppts, meanfn = get_meanfn_file(_dir+"wasach_llamas2200_green.txt", 2)
+prior_gp_vph_gre = ["gp_expquad", [.0267, (_bandpass)**2, ppts, meanfn]]
+ppts, meanfn = get_meanfn_file(_dir+"wasach_llamas2200_blue.txt", 2)
+prior_gp_vph_blu = ["gp_expquad", [.0267, (_bandpass)**2, ppts, meanfn]]
+
+ppts, meanfn = get_meanfn_file(_dir+"ECI_FusedSilica.txt", 3)
+prior_gp_sl = ["gp_expquad", [.1, (_bandpass)**2, ppts, meanfn]]
+ppts, meanfn = get_meanfn_file(_dir+"ECI_FusedSilica.txt", 3)
+prior_gp_bg = ["gp_expquad", [.1, (_bandpass)**2, ppts, meanfn]]
+
 prior_frd = ["gamma_mv", [0.077,0.022**2]]
 
 
@@ -47,6 +55,9 @@ theta_req_defs = [                             #mean, variance
 					["dc_red", prior_dc, "continuous"],
 					["dc_gre", prior_dc, "continuous"],
 					["dc_blu", prior_dc, "continuous"],
+					["qe_red", prior_qe_dd, "functional"],
+					["qe_gre", prior_qe, "functional"],
+					["qe_blu", prior_qe, "functional"],
 					
 					["vph_thru_red", prior_gp_vph_red, "functional"],
 					["vph_thru_gre", prior_gp_vph_gre, "functional"],
@@ -67,6 +78,9 @@ fp_y_defs = [
 				"y_dc_red", 
 				"y_dc_gre", 
 				"y_dc_blu", 
+				"y_qe_red_pts", #expands
+				"y_qe_gre_pts", #expands
+				"y_qe_blu_pts", #expands
 				
 				"y_vph_red_pts", #expands
 				"y_vph_gre_pts", #expands
@@ -96,6 +110,7 @@ _e0 = 22100 #eV
 _m0 = 108.9049856 * 1.66054e-27 #cd109 atomic mass in kg
 _sigmaE = math.sqrt((_m0 * _c**2) / (_k*_temp*_e0**2))
 _w = 3.66 + 0.000615*(300-_temp)
+photodiode = [(200,.12),(280,.1),(300,.125),(400,.185),(633,.33),(930,.5),(1000,.45),(1100,.15)] #representative photodiode, Hamamatsu S1337-1010BQ
 fp_x_defs = [
 				#focal plane
 				["nx", ["nonrandom", [2048]], "discrete", 2048],
@@ -120,6 +135,9 @@ fp_x_defs = [
 				#dc exp
 				["t_0", [], "continuous", 0.1], #100ms baseline exposure assumed
 				["t_dc_buffer", [], "continuous", 5], #WAG
+				#qe
+				["S_pd", [], "functional", define_functional(photodiode.T[0], photodiode.T[1], order=3)],
+				["S_pd_meas_err", [], "continuous", .01]  #mA/W
 				#qoi
 				["tau", [], "continuous", 1800],
 				#llamas
@@ -160,6 +178,9 @@ fp_x_defs = [
 
 
 #_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
+eta = snr_likelihood_fn
+H = 
+Gamma = 
 llamas_snr = ProblemDefinition(eta, H, Gamma, theta_req_defs, fp_y_defs, fp_d_defs, fp_x_defs)
 
 
