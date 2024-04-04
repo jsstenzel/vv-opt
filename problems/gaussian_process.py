@@ -42,7 +42,7 @@ def define_functional(prior_pts, eval_pts, order=3):
 		f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(eval_pts), kind=order)
 		return f(t)
 
-	sample = GaussianProcess1D(None, prior_pts, mean_fn_from_file, None)
+	sample = GaussianProcess1D(None, prior_pts, mean_fn_from_pts, None)
 	return sample
 	
 def define_functional_mean(prior_pts, mean_fn=_zero_mean):
@@ -72,12 +72,12 @@ def get_ppts_meanfn_file(filename, order=3):
 	return prior_pts, mean_fn_from_file
 	
 def sample_gp_from_file(filename, variance, ls, order=3):
-	prior_pts, mean_fn_from_file = get_meanfn_file(filename, order)
+	prior_pts, mean_fn_from_file = get_ppts_meanfn_file(filename, order)
 
 	return sample_gp_prior(variance, ls, prior_pts, mean_fn_from_file)
 	
 def define_functional_from_file(filename, order=3):
-	prior_pts, mean_fn_from_file = get_meanfn_file(filename, order)
+	prior_pts, mean_fn_from_file = get_ppts_meanfn_file(filename, order)
 
 	return define_functional(prior_pts, mean_fn_from_file)
 

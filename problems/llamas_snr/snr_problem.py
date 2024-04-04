@@ -137,7 +137,7 @@ fp_x_defs = [
 				["t_dc_buffer", [], "continuous", 5], #WAG
 				#qe
 				["S_pd", [], "functional", define_functional([p[0] for p in photodiode], [p[1] for p in photodiode], order=3)],
-				["S_pd_meas_err", [], "continuous", .01]  #mA/W
+				["S_pd_meas_err", [], "continuous", .01],  #mA/W
 				#qoi
 				["tau", [], "continuous", 1800],
 				#llamas
@@ -156,7 +156,7 @@ fp_x_defs = [
 				["microlens", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
 				["fiber_ar", [], "functional", define_functional_from_file(_dir+"fiber_ar.txt")],
 				["fiber_internal", [], "functional", define_functional_from_file(_dir+"Polymicro_FBPI_8m.txt")],
-				["frd_meas_err", [], "continuous", 0.068] #analysis based on test measuring a few fibers
+				["frd_meas_err", [], "continuous", 0.068], #analysis based on test measuring a few fibers
 				#spectrograph
 				["collimator", [], "functional", define_functional_from_file(_dir+"dielectric_mirror.txt")],
 				["prism", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
