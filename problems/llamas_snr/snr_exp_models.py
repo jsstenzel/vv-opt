@@ -62,7 +62,6 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	
 	return 
 	
-	
 def simple_measurement(theta, n_meas, err=True):
 	y = theta
 	stddev = #oh shit, get back to this, need to think about sampling error some more
@@ -142,7 +141,7 @@ def gain_exp(gain, rn, dc, t, I, _x, err=True):
 	mu_x = p*E0*gain/w
 	var_x = p * (sigma_E/w)**2 + rn**2 + sigma_dc**2 + p*(1-p)*(E0/w)**2
 	sigma_x = math.sqrt(var_x)
-	stddev = sigma_x/math.sqrt(I)
+	stddev = sigma_x/np.sqrt(math.sqrt(I)*n)
 	
 	random = norm.rvs(scale = stddev)
 	if err:
