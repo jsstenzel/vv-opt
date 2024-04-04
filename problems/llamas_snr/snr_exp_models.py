@@ -58,13 +58,14 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	y_sl = measure_thru(theta["sl_thru_dichroic"], d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["sl_meas_stddev"], err)
 	y_bg = measure_thru(theta["bg_thru_dichroic"], d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["sl_meas_stddev"], err)
 	
-	y_frd = simple_measurement(theta["fiber_frd"], d["d_frd_n_meas"], err)
+	y_frd = simple_measurement(theta["fiber_frd"], x["frd_meas_err"], d["d_frd_n_meas"], err)
 	
 	return 
 	
-def simple_measurement(theta, n_meas, err=True):
+#Adding standard error to a direct measurement of the input
+def simple_measurement(theta, stddev_meas, n_meas, err=True):
 	y = theta
-	stddev = #oh shit, get back to this, need to think about sampling error some more
+	stddev = stddev_meas / np.sqrt(n_meas)
 
 	if err:
 		random = norm.rvs(scale = stddev)

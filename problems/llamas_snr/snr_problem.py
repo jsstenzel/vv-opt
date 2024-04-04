@@ -24,21 +24,21 @@ prior_gain = ["gamma_mv",  [1.1,0.2**2]] #mean, variance
 prior_rn = ["gamma_mv", [2.5,0.25**2]]
 prior_dc = ["gamma_mv", [0.001,.001**2]]
 #the red ones might need a different prior than blue&green, based on the 2 test cameras
-ppts, meanfn = get_meanfn_file(_dir+"CCD55-30_QE.txt", 3)
+ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD55-30_QE.txt", 3)
 prior_qe = ["gp_expquad", [.05, (_bandpass)**2, ppts, meanfn]]
-ppts, meanfn = get_meanfn_file(_dir+"CCD55-30_DD_QE.txt", 3)
+ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD55-30_DD_QE.txt", 3)
 prior_qe_dd = ["gp_expquad", [.05, (_bandpass)**2, ppts, meanfn]]
 	
-ppts, meanfn = get_meanfn_file(_dir+"wasach_llamas2200_red.txt", 2)
+ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_red.txt", 2)
 prior_gp_vph_red = ["gp_expquad", [.0267, (_bandpass)**2, ppts, meanfn]]
-ppts, meanfn = get_meanfn_file(_dir+"wasach_llamas2200_green.txt", 2)
+ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_green.txt", 2)
 prior_gp_vph_gre = ["gp_expquad", [.0267, (_bandpass)**2, ppts, meanfn]]
-ppts, meanfn = get_meanfn_file(_dir+"wasach_llamas2200_blue.txt", 2)
+ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_blue.txt", 2)
 prior_gp_vph_blu = ["gp_expquad", [.0267, (_bandpass)**2, ppts, meanfn]]
 
-ppts, meanfn = get_meanfn_file(_dir+"ECI_FusedSilica.txt", 3)
+ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica.txt", 3)
 prior_gp_sl = ["gp_expquad", [.1, (_bandpass)**2, ppts, meanfn]]
-ppts, meanfn = get_meanfn_file(_dir+"ECI_FusedSilica.txt", 3)
+ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica.txt", 3)
 prior_gp_bg = ["gp_expquad", [.1, (_bandpass)**2, ppts, meanfn]]
 
 prior_frd = ["gamma_mv", [0.077,0.022**2]]
@@ -136,7 +136,7 @@ fp_x_defs = [
 				["t_0", [], "continuous", 0.1], #100ms baseline exposure assumed
 				["t_dc_buffer", [], "continuous", 5], #WAG
 				#qe
-				["S_pd", [], "functional", define_functional(photodiode.T[0], photodiode.T[1], order=3)],
+				["S_pd", [], "functional", define_functional([p[0] for p in photodiode], [p[1] for p in photodiode], order=3)],
 				["S_pd_meas_err", [], "continuous", .01]  #mA/W
 				#qoi
 				["tau", [], "continuous", 1800],
@@ -156,6 +156,7 @@ fp_x_defs = [
 				["microlens", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
 				["fiber_ar", [], "functional", define_functional_from_file(_dir+"fiber_ar.txt")],
 				["fiber_internal", [], "functional", define_functional_from_file(_dir+"Polymicro_FBPI_8m.txt")],
+				["frd_meas_err", [], "continuous", 0.068] #analysis based on test measuring a few fibers
 				#spectrograph
 				["collimator", [], "functional", define_functional_from_file(_dir+"dielectric_mirror.txt")],
 				["prism", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
@@ -179,8 +180,8 @@ fp_x_defs = [
 
 #_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
 eta = snr_likelihood_fn
-H = 
-Gamma = 
+#H = 
+#Gamma = 
 llamas_snr = ProblemDefinition(eta, H, Gamma, theta_req_defs, fp_y_defs, fp_d_defs, fp_x_defs)
 
 
