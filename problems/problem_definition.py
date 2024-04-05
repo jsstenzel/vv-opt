@@ -22,6 +22,11 @@ class ProblemDefinition:
 		self.dim_x = len(_x_defs)
 		self.x_default = [default for name,dist,mask,default in _x_defs]
 		
+		#hack the x_defs to save wasted effort:
+		for xdef in _x_defs:
+			if xdef[1] == []:
+				xdef[1] = ["nonrandom", [xdef[3]]]
+		
 		#priors is a list of defintions of prior distributions on the vector of thetas
 		#so it's a list of pairs, first is type and second is the list of corresponding parameters
 		#type checks:
@@ -44,11 +49,6 @@ class ProblemDefinition:
 		self.theta_masks = [mask for _,_,mask in _theta_defs]
 		self.d_masks     = [mask for _,_,mask in _d_defs]
 		self.x_masks     = [mask for _,_,mask,_ in _x_defs]
-		
-		#hack the x_defs to save wasted effort:
-		for xdist in self.x_dists:
-			if xdist[1] == []:
-				xdist[1] = ["nonrandom", [xdist[3]]]
 		
 		#for documentation:
 		self.theta_names=[name for name,_,_ in _theta_defs]
