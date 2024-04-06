@@ -1,4 +1,4 @@
-astropy==4.1
+astropy
 matplotlib
 multiprocess==0.70.12.2
 numpy
@@ -9,4 +9,3 @@ SALib==1.4.5
 scikit-learn
 scipy
 seaborn==0.11.2
-statsmodels==0.12.2
