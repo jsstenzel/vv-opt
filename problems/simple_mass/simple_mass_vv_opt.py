@@ -52,7 +52,7 @@ def vv_UP_QoI(problem, req, n=10**4):
 	print("Probability of meeting requirement given priors:", prob_meetreq)
 
 #sensitivity analysis of HLVA
-def vv_SA_QoI(p=5):
+def vv_SA_QoI(problem, p=5):
 	#it'll be straightforward to see the dependence of QoI on theta
 	Si = sobol_saltelli(problem.H, 
 						2**p, #SALib wants powers of 2 for convergence
@@ -74,72 +74,32 @@ def vv_UP_exp(problem, dd, n=10**4, savefig=False):
 	uq_ys = [problem.eta(theta, dd) for theta in uq_thetas]
 	uncertainty_prop_plots(uq_ys, c='orchid', xlabs=problem.y_names, saveFig='UP_joint_y0' if savefig else '')
 
-"""	These cause problems on eofe8
+#These cause problems on eofe8
 #sensitivity analysis of the experiment models
-def vv_SA_exp(problem, dd):
-		#we want to see sensitivity of each yi to their inputs, theta and x
-		#instead of trying to break eta into its constitutent experiments, i think i want to just use all of eta,
-		#and doing separate sensitivity analysis on each of the y[i] coming from theta, over entire x and theta span
-		#sobol_saltelli expects a function that takes a single list of parameters
-		def eta_1(param): #gain
-			gain = param[0]
-			rn = param[1]
-			dc = param[2]
-			_x = dict(zip(problem.x_names, problem.x_default)) 
-			_x["sigma_dc"] = param[3]
-			_x["P_signal"] = param[4]
-			_x["P_noise"] = param[5]
-			_x["T_ccd"] = param[6]
-			_x["sigma_E"] = param[7]
-			_x["w"] = param[8]
-			_x["activity_cd109"] = param[9]
-			y = gain_exp(gain, rn, dc, dd[0], dd[1], _x, err=True)
-			return y
-		def eta_2(param): #rn
-			gain = param[0]
-			rn = param[1]
-			_x = dict(zip(problem.x_names, problem.x_default)) 
-			_x["sigma_stray"] = param[2]
-			_x["sigma_dc"] = param[3]
-			y = read_noise_exp(gain, rn, dd[2], _x, err=True)
-			return y
-		def eta_3(param): #dc
-			gain = param[0]
-			rn = param[1]
-			dc = param[2]
-			_x = dict(zip(problem.x_names, problem.x_default)) 
-			_x["sigma_stray"] = param[3]
-			_x["sigma_dc"] = param[4]
-			y = dark_current_exp(gain, rn, dc, dd[3], dd[4], dd[5], _x, err=True)
-			return y
-		#use partials to define these later?
+def vv_SA_exp(problem, dd, p=8):
+	#we want to see sensitivity of each yi to their inputs, theta and x
+	#challenge: sobol_saltelli expects a function that takes a single list of parameters
+	#right now, im doing this in a way that just deals with the thetas
+	#i think i can handle including x's intelligently as well some day, using this filter:
+	filter = range(len(problem.theta_names)) #[]
+		
+	for i,yi in enumerate(problem.y_names):
+		def exp_fn_i(param):
+			y = problem.eta(param, dd) #want to figure out a smarter way to do analysis of x in the future
+			yi = y[i]
+			return yi
 
-		expvar_names = problem.theta_names + problem.x_names
-		expvar_dists = [prior[0] for prior in problem.priors] + [prior[0] for prior in problem.x_dists]
-		expvar_bounds=[prior[1] for prior in problem.priors] + [prior[1] for prior in problem.x_dists]
+		expvar_names = problem.theta_names #+ problem.x_names
+		expvar_dists = [prior[0] for prior in problem.priors] #+ [prior[0] for prior in problem.x_dists]
+		expvar_bounds=[prior[1] for prior in problem.priors] #+ [prior[1] for prior in problem.x_dists]
 			
 		#so ugly!!!
-		Si_1 = sobol_saltelli(eta_1, 
-							2**8, #SALib wants powers of 2 for convergence
-							var_names=[x for i,x in enumerate(expvar_names) if i in [0,1,2,5,8,9,10,12,13,14]], 
-							var_dists=[x for i,x in enumerate(expvar_dists) if i in [0,1,2,5,8,9,10,12,13,14]], 
-							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in [0,1,2,5,8,9,10,12,13,14]], 
-							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)
-		
-		Si_2 = sobol_saltelli(eta_2, 
-							2**8, #SALib wants powers of 2 for convergence
-							var_names=[x for i,x in enumerate(expvar_names) if i in [0,1,5,7]], 
-							var_dists=[x for i,x in enumerate(expvar_dists) if i in [0,1,5,7]], 
-							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in [0,1,5,7]], 
-							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)
-		
-		Si_3 = sobol_saltelli(eta_3, 
-							2**8, #SALib wants powers of 2 for convergence
-							var_names=[x for i,x in enumerate(expvar_names) if i in [0,1,2,5,7]], 
-							var_dists=[x for i,x in enumerate(expvar_dists) if i in [0,1,2,5,7]], 
-							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in [0,1,2,5,7]], 
+		Si_1 = sobol_saltelli(exp_fn_i, 
+							2**p, #SALib wants powers of 2 for convergence
+							var_names=[x for i,x in enumerate(expvar_names) if i in filter], 
+							var_dists=[x for i,x in enumerate(expvar_dists) if i in filter], 
+							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in filter], 
 							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)	
-"""						
 
 def vv_gbi_test(problem, d, Yd, N):		
 	theta_train = problem.prior_rvs(N)
@@ -211,11 +171,12 @@ if __name__ == '__main__':
 		vv_UP_QoI(problem, req, n=10**5)
 	
 	if args.run == "SA_QoI":
-		vv_SA_QoI(problem, p=5)
+		vv_SA_QoI(problem, p=7)
 	
 	if args.run == "UP_exp":
 		vv_UP_exp(problem, d_example, n=10**4)
 	
+	#This one is boring for this simple mass problem
 	if args.run == "SA_exp":
 		vv_SA_exp(problem, d_example)
 

@@ -6,7 +6,6 @@ import csv
 import fileinput
 
 import matplotlib.pyplot as plt
-from astropy.io import fits
 import numpy as np
 import multiprocessing as mp
 import scipy.optimize as optimization
