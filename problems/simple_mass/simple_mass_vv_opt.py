@@ -16,7 +16,7 @@ from obed.obed_multivar import *
 from obed.obed_gbi import *
 from obed.pdf_estimation import *
 from uq.uncertainty_propagation import *
-#from uq.sensitivity_analysis import *
+from uq.sensitivity_analysis import *
 from opt.ngsa import *
 
 ################################
@@ -192,14 +192,14 @@ if __name__ == '__main__':
 	
 	###Problem Definition
 	alphas = [1,1,1,10,10,10,100,100,100] #prior mean of masses
-	betas = [.1,1,10,.1,1,10,.1,1,10] #prior stddev of masses
+	betas = [.1,1,10,.1,1,10,.1,1,10] #prior variance of masses
 	problem = simple_mass_problem_def(alphas, betas)
 	
 	d_best = [0.001]*len(alphas)
 	d_worst = [10]*len(alphas)
 	d_example = [0.5]*len(alphas)
 	
-	req = 350
+	req = 340
 	theta_nominal = alphas
 	y_nominal = problem.eta(theta_nominal, d_example, err=False)
 

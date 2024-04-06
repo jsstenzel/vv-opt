@@ -14,7 +14,7 @@ from problems.problem_definition import *
 
 #Define the mass problem
 #But allow some hyperparameters!
-#alphas are the prior mean masses, betas are the prior stddev masses
+#alphas are the prior mean masses, betas are the prior variances
 def simple_mass_problem_def(alphas, betas):
 	if len(alphas) != len(betas):
 		print("simple_mass_problem_def error, alphas and betas dont match")
@@ -22,12 +22,12 @@ def simple_mass_problem_def(alphas, betas):
 	N = len(alphas)
 	
 	#Each parameter of interest is the mass of an element in the system
-	theta_dists = [ ["gaussian", [alphas[i],betas[i]]] for i in range(N)]
+	theta_dists = [ ["gamma_mv", [alphas[i],betas[i]]] for i in range(N)]
 	theta_defs = [ ["t"+str(i),theta_dists[i],"continuous"] for i in range(N)]
 
 	y_defs = ["y"+str(i) for i in range(N)]
 
-	#Each design variable is a measurement precision
+	#Each design variable is a measurement precision (variance)
 	d_dist = ["uniform", [0.001,10]] #i suppose?
 	d_defs = [ ["d"+str(i),d_dist,"continuous"] for i in range(N)]
 
@@ -36,20 +36,23 @@ def simple_mass_problem_def(alphas, betas):
 		["cost_scale", [], "continuous", 1.0],
 	]
 
-	def eta(_t, _d, _x, err=True):
-		if err:
-			err_scale = _x["meas_err_scale"]
-		else:
-			err_scale = 0
+	def eta(_t, _d, _x, err=True):		
 		#generalize? ugh i wish this wasnt a dictionary
 		ds = [ _d["d"+str(i)] for i in range(N)]
 		ts = [ _t["t"+str(i)] for i in range(N)]
 		
 		y = []
 		for i,t in enumerate(ts):
-			epsilon = scipy.stats.norm.rvs(scale = ds[i] * err_scale)
-			yi = t + ds[i] * epsilon
+			if err:				
+				mean = t
+				variance = ds[i] * _x["meas_err_scale"]
+				alpha = mean**2 / variance
+				beta = mean / variance
+				yi = scipy.stats.gamma.rvs(size=1, a=alpha, scale=1.0/beta)[0]
+			else:
+				yi = t
 			y.append(yi)
+
 		return y
 		
 	#Goal is to determine accurate measurement of total mass
