@@ -101,44 +101,43 @@ def vv_SA_exp(problem, dd, p=8):
 							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in filter], 
 							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)	
 
-def vv_gbi_test(problem, d, Yd, N):		
+def vv_gbi_test(problem, d, N, y=[], ncomp=0):		
+	print("Training...")
 	theta_train = problem.prior_rvs(N)
 	qoi_train = [problem.H(theta) for theta in theta_train]
 	y_train = [problem.eta(theta, d) for theta in theta_train]
 	
-	gmm = gbi_train_model(theta_train, qoi_train, y_train, verbose=2, ncomp=8)
+	gmm = gbi_train_model(theta_train, qoi_train, y_train, verbose=2, ncomp=ncomp)
 	
+	if y==[]:
+		print("Determining random measurement Yd...")
+		truth_theta = problem.prior_rvs(1)
+		Yd = problem.eta(truth_theta, d)
+	else:
+		Yd = y
+	
+	print("Conditioning...")
 	a,b,c = gbi_condition_model(gmm, Yd, verbose=2)
 	
-	plot_predictive_posterior(a, b, c, 0, 7, drawplot=True)
-	
-def vv_gbi_rand_test(problem, d, N):		
-	theta_train = problem.prior_rvs(N)
-	qoi_train = [problem.H(theta) for theta in theta_train]
-	y_train = [problem.eta(theta, d) for theta in theta_train]
-	
-	gmm = gbi_train_model(theta_train, qoi_train, y_train, verbose=0, ncomp=8)
-	
-	truth_theta = problem.prior_rvs(1)
-	measured_y = problem.eta(truth_theta, d)
-	a,b,c = gbi_condition_model(gmm, measured_y, verbose=0)
-	
-	plot_predictive_posterior(a, b, c, 0, 7, drawplot=False, plotmean=True)
-	plt.axvline(problem.H(truth_theta), c='blue')
-	plt.show()
+	if y==[]:
+		plot_predictive_posterior(a, b, c, 0, 500, drawplot=False, plotmean=True)
+		plt.axvline(problem.H(truth_theta), c='blue')
+		plt.show()
+	else:
+		plot_predictive_posterior(a, b, c, 0, 500, drawplot=True)
 
 def vv_obed_gbi(problem, d):
-	U, U_list = U_varH_gbi(d, fp, n_mc=10**5, n_gmm=10**5, doPrint=True)
+	U, U_list = U_varH_gbi(d, problem, n_mc=10**4, n_gmm=10**4, doPrint=True)
 	print(U)
 	#print(U_list)
 	uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")#, saveFig='OBEDresult')
 	return U
 	
-def uncertainty_mc(problem):
+def uncertainty_mc(problem, dd, n_mc=10**2, n_gmm=10**2, n_test=10**2):
 	util_samples = []
-	for ii in range(1000):
+	for ii in range(n_test):
 		print(ii, flush=True)
-		util = U_varH_gbi(d_historical, fp, n_mc=5*10**3, n_gmm=10**3, ncomp=5, doPrint=False)
+		util, _ = U_varH_gbi(dd, problem, n_mc=n_mc, n_gmm=n_gmm, ncomp=10, doPrint=False)
 		util_samples.append(util)
 		
 	uncertainty_prop_plot(util_samples, c='purple', xlab="utility for d=d_hist")
@@ -182,16 +181,20 @@ if __name__ == '__main__':
 
 	###Optimal Bayesian Experimental Design
 	if args.run == "gbi_test":
-		vv_gbi_test(problem, d_example, 10**1, ncomp=1)
+		vv_gbi_test(problem, d_example, 10**5, y_nominal, ncomp=10)
 	if args.run == "gbi_test_rand":
-		vv_gbi_test(problem, d_example, 10**2, y_nominal, ncomp=1)
+		vv_gbi_test(problem, d_example, 10**5, ncomp=10)
 	
 	if args.run == "obed_gbi":
 		U_hist = vv_obed_gbi(problem, d_example)
 	
+	#this testing shows that for n_mc=10**4, n_gmm=10**4,
+	#the utility is estimated with a variance of X
+	#this precision will carry through to the optimization problem
 	if args.run == "uncertainty_mc":
-		uncertainty_mc(problem)
-		
-	#costs, utilities, designs = ngsa2_problem_parallel(8, problem, hours=0, minutes=0, popSize=12, nMonteCarlo=5*10**3, nGMM=5*10**3)
-	#plot_ngsa2(costs, utilities, showPlot=True, savePlot=False, logPlotXY=[False,False])
+		uncertainty_mc(problem, d_example, n_mc=10**2, n_gmm=10**2, n_test=10**3)
+	
+	if args.run == "opt":	
+		costs, utilities, designs = ngsa2_problem_parallel(8, problem, hours=0, minutes=0, popSize=12, nMonteCarlo=5*10**3, nGMM=5*10**3)
+		plot_ngsa2(costs, utilities, showPlot=True, savePlot=False, logPlotXY=[False,False])
 	
