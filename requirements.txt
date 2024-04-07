@@ -1,5 +1,6 @@
 astropy
 matplotlib
+mpmath
 multiprocess==0.70.12.2
 numpy
 pytensor==2.12.3

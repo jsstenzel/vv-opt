@@ -3,6 +3,7 @@
 import sys
 import math
 import numpy as np
+from mpmath import mp
 import scipy.stats
 import matplotlib.pyplot as plt
 from sklearn.mixture import GaussianMixture
@@ -62,36 +63,47 @@ def gbi_condition_model(gmm, Yd, verbose=0):
 	#step 2
 	#Now we have our data, and we find the posterior predictive from that
 	print("calculating posterior predictive...",flush=True) if verbose else 0
-	Yd = np.transpose(np.array(Yd))
-
-	#get key parameters from the GMM
-	mu = np.array(gmm.means_)
-	Sig = np.array(gmm.covariances_)
-	alpha = np.array(gmm.weights_)
-	p_dimension = len(mu[0]) - len(Yd) #this is usually 1
-	ymean_p = np.array([mu_k[:p_dimension] for mu_k in mu])
-	ymean_d = np.array([np.transpose(mu_k[p_dimension:]) for mu_k in mu])
-	Sig_pp = np.array([Sig_k[:p_dimension, :p_dimension] for Sig_k in Sig])
-	Sig_pd = np.array([Sig_k[:p_dimension, p_dimension:] for Sig_k in Sig])
-	Sig_dp = np.array([Sig_k[p_dimension:, :p_dimension] for Sig_k in Sig])
-	Sig_dd = np.array([Sig_k[p_dimension:, p_dimension:] for Sig_k in Sig])
 	
-	if verbose==2:
-		print("ymean_p:\n", ymean_p)
-		print("ymean_d:\n", ymean_d)
-		print("Sig_pp:\n", Sig_pp)
-		print("Sig_pd:\n", Sig_pd)
-		print("Sig_dp:\n", Sig_dp)
-		print("Sig_dd:\n", Sig_dd, flush=True)
+	with mp.workdps(20):
+		Yd = mp.matrix(Yd) #column
 
-	#parameters for the new GMM:
-	B1 = [alpha[k] * (2*math.pi)**(-ncomp/2.0) * np.linalg.det(Sig_dd[k])**(-0.5) 
-			* np.exp(-0.5 * np.transpose(Yd - ymean_d[k]) @ np.linalg.inv(Sig_dd[k]) @ (Yd - ymean_d[k])) 
-			for k in range(ncomp)]
-	B0 = sum(B1)
-	beta = np.array([B1[k] / B0 for k in range(ncomp)])
-	mu_Yd = np.array([ymean_p[k] + Sig_pd[k] @ np.linalg.inv(Sig_dd[k]) @ (Yd - ymean_d[k]) for k in range(ncomp)])
-	Sig_Yd = np.array([Sig_pp[k] - Sig_pd[k] @ np.linalg.inv(Sig_dd[k]) @ Sig_dp[k] for k in range(ncomp)])
+		#get key parameters from the GMM
+		mu = [mp.matrix(mu_k) for mu_k in gmm.means_]
+		Sig = [mp.matrix(cov_k) for cov_k in gmm.covariances_]
+		alpha = mp.matrix(gmm.weights_)
+		p_dimension = len(mu[0]) - len(Yd) #scalar, this is usually 1
+		ymean_p = [mu_k[:p_dimension] for mu_k in mu] #column
+		ymean_d = [mu_k[p_dimension:] for mu_k in mu] #column (kinda)
+		Sig_pp = [Sig_k[:p_dimension, :p_dimension] for Sig_k in Sig]
+		Sig_pd = [Sig_k[:p_dimension, p_dimension:] for Sig_k in Sig]
+		Sig_dp = [Sig_k[p_dimension:, :p_dimension] for Sig_k in Sig]
+		Sig_dd = [Sig_k[p_dimension:, p_dimension:] for Sig_k in Sig]
+		
+		if verbose==2:
+			print("ymean_p:\n", ymean_p)
+			print("ymean_d:\n", ymean_d)
+			print("Sig_pp:\n", Sig_pp)
+			print("Sig_pd:\n", Sig_pd)
+			print("Sig_dp:\n", Sig_dp)
+			print("Sig_dd:\n", Sig_dd, flush=True)
+
+		#parameters for the new GMM:
+		B1 = [alpha[k] * (2*math.pi)**(-ncomp/2.0) * mp.det(Sig_dd[k])**(-0.5) 
+				* mp.exp(mp.norm(-0.5 * (Yd - ymean_d[k]).T * (Sig_dd[k])**-1 * (Yd - ymean_d[k])),p=1)
+				for k in range(ncomp)] #something is busted here
+		B0 = sum(B1)
+		if B0 == 0:
+			print("Something stupid happened")
+			print(B1)
+			sys.exit()
+		beta = [B1[k] / B0 for k in range(ncomp)]
+		mu_Yd = [ymean_p[k] + Sig_pd[k] * (Sig_dd[k])**-1 * (Yd - ymean_d[k]) for k in range(ncomp)]
+		Sig_Yd = [Sig_pp[k] - Sig_pd[k] * (Sig_dd[k])**-1 * Sig_dp[k] for k in range(ncomp)]
+	
+	#convert back to np arrays, annoyingly:
+	beta = np.array([float(mp.norm(x,p=1)) for x in beta])
+	mu_Yd = np.array([[float(mp.norm(x,p=1))] for x in mu_Yd])
+	Sig_Yd = np.array([[[float(mp.norm(x,p=1))]] for x in Sig_Yd])
 	
 	if verbose==2:
 		print("beta:", beta)
