@@ -183,18 +183,20 @@ if __name__ == '__main__':
 	if args.run == "gbi_test":
 		vv_gbi_test(problem, d_example, 10**5, y_nominal, ncomp=10)
 	if args.run == "gbi_test_rand":
-		vv_gbi_test(problem, d_example, 10**5, ncomp=10)
+		vv_gbi_test(problem, d_example, 10**2, ncomp=10)
 	
+	#d_example is 2.2833586292733474
 	if args.run == "obed_gbi":
 		U_hist = vv_obed_gbi(problem, d_example)
 	
-	#this testing shows that for n_mc=10**4, n_gmm=10**4,
-	#the utility is estimated with a variance of X
+	#this testing shows that for n_mc=10**2, n_gmm=10**2,
+	#the utility is estimated with a variance of _____
 	#this precision will carry through to the optimization problem
+	#(n_mc=10**4, n_gmm=10**4, looked like it had stddev 0.2
 	if args.run == "uncertainty_mc":
 		uncertainty_mc(problem, d_example, n_mc=10**2, n_gmm=10**2, n_test=10**3)
 	
-	if args.run == "opt":	
-		costs, utilities, designs = ngsa2_problem_parallel(8, problem, hours=0, minutes=0, popSize=12, nMonteCarlo=5*10**3, nGMM=5*10**3)
+	if args.run == "vv_opt_parallel":
+		costs, utilities, designs = ngsa2_problem_parallel(8, problem, hours=0, minutes=0, popSize=15, nMonteCarlo=5*10**3, nGMM=5*10**3)
 		plot_ngsa2(costs, utilities, showPlot=True, savePlot=False, logPlotXY=[False,False])
 	
