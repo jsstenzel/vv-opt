@@ -62,9 +62,10 @@ def vv_SA_QoI(problem, p=5):
 						conf = 0.95, doSijCalc=False, doPlot=True, doPrint=True)
 
 #Uncertainty analysis of the experiment models
-def vv_UP_exp(problem, dd, n=10**4, savefig=False):
+def vv_UP_exp(problem, dd, theta_nominal, n=10**4, savefig=False):
 	print("Likelihood distribution for nominal historical case:",flush=True)
-	tt = problem.prior_rvs(1); print(tt)
+	#tt = problem.prior_rvs(1); print(tt)
+	tt = theta_nominal
 	ysample_nominal = [problem.eta(tt, dd) for _ in range(n)]
 	uncertainty_prop_plots(ysample_nominal, xlabs=problem.y_names, saveFig='UP_exp_nominal' if savefig else '')
 	
@@ -170,10 +171,10 @@ if __name__ == '__main__':
 		vv_UP_QoI(problem, req, n=10**5)
 	
 	if args.run == "SA_QoI":
-		vv_SA_QoI(problem, p=7)
+		vv_SA_QoI(problem, p=8)
 	
 	if args.run == "UP_exp":
-		vv_UP_exp(problem, d_example, n=10**4)
+		vv_UP_exp(problem, d_example, theta_nominal, n=10**5)
 	
 	#This one is boring for this simple mass problem
 	if args.run == "SA_exp":
@@ -181,9 +182,9 @@ if __name__ == '__main__':
 
 	###Optimal Bayesian Experimental Design
 	if args.run == "gbi_test":
-		vv_gbi_test(problem, d_example, 10**5, y_nominal, ncomp=10)
+		vv_gbi_test(problem, d_example, 10**5, y_nominal, ncomp=0)
 	if args.run == "gbi_test_rand":
-		vv_gbi_test(problem, d_example, 10**2, ncomp=10)
+		vv_gbi_test(problem, d_example, 10**5, ncomp=10)
 	
 	#d_example is 2.2833586292733474
 	if args.run == "obed_gbi":
