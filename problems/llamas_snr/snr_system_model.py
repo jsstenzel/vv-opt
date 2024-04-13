@@ -81,16 +81,67 @@ def make_vph_tab(points,errors,color):
 ################################
 
 #Wrapper function for model call
-def sensitivity_hlva(x, d, col, config_table, spectrograph_models):
+#def sensitivity_hlva(x, d, col, config_table, spectrograph_models):
+def sensitivity_hlva(theta, x):
 	spect_models = deepcopy(spectrograph_models)
     
     #Expected format for x: 
     #x_names = ["resolution","f_col","f_cam","fratio_col","fratio_cam","blade_obscure","d_beam","fiber_theta","fiber_core_d","fiber_frd","microlens_thru","fiber_ar_thru","fiber_internal_thru","collimator_thru","sl_thru","bg_thru","red_vph","green_vph","blue_vph","red_prism","green_prism","blue_prism","l1_red_thru","l2_red_thru","l3_red_thru","l4_red_thru","l5_red_thru","l6_red_thru","l7_red_thru","red_window_thru","l1_green_thru","l2_green_thru","l3_green_thru","l4_green_thru","l5_green_thru","l6_green_thru","l7_green_thru","green_window_thru","l1_blue_thru","l2_blue_thru","l3_blue_thru","l4_blue_thru","l5_blue_thru","l6_blue_thru","l7_blue_thru","blue_window_thru","red_internal_thru","green_internal_thru","blue_internal_thru","red_rn","red_dc","green_rn","green_dc","blue_rn","blue_dc","skyfile"]
+	
+	##############################
+    ###Break down x
+	##############################
+	
+	#focal plane
+	x["nx"],
+	x["ny"],
+	#llamas
+	x["resolution"],
+	x["wave_min"],
+	x["wave_max"],
+	x["f_collimator"],
+	x["f_camera"],
+	x["fratio_collimator"],
+	x["fratio_camera"],
+	x["blade_obscure"],
+	x["d_beam"],
+	#fiber
+	x["fiber_theta"],
+	x["fiber_dcore"],
+	x["microlens"],#"ECI_FusedSilica.txt")],
+	x["fiber_ar"],#"fiber_ar.txt")],
+	x["fiber_internal"],#"Polymicro_FBPI_8m.txt")],
+	x["frd_meas_err"],
+	#spectrograph
+	x["collimator"],#"dielectric_mirror.txt")],
+	x["prism"],#"ECI_FusedSilica.txt")],
+	x["lens1"],#"ECI_FusedSilica.txt")],
+	x["lens2"],#"ECI_PBM8Y.txt")],
+	x["lens3"],#"ECI_FusedSilica.txt")],
+	x["lens4"],#"ECI_PBM8Y.txt")],
+	x["lens5"],#"ECI_FusedSilica.txt")],
+	x["lens6"],#"ECI_PBM8Y.txt")],
+	x["lens7"],#"ECI_PBM8Y.txt")],
+	x["sensor_window"],#"ECI_FusedSilica.txt")],
+	x["sensor_glass_red"],#"llamas_internal_red.txt")],
+	x["sensor_glass_gre"],#"llamas_internal.txt")],
+	x["sensor_glass_blu"],#"llamas_internal_blue.txt")],
 
     ##############################
     ###Break down theta
 	##############################
 	
+	#define design variables, gain rn dc:
+	t_gain = d["t_gain"]
+	I_gain = d["I_gain"]
+	n_meas_rn = d["n_meas_rn"]
+	d_num = d["d_num"]
+	d_max = d["d_max"]
+	d_pow = d["d_pow"]
+	#quantum efficiency:
+	n_qe = d["n_qe"]
+	t_qe = d["t_qe"]
+	I_qe = d["I_qe"]
 	
     
 	##############################

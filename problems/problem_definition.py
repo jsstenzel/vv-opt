@@ -38,7 +38,7 @@ class ProblemDefinition:
 				raise ValueError("Incorrect prior probability function definition: "+str(type)+" not recognized.")
 			if len(params) != self._allowable_prior_types[type]:
 				raise ValueError('Wrong number of arguments for prior type '+str(type)+'; got '+str(len(params))+' and expected '+str(self._allowable_prior_types[type]))
-			if not (mask in ['continuous','discrete','functional']):
+			if not (mask in ['continuous','discrete','functional','object']):
 				raise ValueError('Variable mask not an expected value: '+str(mask))
 
 		#if you pass all of that,

@@ -111,6 +111,21 @@ _m0 = 108.9049856 * 1.66054e-27 #cd109 atomic mass in kg
 _sigmaE = math.sqrt((_m0 * _c**2) / (_k*_temp*_e0**2))
 _w = 3.66 + 0.000615*(300-_temp)
 photodiode = [(200,.12),(280,.1),(300,.125),(400,.185),(633,.33),(930,.5),(1000,.45),(1100,.15)] #representative photodiode, Hamamatsu S1337-1010BQ
+
+#set path variables
+os.environ["COATINGS_PATH"]=args.coatings_path
+os.environ["TEST_DATA_PATH"]=args.test_data_path
+
+#build model
+llamas_red = spec.Spectrograph('LLAMAS_RED')
+llamas_blue = spec.Spectrograph('LLAMAS_BLUE')
+llamas_green = spec.Spectrograph('LLAMAS_GREEN') 
+
+llamas_red.build_model('llamas_red'+args.index+'.def')
+llamas_blue.build_model('llamas_blue'+args.index+'.def')
+llamas_green.build_model('llamas_green'+args.index+'.def')
+llamas_waves = np.array(np.concatenate([llamas_blue.waves,llamas_green.waves,llamas_red.waves]))
+spectrograph_models = [llamas_red, llamas_blue, llamas_green, llamas_waves]
 fp_x_defs = [
 				#focal plane
 				["nx", ["nonrandom", [2048]], "discrete", 2048],
@@ -138,7 +153,7 @@ fp_x_defs = [
 				#qe
 				["S_pd", [], "functional", define_functional([p[0] for p in photodiode], [p[1] for p in photodiode], order=3)],
 				["S_pd_meas_err", [], "continuous", .01],  #mA/W
-				#qoi
+				#requirement
 				["tau", [], "continuous", 1800],
 				#llamas
 				["resolution", [], "continuous", 2200.0],
@@ -158,6 +173,7 @@ fp_x_defs = [
 				["fiber_internal", [], "functional", define_functional_from_file(_dir+"Polymicro_FBPI_8m.txt")],
 				["frd_meas_err", [], "continuous", 0.068], #analysis based on test measuring a few fibers
 				#spectrograph
+				["spect_model_tracker", [], "object", spectrograph_models],
 				["collimator", [], "functional", define_functional_from_file(_dir+"dielectric_mirror.txt")],
 				["prism", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
 				["lens1", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
@@ -180,7 +196,7 @@ fp_x_defs = [
 
 #_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
 eta = snr_likelihood_fn
-#H = 
+H = sensitivity_hlva
 #Gamma = 
 llamas_snr = ProblemDefinition(eta, H, Gamma, theta_req_defs, fp_y_defs, fp_d_defs, fp_x_defs)
 
