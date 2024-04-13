@@ -41,7 +41,7 @@ def vv_UP_QoI(problem, req, n=10**4):
 	uq_thetas = problem.prior_rvs(n)
 	Qs = [problem.H(theta) for theta in uq_thetas]
 	#uncertainty_prop_plot([theta[0] for theta in uq_thetas], xlab="How to plot this...")
-	uncertainty_prop_plot(Qs, xlab="QoI: Avg. Throughput", vline=[req])
+	uncertainty_prop_plot(Qs, xlab="QoI: Total Mass", vline=[req])
 
 	#prob of meeting req along priors:
 	count_meetreq = 0
@@ -82,7 +82,7 @@ def vv_SA_exp(problem, dd, p=8):
 	#challenge: sobol_saltelli expects a function that takes a single list of parameters
 	#right now, im doing this in a way that just deals with the thetas
 	#i think i can handle including x's intelligently as well some day, using this filter:
-	filter = range(len(problem.theta_names)) #[]
+	SA_filter = range(len(problem.theta_names)) #[]
 		
 	for i,yi in enumerate(problem.y_names):
 		def exp_fn_i(param):
@@ -97,10 +97,19 @@ def vv_SA_exp(problem, dd, p=8):
 		#so ugly!!!
 		Si_1 = sobol_saltelli(exp_fn_i, 
 							2**p, #SALib wants powers of 2 for convergence
-							var_names=[x for i,x in enumerate(expvar_names) if i in filter], 
-							var_dists=[x for i,x in enumerate(expvar_dists) if i in filter], 
-							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in filter], 
+							var_names=[x for i,x in enumerate(expvar_names) if i in SA_filter], 
+							var_dists=[x for i,x in enumerate(expvar_dists) if i in SA_filter], 
+							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in SA_filter], 
 							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)	
+							
+def vv_SA_joint(problem, p=5):
+	#it'll be straightforward to see the dependence of QoI on theta
+	Si = sobol_saltelli(problem.H, 
+						2**p, #SALib wants powers of 2 for convergence
+						var_names=problem.theta_names, 
+						var_dists=[prior[0] for prior in problem.priors], 
+						var_bounds=#[prior[1] for prior in problem.priors],  need to do something odd here....?
+						conf = 0.95, doSijCalc=False, doPlot=True, doPrint=True)
 
 def vv_gbi_test(problem, d, N, y=[], ncomp=0):		
 	print("Training...")
@@ -143,6 +152,7 @@ def uncertainty_mc(problem, dd, n_mc=10**2, n_gmm=10**2, n_test=10**2):
 		
 	uncertainty_prop_plot(util_samples, c='purple', xlab="utility for d=d_hist")
 	print(statistics.variance(util_samples))
+	return util_samples
 
 if __name__ == '__main__':  
 	import argparse
@@ -195,9 +205,10 @@ if __name__ == '__main__':
 	#this precision will carry through to the optimization problem
 	#(n_mc=10**4, n_gmm=10**4, looked like it had stddev 0.2
 	if args.run == "uncertainty_mc":
-		uncertainty_mc(problem, d_example, n_mc=10**2, n_gmm=10**2, n_test=10**3)
+		util_samples = uncertainty_mc(problem, d_example, n_mc=10**2, n_gmm=10**2, n_test=3)
+		print(util_samples)
 	
 	if args.run == "vv_opt_parallel":
-		costs, utilities, designs = ngsa2_problem_parallel(8, problem, hours=0, minutes=0, popSize=15, nMonteCarlo=5*10**3, nGMM=5*10**3)
+		costs, utilities, designs = ngsa2_problem_parallel(8, problem, hours=0, minutes=0, popSize=10, nMonteCarlo=10**3, nGMM=10**3)
 		plot_ngsa2(costs, utilities, showPlot=True, savePlot=False, logPlotXY=[False,False])
 	
