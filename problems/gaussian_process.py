@@ -79,7 +79,7 @@ def sample_gp_from_file(filename, variance, ls, order=3):
 def define_functional_from_file(filename, order=3):
 	prior_pts, mean_fn_from_file = get_ppts_meanfn_file(filename, order)
 
-	return define_functional(prior_pts, mean_fn_from_file)
+	return define_functional_mean(prior_pts, mean_fn_from_file)
 
 #This class is intended to work with the sample_gp_prior function
 #Usually, that function is used to specify & sample a prior, returning this object
