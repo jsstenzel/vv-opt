@@ -20,29 +20,35 @@ _dir = "./llamas-etc/COATINGS/"
 _wave_min = 350.0
 _wave_max = 975.0
 _bandpass = _wave_max - _wave_min
+#my physical argument here is that we should consider measurements at these distances apart to be essentially independent
+#and this is based on the approximate spectral resolution of the instrument
+#R = lambda / dlambda = 2200
+#so for lambda=350, dlambda=0.159
+#and for lambda=975, dlambda=0.443
+_lengthscale = 1.0
 
 prior_gain = ["gamma_mv",  [1.1,0.2**2]] #mean, variance
 prior_rn = ["gamma_mv", [2.5,0.25**2]]
 prior_dc = ["gamma_mv", [0.001,.001**2]]
 #the red ones might need a different prior than blue&green, based on the 2 test cameras
 ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_dd.txt", 3)
-prior_qe_red = ["gp_expquad", [.05, (_bandpass)**2, ppts, meanfn]]
+prior_qe_red = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
 ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_green.txt", 3)
-prior_qe_gre = ["gp_expquad", [.05, (_bandpass)**2, ppts, meanfn]]
+prior_qe_gre = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
 ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_blue.txt", 3)
-prior_qe_blu = ["gp_expquad", [.05, (_bandpass)**2, ppts, meanfn]]
+prior_qe_blu = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
 	
 ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_red.txt", 2)
-prior_gp_vph_red = ["gp_expquad", [.0267, (_bandpass)**2, ppts, meanfn]]
+prior_gp_vph_red = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
 ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_green.txt", 2)
-prior_gp_vph_gre = ["gp_expquad", [.0267, (_bandpass)**2, ppts, meanfn]]
+prior_gp_vph_gre = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
 ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_blue.txt", 2)
-prior_gp_vph_blu = ["gp_expquad", [.0267, (_bandpass)**2, ppts, meanfn]]
+prior_gp_vph_blu = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
 
 ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica.txt", 3)
-prior_gp_sl = ["gp_expquad", [.1, (_bandpass)**2, ppts, meanfn]]
+prior_gp_sl = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
 ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica.txt", 3)
-prior_gp_bg = ["gp_expquad", [.1, (_bandpass)**2, ppts, meanfn]]
+prior_gp_bg = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
 
 prior_frd = ["gamma_mv", [0.077,0.022**2]]
 
@@ -64,7 +70,7 @@ theta_defs = [                             #mean, variance
 					
 					["vph_thru_red", prior_gp_vph_red, "functional"],
 					["vph_thru_gre", prior_gp_vph_gre, "functional"],
-					["vp_thruh_blu", prior_gp_vph_blu, "functional"],
+					["vph_thru_blu", prior_gp_vph_blu, "functional"],
 					["sl_thru_dichroic", prior_gp_sl, "functional"],
 					["bg_thru_dichroic", prior_gp_bg, "functional"],
 					["fiber_frd", prior_frd, "continuous"]
@@ -106,7 +112,7 @@ d_defs = [
 				["I_qe", ['uniform', [1, 10]], "continuous"],   #qe  #WAG, check value
 				
 				["d_vph_n_pts", ['uniform', [0,_bandpass*2]], "discrete"],
-				["d_dischroic_n_pts", ['uniform', [0,_bandpass*2]], "discrete"],
+				["d_dichroic_n_pts", ['uniform', [0,_bandpass*2]], "discrete"],
 				["d_frd_n_meas", ['uniform', [0,2400]], "discrete"],
 			]
 	
@@ -121,6 +127,7 @@ photodiode = [(200,.12),(280,.1),(300,.125),(400,.185),(633,.33),(930,.5),(1000,
 
 #build model
 spectrograph_models = build_model(_dir)
+skyfile_path = os.environ['COATINGS_PATH']+"eso_newmoon_radiance.txt"
 
 x_defs = [
 				#focal plane
@@ -150,12 +157,15 @@ x_defs = [
 				#qe
 				["S_pd", [], "functional", define_functional([p[0] for p in photodiode], [p[1] for p in photodiode], order=3)],
 				["S_pd_meas_err", [], "continuous", .01],  #mA/W
-				#requirement
+				#snr
 				["tau", [], "continuous", 1800],
+				["skyspec", [], "object", np.genfromtxt(skyfile_path,usecols=[0,1],names=['waves_nm','skyflux'])],
 				#llamas
 				["resolution", [], "continuous", 2200.0],
 				["wave_min", [], "continuous", _wave_min],
 				["wave_max", [], "continuous", _wave_max],
+				["wave_redgreen", [], "continuous", 690.0],
+				["wave_greenblue", [], "continuous", 480.0],
 				["f_collimator", [], "continuous", 200.0],
 				["f_camera", [], "continuous", 70.0],
 				["fratio_collimator", [], "continuous", 4.0],
@@ -184,6 +194,10 @@ x_defs = [
 				["sensor_glass_red", [], "functional", define_functional_from_file(_dir+"llamas_internal_red.txt")],
 				["sensor_glass_gre", [], "functional", define_functional_from_file(_dir+"llamas_internal.txt")],
 				["sensor_glass_blu", [], "functional", define_functional_from_file(_dir+"llamas_internal_blue.txt")],
+				#optical measurements
+				["vph_meas_stddev", [], "continuous", .001],
+				["sl_meas_stddev", [], "continuous", .001],
+				["bg_meas_stddev", [], "continuous", .001],
 				#cost
 				["testbed_setup", ["nonrandom", [1800]], "continuous", 1800], #WAG
 				#["C_engineer", ["nonrandom", [0.00694444444]], "continuous", 0.00694444444] #WAG $/s, from $25/hr
@@ -201,9 +215,8 @@ llamas_snr = ProblemDefinition(eta, H, Gamma, theta_defs, y_defs, d_defs, x_defs
 def update_llamas_problem(llamas_snr, d):
 	d_masked = [(math.floor(dd) if llamas_snr.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
 	d_dict = dict(zip(llamas_snr.d_names, d_masked))
-	print(d_dict)
 	num_vph = d_dict["d_vph_n_pts"]
-	num_dichroic = d_dict["d_dischroic_n_pts"]
+	num_dichroic = d_dict["d_dichroic_n_pts"]
 	
 	y_vph = ["y_vph_red_pts", "y_vph_gre_pts", "y_vph_blu_pts"]
 	y_dichroic = ["y_sl_pts", "y_bg_pts"]

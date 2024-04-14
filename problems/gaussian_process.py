@@ -39,8 +39,12 @@ def sample_gp_prior(variance, ls, prior_pts, mean_fn=_zero_mean):
 	
 def define_functional(prior_pts, eval_pts, order=3):
 	def mean_fn_from_pts(t):
-		f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(eval_pts), kind=order)
-		return f(t)
+		try:
+			f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(eval_pts), kind=order)
+			val = f(t)
+		except ValueError:
+			return 0.0
+		return val
 
 	sample = GaussianProcess1D(None, prior_pts, mean_fn_from_pts, None)
 	return sample
@@ -62,12 +66,17 @@ def get_ppts_meanfn_file(filename, order=3):
 			if len(words)==0:
 				continue
 			if "#" not in words[0]:
-				prior_pts.append(words[0])
-				mean_pts.append(words[1])
+				prior_pts.append(float(words[0]))
+				mean_pts.append(float(words[1]))
 
 	def mean_fn_from_file(t):
-		f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(mean_pts), kind=order)
-		return f(t)
+		try:
+			f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(mean_pts), kind=order)
+			val = f(t)
+		except ValueError:
+			return 0.0
+		return val
+
 
 	return prior_pts, mean_fn_from_file
 	

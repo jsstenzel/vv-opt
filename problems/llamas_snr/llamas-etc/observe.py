@@ -23,7 +23,7 @@ def observe_spectrum(instrument, texp, input_wv, input_spec, skyspec):#skyfile="
     # Poisson noise is counting statistics, and the thing we count are e- in the CCD
     # that originated from sky photons.
     # "sky" is in photons/m2/s/micron/arcsec^2, we need to turn this into electrons (e-)
-    # which requires multiplying by all factors in the demonimator    
+    # which requires multiplying by all factors in the demonimator 
     skyphotons = sky * \
         magellan.Atel/(100**2) * \
         texp * \

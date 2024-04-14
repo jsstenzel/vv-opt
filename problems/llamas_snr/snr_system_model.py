@@ -34,7 +34,8 @@ def build_model(_dir):
 	llamas_red.build_model('llamas-etc/llamas_red1.def')
 	llamas_blue.build_model('llamas-etc/llamas_blue1.def')
 	llamas_green.build_model('llamas-etc/llamas_green1.def')
-	llamas_waves = np.array(np.concatenate([llamas_blue.waves,llamas_green.waves,llamas_red.waves]))
+	#llamas_waves = np.array(np.concatenate([llamas_blue.waves,llamas_green.waves,llamas_red.waves]))
+	llamas_waves = llamas_red.waves
 	
 	spectrograph_models = [llamas_red, llamas_blue, llamas_green, llamas_waves]
 	return spectrograph_models
@@ -95,7 +96,7 @@ def sensitivity_hlva(theta, x):
 	llamas_red = spect_models[0]
 	llamas_blue = spect_models[1]
 	llamas_green = spect_models[2]
-	llamas_waves = spect_models[3]
+	waves = spect_models[3]
 	
 	
 	##############################
@@ -136,6 +137,9 @@ def sensitivity_hlva(theta, x):
 	elem_glass_red = x["sensor_glass_red"]#"llamas_internal_red.txt")]
 	elem_glass_gre = x["sensor_glass_gre"]#"llamas_internal.txt")]
 	elem_glass_blu = x["sensor_glass_blu"]#"llamas_internal_blue.txt")]
+	#snr
+	tau = x["tau"]
+	skyspec = x["skyspec"]
 
 	##############################
 	###Break down theta
@@ -153,7 +157,7 @@ def sensitivity_hlva(theta, x):
 	
 	elem_vph_red = theta["vph_thru_red"]#wasach_llamas2200_red.txt
 	elem_vph_gre = theta["vph_thru_gre"]#wasach_llamas2200_green.txt
-	elem_vph_blu = theta["vp_thruh_blu"]#wasach_llamas2200_blue.txt
+	elem_vph_blu = theta["vph_thru_blu"]#wasach_llamas2200_blue.txt
 	elem_dichroic_sl = theta["sl_thru_dichroic"]#ECI_FusedSilica.txt
 	elem_dichroic_bg = theta["bg_thru_dichroic"]#ECI_FusedSilica.txt
 	fiber_frd = theta["fiber_frd"]
@@ -235,24 +239,19 @@ def sensitivity_hlva(theta, x):
 	###Run model
 	##############################
 	
-	#reconsider which SNR requirement returned here
-	#reconsider which SNR requirement returned here
-	run_snrs = []
-	
-	texp=600
+	#reconsider which SNR requirement returned here		
 	sampling = 0.05 
 	wave_oversampled = 300 + sampling * np.arange((1000-300)/sampling)
 	spec_oversampled = wave_oversampled * 0 + 1.71e-17 #5.3e-18
 	
-	red_photons, red_noise = observe.observe_spectrum(llamas_red, texp, wave_oversampled, spec_oversampled, skyspec)
-	gre_photons, gre_noise = observe.observe_spectrum(llamas_green, texp, wave_oversampled, spec_oversampled, skyspec)
-	blu_photons, blu_noise = observe.observe_spectrum(llamas_blue, texp, wave_oversampled, spec_oversampled, skyspec)
+	red_photons, red_noise = observe.observe_spectrum(llamas_red, tau, wave_oversampled, spec_oversampled, skyspec)
+	gre_photons, gre_noise = observe.observe_spectrum(llamas_green, tau, wave_oversampled, spec_oversampled, skyspec)
+	blu_photons, blu_noise = observe.observe_spectrum(llamas_blue, tau, wave_oversampled, spec_oversampled, skyspec)
 	spectral_npix = 4
 	signal = np.array(spectral_npix * (blu_photons + gre_photons + red_photons))
 	noise = np.array(np.sqrt(spectral_npix) * (blu_noise + gre_noise + red_noise))
 	snr = [signal[i]/noise[i] for i in range(0, len(signal))]
-	run_snrs.append(np.median(snr))
 			
-	return(np.mean(run_snrs))
+	return(np.mean(snr))
 	
 

@@ -7,7 +7,7 @@ import fileinput
 
 import matplotlib.pyplot as plt
 from astropy.io import fits
-import scipy.signal as ss
+import scipy
 
 import numpy as np
 import itertools
@@ -26,14 +26,9 @@ Full matrix experiment model
 """
 def snr_likelihood_fn(theta, d, x, err=True):
 	#define interest params:
-	if type(theta) is dict:
-		gain = theta["gain"]
-		rn = theta["rn"]
-		dc = theta["dc"]
-	else:
-		gain = theta[0]
-		rn = theta[1]
-		dc = theta[2]
+	if type(theta) is not dict:
+		print("oh howd that happen now?")
+		sys.exit()
 	#define design variables, gain rn dc:
 	t_gain = d["t_gain"]
 	I_gain = d["I_gain"]
@@ -46,21 +41,44 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	t_qe = d["t_qe"]
 	I_qe = d["I_qe"]
 	
-	y_gain = gain_exp(gain, rn, dc, t_gain, I_gain, x, err)
-	y_rn = read_noise_exp(gain, rn, n_meas_rn, x, err)
-	y_dc = dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, x, err)
-	y_qe = quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, x, err)
+	red_min = x["wave_max"]
+	red_max = x["wave_redgreen"]
+	gre_min = x["wave_redgreen"]
+	gre_max = x["wave_greenblue"]
+	blu_min = x["wave_greenblue"]
+	blu_max = x["wave_min"]
 	
-	y_vph_red = measure_thru(theta["vph_thru_red"], d["d_vph_n_pts"], x["red_wave_min"], x["red_wave_max"], x["vph_meas_stddev"], err)
-	y_vph_gre = measure_thru(theta["vph_thru_gre"], d["d_vph_n_pts"], x["gre_wave_min"], x["gre_wave_max"], x["vph_meas_stddev"], err)
-	y_vph_blu = measure_thru(theta["vph_thru_blu"], d["d_vph_n_pts"], x["blu_wave_min"], x["blu_wave_max"], x["vph_meas_stddev"], err)
+	y_gain_red = gain_exp(theta["gain_red"], theta["rn_red"], theta["dc_red"], t_gain, I_gain, x, err)
+	y_gain_gre = gain_exp(theta["gain_gre"], theta["rn_gre"], theta["dc_gre"], t_gain, I_gain, x, err)
+	y_gain_blu = gain_exp(theta["gain_blu"], theta["rn_blu"], theta["dc_blu"], t_gain, I_gain, x, err)
+	y_gain = [y_gain_red, y_gain_gre, y_gain_blu]
+	
+	y_rn_red = read_noise_exp(theta["gain_red"], theta["rn_red"], n_meas_rn, x, err)
+	y_rn_gre = read_noise_exp(theta["gain_gre"], theta["rn_gre"], n_meas_rn, x, err)
+	y_rn_blu = read_noise_exp(theta["gain_blu"], theta["rn_blu"], n_meas_rn, x, err)
+	y_rn = [y_rn_red, y_rn_gre, y_rn_blu]
+	
+	y_dc_red = dark_current_exp(theta["gain_red"], theta["rn_red"],  theta["dc_red"], d_num, d_max, d_pow, x, err)
+	y_dc_gre = dark_current_exp(theta["gain_gre"], theta["rn_gre"],  theta["dc_gre"], d_num, d_max, d_pow, x, err)
+	y_dc_blu = dark_current_exp(theta["gain_blu"], theta["rn_blu"],  theta["dc_blu"], d_num, d_max, d_pow, x, err)
+	y_dc = [y_dc_red, y_dc_gre, y_dc_blu]
+	
+	y_qe_red = quantum_efficiency_exp( theta["qe_red"], theta["gain_red"], theta["rn_red"], n_qe, t_qe, I_qe, red_min, red_max, x, err)
+	y_qe_gre = quantum_efficiency_exp( theta["qe_gre"], theta["gain_gre"], theta["rn_gre"], n_qe, t_qe, I_qe, gre_min, gre_max, x, err)
+	y_qe_blu = quantum_efficiency_exp( theta["qe_blu"], theta["gain_blu"], theta["rn_blu"], n_qe, t_qe, I_qe, blu_min, blu_max, x, err)
+	y_qe = [y_qe_red, y_qe_gre, y_qe_blu]
+	
+	y_vph_red = measure_thru(theta["vph_thru_red"], d["d_vph_n_pts"], red_min, red_max, x["vph_meas_stddev"], err)
+	y_vph_gre = measure_thru(theta["vph_thru_gre"], d["d_vph_n_pts"], gre_min, gre_max, x["vph_meas_stddev"], err)
+	y_vph_blu = measure_thru(theta["vph_thru_blu"], d["d_vph_n_pts"], blu_min, blu_max, x["vph_meas_stddev"], err)
 	
 	y_sl = measure_thru(theta["sl_thru_dichroic"], d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["sl_meas_stddev"], err)
-	y_bg = measure_thru(theta["bg_thru_dichroic"], d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["sl_meas_stddev"], err)
+	y_bg = measure_thru(theta["bg_thru_dichroic"], d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["bg_meas_stddev"], err)
 	
 	y_frd = simple_measurement(theta["fiber_frd"], x["frd_meas_err"], d["d_frd_n_meas"], err)
 	
-	return 
+	y = [*y_gain, *y_rn, *y_dc, *y_qe, *y_vph_red, *y_vph_gre, *y_vph_blu, *y_sl, *y_bg, y_frd]
+	return y
 	
 #Adding standard error to a direct measurement of the input
 def simple_measurement(theta, stddev_meas, n_meas, err=True):
@@ -68,7 +86,7 @@ def simple_measurement(theta, stddev_meas, n_meas, err=True):
 	stddev = stddev_meas / np.sqrt(n_meas)
 
 	if err:
-		random = norm.rvs(scale = stddev)
+		random = scipy.stats.norm.rvs(scale = stddev)
 		y += random
 
 	return y
@@ -144,7 +162,7 @@ def gain_exp(gain, rn, dc, t, I, _x, err=True):
 	sigma_x = math.sqrt(var_x)
 	stddev = sigma_x/np.sqrt(math.sqrt(I)*n)
 	
-	random = norm.rvs(scale = stddev)
+	random = scipy.stats.norm.rvs(scale = stddev)
 	if err:
 		y = mu_x + random
 	else:
@@ -173,7 +191,7 @@ def read_noise_exp(gain, rn, n_meas, _x, err=True):
 	n = nx * ny * n_meas
 	random_var = (2/n) * sigma_si**4
 	random_sigma = math.sqrt(random_var)
-	random = norm.rvs(scale = random_sigma)
+	random = scipy.stats.norm.rvs(scale = random_sigma)
 	
 	if err:
 		y = sigma_si + random
@@ -229,7 +247,7 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x, err=True):
 			ti = t_list[i]
 			random_var = gain**2 * (rn**2 + (sigma_dc*ti)**2 + (sigma_stray*ti)**2) / np.sqrt(nx**2 * ny**2)
 			random_sigma = math.sqrt(random_var)
-			signal_list[i] += norm.rvs(scale = random_sigma) #apply error to mean
+			signal_list[i] += scipy.stats.norm.rvs(scale = random_sigma) #apply error to mean
 		
 	#Calculate slope (assume an intercept but don't worry abot it)
 	Sxy, Sx2 = 0,0
@@ -248,13 +266,11 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x, err=True):
 #recombination within the bulk silicon itself, surface reflection, and, for very long or 
 #short wavelengths, losses due to the almost complete lack of absorption by the CCD"
 #- Howell, Handbook of CCD Astronomy - instead, it models how we might measure intrinsic QE
-def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, _x, err=True):
+def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, wave_min, wave_max, _x, err=True):
 	#define parameters
 	S_pd = _x["S_pd"] #functional
 	S_pd_err = _x["S_pd_meas_err"]
 	sigma_dc = _x["sigma_dc"]
-	wave_min = x["wave_min"]
-	wave_max = x["wave_max"]
 	h = 6.62607015e-34 #J*Hz−1 #Planck's constant
 	c = 299792458 #m/s #speed of light
 	
@@ -270,7 +286,7 @@ def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, _x, err=True):
 		S_pd_sample = S_pd.eval_gp_cond(measure_pts, S_pd_err)
 	else:
 		S_pd_sample = S_pd.eval_gp_cond(measure_pts, 0)
-		
+
 	qe_sample = qe.eval_gp_cond(measure_pts, 0)
 	
 	Signal_measure = []
@@ -284,8 +300,13 @@ def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, _x, err=True):
 		
 		if err:
 			ccd_error = math.sqrt(rn**2 + (sigma_dc*t_qe)**2)
-			Signal += norm.rvs(scale = ccd_error)
+			Signal += scipy.stats.norm.rvs(scale = ccd_error)
 		
 		Signal_measure.append(Signal)
 		
 	return Signal_measure
+	
+	
+	
+def cost_model(theta, x):
+	return 0
