@@ -16,10 +16,10 @@ class OpticalSurface:
         self.wv_tab = wv
         self.transmission_tab = thru
         if (self.vendor == "ECI"): 
-            self.transmission_tab = (100.-self.transmission_tab)/100.
+            self.transmission_tab = [(100.-pt)/100. for pt in self.transmission_tab]
         if (self.name == "Collimator"): 
-            self.transmission_tab = self.transmission_tab/100.
-        self.reflectance_tab  = 1-self.transmission_tab
+            self.transmission_tab = [pt/100. for pt in self.transmission_tab]
+        self.reflectance_tab  = [1-pt for pt in self.transmission_tab]
 
     def loadThroughputTab(self):
         if (os.path.isfile(self.coating_file)):

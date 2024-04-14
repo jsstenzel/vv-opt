@@ -5,16 +5,16 @@ import os
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
-def observe_spectrum(instrument, texp, input_wv, input_spec, skyfile="eso_newmoon_radiance.txt"):
+def observe_spectrum(instrument, texp, input_wv, input_spec, skyspec):#skyfile="eso_newmoon_radiance.txt"):
 
-    if (os.path.isfile(skyfile)):
-        full_path = skyfile
-    else:
-        full_path = os.environ['COATINGS_PATH']+skyfile
+    #if (os.path.isfile(skyfile)):
+    #    full_path = skyfile
+    #else:
+    #    full_path = os.environ['COATINGS_PATH']+skyfile
     
     # ESO dark night sky spectrum is in weird units: photons/m2/s/micron/arcsec2
     # interpolate immediately onto the instrument's wavelength grid
-    skyspec= np.genfromtxt(full_path,usecols=[0,1],names=['waves_nm','skyflux'])
+    #skyspec= np.genfromtxt(full_path,usecols=[0,1],names=['waves_nm','skyflux'])
     sky   = np.interp(instrument.waves,skyspec['waves_nm'],skyspec['skyflux'])
 
     # Object containing operational parameters of the telescope
