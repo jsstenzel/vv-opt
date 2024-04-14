@@ -170,7 +170,6 @@ if __name__ == '__main__':
 						2,	 #d_pow   #approx, 
 						12,  #n_qe #questionable; kind of wasn't measured
 						2,  #t_qe
-						1.9964756312211167,  #I_qe #no, gotta kill this
 						3, #d_vph_n_pts
 						800, #d_dichroic_n_pts
 						10 #d_frd_n_meas

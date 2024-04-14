@@ -39,7 +39,6 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	#quantum efficiency:
 	n_qe = d["n_qe"]
 	t_qe = d["t_qe"]
-	I_qe = d["I_qe"]
 	
 	red_min = x["wave_max"]
 	red_max = x["wave_redgreen"]
@@ -63,9 +62,9 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	y_dc_blu = dark_current_exp(theta["gain_blu"], theta["rn_blu"],  theta["dc_blu"], d_num, d_max, d_pow, x, err)
 	y_dc = [y_dc_red, y_dc_gre, y_dc_blu]
 	
-	y_qe_red = quantum_efficiency_exp( theta["qe_red"], theta["gain_red"], theta["rn_red"], n_qe, t_qe, I_qe, red_min, red_max, x, err)
-	y_qe_gre = quantum_efficiency_exp( theta["qe_gre"], theta["gain_gre"], theta["rn_gre"], n_qe, t_qe, I_qe, gre_min, gre_max, x, err)
-	y_qe_blu = quantum_efficiency_exp( theta["qe_blu"], theta["gain_blu"], theta["rn_blu"], n_qe, t_qe, I_qe, blu_min, blu_max, x, err)
+	y_qe_red = quantum_efficiency_exp( theta["qe_red"], theta["gain_red"], theta["rn_red"], n_qe, t_qe, red_min, red_max, x, err)
+	y_qe_gre = quantum_efficiency_exp( theta["qe_gre"], theta["gain_gre"], theta["rn_gre"], n_qe, t_qe, gre_min, gre_max, x, err)
+	y_qe_blu = quantum_efficiency_exp( theta["qe_blu"], theta["gain_blu"], theta["rn_blu"], n_qe, t_qe, blu_min, blu_max, x, err)
 	y_qe = [y_qe_red, y_qe_gre, y_qe_blu]
 	
 	y_vph_red = measure_thru(theta["vph_thru_red"], d["d_vph_n_pts"], red_min, red_max, x["vph_meas_stddev"], err)
@@ -266,18 +265,19 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x, err=True):
 #recombination within the bulk silicon itself, surface reflection, and, for very long or 
 #short wavelengths, losses due to the almost complete lack of absorption by the CCD"
 #- Howell, Handbook of CCD Astronomy - instead, it models how we might measure intrinsic QE
-def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, wave_min, wave_max, _x, err=True):
+def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, wave_min, wave_max, _x, err=True):
 	#define parameters
 	S_pd = _x["S_pd"] #functional
 	S_pd_err = _x["S_pd_meas_err"]
 	sigma_dc = _x["sigma_dc"]
+	spectral_power = _x["spectral_power"] #W / nm
 	h = 6.62607015e-34 #J*Hz−1 #Planck's constant
 	c = 299792458 #m/s #speed of light
 	
 	#define design variables
 	#n_qe number of evenly-separated measurement points
 	#t_qe exposure time
-	#I_qe photocurrent of light source
+	#I_qe photocurrent of light source - spectral power * wavelength, see Krishnamurthy et al. 2016
 	
 	#Take sample measurements of source and qe
 	measure_pts = np.linspace(wave_min, wave_max, n_qe)
@@ -292,6 +292,7 @@ def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, I_qe, wave_min, wave_max, _
 	Signal_measure = []
 	for lambda_i, qe_i, S_i in zip(measure_pts, qe_sample, S_pd_sample):
 		#see Krishnamurthy et al. 2017
+		I_qe = spectral_power * lambda_i
 		power_pd = I_qe / S_i
 		energy = h*c / (lambda_i*1e-9)
 		photon_rate = power_pd / energy	

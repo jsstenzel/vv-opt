@@ -109,7 +109,6 @@ d_defs = [
 				
 				["n_qe", ['uniform', [0, 100]], "discrete"],   #qe
 				["t_qe", ['uniform', [.1, 600]], "continuous"],#qe
-				["I_qe", ['uniform', [1, 10]], "continuous"],   #qe  #WAG, check value
 				
 				["d_vph_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
 				["d_dichroic_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
@@ -157,6 +156,7 @@ x_defs = [
 				#qe
 				["S_pd", [], "functional", define_functional([p[0] for p in photodiode], [p[1] for p in photodiode], order=3)],
 				["S_pd_meas_err", [], "continuous", .01],  #mA/W
+				["spectral_power", [], "continuous", 1e-4], #watts / nm, Energetiq LDLS, Krishnamurthy et al. 2016
 				#snr
 				["tau", [], "continuous", 1800],
 				["skyspec", [], "object", np.genfromtxt(skyfile_path,usecols=[0,1],names=['waves_nm','skyflux'])],
