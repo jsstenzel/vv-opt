@@ -108,11 +108,11 @@ d_defs = [
 				["d_pow", ['uniform', [0,3]], "continuous"],      #dc
 				
 				["n_qe", ['uniform', [0, 100]], "discrete"],   #qe
-				["t_qe", ['uniform', [.1, 300]], "continuous"],#qe
+				["t_qe", ['uniform', [.1, 600]], "continuous"],#qe
 				["I_qe", ['uniform', [1, 10]], "continuous"],   #qe  #WAG, check value
 				
-				["d_vph_n_pts", ['uniform', [0,_bandpass*2]], "discrete"],
-				["d_dichroic_n_pts", ['uniform', [0,_bandpass*2]], "discrete"],
+				["d_vph_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
+				["d_dichroic_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
 				["d_frd_n_meas", ['uniform', [0,2400]], "discrete"],
 			]
 	

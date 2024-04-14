@@ -161,12 +161,26 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 	
 	###Problem Definition
-	d_example = llamas_snr.sample_d(1)
-	problem = update_llamas_problem(llamas_snr, d_example)
+	d_historical = [
+						20,   #t_gain
+						30,   #I_gain
+						1,	#n_meas_rn
+						8,	#d_num
+						9600, #d_max
+						2,	 #d_pow   #approx, 
+						12,  #n_qe #questionable; kind of wasn't measured
+						2,  #t_qe
+						1.9964756312211167,  #I_qe #no, gotta kill this
+						3, #d_vph_n_pts
+						800, #d_dichroic_n_pts
+						10 #d_frd_n_meas
+					]
+	problem = update_llamas_problem(llamas_snr, d_historical)
+	print("d_historical:",d_historical)
 	
 	req = 0.65
 	theta_nominal = problem.theta_nominal()
-	y_nominal = problem.eta(theta_nominal, d_example, err=False)
+	y_nominal = problem.eta(theta_nominal, d_historical, err=False)
 
 	###Uncertainty Quantification
 	if args.run == "nominal":
@@ -179,23 +193,23 @@ if __name__ == '__main__':
 		vv_SA_QoI(problem, p=4)
 	
 	if args.run == "UP_exp":
-		vv_UP_exp(problem, d_example, theta_nominal, n=10)
+		vv_UP_exp(problem, d_historical, theta_nominal, n=10)
 	
 	#Still needs massaging...
 	#if args.run == "SA_exp":
-	#	vv_SA_exp(problem, d_example)
+	#	vv_SA_exp(problem, d_historical)
 
 	###Optimal Bayesian Experimental Design
 	if args.run == "gbi_test":
-		vv_gbi_test(problem, d_example, 10**1, y_nominal, ncomp=0)
+		vv_gbi_test(problem, d_historical, 10**1, y_nominal, ncomp=0)
 	if args.run == "gbi_test_rand":
-		vv_gbi_test(problem, d_example, 10**1, ncomp=10)
+		vv_gbi_test(problem, d_historical, 10**1, ncomp=10)
 	
 	if args.run == "obed_gbi":
-		U_hist = vv_obed_gbi(problem, d_example)
+		U_hist = vv_obed_gbi(problem, d_historical)
 	
 	if args.run == "uncertainty_mc":
-		util_samples = uncertainty_mc(problem, d_example, n_mc=10**2, n_gmm=10**2, n_test=3)
+		util_samples = uncertainty_mc(problem, d_historical, n_mc=10**2, n_gmm=10**2, n_test=3)
 		print(util_samples)
 		
 	if args.run == "vv_opt_parallel":
