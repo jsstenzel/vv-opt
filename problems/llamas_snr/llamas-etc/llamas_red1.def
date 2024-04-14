@@ -23,10 +23,8 @@ FIBER_ELEM	Internal   1 FusedSilica Polymicro_FBPI_8m.txt PolyMicro model
 #
 # Spectrograph Element Definitions
 ELEMENT 	Collimator 1 FusedSilica dielectric_mirror.txt ECI2 model
-ELEMENT		DichroicRG 1 FusedSilica Dichroic_SL/Actual_transmission(Witness_sample_coating_lot_B).txt ECI2 asbuilt
-#ELEMENT		DichroicRG 1 FusedSilica Dichroic_SL/Actual_transmission_reflection(Witness_sample_coating_lot_A).txt ECI asbuilt
-#GRATING		VPH_B  1200 420 0 wasach_llamas2200_red.txt Wasach model
-GRATING		VPH_B  1200 420 0 VPHG/In-house_testing/6414R-03-03.txt Wasach asbuilt
+ELEMENT		DichroicRG 1 FusedSilica ECI_FusedSilica.txt ECI2 asbuilt
+GRATING		VPH_B  1200 420 0 wasach_llamas2200_red.txt Wasach model
 ELEMENT		Prism	   1 FusedSilica ECI_FusedSilica.txt ECI model
 ELEMENT		L1 	   2 CaF2 	 ECI_FusedSilica.txt ECI placeholder
 ELEMENT		L2 	   2 BAL35Y 	 ECI_PBM8Y.txt 	     ECI placeholder
@@ -37,6 +35,5 @@ ELEMENT		L6 	   2 PBM2Y 	 ECI_PBM8Y.txt 	     ECI placeholder
 ELEMENT		L7 	   2 SNBH52 	 ECI_PBM8Y.txt 	     ECI placeholder
 ELEMENT		WINDOW 	   2 Sapphire 	 ECI_FusedSilica.txt ECI placeholder
 ELEMENT		GLASSTRANS 1 Composite	 llamas_internal_red.txt MIT model
-#SENSOR		CCD42-40_RED CCD42-40_dd.txt 3.0 0.001 13.5
 SENSOR		CCD42-40_RED CCD42-40_dd.txt 2.43 0.001262 13.5
 END

@@ -12,8 +12,9 @@ from problems.problem_definition import *
 from problems.gaussian_process import *
 #llamas
 from problems.llamas_snr.snr_exp_models import *
-#from problems.llamas_snr.snr_system_model import *
+from problems.llamas_snr.snr_system_model import *
 
+#set path variables
 _dir = "./llamas-etc/COATINGS/"
 
 _wave_min = 350.0
@@ -24,10 +25,12 @@ prior_gain = ["gamma_mv",  [1.1,0.2**2]] #mean, variance
 prior_rn = ["gamma_mv", [2.5,0.25**2]]
 prior_dc = ["gamma_mv", [0.001,.001**2]]
 #the red ones might need a different prior than blue&green, based on the 2 test cameras
-ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD55-30_QE.txt", 3)
-prior_qe = ["gp_expquad", [.05, (_bandpass)**2, ppts, meanfn]]
-ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD55-30_DD_QE.txt", 3)
-prior_qe_dd = ["gp_expquad", [.05, (_bandpass)**2, ppts, meanfn]]
+ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_dd.txt", 3)
+prior_qe_red = ["gp_expquad", [.05, (_bandpass)**2, ppts, meanfn]]
+ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_green.txt", 3)
+prior_qe_gre = ["gp_expquad", [.05, (_bandpass)**2, ppts, meanfn]]
+ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_blue.txt", 3)
+prior_qe_blu = ["gp_expquad", [.05, (_bandpass)**2, ppts, meanfn]]
 	
 ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_red.txt", 2)
 prior_gp_vph_red = ["gp_expquad", [.0267, (_bandpass)**2, ppts, meanfn]]
@@ -55,9 +58,9 @@ theta_req_defs = [                             #mean, variance
 					["dc_red", prior_dc, "continuous"],
 					["dc_gre", prior_dc, "continuous"],
 					["dc_blu", prior_dc, "continuous"],
-					["qe_red", prior_qe_dd, "functional"],
-					["qe_gre", prior_qe, "functional"],
-					["qe_blu", prior_qe, "functional"],
+					["qe_red", prior_qe_red, "functional"],
+					["qe_gre", prior_qe_gre, "functional"],
+					["qe_blu", prior_qe_blu, "functional"],
 					
 					["vph_thru_red", prior_gp_vph_red, "functional"],
 					["vph_thru_gre", prior_gp_vph_gre, "functional"],
@@ -112,24 +115,14 @@ _sigmaE = math.sqrt((_m0 * _c**2) / (_k*_temp*_e0**2))
 _w = 3.66 + 0.000615*(300-_temp)
 photodiode = [(200,.12),(280,.1),(300,.125),(400,.185),(633,.33),(930,.5),(1000,.45),(1100,.15)] #representative photodiode, Hamamatsu S1337-1010BQ
 
-#set path variables
-os.environ["COATINGS_PATH"]=args.coatings_path
-os.environ["TEST_DATA_PATH"]=args.test_data_path
-
 #build model
-llamas_red = spec.Spectrograph('LLAMAS_RED')
-llamas_blue = spec.Spectrograph('LLAMAS_BLUE')
-llamas_green = spec.Spectrograph('LLAMAS_GREEN') 
+spectrograph_models = build_model(_dir)
 
-llamas_red.build_model('llamas_red'+args.index+'.def')
-llamas_blue.build_model('llamas_blue'+args.index+'.def')
-llamas_green.build_model('llamas_green'+args.index+'.def')
-llamas_waves = np.array(np.concatenate([llamas_blue.waves,llamas_green.waves,llamas_red.waves]))
-spectrograph_models = [llamas_red, llamas_blue, llamas_green, llamas_waves]
 fp_x_defs = [
 				#focal plane
 				["nx", ["nonrandom", [2048]], "discrete", 2048],
 				["ny", ["nonrandom", [2048]], "discrete", 2048],
+				["pixel_size_mm", [], "continuous", 13.5],
 				["sigma_dc", ["uniform", [.3,.7]], "continuous", .5], #e-/s #WAGish based on a consistency test performed on SN20006
 				["mu_stray", ["nonrandom", [0]], "continuous", 0], #e-/s #WAG for now
 				["sigma_stray", ["uniform", [.001,.01]], "continuous", .005], #WAG for now

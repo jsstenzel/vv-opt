@@ -5,32 +5,39 @@ import shutil
 import csv
 import fileinput
 sys.path.insert(0, "..")
+sys.path.append('llamas-etc')
 
-import spectrograph as spec
-import matplotlib.pyplot as plt
-import observe
-from astropy.io import fits
-import scipy.signal as ss
 import spectrograph as spec
 import observe
 
 import numpy as np
+import matplotlib.pyplot as plt
 import itertools
 import multiprocessing as mp
 import math
-from SALib.sample import saltelli, fast_sampler
-from SALib.analyze import sobol, fast
 from copy import deepcopy
-import scipy.optimize as optimization
 
-os.environ['COATINGS_PATH']="C:/Users/June/Desktop/Repositories/LLAMAS/SIMULATIONS/llamas-etc/COATINGS/"
-os.environ['TEST_DATA_PATH']="C:/Users/June/Desktop/Repositories/LLAMAS/TEST DATA/"
-
-num_workers = mp.cpu_count() 
+#os.environ['COATINGS_PATH']="C:/Users/June/Desktop/Repositories/LLAMAS/SIMULATIONS/llamas-etc/COATINGS/"
+#os.environ['TEST_DATA_PATH']="C:/Users/June/Desktop/Repositories/LLAMAS/TEST DATA/"
 
 ################################
 #Utility functions
 ################################
+
+def build_model(_dir):
+	os.environ["COATINGS_PATH"] =_dir
+
+	llamas_red = spec.Spectrograph('LLAMAS_RED')
+	llamas_blue = spec.Spectrograph('LLAMAS_BLUE')
+	llamas_green = spec.Spectrograph('LLAMAS_GREEN') 
+
+	llamas_red.build_model('llamas-etc/llamas_red1.def')
+	llamas_blue.build_model('llamas-etc/llamas_blue1.def')
+	llamas_green.build_model('llamas-etc/llamas_green1.def')
+	llamas_waves = np.array(np.concatenate([llamas_blue.waves,llamas_green.waves,llamas_red.waves]))
+	
+	spectrograph_models = [llamas_red, llamas_blue, llamas_green, llamas_waves]
+	return spectrograph_models
 
 def mkdir(path):
 	if os.path.exists(path):
@@ -57,7 +64,7 @@ def update_tab(thru_tab, bias):
 	return [return_thru, return_refl]
 	
 def parabola(x,a,b,c):
-    return a*x*x + b*x + c	
+	return a*x*x + b*x + c	
 
 def make_vph_tab(points,errors,color):
 	thrus = [float(p)+float(e) for p,e in zip(points,errors)]
@@ -74,6 +81,9 @@ def make_vph_tab(points,errors,color):
 	out_reflect = [1-t for t in out_trans]
 	
 	return [out_trans, out_reflect, out_waves]
+	
+#do i need to define setThroughputTab out here?????
+#look back at tyhe old commits here
 
 
 ################################
@@ -83,118 +93,151 @@ def make_vph_tab(points,errors,color):
 #Wrapper function for model call
 #def sensitivity_hlva(x, d, col, config_table, spectrograph_models):
 def sensitivity_hlva(theta, x):
+	spectrograph_models = x["spect_model_tracker"]
 	spect_models = deepcopy(spectrograph_models)
-    
-    #Expected format for x: 
-    #x_names = ["resolution","f_col","f_cam","fratio_col","fratio_cam","blade_obscure","d_beam","fiber_theta","fiber_core_d","fiber_frd","microlens_thru","fiber_ar_thru","fiber_internal_thru","collimator_thru","sl_thru","bg_thru","red_vph","green_vph","blue_vph","red_prism","green_prism","blue_prism","l1_red_thru","l2_red_thru","l3_red_thru","l4_red_thru","l5_red_thru","l6_red_thru","l7_red_thru","red_window_thru","l1_green_thru","l2_green_thru","l3_green_thru","l4_green_thru","l5_green_thru","l6_green_thru","l7_green_thru","green_window_thru","l1_blue_thru","l2_blue_thru","l3_blue_thru","l4_blue_thru","l5_blue_thru","l6_blue_thru","l7_blue_thru","blue_window_thru","red_internal_thru","green_internal_thru","blue_internal_thru","red_rn","red_dc","green_rn","green_dc","blue_rn","blue_dc","skyfile"]
+	llamas_red = spect_models[0]
+	llamas_blue = spect_models[1]
+	llamas_green = spect_models[2]
+	llamas_waves = spect_models[3]
+	
 	
 	##############################
-    ###Break down x
+	###Break down x
 	##############################
 	
 	#focal plane
-	x["nx"],
-	x["ny"],
+	nx = x["nx"]
+	ny = x["ny"]
+	pixel_size_mm = x["pixel_size_mm"]
 	#llamas
-	x["resolution"],
-	x["wave_min"],
-	x["wave_max"],
-	x["f_collimator"],
-	x["f_camera"],
-	x["fratio_collimator"],
-	x["fratio_camera"],
-	x["blade_obscure"],
-	x["d_beam"],
+	resolution = x["resolution"]
+	wave_min = x["wave_min"]
+	wave_max = x["wave_max"]
+	f_col = x["f_collimator"]
+	f_cam = x["f_camera"]
+	fratio_col = x["fratio_collimator"]
+	fratio_com = x["fratio_camera"]
+	blade_obscure = x["blade_obscure"]
+	d_beam = x["d_beam"]
 	#fiber
-	x["fiber_theta"],
-	x["fiber_dcore"],
-	x["microlens"],#"ECI_FusedSilica.txt")],
-	x["fiber_ar"],#"fiber_ar.txt")],
-	x["fiber_internal"],#"Polymicro_FBPI_8m.txt")],
-	x["frd_meas_err"],
+	fiber_theta = x["fiber_theta"]
+	fiber_dcore = x["fiber_dcore"]
+	elem_mla = x["microlens"]#"ECI_FusedSilica.txt")]
+	elem_ar = x["fiber_ar"]#"fiber_ar.txt")]
+	elem_fiber = x["fiber_internal"]#"Polymicro_FBPI_8m.txt")]
 	#spectrograph
-	x["collimator"],#"dielectric_mirror.txt")],
-	x["prism"],#"ECI_FusedSilica.txt")],
-	x["lens1"],#"ECI_FusedSilica.txt")],
-	x["lens2"],#"ECI_PBM8Y.txt")],
-	x["lens3"],#"ECI_FusedSilica.txt")],
-	x["lens4"],#"ECI_PBM8Y.txt")],
-	x["lens5"],#"ECI_FusedSilica.txt")],
-	x["lens6"],#"ECI_PBM8Y.txt")],
-	x["lens7"],#"ECI_PBM8Y.txt")],
-	x["sensor_window"],#"ECI_FusedSilica.txt")],
-	x["sensor_glass_red"],#"llamas_internal_red.txt")],
-	x["sensor_glass_gre"],#"llamas_internal.txt")],
-	x["sensor_glass_blu"],#"llamas_internal_blue.txt")],
+	elem_collimator = x["collimator"]#"dielectric_mirror.txt")]
+	elem_prism = x["prism"]#"ECI_FusedSilica.txt")]
+	elem_lens1 = x["lens1"]#"ECI_FusedSilica.txt")]
+	elem_lens2 = x["lens2"]#"ECI_PBM8Y.txt")]
+	elem_lens3 = x["lens3"]#"ECI_FusedSilica.txt")]
+	elem_lens4 = x["lens4"]#"ECI_PBM8Y.txt")]
+	elem_lens5 = x["lens5"]#"ECI_FusedSilica.txt")]
+	elem_lens6 = x["lens6"]#"ECI_PBM8Y.txt")]
+	elem_lens7 = x["lens7"]#"ECI_PBM8Y.txt")]
+	elem_window = x["sensor_window"]#"ECI_FusedSilica.txt")]
+	elem_glass_red = x["sensor_glass_red"]#"llamas_internal_red.txt")]
+	elem_glass_gre = x["sensor_glass_gre"]#"llamas_internal.txt")]
+	elem_glass_blu = x["sensor_glass_blu"]#"llamas_internal_blue.txt")]
 
-    ##############################
-    ###Break down theta
+	##############################
+	###Break down theta
 	##############################
 	
-	#define design variables, gain rn dc:
-	t_gain = d["t_gain"]
-	I_gain = d["I_gain"]
-	n_meas_rn = d["n_meas_rn"]
-	d_num = d["d_num"]
-	d_max = d["d_max"]
-	d_pow = d["d_pow"]
-	#quantum efficiency:
-	n_qe = d["n_qe"]
-	t_qe = d["t_qe"]
-	I_qe = d["I_qe"]
+	rn_red = theta["rn_red"]
+	rn_gre = theta["rn_gre"]
+	rn_blu = theta["rn_blu"]
+	dc_red = theta["dc_red"]
+	dc_gre = theta["dc_gre"]
+	dc_blu = theta["dc_blu"]
+	elem_qe_red = theta["qe_red"]#CCD42-40_dd.txt
+	elem_qe_gre = theta["qe_gre"]#CCD42-40_green.txt
+	elem_qe_blu = theta["qe_blu"]#CCD42-40_blue.txt
 	
-    
+	elem_vph_red = theta["vph_thru_red"]#wasach_llamas2200_red.txt
+	elem_vph_gre = theta["vph_thru_gre"]#wasach_llamas2200_green.txt
+	elem_vph_blu = theta["vp_thruh_blu"]#wasach_llamas2200_blue.txt
+	elem_dichroic_sl = theta["sl_thru_dichroic"]#ECI_FusedSilica.txt
+	elem_dichroic_bg = theta["bg_thru_dichroic"]#ECI_FusedSilica.txt
+	fiber_frd = theta["fiber_frd"]
+	
 	##############################
-    ###Load in the new values to the spect_models
+	###Load in the new values to the spect_models
 	##############################
-	#update frd
-	llamas_red.fiber.frd_loss += frd_error
-	llamas_green.fiber.frd_loss += frd_error
-	llamas_blue.fiber.frd_loss += frd_error
-	#update cameras
-	llamas_red.sensor.rn += red_rn_error
-	llamas_red.sensor.dark += red_dc_error
-	llamas_green.sensor.rn += gre_rn_error
-	llamas_green.sensor.dark += gre_dc_error
-	llamas_blue.sensor.rn += blu_rn_error
-	llamas_blue.sensor.dark += blu_dc_error
-	#update sl
-	llamas_red.elements[1].surfaces[0].setThroughputTab(update_tab(llamas_red.elements[1].surfaces[0].transmission_tab,sl_error)) 
-	llamas_green.elements[1].surfaces[0].setThroughputTab(update_tab(llamas_green.elements[1].surfaces[0].transmission_tab,-sl_error)) 
-	llamas_blue.elements[1].surfaces[0].setThroughputTab([llamas_green.elements[1].surfaces[0].transmission_tab,llamas_green.elements[1].surfaces[0].reflectance_tab]) 
-	#update bg
-	llamas_green.elements[2].surfaces[0].setThroughputTab(update_tab(llamas_green.elements[2].surfaces[0].transmission_tab,bg_error)) 
-	llamas_blue.elements[2].surfaces[0].setThroughputTab(update_tab(llamas_blue.elements[2].surfaces[0].transmission_tab,-bg_error))
+	
+	red_elem_list = [elem_collimator, elem_dichroic_sl, elem_prism, elem_lens1, elem_lens2, elem_lens3, elem_lens4, elem_lens5, elem_lens6, elem_lens7, elem_window, elem_glass_red]
+	gre_elem_list = [elem_collimator, elem_dichroic_sl, elem_dichroic_bg, elem_prism, elem_lens1, elem_lens2, elem_lens3, elem_lens4, elem_lens5, elem_lens6, elem_lens7, elem_window, elem_glass_gre]
+	blu_elem_list = [elem_collimator, elem_dichroic_sl, elem_dichroic_bg, elem_prism, elem_lens1, elem_lens2, elem_lens3, elem_lens4, elem_lens5, elem_lens6, elem_lens7, elem_window, elem_glass_blu]
+	
+	#update spectrograph definitions
+	for llamas_channel in [llamas_red, llamas_green, llamas_blue]:
+		llamas_channel.R		  =	resolution
+		llamas_channel.wv_min	 =	wave_min
+		llamas_channel.wv_max	 =	wave_max
+		llamas_channel.f_col	  =	f_col
+		llamas_channel.f_cam	  =	f_cam
+		llamas_channel.Fratio_col =	fratio_col
+		llamas_channel.Fratio_cam =	fratio_com
+		llamas_channel.Dbeam	  =	d_beam
+		llamas_channel.blade_obscuration = blade_obscure
+		
+	#update fiber
+	for llamas_channel in [llamas_red, llamas_green, llamas_blue]:
+		llamas_channel.fiber.frd_loss = fiber_frd
+		llamas_channel.fiber.theta_fib = fiber_theta
+		llamas_channel.fiber.dFib = fiber_dcore
+		for surf in llamas_channel.fiber.elements[0].surfaces: #mla
+			surf.setThroughputTab(elem_mla.prior_pts, elem_mla.evaluate())
+		for surf in llamas_channel.fiber.elements[1].surfaces: #ar
+			surf.setThroughputTab(elem_ar.prior_pts, elem_ar.evaluate())
+		for surf in llamas_channel.fiber.elements[2].surfaces: #fiber
+			surf.setThroughputTab(elem_fiber.prior_pts, elem_fiber.evaluate())
+
 	#update vph
-	red_vph_points = [float(row[col['red_vph_pt1']]),float(row[col['red_vph_pt2']]),float(row[col['red_vph_pt3']])]  
-	green_vph_points = [float(row[col['green_vph_pt1']]),(row[col['green_vph_pt2']]),float(row[col['green_vph_pt3']])]  
-	blue_vph_points = [float(row[col['blue_vph_pt1']]),float(row[col['blue_vph_pt2']]),float(row[col['blue_vph_pt3']])]  
-	red_vph_tabs = make_vph_tab(red_vph_points,[red_vph_err1,red_vph_err2,red_vph_err3],'r')
-	green_vph_tabs = make_vph_tab(green_vph_points,[green_vph_err1,green_vph_err2,green_vph_err3],'r')
-	blue_vph_tabs = make_vph_tab(blue_vph_points,[blue_vph_err1,blue_vph_err2,blue_vph_err3],'r')
-	llamas_red.grating.blaze.setThroughputTab(red_vph_tabs)
-	llamas_green.grating.blaze.setThroughputTab(green_vph_tabs)
-	llamas_blue.grating.blaze.setThroughputTab(blue_vph_tabs)
-	#update lens throughputs (spect 12345678, camera rgb, lens L1 L2 L3 L4-L5 L6-L7 W, two surfaces)
-	set up iterator through lens_rgb_...
-	for lens in [4,5,6,7,8,9,10,11]:
-		for surf in [0,1]:
-			llamas_red.elements[lens-1].surfaces[surf].setThroughputTab(update_tab(llamas_red.elements[lens-1].surfaces[surf].transmission_tab,lens_thru_err)) 
-			llamas_green.elements[lens].surfaces[surf].setThroughputTab(update_tab(llamas_red.elements[lens].surfaces[surf].transmission_tab,lens_thru_err)) 
-			llamas_blue.elements[lens].surfaces[surf].setThroughputTab(update_tab(llamas_red.elements[lens].surfaces[surf].transmission_tab,lens_thru_err)) 
-	#update fiber core
-	llamas_red.fiber.dFib += fiber_core_d_err
-	llamas_green.fiber.dFib += fiber_core_d_err
-	llamas_blue.fiber.dFib += fiber_core_d_err
+	llamas_red.grating.blaze.setThroughputTab(elem_vph_red.prior_pts, elem_vph_red.evaluate())
+	llamas_green.grating.blaze.setThroughputTab(elem_vph_gre.prior_pts, elem_vph_gre.evaluate())
+	llamas_blue.grating.blaze.setThroughputTab(elem_vph_blu.prior_pts, elem_vph_blu.evaluate())
 	
-
+	#update spect elem throughputs
+	for i,elem in enumerate(red_elem_list):
+		for surf in llamas_red.elements[i].surfaces:
+			surf.setThroughputTab(elem.prior_pts, elem.evaluate())  #fix this
+			
+	for i,elem in enumerate(gre_elem_list):
+		for surf in llamas_green.elements[i].surfaces:
+			surf.setThroughputTab(elem.prior_pts, elem.evaluate())  #fix this
+			
+	for i,elem in enumerate(blu_elem_list):
+		for surf in llamas_blue.elements[i].surfaces:
+			surf.setThroughputTab(elem.prior_pts, elem.evaluate())  #fix this
+	
+	#update sensors
+	for llamas_channel in [llamas_red, llamas_green, llamas_blue]:
+		llamas_channel.sensor.naxis1 = nx
+		llamas_channel.sensor.naxis2 = ny
+		llamas_channel.sensor.pixelsize = pixel_size_mm
+	
+	llamas_red.sensor.rn = rn_red
+	llamas_red.sensor.dark = dc_red
+	llamas_red.sensor.qe.setThroughputTab(elem_qe_red.prior_pts, elem_qe_red.evaluate())
+	
+	llamas_green.sensor.rn = rn_gre
+	llamas_green.sensor.dark = dc_gre
+	llamas_green.sensor.qe.setThroughputTab(elem_qe_gre.prior_pts, elem_qe_gre.evaluate())
+	
+	llamas_blue.sensor.rn = rn_blu
+	llamas_blue.sensor.dark = dc_blu
+	llamas_blue.sensor.qe.setThroughputTab(elem_qe_blu.prior_pts, elem_qe_blu.evaluate())
+	
+	#And at last, we recalculate the throughputs based on the new data
 	llamas_red.throughput = llamas_red.calc_throughput(waves)
 	llamas_green.throughput = llamas_green.calc_throughput(waves)
 	llamas_blue.throughput = llamas_blue.calc_throughput(waves)
-    
+	
 	##############################
-    ###Run model
+	###Run model
 	##############################
+	
 	run_snrs = []
 	
 	texp=600
