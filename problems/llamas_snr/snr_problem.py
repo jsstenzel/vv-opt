@@ -48,7 +48,7 @@ prior_frd = ["gamma_mv", [0.077,0.022**2]]
 
 
 #these priors are based on requirements that were met, see Camera Qual Report
-theta_req_defs = [                             #mean, variance
+theta_defs = [                             #mean, variance
 					["gain_red", prior_gain, "continuous"],
 					["gain_gre", prior_gain, "continuous"],
 					["gain_blu", prior_gain, "continuous"],
@@ -71,7 +71,7 @@ theta_req_defs = [                             #mean, variance
 				]
 #need to update with range somehow? These can't be negative
 
-fp_y_defs = [	
+y_defs = [	
 				"y_gain_red", 
 				"y_gain_gre", 
 				"y_gain_blu", 
@@ -93,13 +93,17 @@ fp_y_defs = [
 				"y_frd"
 			]
 
-fp_d_defs = [
+d_defs = [
 				["t_gain", ['uniform', [.1, 600]], "continuous"], #gain
 				["I_gain", ['uniform', [1, 100]], "discrete"],    #gain
 				["n_meas_rn", ['uniform', [1, 50]], "discrete"],  #rn
 				["d_num", ['uniform', [2, 25]], "discrete"],      #dc
 				["d_max", ['uniform', [1, 12000]], "continuous"], #dc
 				["d_pow", ['uniform', [0,3]], "continuous"],      #dc
+				
+				["n_qe", ['uniform', [0, 100]], "discrete"],   #qe
+				["t_qe", ['uniform', [.1, 300]], "continuous"],#qe
+				["I_qe", ['uniform', [1, 10]], "continuous"],   #qe  #WAG, check value
 				
 				["d_vph_n_pts", ['uniform', [0,_bandpass*2]], "discrete"],
 				["d_dischroic_n_pts", ['uniform', [0,_bandpass*2]], "discrete"],
@@ -118,7 +122,7 @@ photodiode = [(200,.12),(280,.1),(300,.125),(400,.185),(633,.33),(930,.5),(1000,
 #build model
 spectrograph_models = build_model(_dir)
 
-fp_x_defs = [
+x_defs = [
 				#focal plane
 				["nx", ["nonrandom", [2048]], "discrete", 2048],
 				["ny", ["nonrandom", [2048]], "discrete", 2048],
@@ -190,13 +194,14 @@ fp_x_defs = [
 #_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
 eta = snr_likelihood_fn
 H = sensitivity_hlva
-#Gamma = 
-llamas_snr = ProblemDefinition(eta, H, Gamma, theta_req_defs, fp_y_defs, fp_d_defs, fp_x_defs)
+Gamma = cost_model
+llamas_snr = ProblemDefinition(eta, H, Gamma, theta_defs, y_defs, d_defs, x_defs)
 
 
 def update_llamas_problem(llamas_snr, d):
-	d_masked = [(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
-	d_dict = dict(zip(self.d_names, d_masked))
+	d_masked = [(math.floor(dd) if llamas_snr.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
+	d_dict = dict(zip(llamas_snr.d_names, d_masked))
+	print(d_dict)
 	num_vph = d_dict["d_vph_n_pts"]
 	num_dichroic = d_dict["d_dischroic_n_pts"]
 	
@@ -215,13 +220,13 @@ def update_llamas_problem(llamas_snr, d):
 			mod_y_defs.append(yname)
 	
 	llamas_snr_d = ProblemDefinition(
-		llamas_snr.eta, 
-		llamas_snr.H, 
-		llamas_snr.Gamma, 
-		llamas_snr.theta_req_defs, 
-		mod_y_defs, 
-		llamas_snr.fp_d_defs, 
-		llamas_snr.fp_x_defs
+		eta, 
+		H, 
+		Gamma, 
+		theta_defs, 
+		mod_y_defs, #!
+		d_defs, 
+		x_defs
 	)
 		
 	return llamas_snr_d

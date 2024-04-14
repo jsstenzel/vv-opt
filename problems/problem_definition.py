@@ -221,6 +221,41 @@ class ProblemDefinition:
 		#but unnormalized may be ok for MCMC?
 		return probabilities
 	"""
+	
+	def theta_nominal(self):
+		tnom = []
+		for prior in self.priors: ###iterate over dim_theta
+			dtype = prior[0]
+			params = prior[1]
+	
+			#generate the rvs for this one particular theta
+			if dtype == 'gaussian':
+				mu = params[0]
+				tnom.append(mu)
+			elif dtype == 'gamma_ab':
+				alpha = params[0]
+				beta = params[1]
+				tnom.append(alpha/beta)
+			elif dtype == 'gamma_mv':
+				mean = params[0]
+				tnom.append(mean)
+			elif dtype == 'lognorm':
+				mu = params[0]
+				tnom.append(mu)
+			elif dtype == 'uniform':
+				left = params[0]
+				right = params[1]
+				tnom.append(right-left)
+			elif dtype == 'nonrandom':
+				tnom.append(param[0])
+			elif dtype == 'gp_expquad':
+				prior_pts = params[2]
+				mean_fn = params[3]
+				funct = define_functional_mean(prior_pts, mean_fn)
+				tnom.append(funct)
+			else:
+				return 0 #fail!
+		return tnom
 		
 	def __str__(self): #handsome little format for printing the object
 		printout = "ProblemDefinition printout:\n"

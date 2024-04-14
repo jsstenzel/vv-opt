@@ -64,7 +64,7 @@ def update_tab(thru_tab, bias):
 	return [return_thru, return_refl]
 	
 def parabola(x,a,b,c):
-	return a*x*x + b*x + c	
+	return a*x*x + b*x + c
 
 def make_vph_tab(points,errors,color):
 	thrus = [float(p)+float(e) for p,e in zip(points,errors)]
@@ -81,9 +81,6 @@ def make_vph_tab(points,errors,color):
 	out_reflect = [1-t for t in out_trans]
 	
 	return [out_trans, out_reflect, out_waves]
-	
-#do i need to define setThroughputTab out here?????
-#look back at tyhe old commits here
 
 
 ################################
@@ -238,6 +235,8 @@ def sensitivity_hlva(theta, x):
 	###Run model
 	##############################
 	
+	#reconsider which SNR requirement returned here
+	#reconsider which SNR requirement returned here
 	run_snrs = []
 	
 	texp=600
