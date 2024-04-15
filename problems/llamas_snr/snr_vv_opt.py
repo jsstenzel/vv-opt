@@ -177,7 +177,7 @@ if __name__ == '__main__':
 	problem = update_llamas_problem(llamas_snr, d_historical)
 	print("d_historical:",d_historical)
 	
-	req = 0.65
+	req = 5.0
 	theta_nominal = problem.theta_nominal()
 	y_nominal = problem.eta(theta_nominal, d_historical, err=False)
 

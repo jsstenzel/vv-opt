@@ -27,10 +27,14 @@ _bandpass = _wave_max - _wave_min
 #and for lambda=975, dlambda=0.443
 _lengthscale = 1.0
 
-prior_gain = ["gamma_mv",  [1.1,0.2**2]] #mean, variance
-prior_rn = ["gamma_mv", [2.5,0.25**2]]
-prior_dc = ["gamma_mv", [0.001,.001**2]]
-#the red ones might need a different prior than blue&green, based on the 2 test cameras
+prior_gain_SN1 = ["gamma_mv",  [0.999,0.2**2]] #mean, variance
+prior_rn_SN1 = ["gamma_mv", [2.32,0.25**2]]
+prior_dc_SN1 = ["gamma_mv", [0.00238,.001**2]]
+
+prior_gain_SN3 = ["gamma_mv",  [1.008,0.2**2]] #mean, variance
+prior_rn_SN3 = ["gamma_mv", [2.35,0.25**2]]
+prior_dc_SN3 = ["gamma_mv", [0.00267,.001**2]]
+
 ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_dd.txt", 3)
 prior_qe_red = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
 ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_green.txt", 3)
@@ -55,15 +59,15 @@ prior_frd = ["gamma_mv", [0.077,0.022**2]]
 
 #these priors are based on requirements that were met, see Camera Qual Report
 theta_defs = [                             #mean, variance
-					["gain_red", prior_gain, "continuous"],
-					["gain_gre", prior_gain, "continuous"],
-					["gain_blu", prior_gain, "continuous"],
-					["rn_red", prior_rn, "continuous"],
-					["rn_gre", prior_rn, "continuous"],
-					["rn_blu", prior_rn, "continuous"],
-					["dc_red", prior_dc, "continuous"],
-					["dc_gre", prior_dc, "continuous"],
-					["dc_blu", prior_dc, "continuous"],
+					["gain_red", prior_gain_SN1, "continuous"],
+					["gain_gre", prior_gain_SN3, "continuous"],
+					["gain_blu", prior_gain_SN3, "continuous"],
+					["rn_red", prior_rn_SN1, "continuous"],
+					["rn_gre", prior_rn_SN3, "continuous"],
+					["rn_blu", prior_rn_SN3, "continuous"],
+					["dc_red", prior_dc_SN1, "continuous"],
+					["dc_gre", prior_dc_SN3, "continuous"],
+					["dc_blu", prior_dc_SN3, "continuous"],
 					["qe_red", prior_qe_red, "functional"],
 					["qe_gre", prior_qe_gre, "functional"],
 					["qe_blu", prior_qe_blu, "functional"],

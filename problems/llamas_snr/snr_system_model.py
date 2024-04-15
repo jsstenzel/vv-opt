@@ -239,10 +239,17 @@ def sensitivity_hlva(theta, x):
 	###Run model
 	##############################
 	
-	#reconsider which SNR requirement returned here		
+	#This uses the Emission Sensitivity requirement & model
+	# LSB emission 3e-19 erg/cm2/s/A/fiber SNR=5 in 1 night or less
+	#simulated with an oversampled spectrum
+	
 	sampling = 0.05 
 	wave_oversampled = 300 + sampling * np.arange((1000-300)/sampling)
-	spec_oversampled = wave_oversampled * 0 + 1.71e-17 #5.3e-18
+	#source = 3e-19 #from thesis
+	#source = 5.3e-18 #dont remember
+	#source = 1.71e-17 #dont remember
+	source = 4.5e-18 #This is from Rob's 7/14/22 email
+	spec_oversampled = wave_oversampled * 0 + source
 	
 	red_photons, red_noise = observe.observe_spectrum(llamas_red, tau, wave_oversampled, spec_oversampled, skyspec)
 	gre_photons, gre_noise = observe.observe_spectrum(llamas_green, tau, wave_oversampled, spec_oversampled, skyspec)
