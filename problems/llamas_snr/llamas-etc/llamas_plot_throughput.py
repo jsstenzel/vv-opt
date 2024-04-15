@@ -26,6 +26,33 @@ def plot_throughput(llamas_red, llamas_green, llamas_blue):
    plt.ylabel("Throughput ratio")
    plt.show()
    
+   #print("DICHROICS")
+   rg_dichroic_b = llamas_blue.elements[1].throughput(llamas_blue.waves)
+   rg_dichroic_g = llamas_green.elements[1].throughput(llamas_green.waves)
+   rg_dichroic_r = llamas_red.elements[1].throughput(llamas_red.waves)
+
+   bg_dichroic_b = llamas_blue.elements[2].throughput(llamas_blue.waves)
+   bg_dichroic_g = llamas_green.elements[2].throughput(llamas_green.waves)
+
+   plt.plot(llamas_blue.waves, rg_dichroic_b, c='b')
+   plt.plot(llamas_green.waves, rg_dichroic_g, c='g')
+   plt.plot(llamas_red.waves, rg_dichroic_r, c='r')
+
+   plt.title('RG Dichroic Throughput')
+   plt.ylim(-0.05,1.05)
+   plt.xlabel("Wavelength [nm]")
+   plt.ylabel("Throughput ratio")
+   plt.show()
+
+   plt.plot(llamas_blue.waves, bg_dichroic_b, c='b')
+   plt.plot(llamas_green.waves, bg_dichroic_g, c='g')
+
+   plt.title('BG Dichroic Throughput')
+   plt.ylim(-0.05,1.05)
+   plt.xlabel("Wavelength [nm]")
+   plt.ylabel("Throughput ratio")
+   plt.show()
+   
    return 0
 
    print("FIBER RUN")
@@ -99,33 +126,6 @@ def plot_throughput(llamas_red, llamas_green, llamas_blue):
    plt.show()
 
    print(np.median(ft))
-
-   print("DICHROICS")
-   rg_dichroic_b = llamas_blue.elements[1].throughput(llamas_blue.waves)
-   rg_dichroic_g = llamas_green.elements[1].throughput(llamas_green.waves)
-   rg_dichroic_r = llamas_red.elements[1].throughput(llamas_red.waves)
-
-   bg_dichroic_b = llamas_blue.elements[2].throughput(llamas_blue.waves)
-   bg_dichroic_g = llamas_green.elements[2].throughput(llamas_green.waves)
-
-   plt.plot(llamas_blue.waves, rg_dichroic_b, c='b')
-   plt.plot(llamas_green.waves, rg_dichroic_g, c='g')
-   plt.plot(llamas_red.waves, rg_dichroic_r, c='r')
-
-   plt.title('RG Dichroic Throughput')
-   plt.ylim(-0.05,1.05)
-   plt.xlabel("Wavelength [nm]")
-   plt.ylabel("Throughput ratio")
-   plt.show()
-
-   plt.plot(llamas_blue.waves, bg_dichroic_b, c='b')
-   plt.plot(llamas_green.waves, bg_dichroic_g, c='g')
-
-   plt.title('BG Dichroic Throughput')
-   plt.ylim(-0.05,1.05)
-   plt.xlabel("Wavelength [nm]")
-   plt.ylabel("Throughput ratio")
-   plt.show()
 
    return red_med, green_med, blue_med, fiber_run_med
 

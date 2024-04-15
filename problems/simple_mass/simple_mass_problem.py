@@ -56,7 +56,7 @@ def simple_mass_problem_def(alphas, betas):
 		return y
 		
 	#Goal is to determine accurate measurement of total mass
-	def H(_t, _x):
+	def H(_t, _x, verbose=False):
 		ts = [ _t["t"+str(i)] for i in range(N)]
 		total_mass = sum([ _t["t"+str(i)] for i in range(N)])
 		
