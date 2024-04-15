@@ -108,7 +108,7 @@ def vv_SA_joint(problem, p=5):
 						2**p, #SALib wants powers of 2 for convergence
 						var_names=problem.theta_names, 
 						var_dists=[prior[0] for prior in problem.priors], 
-						var_bounds=#[prior[1] for prior in problem.priors],  need to do something odd here....?
+						var_bounds=[prior[1] for prior in problem.priors],  #need to do something odd here....?
 						conf = 0.95, doSijCalc=False, doPlot=True, doPrint=True)
 
 def vv_gbi_test(problem, d, N, y=[], ncomp=0):		
@@ -136,22 +136,28 @@ def vv_gbi_test(problem, d, N, y=[], ncomp=0):
 	else:
 		plot_predictive_posterior(a, b, c, 0, 500, drawplot=True)
 
-def vv_obed_gbi(problem, d):
-	U, U_list = U_varH_gbi(d, problem, n_mc=10**4, n_gmm=10**4, doPrint=True)
+def vv_obed_gbi(problem, d, n_mc=10**4, n_gmm=10**4):
+	U, U_list = U_varH_gbi(d, problem, n_mc=n_mc, n_gmm=n_gmm, doPrint=True)
 	print(U)
 	#print(U_list)
 	uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")#, saveFig='OBEDresult')
 	return U
 	
-def uncertainty_mc(problem, dd, n_mc=10**2, n_gmm=10**2, n_test=10**2):
-	util_samples = []
+def uncertainty_mc(problem, dd, dname, n_mc=10**2, n_gmm=10**2, n_test=10**2):
+	theta_check = problem.prior_rvs(n_gmm)
+	ncomp = find_ncomp( theta_check, 
+						[problem.H(theta) for theta in theta_check], 
+						[problem.eta(theta, dd) for theta in theta_check])
+	print("Using ncomp =",ncomp)
+	
+	util_samples=[]
 	for ii in range(n_test):
-		print(ii, flush=True)
-		util, _ = U_varH_gbi(dd, problem, n_mc=n_mc, n_gmm=n_gmm, ncomp=10, doPrint=False)
+		util, _ = U_varH_gbi(dd, problem, n_mc=n_mc, n_gmm=n_gmm, ncomp=ncomp, doPrint=False)
 		util_samples.append(util)
+		print(ii, util, flush=True)
 		
-	uncertainty_prop_plot(util_samples, c='purple', xlab="utility for d=d_hist")
-	print(statistics.variance(util_samples))
+	uncertainty_prop_plot(util_samples, c='purple', xlab="utility for d="+dname)
+	print("variance of utility estimation for n_mc="+str(n_mc)+", n_gmm"+str(n_gmm),"is",statistics.variance(util_samples))
 	return util_samples
 
 if __name__ == '__main__':  
@@ -192,20 +198,22 @@ if __name__ == '__main__':
 
 	###Optimal Bayesian Experimental Design
 	if args.run == "gbi_test":
-		vv_gbi_test(problem, d_example, 10**5, y_nominal, ncomp=0)
+		vv_gbi_test(problem, d_example, 10**2, y_nominal, ncomp=0)
 	if args.run == "gbi_test_rand":
-		vv_gbi_test(problem, d_example, 10**5, ncomp=10)
+		vv_gbi_test(problem, d_example, 10**2, ncomp=10)
 	
 	#d_example is 2.2833586292733474
 	if args.run == "obed_gbi":
-		U_hist = vv_obed_gbi(problem, d_example)
+		U_hist = vv_obed_gbi(problem, d_example, 10**2, 10**2)
 	
 	#this testing shows that for n_mc=10**2, n_gmm=10**2,
 	#the utility is estimated with a variance of _____
 	#this precision will carry through to the optimization problem
 	#(n_mc=10**4, n_gmm=10**4, looked like it had stddev 0.2
 	if args.run == "uncertainty_mc":
-		util_samples = uncertainty_mc(problem, d_example, n_mc=10**2, n_gmm=10**2, n_test=3)
+		util_samples = uncertainty_mc(problem, d_example, "d_example", n_mc=10**3, n_gmm=10**3, n_test=10**3)
+		#util_samples = uncertainty_mc(problem, d_best, "d_best", n_mc=10**2, n_gmm=10**2, n_test=10**2)
+		#util_samples = uncertainty_mc(problem, d_worst, "d_worst", n_mc=10**2, n_gmm=10**2, n_test=10**2)
 		print(util_samples)
 	
 	if args.run == "vv_opt_parallel":

@@ -148,3 +148,31 @@ def plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound, rbound, drawplot=True
 		plt.axvline(mean, c='red')
 	if drawplot:
 		plt.show()
+		
+def find_ncomp(theta_samples, qoi_samples, y_samples):
+	#step 1: train 
+	#Get a a Gaussian mixture model from the push-forward of the prior through yd and yp
+	samples = theta_samples
+	yp_sample = qoi_samples
+	yd_sample = y_samples
+
+	p_dimension = 1 #len(yp_sample[0]) #1
+	d_dimension = len(yd_sample[0]) #3
+
+	#actually i think ill use sklearn for this
+	data = np.array([np.hstack([yp_sample[i],yd_sample[i]]) for i,_ in enumerate(samples)])
+
+	#need to use a "Bayesian information criterion approach [8]"
+	curr_gmm = GaussianMixture(n_components=1).fit(data)
+	curr_bic = curr_gmm.bic(data)
+	next_gmm = GaussianMixture(n_components=2).fit(data)
+	next_bic = next_gmm.bic(data)
+	ncomp = 1
+	while next_bic < curr_bic:
+		curr_bic = next_bic
+		curr_gmm = next_gmm
+		ncomp += 1
+		next_gmm = GaussianMixture(n_components=ncomp+1).fit(data)
+		next_bic = next_gmm.bic(data)
+		
+	return ncomp
