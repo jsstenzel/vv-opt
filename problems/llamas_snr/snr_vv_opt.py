@@ -29,7 +29,7 @@ from opt.ngsa import *
 
 def vv_nominal(problem, req, theta_nominal, y_nominal):
 	print("QoI requirement:", req)
-	QoI_nominal = problem.H(theta_nominal)
+	QoI_nominal = problem.H(theta_nominal, verbose=True)
 	print("Given the nominal theta:", theta_nominal)
 	print("Nominal y:", y_nominal)
 	print("Nominal QoI:", QoI_nominal)
@@ -40,6 +40,7 @@ def vv_UP_QoI(problem, req, n=10**4):
 	#uncertainty propagation of HLVA
 	uq_thetas = problem.prior_rvs(n)
 	Qs = [problem.H(theta) for theta in uq_thetas]
+	print(Qs)
 	#uncertainty_prop_plot([theta[0] for theta in uq_thetas], xlab="How to plot this...")
 	uncertainty_prop_plot(Qs, xlab="QoI: SNR", vline=[req])
 
@@ -186,7 +187,7 @@ if __name__ == '__main__':
 		vv_nominal(problem, req, theta_nominal, y_nominal)
 	
 	if args.run == "UP_QoI":
-		vv_UP_QoI(problem, req, n=10)
+		vv_UP_QoI(problem, req, n=2)
 	
 	if args.run == "SA_QoI":
 		vv_SA_QoI(problem, p=4)

@@ -2,21 +2,15 @@ import spectrograph as spec
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_throughput(rfile, gfile, bfile):
-   llamas_blue = spec.Spectrograph('LLAMAS_BLUE')
-   llamas_blue.build_model(bfile)
+def plot_throughput(llamas_red, llamas_green, llamas_blue):
    plt.plot(llamas_blue.waves, llamas_blue.throughput, c='b')
-
-   llamas_green = spec.Spectrograph('LLAMAS_GREEN')
-   llamas_green.build_model(gfile)
    plt.plot(llamas_green.waves, llamas_green.throughput, c='g')
-
-   llamas_red = spec.Spectrograph('LLAMAS_RED')
-   llamas_red.build_model(rfile)
    plt.plot(llamas_red.waves, llamas_red.throughput, c='r')
 
-   waves_all = [llamas_blue.waves,llamas_green.waves,llamas_red.waves]
-   thru_all = [llamas_blue.throughput,llamas_green.throughput,llamas_red.throughput]
+   #waves_all = llamas_red.waves#[llamas_blue.waves,llamas_green.waves,llamas_red.waves]
+   #thru_all = [llamas_blue.throughput,llamas_green.throughput,llamas_red.throughput]
+   waves_all = llamas_red.waves
+   thru_all = llamas_blue.throughput + llamas_green.throughput + llamas_red.throughput
    print(np.median(thru_all))
    
    plt.hlines(y=0.38, xmin=350, xmax=970, linewidth=2, color='orange')
@@ -24,13 +18,15 @@ def plot_throughput(rfile, gfile, bfile):
    plt.hlines(y=0.1, xmin=350, xmax=400, linewidth=2, color='black')
    plt.hlines(y=0.1, xmin=900, xmax=970, linewidth=2, color='black')
 
-   plt.plot(llamas_blue.waves, llamas_blue.throughput + llamas_green.throughput + llamas_red.throughput, linestyle=(0, (4,4)), c='k')
+   #plt.plot(waves_all, thru_all, linestyle=(0, (4,4)), c='k')
 
    plt.title('Total Throughput')
    plt.ylim(-0.05,1.05)
    plt.xlabel("Wavelength [nm]")
    plt.ylabel("Throughput ratio")
    plt.show()
+   
+   return 0
 
    print("FIBER RUN")
    plt.plot(llamas_blue.waves, llamas_blue.fiber.throughput(llamas_blue.waves), c='b')

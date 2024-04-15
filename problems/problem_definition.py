@@ -88,7 +88,7 @@ class ProblemDefinition:
 		x_dict = dict(zip(self.x_names, x))
 		return self._internal_G(d_dict, x_dict)
 	
-	def H(self, theta, x=[]):
+	def H(self, theta, x=[], verbose=False):
 		if x == []: #default x
 			x = self.x_default
 		if len(theta) != self.dim_theta:
@@ -100,7 +100,7 @@ class ProblemDefinition:
 		#make dicts for inputs w/ defs, to ensure consistency
 		theta_dict = dict(zip(self.theta_names, theta_masked))
 		x_dict = dict(zip(self.x_names, x))
-		return self._internal_H(theta_dict, x_dict)
+		return self._internal_H(theta_dict, x_dict, verbose)
 	
 	
 	_allowable_prior_types = {

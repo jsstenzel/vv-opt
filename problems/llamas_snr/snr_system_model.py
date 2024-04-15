@@ -9,6 +9,7 @@ sys.path.append('llamas-etc')
 
 import spectrograph as spec
 import observe
+import llamas_plot_throughput
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -90,7 +91,7 @@ def make_vph_tab(points,errors,color):
 
 #Wrapper function for model call
 #def sensitivity_hlva(x, d, col, config_table, spectrograph_models):
-def sensitivity_hlva(theta, x):
+def sensitivity_hlva(theta, x, verbose=False):
 	spectrograph_models = x["spect_model_tracker"]
 	spect_models = deepcopy(spectrograph_models)
 	llamas_red = spect_models[0]
@@ -235,6 +236,9 @@ def sensitivity_hlva(theta, x):
 	llamas_green.throughput = llamas_green.calc_throughput(waves)
 	llamas_blue.throughput = llamas_blue.calc_throughput(waves)
 	
+	if verbose:
+		llamas_plot_throughput.plot_throughput(llamas_red, llamas_green, llamas_blue)
+	
 	##############################
 	###Run model
 	##############################
@@ -257,8 +261,21 @@ def sensitivity_hlva(theta, x):
 	spectral_npix = 4
 	signal = np.array(spectral_npix * (blu_photons + gre_photons + red_photons))
 	noise = np.array(np.sqrt(spectral_npix) * (blu_noise + gre_noise + red_noise))
-	snr = [signal[i]/noise[i] for i in range(0, len(signal))]
+	snr = [s/n for s,n in zip(signal, noise)]
+	mean_snr = np.mean(snr)
+	
+	for i,s in enumerate(signal):
+		if s == 0:
+			print(waves[i], "signal zero")
+		if math.isnan(s):
+			print(waves[i], "signal nan")
+
+	for i,s in enumerate(noise):
+		if s == 0:
+			print(waves[i], "signal zero")
+		if math.isnan(s):
+			print(waves[i], "noise nan")
 			
-	return(np.mean(snr))
+	return(mean_snr)
 	
 
