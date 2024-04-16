@@ -159,17 +159,18 @@ def sensitivity_hlva(theta, x, verbose=False):
 	elem_vph_red = theta["vph_thru_red"]#wasach_llamas2200_red.txt
 	elem_vph_gre = theta["vph_thru_gre"]#wasach_llamas2200_green.txt
 	elem_vph_blu = theta["vph_thru_blu"]#wasach_llamas2200_blue.txt
+	fiber_frd = theta["fiber_frd"]
+	
 	elem_dichroic_sl = theta["sl_thru_dichroic"]#ECI_FusedSilica.txt
 	elem_dichroic_bg = theta["bg_thru_dichroic"]#ECI_FusedSilica.txt
-	fiber_frd = theta["fiber_frd"]
 	
 	##############################
 	###Load in the new values to the spect_models
 	##############################
 	
-	red_elem_list = [elem_collimator, elem_dichroic_sl, elem_prism, elem_lens1, elem_lens2, elem_lens3, elem_lens4, elem_lens5, elem_lens6, elem_lens7, elem_window, elem_glass_red]
-	gre_elem_list = [elem_collimator, elem_dichroic_sl, elem_dichroic_bg, elem_prism, elem_lens1, elem_lens2, elem_lens3, elem_lens4, elem_lens5, elem_lens6, elem_lens7, elem_window, elem_glass_gre]
-	blu_elem_list = [elem_collimator, elem_dichroic_sl, elem_dichroic_bg, elem_prism, elem_lens1, elem_lens2, elem_lens3, elem_lens4, elem_lens5, elem_lens6, elem_lens7, elem_window, elem_glass_blu]
+	red_elem_list = ['elem_collimator', 'elem_dichroic_sl', elem_prism, elem_lens1, elem_lens2, elem_lens3, elem_lens4, elem_lens5, elem_lens6, elem_lens7, elem_window, elem_glass_red]
+	gre_elem_list = ['elem_collimator', 'elem_dichroic_sl', 'elem_dichroic_bg', elem_prism, elem_lens1, elem_lens2, elem_lens3, elem_lens4, elem_lens5, elem_lens6, elem_lens7, elem_window, elem_glass_gre]
+	blu_elem_list = ['elem_collimator', 'elem_dichroic_sl', 'elem_dichroic_bg', elem_prism, elem_lens1, elem_lens2, elem_lens3, elem_lens4, elem_lens5, elem_lens6, elem_lens7, elem_window, elem_glass_blu]
 	
 	#update spectrograph definitions
 	for llamas_channel in [llamas_red, llamas_green, llamas_blue]:
@@ -200,18 +201,33 @@ def sensitivity_hlva(theta, x, verbose=False):
 	llamas_green.grating.blaze.setThroughputTab(elem_vph_gre.prior_pts, elem_vph_gre.evaluate())
 	llamas_blue.grating.blaze.setThroughputTab(elem_vph_blu.prior_pts, elem_vph_blu.evaluate())
 	
-	#update spect elem throughputs
+	#update collimator throughputs
+	llamas_red.elements[0].surfaces[0].setThroughputTab(elem_collimator.prior_pts, elem_collimator.evaluate())
+	llamas_green.elements[0].surfaces[0].setThroughputTab(elem_collimator.prior_pts, elem_collimator.evaluate())
+	llamas_blue.elements[0].surfaces[0].setThroughputTab(elem_collimator.prior_pts, elem_collimator.evaluate())
+			
+	#update dichroic throughputs
+	llamas_red.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.prior_pts, elem_dichroic_sl.evaluate())
+	llamas_green.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.prior_pts, [1.0-t for t in elem_dichroic_sl.evaluate()])		
+	llamas_green.elements[2].surfaces[0].setThroughputTab(elem_dichroic_bg.prior_pts, elem_dichroic_bg.evaluate())
+	llamas_blue.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.prior_pts, [1.0-t for t in elem_dichroic_sl.evaluate()])
+	llamas_blue.elements[2].surfaces[0].setThroughputTab(elem_dichroic_bg.prior_pts, [1.0-t for t in elem_dichroic_bg.evaluate()])
+			
+	#update other spect elem throughputs
 	for i,elem in enumerate(red_elem_list):
-		for surf in llamas_red.elements[i].surfaces:
-			surf.setThroughputTab(elem.prior_pts, elem.evaluate())  #fix this
+		if i>1:
+			for surf in llamas_red.elements[i].surfaces:
+				surf.setThroughputTab(elem.prior_pts, elem.evaluate())
 			
 	for i,elem in enumerate(gre_elem_list):
-		for surf in llamas_green.elements[i].surfaces:
-			surf.setThroughputTab(elem.prior_pts, elem.evaluate())  #fix this
+		if i>2:
+			for surf in llamas_green.elements[i].surfaces:
+				surf.setThroughputTab(elem.prior_pts, elem.evaluate())
 			
 	for i,elem in enumerate(blu_elem_list):
-		for surf in llamas_blue.elements[i].surfaces:
-			surf.setThroughputTab(elem.prior_pts, elem.evaluate())  #fix this
+		if i>2:
+			for surf in llamas_blue.elements[i].surfaces:
+				surf.setThroughputTab(elem.prior_pts, elem.evaluate())
 	
 	#update sensors
 	for llamas_channel in [llamas_red, llamas_green, llamas_blue]:

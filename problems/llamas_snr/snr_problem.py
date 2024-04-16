@@ -19,6 +19,8 @@ _dir = "./llamas-etc/COATINGS/"
 
 _wave_min = 350.0
 _wave_max = 975.0
+_wave_redgreen = 690.0
+_wave_greenblue = 480.0
 _bandpass = _wave_max - _wave_min
 #my physical argument here is that we should consider measurements at these distances apart to be essentially independent
 #and this is based on the approximate spectral resolution of the instrument
@@ -49,9 +51,9 @@ prior_gp_vph_gre = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
 ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_blue.txt", 2)
 prior_gp_vph_blu = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
 
-ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica.txt", 3)
+ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_sl_prior.txt", 3)
 prior_gp_sl = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
-ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica.txt", 3)
+ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_bg_prior.txt", 3)
 prior_gp_bg = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
 
 prior_frd = ["gamma_mv", [0.077,0.022**2]]
@@ -168,8 +170,8 @@ x_defs = [
 				["resolution", [], "continuous", 2200.0],
 				["wave_min", [], "continuous", _wave_min],
 				["wave_max", [], "continuous", _wave_max],
-				["wave_redgreen", [], "continuous", 690.0],
-				["wave_greenblue", [], "continuous", 480.0],
+				["wave_redgreen", [], "continuous", _wave_redgreen],
+				["wave_greenblue", [], "continuous", _wave_greenblue],
 				["f_collimator", [], "continuous", 200.0],
 				["f_camera", [], "continuous", 70.0],
 				["fratio_collimator", [], "continuous", 4.0],
