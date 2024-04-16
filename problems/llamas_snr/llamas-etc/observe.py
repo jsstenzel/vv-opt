@@ -5,6 +5,9 @@ import os
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
+import math
+import sys
+
 def observe_spectrum(instrument, texp, input_wv, input_spec, skyspec):#skyfile="eso_newmoon_radiance.txt"):
 
     #if (os.path.isfile(skyfile)):
@@ -57,6 +60,9 @@ def observe_spectrum(instrument, texp, input_wv, input_spec, skyspec):#skyfile="
     
     skynoise = np.sqrt(skyphotons)
     totnoise = np.sqrt(skyphotons + dark*np.ceil(pix_resel) + readnoise**2*np.ceil(pix_resel))
+    
+    if any([math.isnan(n) for n in totnoise]):
+        breakpoint()
 
     return objphotons, totnoise
 

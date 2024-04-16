@@ -82,9 +82,31 @@ class Spectrograph:
 
             # Now the parameters are read in, so calculate the central wavelength
             # of each pixel and store along with the total throguhput.
-            disp = (self.wv_max-self.wv_min)/float(self.sensor.naxis1)
-            self.waves  = self.wv_min+np.arange(self.sensor.naxis1)*disp
+            #disp = (self.wv_max-self.wv_min)/float(self.sensor.naxis1)
+            #self.waves  = self.wv_min+np.arange(self.sensor.naxis1)*disp
+            self.waves = self.calculate_composite_waves()
             self.throughput = self.calc_throughput(self.waves)
+            
+    #A hack I'm implementing to fix the throughput interpolations
+    #This is because I changed how spectrograph works to use the instrument bandpass instead of limb bandpass
+    #now, the throughput wavelengths will be correctly interpolated into the 2048*3 pixels
+    def calculate_composite_waves(self):
+        blue_low = 350.0
+        blue_high = 480.0
+        green_low = 480.0
+        green_high = 690.0
+        red_low = 690.0
+        red_high = 975.0
+        
+        blue_disp = (blue_high-blue_low)/float(self.sensor.naxis1)
+        green_disp = (green_high-green_low)/float(self.sensor.naxis1)
+        red_disp = (red_high-red_low)/float(self.sensor.naxis1)
+        
+        blue_waves = blue_low+np.arange(self.sensor.naxis1)*blue_disp
+        green_waves = green_low+np.arange(self.sensor.naxis1)*green_disp
+        red_waves = red_low+np.arange(self.sensor.naxis1)*red_disp
+        composite_waves = np.concatenate((blue_waves,green_waves,red_waves))
+        return composite_waves
 
     def calc_throughput(self,input_wave,nofront=False):
         composite_throughput = np.ones(len(input_wave))
@@ -100,6 +122,13 @@ class Spectrograph:
             composite_throughput *= self.fiber.throughput(input_wave)
         # Vignetting from the fiber blade
         composite_throughput *= self.blade_obscuration
+        
+        for i,t in enumerate(composite_throughput):
+            if t <= 0.0:
+                composite_throughput[i] = 0.0
+            elif t == 1.0:
+                composite_throughput[i] = 1.0
+        
         return composite_throughput
 
 ###############################
