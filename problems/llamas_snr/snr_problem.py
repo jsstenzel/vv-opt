@@ -133,6 +133,9 @@ photodiode = [(200,.12),(280,.1),(300,.125),(400,.185),(633,.33),(930,.5),(1000,
 #build model
 spectrograph_models = build_model(_dir)
 skyfile_path = os.environ['COATINGS_PATH']+"eso_newmoon_radiance.txt"
+with fits.open('./llamas-etc/'+'lbg_shapley.fits') as hdul:
+	shapley_wv   = hdul[2].data * (1+2.5) / 10.0
+	shapley_spec = hdul[0].data
 
 x_defs = [
 				#focal plane
@@ -164,8 +167,10 @@ x_defs = [
 				["S_pd_meas_err", [], "continuous", .01],  #mA/W
 				["spectral_power", [], "continuous", 1e-4], #watts / nm, Energetiq LDLS, Krishnamurthy et al. 2016
 				#snr
-				["tau", [], "continuous", 1800],
+				["tau", [], "continuous", 5*3600],
 				["skyspec", [], "object", np.genfromtxt(skyfile_path,usecols=[0,1],names=['waves_nm','skyflux'])],
+				["shapley_wv", [], "object", shapley_wv],
+				["shapley_spec", [], "object", shapley_spec],
 				#llamas
 				["resolution", [], "continuous", 2200.0],
 				["wave_min", [], "continuous", _wave_min],

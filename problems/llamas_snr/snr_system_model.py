@@ -40,49 +40,6 @@ def build_model(_dir):
 	
 	spectrograph_models = [llamas_red, llamas_blue, llamas_green, llamas_waves]
 	return spectrograph_models
-
-def mkdir(path):
-	if os.path.exists(path):
-		shutil.rmtree(path)
-	os.makedirs(path)
-	
-def soft_mkdir(path):
-	if os.path.exists(path):
-		return
-	os.makedirs(path)
-	
-def update_tab(thru_tab, bias):
-	return_thru = []
-	
-	for thru in thru_tab:
-		new_thru = thru + bias
-		if new_thru > 1:
-			new_thru = 1
-		if new_thru < 0:
-			new_thru = 0
-		return_thru.append(new_thru)
-	return_thru = np.array(return_thru)
-	return_refl = 1 - return_thru
-	return [return_thru, return_refl]
-	
-def parabola(x,a,b,c):
-	return a*x*x + b*x + c
-
-def make_vph_tab(points,errors,color):
-	thrus = [float(p)+float(e) for p,e in zip(points,errors)]
-	waves = []
-	if color == "r":
-		waves = [700.0,825.0,925.0]
-	if color == "g":
-		waves = [475.0,550.0,675.0]
-	if color == "b":
-		waves = [375.0,425.0,475.0]
-	fit = optimization.curve_fit(parabola,waves,thrus,[-.000005,.005,.5])
-	out_waves = np.arange(350,975,.5)
-	out_trans = [min(1,max(0,parabola(wave,fit[0][0],fit[0][1],fit[0][2]))) for wave in out_waves]
-	out_reflect = [1-t for t in out_trans]
-	
-	return [out_trans, out_reflect, out_waves]
 	
 def thru(gp):
 	thru_raw = gp.evaluate()
@@ -104,8 +61,7 @@ def thru(gp):
 #Wrapper function for model call
 #def sensitivity_hlva(x, d, col, config_table, spectrograph_models):
 def sensitivity_hlva(theta, x, verbose=True):
-	spectrograph_models = x["spect_model_tracker"]
-	spect_models = deepcopy(spectrograph_models)
+	spect_models = x["spect_model_tracker"]
 	llamas_red = spect_models[0]
 	llamas_blue = spect_models[1]
 	llamas_green = spect_models[2]
@@ -266,11 +222,13 @@ def sensitivity_hlva(theta, x, verbose=True):
 	
 	if verbose:
 		llamas_plot_throughput.plot_throughput(llamas_red, llamas_green, llamas_blue)
+	#breakpoint()
 	
 	##############################
 	###Run model
 	##############################
 	
+	"""
 	#This uses the Emission Sensitivity requirement & model
 	# LSB emission 3e-19 erg/cm2/s/A/fiber SNR=5 in 1 night or less
 	#simulated with an oversampled spectrum
@@ -289,6 +247,28 @@ def sensitivity_hlva(theta, x, verbose=True):
 	spectral_npix = 4
 	signal = np.array(spectral_npix * (blu_photons + gre_photons + red_photons))
 	noise = np.array(np.sqrt(spectral_npix) * (blu_noise + gre_noise + red_noise))
+	snr = [s/n for s,n in zip(signal, noise)]
+	mean_snr = np.mean(snr)
+	"""
+	
+	#This uses the Continuum Sensitivity requirement & model
+	# R = 25 Lyman Break Galaxy SNR=3 in 5 hours
+	#simulated with a Shapley spectrum
+	input_wv = x["shapley_wv"]
+	input_spec = x["shapley_spec"]
+	
+	fnu_shapley = 3.4e-30
+	Rmag = 25.0
+	c = 3.0e17   # nm/sec
+	fnu = 10**(-0.4*(Rmag+48.6))
+	input_spec *= fnu / fnu_shapley
+	input_flam = input_spec * c / (input_wv)**2 
+	
+	red_photons, red_noise = observe.observe_spectrum(llamas_red, tau, input_wv, input_flam, skyspec)
+	gre_photons, gre_noise = observe.observe_spectrum(llamas_green, tau, input_wv, input_flam, skyspec)
+	blu_photons, blu_noise = observe.observe_spectrum(llamas_blue, tau, input_wv, input_flam, skyspec)
+	signal = np.array(blu_photons + gre_photons + red_photons)
+	noise = np.array(blu_noise + gre_noise + red_noise)
 	snr = [s/n for s,n in zip(signal, noise)]
 	mean_snr = np.mean(snr)
 	

@@ -4,6 +4,7 @@ import scipy.stats
 import scipy.interpolate
 import numpy as np
 import math
+from copy import deepcopy
 
 sys.path.append('..')
 from problems.gaussian_process import *
@@ -58,7 +59,7 @@ class ProblemDefinition:
 	
 	def eta(self, theta, d, x=[], err=True):
 		if x == []: #default x
-			x = self.x_default
+			x = deepcopy(self.x_default)
 		if len(theta) != self.dim_theta:
 			raise ValueError("Input to ProblemDefinition eta: theta size "+str(self.dim_theta)+" expected, "+str(len(theta))+" provided.")
 		if len(d) != self.dim_d:
@@ -76,7 +77,7 @@ class ProblemDefinition:
 	
 	def G(self, d, x=[]):
 		if x == []: #default x
-			x = self.x_default
+			x = deepcopy(self.x_default)
 		if len(d) != self.dim_d:
 			raise ValueError("Input to ProblemDefinition G: theta size "+str(self.dim_d)+" expected, "+str(len(d))+" provided.")
 		if len(x) != self.dim_x:
@@ -90,7 +91,7 @@ class ProblemDefinition:
 	
 	def H(self, theta, x=[], verbose=False):
 		if x == []: #default x
-			x = self.x_default
+			x = deepcopy(self.x_default)
 		if len(theta) != self.dim_theta:
 			raise ValueError("Input to ProblemDefinition H: theta size "+str(self.dim_theta)+" expected, "+str(len(theta))+" provided.")
 		if len(x) != self.dim_x:
