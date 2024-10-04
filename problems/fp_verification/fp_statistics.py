@@ -3,7 +3,7 @@ import math
 
 sys.path.append('../..')
 from problems.fp_verification.fp_experiment_models import *
-from problems.functionals import *
+#from problems.functionals import *
 	
 """
 theta: [0] gain [1] read noise [2] dark current

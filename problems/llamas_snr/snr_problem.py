@@ -113,12 +113,12 @@ d_defs = [
 				["d_max", ['uniform', [1, 12000]], "continuous"], #dc
 				["d_pow", ['uniform', [0,3]], "continuous"],      #dc
 				
-				["n_qe", ['uniform', [0, 100]], "discrete"],   #qe
+				["n_qe", ['uniform', [1, 100]], "discrete"],   #qe #allow 0 later
 				["t_qe", ['uniform', [.1, 600]], "continuous"],#qe
 				
-				["d_vph_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
-				["d_dichroic_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
-				["d_frd_n_meas", ['uniform', [0,2400]], "discrete"],
+				["d_vph_n_pts", ['uniform', [1,_bandpass*10]], "discrete"], #allow 0 later
+				["d_dichroic_n_pts", ['uniform', [1,_bandpass*10]], "discrete"], #allow 0 later
+				["d_frd_n_meas", ['uniform', [1,2400]], "discrete"], #allow 0 later
 			]
 	
 _temp= -90+273.15 #K

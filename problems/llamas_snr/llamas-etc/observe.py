@@ -60,6 +60,7 @@ def observe_spectrum(instrument, texp, input_wv, input_spec, skyspec):#skyfile="
     
     skynoise = np.sqrt(skyphotons)
     totnoise = np.sqrt(skyphotons + dark*np.ceil(pix_resel) + readnoise**2*np.ceil(pix_resel))
+	#TODO i think this noise expression is too low -- missing the noise from sqrt(signal), in addition to multiplying the skynoise (currently just for one fiber) by pix_resel to match the other noise sources. See “CCD Equation” (Mortara & Fowler, 1981), or Howell's handbook
     
     if any([math.isnan(n) for n in totnoise]):
         breakpoint()

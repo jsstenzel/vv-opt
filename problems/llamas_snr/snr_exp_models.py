@@ -10,7 +10,7 @@ from astropy.io import fits
 import scipy
 
 import numpy as np
-import itertools
+import more_itertools
 import multiprocessing as mp
 import math
 from copy import deepcopy
@@ -76,7 +76,8 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	
 	y_frd = simple_measurement(theta["fiber_frd"], x["frd_meas_err"], d["d_frd_n_meas"], err)
 	
-	y = [*y_gain, *y_rn, *y_dc, *y_qe, *y_vph_red, *y_vph_gre, *y_vph_blu, *y_sl, *y_bg, y_frd]
+	y = [y_gain, y_rn, y_dc, y_qe, y_vph_red, y_vph_gre, y_vph_blu, y_sl, y_bg, y_frd]
+	y = list(more_itertools.collapse(y))
 	return y
 	
 #Adding standard error to a direct measurement of the input
@@ -93,7 +94,7 @@ def simple_measurement(theta, stddev_meas, n_meas, err=True):
 	
 def measure_thru(theta_thru, d_meas_pts, wave_min, wave_max, meas_stddev, err=True):
 	if err:
-		stddev = x["vph_meas_stddev"]
+		stddev = meas_stddev
 	else:
 		stddev = 0
 	
@@ -293,11 +294,12 @@ def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, wave_min, wave_max, _x, err
 	for lambda_i, qe_i, S_i in zip(measure_pts, qe_sample, S_pd_sample):
 		#see Krishnamurthy et al. 2017
 		I_qe = spectral_power * lambda_i
-		power_pd = I_qe / S_i
+		power_pd = I_qe / S_i #I could add error here, associated with the error of the photodiode
+		
 		energy = h*c / (lambda_i*1e-9)
 		photon_rate = power_pd / energy	
 		num_photons = photon_rate * t_qe
-		Signal = gain * qe_i * num_photons
+		Signal = (qe_i / gain) * num_photons
 		
 		if err:
 			ccd_error = math.sqrt(rn**2 + (sigma_dc*t_qe)**2)

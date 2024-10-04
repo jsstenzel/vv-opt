@@ -4,7 +4,7 @@ import numpy as np
 from scipy.stats import norm, poisson
 
 sys.path.append('../..')
-from problems.functionals import *
+#from problems.functionals import *
 
 """
 Full matrix experiment model

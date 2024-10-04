@@ -78,6 +78,7 @@ def gbi_condition_model(gmm, Yd, verbose=0):
 		Sig_pd = [Sig_k[:p_dimension, p_dimension:] for Sig_k in Sig]
 		Sig_dp = [Sig_k[p_dimension:, :p_dimension] for Sig_k in Sig]
 		Sig_dd = [Sig_k[p_dimension:, p_dimension:] for Sig_k in Sig]
+		print(Sig_dd, flush=True)
 		
 		if verbose==2:
 			print("ymean_p:\n", ymean_p)

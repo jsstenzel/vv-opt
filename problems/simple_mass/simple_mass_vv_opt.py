@@ -198,7 +198,7 @@ if __name__ == '__main__':
 
 	###Optimal Bayesian Experimental Design
 	if args.run == "gbi_test":
-		vv_gbi_test(problem, d_example, 10**2, y_nominal, ncomp=0)
+		vv_gbi_test(problem, d_example, 10**2, y_nominal, ncomp=1)
 	if args.run == "gbi_test_rand":
 		vv_gbi_test(problem, d_example, 10**2, ncomp=10)
 	
@@ -211,9 +211,9 @@ if __name__ == '__main__':
 	#this precision will carry through to the optimization problem
 	#(n_mc=10**4, n_gmm=10**4, looked like it had stddev 0.2
 	if args.run == "uncertainty_mc":
-		util_samples = uncertainty_mc(problem, d_example, "d_example", n_mc=10**3, n_gmm=10**3, n_test=10**3)
-		#util_samples = uncertainty_mc(problem, d_best, "d_best", n_mc=10**2, n_gmm=10**2, n_test=10**2)
-		#util_samples = uncertainty_mc(problem, d_worst, "d_worst", n_mc=10**2, n_gmm=10**2, n_test=10**2)
+		#util_samples = uncertainty_mc(problem, d_example, "d_example", n_mc=10**3, n_gmm=10**3, n_test=10**3)
+		#util_samples = uncertainty_mc(problem, d_best, "d_best", n_mc=10**3, n_gmm=10**3, n_test=10**3)
+		util_samples = uncertainty_mc(problem, d_worst, "d_worst", n_mc=10**3, n_gmm=10**3, n_test=10**3)
 		print(util_samples)
 	
 	if args.run == "vv_opt_parallel":
