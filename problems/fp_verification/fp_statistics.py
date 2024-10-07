@@ -3,12 +3,12 @@ import math
 
 sys.path.append('../..')
 from problems.fp_verification.fp_experiment_models import *
-from problems.functionals import *
+from problems.gaussian_process import *
 	
 """
 theta: [0] gain [1] read noise [2] dark current
 """
-def fp_hlva(theta, x):
+def fp_hlva(theta, x, verbose=False):
 	#define interest params:
 	if type(theta) is dict:
 		gain = theta["gain"]

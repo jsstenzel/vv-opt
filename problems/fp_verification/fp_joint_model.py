@@ -193,6 +193,29 @@ def fp_vv_obed_gbi(d):
 	uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")#, saveFig='OBEDresult')
 	return U
 	
+def fp_jm_test_ols(problem, N):
+	###get a validation set
+	theta_train = problem.prior_rvs(N)
+	d_train = [d for d in problem.sample_d(N)]
+	qoi_train = [problem.H(theta) for theta in theta_train]
+	y_train = [problem.eta(theta, d) for theta,d in zip(theta_train,d_train)]
+	val_input = [yi+di for yi,di in zip(y_train, d_train)]
+	val_output = np.array(qoi_train)
+	
+	###plot the covariance?
+	
+	###get the model
+	model, _ = joint_model_linear(problem, N, doPrint=True)
+	
+	###calculate what the model calculates for the validation set
+	model_output = [model(np.array([vi]))[0] for vi in val_input]
+	
+	###compare
+	validation_error = abs(model_output - val_output)
+	print(val_output)
+	print(model_output)
+	uncertainty_prop_plot(validation_error, xlab="model prediction error", c='r')
+	
 
 
 if __name__ == '__main__':  
@@ -212,7 +235,7 @@ if __name__ == '__main__':
 	
 	#U_hist = fp_vv_obed_gbi(d_historical)
 	
-	joint_model_bayesian_linear(fp, 1)
+	fp_jm_test_ols(fp, 10**4) #doesn't actually seem to get better from 10^2 to 10^4! Probably bc linear model isnt great here (:
 	
 	"""
 	#U_hist = fp_vv_obed_gbi(d_historical)
