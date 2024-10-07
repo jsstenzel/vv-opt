@@ -120,7 +120,7 @@ class ProblemDefinition:
 		
 	def sample_d(self, num_vals):
 		d = self._dist_rvs(num_vals, self.d_dists)
-		d_masked = [(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
+		d_masked = [[(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(dj)] for j,dj in enumerate(d)]
 		return d_masked
 		
 	def sample_x(self, num_vals):
@@ -319,4 +319,4 @@ if __name__ == "__main__":
 	"""print(toy.prior_pdf_unnorm([-1.5,1.5]))"""
 	print(toy.prior_rvs(5))
 	print(toy.prior_rvs(1))
-	print(toy.sample_d(1))
+	print(toy.sample_d(3))
