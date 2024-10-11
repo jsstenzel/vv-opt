@@ -12,6 +12,7 @@ from problems.fp_verification.fp_problem import *
 #analysis
 from obed.obed_gbi import *
 from uq.uncertainty_propagation import *
+from uq.plotmatrix import *
 from approx.joint_model_reduction import *
 #from uq.sensitivity_analysis import *
 from opt.ngsa import *
@@ -203,6 +204,9 @@ def fp_jm_test_ols(problem, N):
 	val_output = np.array(qoi_train)
 	
 	###plot the covariance?
+	input_cov = np.cov(val_input,rowvar=0)
+	plotmatrix(input_cov)
+	#print(np.cov(val_output))
 	
 	###get the model
 	model, _ = joint_model_linear(problem, N, doPrint=True)
@@ -212,8 +216,8 @@ def fp_jm_test_ols(problem, N):
 	
 	###compare
 	validation_error = abs(model_output - val_output)
-	print(val_output)
-	print(model_output)
+	#print(val_output)
+	#print(model_output)
 	uncertainty_prop_plot(validation_error, xlab="model prediction error", c='r')
 	
 
