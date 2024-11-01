@@ -8,9 +8,10 @@ from sklearn import datasets, linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 
 sys.path.append('../..')
-from approx.regression_models import *
+#from approx.regression_models import *
 from problems.problem_definition import *
 from uq.plotmatrix import *
+from inference.goal_based_inference import *
 
 #train a model on the data p(theta),d -> y and p(theta) -> Q
 #to develop the joint model Q = J(y,d)
@@ -65,23 +66,61 @@ def joint_model_linear(problem, N, doPrint=False, doPlot=False):
 	MSE = mean_squared_error(joint_pred, joint_output)
 	
 	return model, MSE
+	
+#train a model on the data p(theta),d -> y and p(theta) -> Q
+#to develop the joint model Q = J(y,d)
+#for use in the goal-based approach
+#with the same GMM approach I used originally
+def joint_model_gmm(problem, N, doPrint=False, doPlot=False):
+	if doPrint:
+			print("Generating the training data...", flush=True)
+			
+	#model inputs
+	theta_train = problem.prior_rvs(N)
+	d_train = [d for d in problem.sample_d(N)]
+	
+	#model outputs
+	qoi_train = [problem.H(theta) for theta in theta_train]
+	y_train = [problem.eta(theta, d) for theta,d in zip(theta_train,d_train)]
+	
+	#print(theta_train)
+	#print(d_train)
+	#print(qoi_train)
+	#print(y_train)
+	
+	joint_input = [yi+di for yi,di in zip(y_train, d_train)]
+	joint_output = np.array(qoi_train)
+	
+	#print(joint_input)
+	#print(joint_output)
+	
+	if doPrint:
+			print("Training the joint model...", flush=True)
+
+	# Create linear regression object
+	gmm = gbi_train_model(joint_output, joint_output, joint_input, ncomp=0, verbose=doPrint)
+	
+	model = gmm
+	
+	return model
 
 def polynomial_features(X, k):
-    return np.hstack([X ** i for i in range(1, k + 1)])
+	return np.hstack([X ** i for i in range(1, k + 1)])
 
 #train a model on the data p(theta),d -> y and p(theta) -> Q
 #to develop the joint model Q = J(y,d)
 #for use in the goal-based approach
 #using Bayesian Regression with Polynomial Features
 def joint_model_bayes_polynomial(problem, N, pk, doPrint=False, doPlot=False):
+	0
 	#TODO
 	
 	
-def joint_model_PCE_linregress(problem, N, order, sobol=false):
+def joint_model_PCE_linregress(problem, N, order, sobol=False):
 	if doPrint:
 			print("Generating the training data...", flush=True)
 			
-	if sobol == false:
+	if sobol == False:
 		#model inputs
 		theta_train = problem.prior_rvs(N)
 		d_train = [d for d in problem.sample_d(N)]

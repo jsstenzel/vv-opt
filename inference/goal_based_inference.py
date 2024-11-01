@@ -129,6 +129,19 @@ def gbi_gmm_variance(beta, mu_Yd, Sig_Yd):
 	moment2 = np.sum([b*(var + mu**2) for b,mu,var in zip(beta, mu_Yd, Sig_Yd)])
 	var = moment2 - moment1**2
 	return var
+	
+def gbi_var_of_conditional_pp(gmm, Yd, verbose=0):
+	beta, mu_Yd, Sig_Yd = gbi_condition_model(gmm, Yd, verbose=verbose)
+	return gbi_gmm_variance(beta, mu_Yd, Sig_Yd)
+	
+#Given a GMM and a conditional Yd, what is a sample of Yp?
+def gbi_sample_of_conditional_pp(gmm, Yd, verbose=0):
+	beta, mu_Yd, Sig_Yd = gbi_condition_model(gmm, Yd, verbose=verbose)
+	samples = np.array([p * scipy.stats.norm.rvs(loc=mu, scale=np.sqrt(sd)) for mu, sd, p in zip(mu_Yd, Sig_Yd, beta)])
+	sample = np.sum(np.array(samples))
+	
+	return sample
+	
 
 def plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound, rbound, drawplot=True, plotmean=False):
 	#p is one-dimensional, give it a plot
