@@ -120,8 +120,14 @@ class ProblemDefinition:
 		
 	def sample_d(self, num_vals):
 		d = self._dist_rvs(num_vals, self.d_dists)
+		if num_vals == 1: #stupid, inefficient
+			d = [d]
 		d_masked = [[(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(dj)] for j,dj in enumerate(d)]
-		return d_masked
+		
+		if num_vals == 1: #also somewhat stupid
+			return d_masked[0] #this is a list (dim_d)
+		else:
+			return d_masked #this is a list (num_vals) of random variables (dim_d)
 		
 	def sample_x(self, num_vals):
 		return self._dist_rvs(num_vals, self.x_dists)
