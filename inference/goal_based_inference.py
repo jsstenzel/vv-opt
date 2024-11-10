@@ -64,41 +64,43 @@ def gbi_condition_model(gmm, Yd, verbose=0):
 	#Now we have our data, and we find the posterior predictive from that
 	print("calculating posterior predictive...",flush=True) if verbose else 0
 	
-	with mp.workdps(20):
-		Yd = mp.matrix(Yd) #column
+	#with mp.workdps(20):
+	###
+	Yd = mp.matrix(Yd) #column
 
-		#get key parameters from the GMM
-		mu = [mp.matrix(mu_k) for mu_k in gmm.means_]
-		Sig = [mp.matrix(cov_k) for cov_k in gmm.covariances_]
-		alpha = mp.matrix(gmm.weights_)
-		p_dimension = len(mu[0]) - len(Yd) #scalar, this is usually 1
-		ymean_p = [mu_k[:p_dimension] for mu_k in mu] #column
-		ymean_d = [mu_k[p_dimension:] for mu_k in mu] #column (kinda)
-		Sig_pp = [Sig_k[:p_dimension, :p_dimension] for Sig_k in Sig]
-		Sig_pd = [Sig_k[:p_dimension, p_dimension:] for Sig_k in Sig]
-		Sig_dp = [Sig_k[p_dimension:, :p_dimension] for Sig_k in Sig]
-		Sig_dd = [Sig_k[p_dimension:, p_dimension:] for Sig_k in Sig]
-		
-		if verbose==2:
-			print("ymean_p:\n", ymean_p)
-			print("ymean_d:\n", ymean_d)
-			print("Sig_pp:\n", Sig_pp)
-			print("Sig_pd:\n", Sig_pd)
-			print("Sig_dp:\n", Sig_dp)
-			print("Sig_dd:\n", Sig_dd, flush=True)
+	#get key parameters from the GMM
+	mu = [mp.matrix(mu_k) for mu_k in gmm.means_]
+	Sig = [mp.matrix(cov_k) for cov_k in gmm.covariances_]
+	alpha = mp.matrix(gmm.weights_)
+	p_dimension = len(mu[0]) - len(Yd) #scalar, this is usually 1
+	ymean_p = [mu_k[:p_dimension] for mu_k in mu] #column
+	ymean_d = [mu_k[p_dimension:] for mu_k in mu] #column (kinda)
+	Sig_pp = [Sig_k[:p_dimension, :p_dimension] for Sig_k in Sig]
+	Sig_pd = [Sig_k[:p_dimension, p_dimension:] for Sig_k in Sig]
+	Sig_dp = [Sig_k[p_dimension:, :p_dimension] for Sig_k in Sig]
+	Sig_dd = [Sig_k[p_dimension:, p_dimension:] for Sig_k in Sig]
+	
+	if verbose==2:
+		print("ymean_p:\n", ymean_p)
+		print("ymean_d:\n", ymean_d)
+		print("Sig_pp:\n", Sig_pp)
+		print("Sig_pd:\n", Sig_pd)
+		print("Sig_dp:\n", Sig_dp)
+		print("Sig_dd:\n", Sig_dd, flush=True)
 
-		#parameters for the new GMM:
-		B1 = [alpha[k] * (2*math.pi)**(-ncomp/2.0) * mp.det(Sig_dd[k])**(-0.5) 
-				* mp.exp(mp.norm(-0.5 * (Yd - ymean_d[k]).T * (Sig_dd[k])**-1 * (Yd - ymean_d[k])),p=1)
-				for k in range(ncomp)] #something is busted here
-		B0 = sum(B1)
-		if B0 == 0:
-			print("Something stupid happened")
-			print(B1)
-			sys.exit()
-		beta = [B1[k] / B0 for k in range(ncomp)]
-		mu_Yd = [ymean_p[k] + Sig_pd[k] * (Sig_dd[k])**-1 * (Yd - ymean_d[k]) for k in range(ncomp)]
-		Sig_Yd = [Sig_pp[k] - Sig_pd[k] * (Sig_dd[k])**-1 * Sig_dp[k] for k in range(ncomp)]
+	#parameters for the new GMM:
+	B1 = [alpha[k] * (2*math.pi)**(-ncomp/2.0) * mp.det(Sig_dd[k])**(-0.5) 
+			* mp.exp(mp.norm(-0.5 * (Yd - ymean_d[k]).T * (Sig_dd[k])**-1 * (Yd - ymean_d[k])),p=1)
+			for k in range(ncomp)] #something is busted here
+	B0 = sum(B1)
+	if B0 == 0:
+		print("Something stupid happened")
+		print(B1)
+		sys.exit()
+	beta = [B1[k] / B0 for k in range(ncomp)]
+	mu_Yd = [ymean_p[k] + Sig_pd[k] * (Sig_dd[k])**-1 * (Yd - ymean_d[k]) for k in range(ncomp)]
+	Sig_Yd = [Sig_pp[k] - Sig_pd[k] * (Sig_dd[k])**-1 * Sig_dp[k] for k in range(ncomp)]
+	###
 	
 	#convert back to np arrays, annoyingly:
 	beta = np.array([float(mp.norm(x,p=1)) for x in beta])
@@ -143,7 +145,7 @@ def gbi_sample_of_conditional_pp(gmm, Yd, verbose=0):
 	return sample
 	
 
-def plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound, rbound, drawplot=True, plotmean=False):
+def plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound, rbound, drawplot=True, plotmean=False, compplot=True, maincolor='k'):
 	#p is one-dimensional, give it a plot
 	x = np.linspace(lbound, rbound, 10000)
 
@@ -151,9 +153,10 @@ def plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound, rbound, drawplot=True
 	pdfs = np.array([pdf[0] for pdf in pdfs])
 	density = np.sum(np.array(pdfs), axis=0)
 
-	for pdf in pdfs:
-		plt.plot(x, pdf, '--', c='gray')#c=np.random.rand(3))
-	plt.plot(x, density, '-k')
+	if compplot:
+		for pdf in pdfs:
+			plt.plot(x, pdf, '--', c='gray')#c=np.random.rand(3))
+	plt.plot(x, density, '-', c=maincolor)
 	plt.xlabel('$y_p$')
 	plt.ylabel('$f(y_p | y_d)$')
 	if plotmean:
@@ -189,3 +192,41 @@ def find_ncomp(theta_samples, qoi_samples, y_samples):
 		next_bic = next_gmm.bic(data)
 		
 	return ncomp
+
+
+#train a model on the data p(theta),d -> y and p(theta) -> Q
+#to develop the joint model Q = J(y,d)
+#for use in the goal-based approach
+#with the same GMM approach I used originally
+def joint_model_gmm(problem, N, doPrint=False, doPlot=False):
+	if doPrint:
+			print("Generating the training data...", flush=True)
+			
+	#model inputs
+	theta_train = problem.prior_rvs(N)
+	d_train = [d for d in problem.sample_d(N)]
+	
+	#model outputs
+	qoi_train = [problem.H(theta) for theta in theta_train]
+	y_train = [problem.eta(theta, d) for theta,d in zip(theta_train,d_train)]
+	
+	#print(theta_train)
+	#print(d_train)
+	#print(qoi_train)
+	#print(y_train)
+	
+	joint_input = [yi+di for yi,di in zip(y_train, d_train)]
+	joint_output = np.array(qoi_train)
+	
+	#print(joint_input)
+	#print(joint_output)
+	
+	if doPrint:
+			print("Training the joint model...", flush=True)
+
+	# Create linear regression object
+	gmm = gbi_train_model(joint_output, joint_output, joint_input, ncomp=0, verbose=doPrint)
+	
+	model = gmm
+	
+	return model

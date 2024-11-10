@@ -5,6 +5,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
+import joblib
 
 sys.path.append('../..')
 #focal plane
@@ -13,7 +14,6 @@ from problems.fp_verification.fp_problem import *
 from obed.obed_gbi import *
 from uq.uncertainty_propagation import *
 from uq.plotmatrix import *
-from approx.joint_model_reduction import *
 #from uq.sensitivity_analysis import *
 from opt.ngsa import *
 
@@ -193,9 +193,8 @@ def fp_vv_obed_gbi(d):
 	#print(U_list)
 	uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")#, saveFig='OBEDresult')
 	return U
-
-"""
-def fp_jm_self_error(problem, N):
+	
+def gbi_test(d):
 	###get a validation set
 	theta_val = problem.prior_rvs(N)
 	d_val = [d for d in problem.sample_d(N)]
@@ -203,19 +202,6 @@ def fp_jm_self_error(problem, N):
 	y_val = [problem.eta(theta, d) for theta,d in zip(theta_val,d_val)]
 	val_input = [yi+di for yi,di in zip(y_val, d_val)]
 	val_output = np.array(qoi_val)
-	
-	###get the test set from the exact same theta,d
-	qoi_test = [problem.H(theta) for theta in theta_val]
-	y_test = [problem.eta(theta, d) for theta,d in zip(theta_val,d_val)]
-	test_input = [yi+di for yi,di in zip(y_test, d_val)]
-	test_output = np.array(qoi_test)
-	
-	###compare
-	validation_error = abs(test_output - val_output)
-	#print(val_output)
-	#print(model_output)
-	uncertainty_prop_plot(validation_error, xlab="self-error in the QoI", c='r')
-"""
 
 def fp_jm_test_plot(problem, N):
 	###get a validation set
@@ -237,34 +223,6 @@ def fp_jm_test_plot(problem, N):
 	#plot it alongside q
 	names = problem.y_names + problem.d_names + ['q']
 	plotmatrix(np.append(np.array(val_input),val_output[:,None], axis=1), names=names, rescale=False)
-
-def fp_jm_test_ols(problem, N):
-	###get a validation set
-	theta_val = problem.prior_rvs(N)
-	d_val = [d for d in problem.sample_d(N)]
-	qoi_val = [problem.H(theta) for theta in theta_val]
-	y_val = [problem.eta(theta, d) for theta,d in zip(theta_val,d_val)]
-	val_input = [yi+di for yi,di in zip(y_val, d_val)]
-	val_output = np.array(qoi_val)
-	
-	###plot the covariance?
-	print(np.shape(val_input))
-	print(np.shape(val_output))
-	#plotmatrix(np.array(val_input))
-	plotmatrix(np.append(np.array(val_input),val_output[:,None], axis=1))
-	#print(np.cov(val_output))
-	
-	###get the model
-	model, _ = joint_model_linear(problem, N, doPrint=True)
-	
-	###calculate what the model calculates for the validation set
-	model_output = [model(np.array([vi]))[0] for vi in val_input]
-	
-	###compare
-	validation_error = abs(model_output - val_output)
-	#print(val_output)
-	#print(model_output)
-	uncertainty_prop_plot(validation_error, xlab="model prediction error", c='r')
 	
 #i dont think my little test here is actually well-formed
 def fp_jm_test_gmm(problem, N, N_val):
@@ -291,10 +249,10 @@ def fp_jm_test_gmm(problem, N, N_val):
 #to do that at one data point, I need to pick a y and d (implicitly picking a theta)
 #then, I need to train the ydq joint model with gbi_train_model(joint_output, joint_output, joint_input, ncomp=0, verbose=doPrint)
 #and I need to train the yq joint model with gbi_train_model(theta_train, qoi_train, y_train, ncomp=ncomp)
-def fp_jm_test_gmm_var(problem, N, N_val):
+def fp_jm_test_gmm_var(problem, N_yq, N_ydq, N_val, valplots=True, d_fixed=[]):
 	###get a training set
-	theta_train = problem.prior_rvs(N)
-	d_train = [d for d in problem.sample_d(N)]
+	theta_train = problem.prior_rvs(N_ydq)
+	d_train = [d for d in problem.sample_d(N_ydq)]
 	qoi_train = [problem.H(theta) for theta in theta_train]
 	y_train = [problem.eta(theta, d) for theta,d in zip(theta_train,d_train)]
 	train_input = [yi+di for yi,di in zip(y_train, d_train)]
@@ -302,9 +260,18 @@ def fp_jm_test_gmm_var(problem, N, N_val):
 	
 	ydq_joint_gmm = gbi_train_model(train_output, train_output, train_input, ncomp=0, verbose=True)
 	
+	###get a different training set
+	#theta_train = problem.prior_rvs(N_yq)
+	#d_train = [d for d in problem.sample_d(N_yq)]
+	#qoi_train = [problem.H(theta) for theta in theta_train]
+	#y_train = [problem.eta(theta, d) for theta,d in zip(theta_train,d_train)]
+	#train_input = [yi+di for yi,di in zip(y_train, d_train)]
+	#train_output = np.array(qoi_train)
+	
 	###get the yq joint at d
-	d_fixed = problem.sample_d(1)
-	print(d_fixed)
+	if len(d_fixed)==0:
+		d_fixed = problem.sample_d(1)
+		print(d_fixed)
 	
 	y_train_d_fixed = [problem.eta(theta, d_fixed) for theta in theta_train]
 	yq_joint_gmm = gbi_train_model(theta_train, qoi_train, y_train_d_fixed, ncomp=0, verbose=True)
@@ -315,15 +282,27 @@ def fp_jm_test_gmm_var(problem, N, N_val):
 	y_val = [problem.eta(theta, d_fixed) for theta in theta_val]
 	val_input = [yi+d_fixed for yi in y_val]
 	
-	#Here, I'm essentially using two different models to calculate the mean varH over theta and y(theta,d_fixed)
-	#or in other words, I'm using two different models to calculate U(d) where n=N_val
-	yq_model_eval = np.array([gbi_var_of_conditional_pp(yq_joint_gmm, yi) for yi in y_val])
-	ydq_model_eval = np.array([gbi_var_of_conditional_pp(ydq_joint_gmm, vi) for vi in val_input])
+	yq_model_eval = []
+	ydq_model_eval = []
+	for yi,vi in zip(y_val, val_input):
+		#Here, I'm essentially using two different models to calculate the mean varH over theta and y(theta,d_fixed)
+		#or in other words, I'm using two different models to calculate U(d) where n=N_val
+		beta_y, mu_y, Sig_y = gbi_condition_model(yq_joint_gmm, yi)
+		beta_v, mu_v, Sig_v = gbi_condition_model(ydq_joint_gmm, vi)
+		
+		if valplots:
+			plot_predictive_posterior(beta_y, mu_y, Sig_y, 0, 8, compplot=False, drawplot=False, plotmean=True)
+			plot_predictive_posterior(beta_v, mu_v, Sig_v, 0, 8, compplot=False, drawplot=True, plotmean=True, maincolor='darkgreen')
+
+		yq_model_eval.append(gbi_gmm_variance(beta_y, mu_y, Sig_y))
+		ydq_model_eval.append(gbi_gmm_variance(beta_v, mu_v, Sig_v))
 	
 	###compare
-	validation_error = abs(yq_model_eval - ydq_model_eval)
-	uncertainty_prop_plot(validation_error, xlab="model prediction error", c='r')
-	print("U diff:",abs(np.mean(yq_model_eval) - np.mean(ydq_model_eval)))
+	if valplots:
+		model_mean_diff = [abs(u1 - u2) for u1,u2 in zip(yq_model_eval, ydq_model_eval)]
+		uncertainty_prop_plot(model_mean_diff, xlab="model prediction error", c='r')
+		print("U diff:",np.mean(model_mean_diff))
+	return np.mean(yq_model_eval), np.mean(ydq_model_eval)
 	
 #make a new version of the above that calculates this at many d
 def fp_jm_test_gmm_U(problem, N_train, N_mc, N_opt):
@@ -362,6 +341,13 @@ def fp_jm_test_gmm_U(problem, N_train, N_mc, N_opt):
 	
 	print(val_err, flush=True)
 	uncertainty_prop_plot(val_err, xlab="model prediction error", c='r')
+	
+def fp_vv_obed_gbi_joint(d, gmm, n):
+	U, U_list = U_varH_gbi_joint(d, fp, gmm, n_mc=n, doPrint=True)
+	print(U)
+	print(U_list)
+	uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")#, saveFig='OBEDresult')
+	return U
 
 
 if __name__ == '__main__':  
@@ -380,9 +366,7 @@ if __name__ == '__main__':
 	#fp_vv_gbi_rand_test(d_historical, 10**4)
 	
 	#U_hist = fp_vv_obed_gbi(d_historical)
-	
-	#fp_jm_test_ols(fp, 10**4) #doesn't actually seem to get better from 10^2 to 10^4! Probably bc linear model isnt great here (:
-	
+		
 	#fp_jm_test_plot(fp, 10**3)
 	
 	#fp_jm_test_gmm(fp, 50, 10**3)
@@ -395,12 +379,43 @@ if __name__ == '__main__':
 	#this shows performance getting worse for higher N
 	#I think thats maybe not surprising, both GMMs are getting better, i guess at different rates
 	#I could freeze N for the yq one, but even then that may not be terribly informative, what if the ydq one exceeds it?
+	#fp_jm_test_gmm_var(fp, N_yq=10**3, N_ydq=4*10**3, N_val=10)
+	
+	#convergence plot
+	nlist = [10**3, 4*10**3, 10**4, 4*10**4, 10**5, 4*10**5, 10**6, 4*10**6]
+	d_fixed = fp.sample_d(1)
+	ulist_yq = []
+	ulist_ydq = []
+	for n in nlist:
+		u_yq, u_ydq = fp_jm_test_gmm_var(fp, N_yq=n, N_ydq=n, N_val=10**3, d_fixed=d_fixed, valplots=False)
+		ulist_yq.append(u_yq)
+		ulist_ydq.append(u_ydq)
+	plt.plot(nlist, ulist_yq, c='k')
+	plt.plot(nlist, ulist_ydq, c='darkgreen')
+	plt.show()
 	
 	#What is actually a good test here?
 	#Hard to test against "truth" because that involves MCMC, which is not my friend anymore
 	#Nannapaneni 2020 suggests comparing pareto fronts
+	#ah fuck worry about it later then!
 	
 	#fp_jm_test_gmm_U(fp, N_train=10**3, N_mc=10**5, N_opt=25)
+	
+	#train the GMM of our BN
+	#ydq_joint_gmm = joint_model_gmm(fp, 10**6, doPrint=True, doPlot=False)
+	#actually, i should do this totally separately, so i can manually record the properties of the gmm for posterity & repetition
+	# save
+	#joblib.dump(ydq_joint_gmm, "gmm.pkl") 
+
+	"""
+	# load
+	ydq_joint_gmm = joblib.load("gmm_10^6.pkl")
+	
+	#now use it
+	fp_vv_obed_gbi_joint(d_historical, ydq_joint_gmm, 10**2)
+	fp_vv_obed_gbi_joint(d_best, ydq_joint_gmm, 10**2)	
+	fp_vv_obed_gbi_joint(d_worst, ydq_joint_gmm, 10**2)	
+	"""
 	
 	"""
 	#U_hist = fp_vv_obed_gbi(d_historical)

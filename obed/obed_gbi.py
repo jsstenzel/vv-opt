@@ -52,3 +52,30 @@ def U_varH_gbi(d, problem, n_mc=10**5, n_gmm=10**4, ncomp=0, doPrint=False):
 	#compute an in-distribution probability
 	U = np.average(U_list)
 	return U, U_list
+	
+def U_varH_gbi_joint(d, problem, gmm_ydq, n_mc=10**5, ncomp=0, doPrint=False):   
+	#Generate a list of y's sampled from likelihood fn, p(y|theta,d)p(theta)
+	pthetas = problem.prior_rvs(n_mc)
+	Y1_list = [problem.eta(theta, d) for theta in pthetas]
+	print(Y1_list, flush=True)
+	
+	#We expact we have already trained a joint gmm model p(y,d,q) offline,
+	#and will condition it for p(q|y,d)
+	
+	U_list = []
+	for i,y in enumerate(Y1_list): #MC loop		
+		vi = np.array(y + d)
+	
+		#Now, use my posterior predictive to calculate the utility
+		H_var = gbi_var_of_conditional_pp(gmm_ydq, vi)
+		u = H_var
+		U_list.append(u)
+		if doPrint:
+			print(str(i+1)+"/"+str(n_mc),str(u)+'\t', flush=True, end='\r')
+			
+	if doPrint:
+		print('')
+		
+	#compute an in-distribution probability
+	U = np.average(U_list)
+	return U, U_list
