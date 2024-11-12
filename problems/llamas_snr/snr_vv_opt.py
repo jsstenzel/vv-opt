@@ -183,8 +183,7 @@ if __name__ == '__main__':
 						800, #d_dichroic_n_pts
 						10 #d_frd_n_meas
 					]
-	problem = update_llamas_problem(llamas_snr, d_historical)
-	print("d_historical:",d_historical)
+	problem = llamas_snr
 	
 	req = 3.0
 	theta_nominal = problem.theta_nominal()

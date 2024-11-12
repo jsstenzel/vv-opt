@@ -10,6 +10,7 @@ import csv
 sys.path.append('../..')
 from problems.problem_definition import *
 from problems.gaussian_process import *
+from approx.regression_models import *
 #llamas
 from problems.llamas_snr.snr_exp_models import *
 from problems.llamas_snr.snr_system_model import *
@@ -28,6 +29,7 @@ _bandpass = _wave_max - _wave_min
 #so for lambda=350, dlambda=0.159
 #and for lambda=975, dlambda=0.443
 _lengthscale = 1.0
+thru_param_var = .01**2
 
 prior_gain_SN1 = ["gamma_mv",  [0.999,0.2**2]] #mean, variance
 prior_rn_SN1 = ["gamma_mv", [2.32,0.25**2]]
@@ -37,24 +39,70 @@ prior_gain_SN3 = ["gamma_mv",  [1.008,0.2**2]] #mean, variance
 prior_rn_SN3 = ["gamma_mv", [2.35,0.25**2]]
 prior_dc_SN3 = ["gamma_mv", [0.00267,.001**2]]
 
-ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_dd.txt", 3)
-prior_qe_red = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
-ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_green.txt", 3)
-prior_qe_gre = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
-ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_blue.txt", 3)
-prior_qe_blu = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
-	
-ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_red.txt", 2)
-prior_gp_vph_red = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
-ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_green.txt", 2)
-prior_gp_vph_gre = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
-ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_blue.txt", 2)
-prior_gp_vph_blu = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
+#ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_dd.txt", 3)
+#prior_qe_red = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
+#ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_green.txt", 3)
+#prior_qe_gre = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
+#ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_blue.txt", 3)
+#prior_qe_blu = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
 
-ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_sl_prior.txt", 3)
-prior_gp_sl = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
-ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_bg_prior.txt", 3)
-prior_gp_bg = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
+coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_dd.txt", 2, doPlot=False, doErr=True)
+prior_qe_red_t0 = ["gaussian", [inter,thru_param_var]] 
+prior_qe_red_t1 = ["gaussian", [coeffs[0],thru_param_var]]
+prior_qe_red_t2 = ["gaussian", [coeffs[1],thru_param_var]]
+prior_qe_red_t3 = ["gaussian", [coeffs[2],thru_param_var]]
+prior_qe_red_t4 = ["gaussian", [coeffs[3],thru_param_var]]
+coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_green.txt", 2, doPlot=False, doErr=True)
+prior_qe_gre_t0 = ["gaussian", [inter,thru_param_var]]
+prior_qe_gre_t1 = ["gaussian", [coeffs[0],thru_param_var]]
+prior_qe_gre_t2 = ["gaussian", [coeffs[1],thru_param_var]]
+prior_qe_gre_t3 = ["gaussian", [coeffs[2],thru_param_var]]
+prior_qe_gre_t4 = ["gaussian", [coeffs[3],thru_param_var]]
+coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_blue.txt", 2, doPlot=False, doErr=True)
+prior_qe_blu_t0 = ["gaussian", [inter,thru_param_var]]
+prior_qe_blu_t1 = ["gaussian", [coeffs[0],thru_param_var]]
+prior_qe_blu_t2 = ["gaussian", [coeffs[1],thru_param_var]]
+prior_qe_blu_t3 = ["gaussian", [coeffs[2],thru_param_var]]
+prior_qe_blu_t4 = ["gaussian", [coeffs[3],thru_param_var]]
+
+#ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_red.txt", 2)
+#prior_gp_vph_red = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
+#ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_green.txt", 2)
+#prior_gp_vph_gre = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
+#ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_blue.txt", 2)
+#prior_gp_vph_blu = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
+
+a, b, c, d = p3_fit_throughput_file(_dir+"wasach_llamas2200_red.txt", doPlot=False, doErr=True)
+prior_vph_red_t0 = ["gaussian", [a,thru_param_var]] 
+prior_vph_red_t1 = ["gaussian", [b,thru_param_var]]
+prior_vph_red_t2 = ["gaussian", [c,thru_param_var]]
+prior_vph_red_t3 = ["gaussian", [d,thru_param_var]]
+a, b, c, d = p3_fit_throughput_file(_dir+"wasach_llamas2200_green.txt", doPlot=False, doErr=True)
+prior_vph_gre_t0 = ["gaussian", [a,thru_param_var]]
+prior_vph_gre_t1 = ["gaussian", [b,thru_param_var]]
+prior_vph_gre_t2 = ["gaussian", [c,thru_param_var]]
+prior_vph_gre_t3 = ["gaussian", [d,thru_param_var]]
+a, b, c, d = p3_fit_throughput_file(_dir+"wasach_llamas2200_blue.txt", doPlot=False, doErr=True)
+prior_vph_blu_t0 = ["gaussian", [a,thru_param_var]]
+prior_vph_blu_t1 = ["gaussian", [b,thru_param_var]]
+prior_vph_blu_t2 = ["gaussian", [c,thru_param_var]]
+prior_vph_blu_t3 = ["gaussian", [d,thru_param_var]]
+
+#ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_sl_prior.txt", 3)
+#prior_gp_sl = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
+#ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_bg_prior.txt", 3)
+#prior_gp_bg = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
+
+lval, steppt, rval, power = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_sl_prior.txt", doPlot=False, doErr=True)
+prior_sl_t0 = ["gaussian", [lval,thru_param_var]]
+prior_sl_t1 = ["gaussian", [steppt,thru_param_var]]
+prior_sl_t2 = ["gaussian", [rval,thru_param_var]]
+prior_sl_t3 = ["gaussian", [power,thru_param_var]]
+lval, steppt, rval, power = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_bg_prior.txt", doPlot=False, doErr=True)
+prior_bg_t0 = ["gaussian", [lval,thru_param_var]]
+prior_bg_t1 = ["gaussian", [steppt,thru_param_var]]
+prior_bg_t2 = ["gaussian", [rval,thru_param_var]]
+prior_bg_t3 = ["gaussian", [power,thru_param_var]]
 
 prior_frd = ["gamma_mv", [0.077,0.022**2]]
 
@@ -70,15 +118,49 @@ theta_defs = [                             #mean, variance
 					["dc_red", prior_dc_SN1, "continuous"],
 					["dc_gre", prior_dc_SN3, "continuous"],
 					["dc_blu", prior_dc_SN3, "continuous"],
-					["qe_red", prior_qe_red, "functional"],
-					["qe_gre", prior_qe_gre, "functional"],
-					["qe_blu", prior_qe_blu, "functional"],
-					
-					["vph_thru_red", prior_gp_vph_red, "functional"],
-					["vph_thru_gre", prior_gp_vph_gre, "functional"],
-					["vph_thru_blu", prior_gp_vph_blu, "functional"],
-					["sl_thru_dichroic", prior_gp_sl, "functional"],
-					["bg_thru_dichroic", prior_gp_bg, "functional"],
+					#["qe_red", prior_qe_red, "functional"],
+					["qe_red_t0", prior_qe_red_t0, "continuous"],
+					["qe_red_t1", prior_qe_red_t1, "continuous"],
+					["qe_red_t2", prior_qe_red_t2, "continuous"],
+					["qe_red_t3", prior_qe_red_t3, "continuous"],
+					["qe_red_t4", prior_qe_red_t4, "continuous"],
+					#["qe_gre", prior_qe_gre, "functional"],
+					["qe_gre_t0", prior_qe_gre_t0, "continuous"],
+					["qe_gre_t1", prior_qe_gre_t1, "continuous"],
+					["qe_gre_t2", prior_qe_gre_t2, "continuous"],
+					["qe_gre_t3", prior_qe_gre_t3, "continuous"],
+					["qe_gre_t4", prior_qe_gre_t4, "continuous"],
+					#["qe_blu", prior_qe_blu, "functional"],
+					["qe_blu_t0", prior_qe_blu_t0, "continuous"],
+					["qe_blu_t1", prior_qe_blu_t1, "continuous"],
+					["qe_blu_t2", prior_qe_blu_t2, "continuous"],
+					["qe_blu_t3", prior_qe_blu_t3, "continuous"],
+					["qe_blu_t4", prior_qe_blu_t4, "continuous"],
+					#["vph_thru_red", prior_gp_vph_red, "functional"],
+					["vph_red_t0", prior_vph_red_t0, "continuous"],
+					["vph_red_t1", prior_vph_red_t1, "continuous"],
+					["vph_red_t2", prior_vph_red_t2, "continuous"],
+					["vph_red_t3", prior_vph_red_t3, "continuous"],
+					#["vph_thru_gre", prior_gp_vph_gre, "functional"],
+					["vph_gre_t0", prior_vph_gre_t0, "continuous"],
+					["vph_gre_t1", prior_vph_gre_t1, "continuous"],
+					["vph_gre_t2", prior_vph_gre_t2, "continuous"],
+					["vph_gre_t3", prior_vph_gre_t3, "continuous"],
+					#["vph_thru_blu", prior_gp_vph_blu, "functional"],
+					["vph_blu_t0", prior_vph_blu_t0, "continuous"],
+					["vph_blu_t1", prior_vph_blu_t1, "continuous"],
+					["vph_blu_t2", prior_vph_blu_t2, "continuous"],
+					["vph_blu_t3", prior_vph_blu_t3, "continuous"],
+					#["sl_thru_dichroic", prior_gp_sl, "functional"],
+					["sl_t0", prior_sl_t0, "continuous"],
+					["sl_t1", prior_sl_t1, "continuous"],
+					["sl_t2", prior_sl_t2, "continuous"],
+					["sl_t3", prior_sl_t3, "continuous"],
+					#["bg_thru_dichroic", prior_gp_bg, "functional"],
+					["bg_t0", prior_bg_t0, "continuous"],
+					["bg_t1", prior_bg_t1, "continuous"],
+					["bg_t2", prior_bg_t2, "continuous"],
+					["bg_t3", prior_bg_t3, "continuous"],
 					["fiber_frd", prior_frd, "continuous"]
 				]
 #need to update with range somehow? These can't be negative
@@ -93,15 +175,49 @@ y_defs = [
 				"y_dc_red", 
 				"y_dc_gre", 
 				"y_dc_blu", 
-				"y_qe_red_pts", #expands
-				"y_qe_gre_pts", #expands
-				"y_qe_blu_pts", #expands
-				
-				"y_vph_red_pts", #expands
-				"y_vph_gre_pts", #expands
-				"y_vph_blu_pts", #expands
-				"y_sl_pts", #expands
-				"y_bg_pts", #expands
+				#"y_qe_red_pts",
+				"y_qe_red_t0", 
+				"y_qe_red_t1", 
+				"y_qe_red_t2", 
+				"y_qe_red_t3", 
+				"y_qe_red_t4", 
+				#"y_qe_gre_pts",
+				"y_qe_gre_t0", 
+				"y_qe_gre_t1", 
+				"y_qe_gre_t2", 
+				"y_qe_gre_t3", 
+				"y_qe_gre_t4", 
+				#"y_qe_blu_pts",
+				"y_qe_blu_t0", 
+				"y_qe_blu_t1", 
+				"y_qe_blu_t2", 
+				"y_qe_blu_t3", 
+				"y_qe_blu_t4", 
+				#"y_vph_red_pts",
+				"y_vph_red_t0", 
+				"y_vph_red_t1", 
+				"y_vph_red_t2", 
+				"y_vph_red_t3", 
+				#"y_vph_gre_pts",
+				"y_vph_gre_t0", 
+				"y_vph_gre_t1", 
+				"y_vph_gre_t2", 
+				"y_vph_gre_t3", 
+				#"y_vph_blu_pts",
+				"y_vph_blu_t0", 
+				"y_vph_blu_t1", 
+				"y_vph_blu_t2", 
+				"y_vph_blu_t3", 
+				#"y_sl_pts",
+				"y_sl_t0", 
+				"y_sl_t1", 
+				"y_sl_t2", 
+				"y_sl_t3", 
+				#"y_bg_pts",
+				"y_bg_t0", 
+				"y_bg_t1", 
+				"y_bg_t2", 
+				"y_bg_t3", 
 				"y_frd"
 			]
 
@@ -221,36 +337,3 @@ eta = snr_likelihood_fn
 H = sensitivity_hlva
 Gamma = cost_model
 llamas_snr = ProblemDefinition(eta, H, Gamma, theta_defs, y_defs, d_defs, x_defs)
-
-
-def update_llamas_problem(llamas_snr, d):
-	d_masked = [(math.floor(dd) if llamas_snr.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
-	d_dict = dict(zip(llamas_snr.d_names, d_masked))
-	num_vph = d_dict["d_vph_n_pts"]
-	num_dichroic = d_dict["d_dichroic_n_pts"]
-	
-	y_vph = ["y_vph_red_pts", "y_vph_gre_pts", "y_vph_blu_pts"]
-	y_dichroic = ["y_sl_pts", "y_bg_pts"]
-	
-	mod_y_defs = []
-	for yname in llamas_snr.y_names:
-		if yname in y_vph:
-			new_y = [yname+"_"+str(i) for i in range(num_vph)]
-			mod_y_defs += new_y
-		elif yname in y_dichroic: 
-			new_y = [yname+"_"+str(i) for i in range(num_vph)]
-			mod_y_defs += new_y
-		else:
-			mod_y_defs.append(yname)
-	
-	llamas_snr_d = ProblemDefinition(
-		eta, 
-		H, 
-		Gamma, 
-		theta_defs, 
-		mod_y_defs, #!
-		d_defs, 
-		x_defs
-	)
-		
-	return llamas_snr_d
