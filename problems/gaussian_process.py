@@ -38,9 +38,10 @@ def sample_gp_prior(variance, ls, prior_pts, mean_fn=_zero_mean):
 	return sample
 	
 def define_functional(prior_pts, eval_pts, order=3):
+	f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(eval_pts), kind=order)
+	
 	def mean_fn_from_pts(t):
 		try:
-			f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(eval_pts), kind=order)
 			val = f(t)
 		except ValueError:
 			return 0.0
