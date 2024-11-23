@@ -42,13 +42,17 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	#quantum efficiency:
 	n_qe = d["n_qe"]
 	t_qe = d["t_qe"]
-	
-	red_min = x["wave_max"]
-	red_max = x["wave_redgreen"]
-	gre_min = x["wave_redgreen"]
-	gre_max = x["wave_greenblue"]
-	blu_min = x["wave_greenblue"]
-	blu_max = x["wave_min"]
+
+	#_wave_max = 975.0 red end
+	#_wave_redgreen = 690.0
+	#_wave_greenblue = 480.0
+	#_wave_min = 350.0 blue end
+	red_max = x["wave_max"]
+	red_min = x["wave_redgreen"]
+	gre_max = x["wave_redgreen"]
+	gre_min = x["wave_greenblue"]
+	blu_max = x["wave_greenblue"]
+	blu_min = x["wave_min"]
 	
 	y_gain_red = gain_exp(theta["gain_red"], theta["rn_red"], theta["dc_red"], t_gain, I_gain, x, err)
 	y_gain_gre = gain_exp(theta["gain_gre"], theta["rn_gre"], theta["dc_gre"], t_gain, I_gain, x, err)
@@ -75,9 +79,9 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	vph_red_params = [theta["vph_red_t0"], theta["vph_red_t1"], theta["vph_red_t2"], theta["vph_red_t3"]]
 	vph_gre_params = [theta["vph_gre_t0"], theta["vph_gre_t1"], theta["vph_gre_t2"], theta["vph_gre_t3"]]
 	vph_blu_params = [theta["vph_blu_t0"], theta["vph_blu_t1"], theta["vph_blu_t2"], theta["vph_blu_t3"]]
-	y_vph_red_t = measure_thru_p3(vph_red_params, d["d_vph_n_pts"], red_min, red_max, x["vph_meas_stddev"], err)
-	y_vph_gre_t = measure_thru_p3(vph_gre_params, d["d_vph_n_pts"], gre_min, gre_max, x["vph_meas_stddev"], err)
-	y_vph_blu_t = measure_thru_p3(vph_blu_params, d["d_vph_n_pts"], blu_min, blu_max, x["vph_meas_stddev"], err)
+	y_vph_red_t = measure_thru_poly(vph_red_params, d["d_vph_n_pts"], red_min, red_max, x["vph_meas_stddev"], err)
+	y_vph_gre_t = measure_thru_poly(vph_gre_params, d["d_vph_n_pts"], gre_min, gre_max, x["vph_meas_stddev"], err)
+	y_vph_blu_t = measure_thru_poly(vph_blu_params, d["d_vph_n_pts"], blu_min, blu_max, x["vph_meas_stddev"], err)
 	
 	sl_params = [theta["sl_t0"], theta["sl_t1"], theta["sl_t2"], theta["sl_t3"]]
 	bg_params = [theta["bg_t0"], theta["bg_t1"], theta["bg_t2"], theta["bg_t3"]]
@@ -108,7 +112,7 @@ def measure_thru_sigmoid(params, d_meas_pts, wave_min, wave_max, meas_stddev, er
 		stddev = 0
 		
 	#convert the theta params to a GP
-	lambda_pts = np.linspace(wave_min, wave_max, num=(wave_max-wave_min)/0.1)
+	lambda_pts = np.linspace(wave_min, wave_max, num=math.ceil((wave_max-wave_min)/0.1))
 	thru_pts = throughput_from_sigmoidfit_coeffs(params[0], params[1], params[2], params[3], lambda_pts)
 	gp_throughput = define_functional(lambda_pts, thru_pts, order=1)
 	
@@ -131,15 +135,15 @@ def measure_thru_sigmoid(params, d_meas_pts, wave_min, wave_max, meas_stddev, er
 	return [lval, step_pt, rval, power]
 	
 	
-def measure_thru_p3(params, d_meas_pts, wave_min, wave_max, meas_stddev, err=True):
+def measure_thru_poly(params, d_meas_pts, wave_min, wave_max, meas_stddev, err=True):
 	if err:
 		stddev = x["vph_meas_stddev"]
 	else:
 		stddev = 0
 		
 	#convert the theta params to a GP
-	lambda_pts = np.linspace(wave_min, wave_max, num=(wave_max-wave_min)/0.1)
-	thru_pts = throughput_from_p3fit_coeffs(params[0], params[1], params[2], params[3], lambda_pts)
+	lambda_pts = np.linspace(wave_min, wave_max, num=math.ceil((wave_max-wave_min)/0.1))
+	thru_pts = throughput_from_polyfit_coeffs(params, lambda_pts)
 	gp_throughput = define_functional(lambda_pts, thru_pts, order=1)
 	
 	#choose the measurement points
@@ -156,9 +160,9 @@ def measure_thru_p3(params, d_meas_pts, wave_min, wave_max, meas_stddev, err=Tru
 			y_thru[i] = 1
 			
 	#convert measurements back to y params
-	a, b, c, d = p3_fit_throughput(measurement_pts, y_thru, doPlot=False, doErr=False)
+	popt = poly_fit_throughput(measurement_pts, y_thru, 3, doPlot=False, doErr=False)
 		
-	return [a, b, c, d]
+	return popt
 	
 	
 """
@@ -351,7 +355,7 @@ def quantum_efficiency_exp(params, gain, rn, n_qe, t_qe, wave_min, wave_max, _x,
 		
 	
 	#convert measurements back to y params
-	coeffs, inter = linreg_fourier_throughput(measure_pts, Signal_measure, doPlot=False, doErr=False)
+	coeffs, inter, _, _ = linreg_fourier_throughput(measure_pts, Signal_measure, 2, doPlot=False, doErr=False)
 		
 	return [inter, coeffs[0], coeffs[1], coeffs[2], coeffs[3]]
 	

@@ -72,21 +72,21 @@ prior_qe_blu_t4 = ["gaussian", [coeffs[3],thru_param_var]]
 #ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_blue.txt", 2)
 #prior_gp_vph_blu = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
 
-a, b, c, d = p3_fit_throughput_file(_dir+"wasach_llamas2200_red.txt", doPlot=False, doErr=True)
-prior_vph_red_t0 = ["gaussian", [a,thru_param_var]] 
-prior_vph_red_t1 = ["gaussian", [b,thru_param_var]]
-prior_vph_red_t2 = ["gaussian", [c,thru_param_var]]
-prior_vph_red_t3 = ["gaussian", [d,thru_param_var]]
-a, b, c, d = p3_fit_throughput_file(_dir+"wasach_llamas2200_green.txt", doPlot=False, doErr=True)
-prior_vph_gre_t0 = ["gaussian", [a,thru_param_var]]
-prior_vph_gre_t1 = ["gaussian", [b,thru_param_var]]
-prior_vph_gre_t2 = ["gaussian", [c,thru_param_var]]
-prior_vph_gre_t3 = ["gaussian", [d,thru_param_var]]
-a, b, c, d = p3_fit_throughput_file(_dir+"wasach_llamas2200_blue.txt", doPlot=False, doErr=True)
-prior_vph_blu_t0 = ["gaussian", [a,thru_param_var]]
-prior_vph_blu_t1 = ["gaussian", [b,thru_param_var]]
-prior_vph_blu_t2 = ["gaussian", [c,thru_param_var]]
-prior_vph_blu_t3 = ["gaussian", [d,thru_param_var]]
+plist = poly_fit_throughput_file(_dir+"wasach_llamas2200_red.txt", 3, doPlot=False, doErr=True)
+prior_vph_red_t0 = ["gaussian", [plist[0],thru_param_var]] 
+prior_vph_red_t1 = ["gaussian", [plist[1],thru_param_var]]
+prior_vph_red_t2 = ["gaussian", [plist[2],thru_param_var]]
+prior_vph_red_t3 = ["gaussian", [plist[3],thru_param_var]]
+plist = poly_fit_throughput_file(_dir+"wasach_llamas2200_green.txt", 3, doPlot=False, doErr=True)
+prior_vph_gre_t0 = ["gaussian", [plist[0],thru_param_var]]
+prior_vph_gre_t1 = ["gaussian", [plist[1],thru_param_var]]
+prior_vph_gre_t2 = ["gaussian", [plist[2],thru_param_var]]
+prior_vph_gre_t3 = ["gaussian", [plist[3],thru_param_var]]
+plist = poly_fit_throughput_file(_dir+"wasach_llamas2200_blue.txt", 3, doPlot=False, doErr=True)
+prior_vph_blu_t0 = ["gaussian", [plist[0],thru_param_var]]
+prior_vph_blu_t1 = ["gaussian", [plist[1],thru_param_var]]
+prior_vph_blu_t2 = ["gaussian", [plist[2],thru_param_var]]
+prior_vph_blu_t3 = ["gaussian", [plist[3],thru_param_var]]
 
 #ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_sl_prior.txt", 3)
 #prior_gp_sl = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
@@ -337,3 +337,4 @@ eta = snr_likelihood_fn
 H = sensitivity_hlva
 Gamma = cost_model
 llamas_snr = ProblemDefinition(eta, H, Gamma, theta_defs, y_defs, d_defs, x_defs)
+print(llamas_snr)

@@ -108,8 +108,8 @@ def linreg_fourier_throughput(lambda_pts, thru_pts, order, doPlot=False, doErr=F
 	
 def throughput_from_linfourier_coeffs(coeffs, intercept, order, div, lambda_pts):
 	h_lin_ff = sklearn.linear_model.LinearRegression()
-	h_lin_ff.coef_ = coeffs
-	h_lin_ff.intercept_ = intercept
+	h_lin_ff.coef_ = np.array(coeffs)
+	h_lin_ff.intercept_ = float(intercept)
 	
 	X=np.array([[pt] for pt in lambda_pts])
 	thru_pts = h_lin_ff.predict(fourier_features(X, order, div))
@@ -185,10 +185,13 @@ def throughput_from_sigmoidfit_coeffs(lval, step_pt, rval, power, lambda_pts):
 	
 ####################################################
 
-def p3_fn(x, a, b, c, d):
-	return a*x**3 + b*x**2 + c*x + d
+def poly_fn(x, params):
+	total = 0
+	for i,p in enumerate(params):
+		total += p * x**i
+	return total
 	
-def p3_fit_throughput_file(thru_file, doPlot=False, doErr=False):
+def poly_fit_throughput_file(thru_file, power, doPlot=False, doErr=False):
 	lambda_pts = []
 	thru_pts = []
 	with open(thru_file, "r") as f:
@@ -200,9 +203,9 @@ def p3_fit_throughput_file(thru_file, doPlot=False, doErr=False):
 				lambda_pts.append(float(words[0]))
 				thru_pts.append(float(words[1]))
 	
-	return p3_fit_throughput(lambda_pts, thru_pts, doPlot=doPlot, doErr=doErr)
+	return poly_fit_throughput(lambda_pts, thru_pts, power, doPlot=doPlot, doErr=doErr)
 	
-def p3_fit_throughput(lambda_pts, thru_pts, doPlot=False, doErr=False):
+def poly_fit_throughput(lambda_pts, thru_pts, power, doPlot=False, doErr=False):
 	domain_min = min(lambda_pts)
 	domain_max = max(lambda_pts)
 	range_min = min(thru_pts)
@@ -211,16 +214,11 @@ def p3_fit_throughput(lambda_pts, thru_pts, doPlot=False, doErr=False):
 	X=np.array(lambda_pts)
 	Y=np.array(thru_pts)
 	
-	popt,pcov=curve_fit(p3_fn,X,Y)
-	
-	a = popt[0]
-	b = popt[1]
-	c = popt[2]
-	d = popt[3]
+	popt=np.polyfit(X, Y, power)
 	
 	if doPlot:
 		plot_pts = np.array(np.linspace(domain_min, domain_max, len(lambda_pts)*10))
-		Yfit = [p3_fn(x, a, b, c, d) for x in plot_pts]
+		Yfit = [poly_fn(x, popt) for x in plot_pts]
 	
 		plt.plot(X, Y, c='k')
 		plt.plot(plot_pts, Yfit, c='orange')
@@ -228,16 +226,16 @@ def p3_fit_throughput(lambda_pts, thru_pts, doPlot=False, doErr=False):
 		plt.show()
 		
 	if doErr:
-		Yfit = [p3_fn(x, a, b, c, d) for x in X]
+		Yfit = [poly_fn(x, popt) for x in X]
 		Y_diffs = (Yfit - Y)**2
 		MSE = np.mean(Y_diffs)
-		print("p3fit MSE:", MSE)
+		print("polyfit MSE:", MSE)
 		
-	return a, b, c, d
+	return popt
 	
-def throughput_from_p3fit_coeffs(a, b, c, d, lambda_pts):
+def throughput_from_polyfit_coeffs(popt, lambda_pts):
 	X=np.array(lambda_pts)
-	thru_pts = [p3_fn(x, a, b, c, d, power) for x in X]
+	thru_pts = [poly_fn(x, popt) for x in X]
 	
 	#plt.plot(X, thru_pts, c='blue')
 	#plt.show()

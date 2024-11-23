@@ -113,12 +113,12 @@ def sensitivity_hlva(theta, x, verbose=True):
 	tau = x["tau"]
 	skyspec = x["skyspec"]
 	
-	red_min = x["wave_max"]
-	red_max = x["wave_redgreen"]
-	gre_min = x["wave_redgreen"]
-	gre_max = x["wave_greenblue"]
-	blu_min = x["wave_greenblue"]
-	blu_max = x["wave_min"]
+	red_max = x["wave_max"]
+	red_min = x["wave_redgreen"]
+	gre_max = x["wave_redgreen"]
+	gre_min = x["wave_greenblue"]
+	blu_max = x["wave_greenblue"]
+	blu_min = x["wave_min"]
 
 	##############################
 	###Break down theta
@@ -132,7 +132,7 @@ def sensitivity_hlva(theta, x, verbose=True):
 	dc_blu = theta["dc_blu"]
 
 
-	lambda_pts = np.linspace(wave_min, wave_max, num=(wave_max-wave_min)/0.1)
+	lambda_pts = np.linspace(wave_min, wave_max, num=math.ceil((wave_max-wave_min)/0.1))
 	
 	#elem_qe_red = theta["qe_red"]#CCD42-40_dd.txt
 	coeffs = [theta["qe_red_t1"], theta["qe_red_t2"], theta["qe_red_t3"], theta["qe_red_t4"]]
@@ -147,13 +147,16 @@ def sensitivity_hlva(theta, x, verbose=True):
 	elem_qe_blu = throughput_from_linfourier_coeffs(coeffs, theta["qe_blu_t0"], 2, blu_max-blu_min, lambda_pts)
 	
 	#elem_vph_red = theta["vph_thru_red"]#wasach_llamas2200_red.txt
-	elem_vph_red = throughput_from_p3fit_coeffs(theta["vph_red_t0"], theta["vph_red_t1"], theta["vph_red_t2"], theta["vph_red_t3"], lambda_pts)
+	popt = [theta["vph_red_t0"], theta["vph_red_t1"], theta["vph_red_t2"], theta["vph_red_t3"]]
+	elem_vph_red = throughput_from_polyfit_coeffs(popt, lambda_pts)
 	
 	#elem_vph_gre = theta["vph_thru_gre"]#wasach_llamas2200_green.txt
-	elem_vph_gre = throughput_from_p3fit_coeffs(theta["vph_gre_t0"], theta["vph_gre_t1"], theta["vph_gre_t2"], theta["vph_gre_t3"], lambda_pts)
+	popt = [theta["vph_gre_t0"], theta["vph_gre_t1"], theta["vph_gre_t2"], theta["vph_gre_t3"]]
+	elem_vph_gre = throughput_from_polyfit_coeffs(popt, lambda_pts)
 	
 	#elem_vph_blu = theta["vph_thru_blu"]#wasach_llamas2200_blue.txt
-	elem_vph_blu = throughput_from_p3fit_coeffs(theta["vph_blu_t0"], theta["vph_blu_t1"], theta["vph_blu_t2"], theta["vph_blu_t3"], lambda_pts)
+	popt = [theta["vph_blu_t0"], theta["vph_blu_t1"], theta["vph_blu_t2"], theta["vph_blu_t3"]]
+	elem_vph_blu = throughput_from_polyfit_coeffs(popt, lambda_pts)
 	
 	#elem_dichroic_sl = theta["sl_thru_dichroic"]#ECI_FusedSilica.txt
 	elem_dichroic_sl = throughput_from_sigmoidfit_coeffs(theta["sl_t0"], theta["sl_t1"], theta["sl_t2"], theta["sl_t3"], lambda_pts)
@@ -208,7 +211,7 @@ def sensitivity_hlva(theta, x, verbose=True):
 	#update dichroic throughputs
 	llamas_red.elements[1].surfaces[0].setThroughputTab(lambda_pts, elem_dichroic_sl)
 	llamas_green.elements[1].surfaces[0].setThroughputTab(lambda_pts, [1.0-t for t in elem_dichroic_sl])		
-	llamas_green.elements[2].surfaces[0].setThroughputTab(lambda_pts, elem_dichroic_bg.evaluate())
+	llamas_green.elements[2].surfaces[0].setThroughputTab(lambda_pts, elem_dichroic_bg)
 	llamas_blue.elements[1].surfaces[0].setThroughputTab(lambda_pts, [1.0-t for t in elem_dichroic_sl])
 	llamas_blue.elements[2].surfaces[0].setThroughputTab(lambda_pts, [1.0-t for t in elem_dichroic_bg])
 			
@@ -216,17 +219,17 @@ def sensitivity_hlva(theta, x, verbose=True):
 	for i,elem in enumerate(red_elem_list):
 		if i>1:
 			for surf in llamas_red.elements[i].surfaces:
-				surf.setThroughputTab(lambda_pts, elem)
+				surf.setThroughputTab(elem.prior_pts, thru(elem))
 			
 	for i,elem in enumerate(gre_elem_list):
 		if i>2:
 			for surf in llamas_green.elements[i].surfaces:
-				surf.setThroughputTab(lambda_pts, elem)
+				surf.setThroughputTab(elem.prior_pts, thru(elem))
 			
 	for i,elem in enumerate(blu_elem_list):
 		if i>2:
 			for surf in llamas_blue.elements[i].surfaces:
-				surf.setThroughputTab(lambda_pts, elem)
+				surf.setThroughputTab(elem.prior_pts, thru(elem))
 	
 	#update sensors
 	for llamas_channel in [llamas_red, llamas_green, llamas_blue]:
