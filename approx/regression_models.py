@@ -87,7 +87,7 @@ def linreg_fourier_throughput(lambda_pts, thru_pts, order, bandpass, doPlot=Fals
 	ff = fourier_features(X, order, div)
 	#print(ff)
 	h_lin_ff = sklearn.linear_model.LinearRegression().fit(ff, Y)
-	print(h_lin_ff.coef_, h_lin_ff.intercept_, flush=True)
+	#print(h_lin_ff.coef_, h_lin_ff.intercept_, flush=True)
 	
 	if doPlot:
 		plot_pts = np.array([[pt] for pt in np.linspace(domain_min, domain_max, 100)])
@@ -104,7 +104,6 @@ def linreg_fourier_throughput(lambda_pts, thru_pts, order, bandpass, doPlot=Fals
 		MSE = np.mean(Y_diffs)
 		print("linreg MSE:", MSE)
 	
-	#print(h_lin_ff.intercept_, h_lin_ff.coef_)
 	return h_lin_ff.coef_, h_lin_ff.intercept_, order, div
 	
 def throughput_from_linfourier_coeffs(coeffs, intercept, order, div, lambda_pts, doPlot=False):

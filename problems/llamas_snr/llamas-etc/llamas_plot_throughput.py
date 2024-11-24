@@ -12,7 +12,7 @@ def plot_throughput(llamas_red, llamas_green, llamas_blue):
    #thru_all = [llamas_blue.throughput,llamas_green.throughput,llamas_red.throughput]
    waves_all = llamas_red.waves
    thru_all = llamas_blue.throughput + llamas_green.throughput + llamas_red.throughput
-   print(np.median(thru_all))
+   print("Median throughput:", np.median(thru_all))
    
    plt.hlines(y=0.38, xmin=350, xmax=970, linewidth=2, color='orange')
    plt.hlines(y=0.3, xmin=400, xmax=900, linewidth=2, color='black')
@@ -79,7 +79,7 @@ def plot_throughput(llamas_red, llamas_green, llamas_blue):
    fiber_run_med = np.median([llamas_blue.fiber.throughput(llamas_blue.waves), \
                     llamas_green.fiber.throughput(llamas_green.waves), \
                     llamas_red.fiber.throughput(llamas_red.waves)])
-   print(fiber_run_med)
+   #print(fiber_run_med)
 
    plt.title('Fiber Run Throughput')
    plt.ylim(-0.05,1.05)

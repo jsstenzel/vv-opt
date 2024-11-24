@@ -46,19 +46,19 @@ prior_dc_SN3 = ["gamma_mv", [0.00267,.001**2]]
 #ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_blue.txt", 3)
 #prior_qe_blu = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
 
-coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_dd.txt", 2, _wave_max-_wave_min, doPlot=True, doErr=True)
+coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_dd.txt", 2, _wave_max-_wave_min, doPlot=False, doErr=True)
 prior_qe_red_t0 = ["gaussian", [inter,thru_param_var]] 
 prior_qe_red_t1 = ["gaussian", [coeffs[0],thru_param_var]]
 prior_qe_red_t2 = ["gaussian", [coeffs[1],thru_param_var]]
 prior_qe_red_t3 = ["gaussian", [coeffs[2],thru_param_var]]
 prior_qe_red_t4 = ["gaussian", [coeffs[3],thru_param_var]]
-coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_green.txt", 2, _wave_max-_wave_min, doPlot=True, doErr=True)
+coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_green.txt", 2, _wave_max-_wave_min, doPlot=False, doErr=True)
 prior_qe_gre_t0 = ["gaussian", [inter,thru_param_var]]
 prior_qe_gre_t1 = ["gaussian", [coeffs[0],thru_param_var]]
 prior_qe_gre_t2 = ["gaussian", [coeffs[1],thru_param_var]]
 prior_qe_gre_t3 = ["gaussian", [coeffs[2],thru_param_var]]
 prior_qe_gre_t4 = ["gaussian", [coeffs[3],thru_param_var]]
-coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_blue.txt", 2, _wave_max-_wave_min, doPlot=True, doErr=True)
+coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_blue.txt", 2, _wave_max-_wave_min, doPlot=False, doErr=True)
 prior_qe_blu_t0 = ["gaussian", [inter,thru_param_var]]
 prior_qe_blu_t1 = ["gaussian", [coeffs[0],thru_param_var]]
 prior_qe_blu_t2 = ["gaussian", [coeffs[1],thru_param_var]]
@@ -331,4 +331,3 @@ eta = snr_likelihood_fn
 H = sensitivity_hlva
 Gamma = cost_model
 llamas_snr = ProblemDefinition(eta, H, Gamma, theta_defs, y_defs, d_defs, x_defs)
-print(llamas_snr)

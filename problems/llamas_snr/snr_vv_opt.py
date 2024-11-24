@@ -28,6 +28,7 @@ from opt.ngsa import *
 ################################
 
 def vv_nominal(problem, req, theta_nominal, y_nominal):
+	print(llamas_snr)
 	print("QoI requirement:", req)
 	QoI_nominal = problem.H(theta_nominal, verbose=True)
 	print("Given the nominal theta:", theta_nominal)
