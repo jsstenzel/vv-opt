@@ -136,26 +136,26 @@ def sensitivity_hlva(theta, x, verbose=True):
 	
 	#elem_qe_red = theta["qe_red"]#CCD42-40_dd.txt
 	coeffs = [theta["qe_red_t1"], theta["qe_red_t2"], theta["qe_red_t3"], theta["qe_red_t4"]]
-	elem_qe_red = throughput_from_linfourier_coeffs(coeffs, theta["qe_red_t0"], 2, red_max-red_min, lambda_pts)
+	elem_qe_red = throughput_from_linfourier_coeffs(coeffs, theta["qe_red_t0"], 2, wave_max-wave_min, lambda_pts, doPlot=verbose)
 	
 	#elem_qe_gre = theta["qe_gre"]#CCD42-40_green.txt
 	coeffs = [theta["qe_gre_t1"], theta["qe_gre_t2"], theta["qe_gre_t3"], theta["qe_gre_t4"]]
-	elem_qe_gre = throughput_from_linfourier_coeffs(coeffs, theta["qe_gre_t0"], 2, gre_max-gre_min, lambda_pts)
+	elem_qe_gre = throughput_from_linfourier_coeffs(coeffs, theta["qe_gre_t0"], 2, wave_max-wave_min, lambda_pts, doPlot=verbose)
 	
 	#elem_qe_blu = theta["qe_blu"]#CCD42-40_blue.txt
 	coeffs = [theta["qe_blu_t1"], theta["qe_blu_t2"], theta["qe_blu_t3"], theta["qe_blu_t4"]]
-	elem_qe_blu = throughput_from_linfourier_coeffs(coeffs, theta["qe_blu_t0"], 2, blu_max-blu_min, lambda_pts)
+	elem_qe_blu = throughput_from_linfourier_coeffs(coeffs, theta["qe_blu_t0"], 2, wave_max-wave_min, lambda_pts, doPlot=verbose)
 	
 	#elem_vph_red = theta["vph_thru_red"]#wasach_llamas2200_red.txt
-	popt = [theta["vph_red_t0"], theta["vph_red_t1"], theta["vph_red_t2"], theta["vph_red_t3"]]
+	popt = [theta["vph_red_t0"], theta["vph_red_t1"], theta["vph_red_t2"]]#, theta["vph_red_t3"]]
 	elem_vph_red = throughput_from_polyfit_coeffs(popt, lambda_pts)
 	
 	#elem_vph_gre = theta["vph_thru_gre"]#wasach_llamas2200_green.txt
-	popt = [theta["vph_gre_t0"], theta["vph_gre_t1"], theta["vph_gre_t2"], theta["vph_gre_t3"]]
+	popt = [theta["vph_gre_t0"], theta["vph_gre_t1"], theta["vph_gre_t2"]]#, theta["vph_gre_t3"]]
 	elem_vph_gre = throughput_from_polyfit_coeffs(popt, lambda_pts)
 	
 	#elem_vph_blu = theta["vph_thru_blu"]#wasach_llamas2200_blue.txt
-	popt = [theta["vph_blu_t0"], theta["vph_blu_t1"], theta["vph_blu_t2"], theta["vph_blu_t3"]]
+	popt = [theta["vph_blu_t0"], theta["vph_blu_t1"], theta["vph_blu_t2"]]#, theta["vph_blu_t3"]]
 	elem_vph_blu = throughput_from_polyfit_coeffs(popt, lambda_pts)
 	
 	#elem_dichroic_sl = theta["sl_thru_dichroic"]#ECI_FusedSilica.txt

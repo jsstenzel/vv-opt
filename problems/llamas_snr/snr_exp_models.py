@@ -72,16 +72,16 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	qe_red_params = [theta["qe_red_t0"], theta["qe_red_t1"], theta["qe_red_t2"], theta["qe_red_t3"], theta["qe_red_t4"]]
 	qe_gre_params = [theta["qe_gre_t0"], theta["qe_gre_t1"], theta["qe_gre_t2"], theta["qe_gre_t3"], theta["qe_gre_t4"]]
 	qe_blu_params = [theta["qe_blu_t0"], theta["qe_blu_t1"], theta["qe_blu_t2"], theta["qe_blu_t3"], theta["qe_blu_t4"]]
-	y_qe_red_t = quantum_efficiency_exp(qe_red_params, theta["gain_red"], theta["rn_red"], n_qe, t_qe, red_min, red_max, x, err)
-	y_qe_gre_t = quantum_efficiency_exp(qe_gre_params, theta["gain_gre"], theta["rn_gre"], n_qe, t_qe, gre_min, gre_max, x, err)
-	y_qe_blu_t = quantum_efficiency_exp(qe_blu_params, theta["gain_blu"], theta["rn_blu"], n_qe, t_qe, blu_min, blu_max, x, err)
+	y_qe_red_t = quantum_efficiency_exp(qe_red_params, theta["gain_red"], theta["rn_red"], n_qe, t_qe, red_min, red_max, red_max-blu_min, x, err)
+	y_qe_gre_t = quantum_efficiency_exp(qe_gre_params, theta["gain_gre"], theta["rn_gre"], n_qe, t_qe, gre_min, gre_max, red_max-blu_min, x, err)
+	y_qe_blu_t = quantum_efficiency_exp(qe_blu_params, theta["gain_blu"], theta["rn_blu"], n_qe, t_qe, blu_min, blu_max, red_max-blu_min, x, err)
 	
-	vph_red_params = [theta["vph_red_t0"], theta["vph_red_t1"], theta["vph_red_t2"], theta["vph_red_t3"]]
-	vph_gre_params = [theta["vph_gre_t0"], theta["vph_gre_t1"], theta["vph_gre_t2"], theta["vph_gre_t3"]]
-	vph_blu_params = [theta["vph_blu_t0"], theta["vph_blu_t1"], theta["vph_blu_t2"], theta["vph_blu_t3"]]
-	y_vph_red_t = measure_thru_poly(vph_red_params, d["d_vph_n_pts"], red_min, red_max, x["vph_meas_stddev"], err)
-	y_vph_gre_t = measure_thru_poly(vph_gre_params, d["d_vph_n_pts"], gre_min, gre_max, x["vph_meas_stddev"], err)
-	y_vph_blu_t = measure_thru_poly(vph_blu_params, d["d_vph_n_pts"], blu_min, blu_max, x["vph_meas_stddev"], err)
+	vph_red_params = [theta["vph_red_t0"], theta["vph_red_t1"], theta["vph_red_t2"]]#, theta["vph_red_t3"]]
+	vph_gre_params = [theta["vph_gre_t0"], theta["vph_gre_t1"], theta["vph_gre_t2"]]#, theta["vph_gre_t3"]]
+	vph_blu_params = [theta["vph_blu_t0"], theta["vph_blu_t1"], theta["vph_blu_t2"]]#, theta["vph_blu_t3"]]
+	y_vph_red_t = measure_thru_vph(vph_red_params, d["d_vph_n_pts"], red_min, red_max, x["vph_meas_stddev"], err)
+	y_vph_gre_t = measure_thru_vph(vph_gre_params, d["d_vph_n_pts"], gre_min, gre_max, x["vph_meas_stddev"], err)
+	y_vph_blu_t = measure_thru_vph(vph_blu_params, d["d_vph_n_pts"], blu_min, blu_max, x["vph_meas_stddev"], err)
 	
 	sl_params = [theta["sl_t0"], theta["sl_t1"], theta["sl_t2"], theta["sl_t3"]]
 	bg_params = [theta["bg_t0"], theta["bg_t1"], theta["bg_t2"], theta["bg_t3"]]
@@ -92,6 +92,7 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	
 	y = [*y_gain, *y_rn, *y_dc, *y_qe_red_t, *y_qe_gre_t, *y_qe_blu_t, *y_vph_red_t, *y_vph_gre_t, *y_vph_blu_t, *y_sl_t, *y_bg_t, y_frd]
 	return y
+
 	
 #Adding standard error to a direct measurement of the input
 def simple_measurement(theta, stddev_meas, n_meas, err=True):
@@ -113,14 +114,18 @@ def measure_thru_sigmoid(params, d_meas_pts, wave_min, wave_max, meas_stddev, er
 		
 	#convert the theta params to a GP
 	lambda_pts = np.linspace(wave_min, wave_max, num=math.ceil((wave_max-wave_min)/0.1))
+	#print(lambda_pts, flush=True)
 	thru_pts = throughput_from_sigmoidfit_coeffs(params[0], params[1], params[2], params[3], lambda_pts)
+	#print(thru_pts, flush=True)
 	gp_throughput = define_functional(lambda_pts, thru_pts, order=1)
 	
 	#choose the measurement points
 	measurement_pts = np.linspace(wave_min, wave_max, num=d_meas_pts)
+	#print(measurement_pts, flush=True)
 	
 	#make the measurements, assuming that there is one y_i for each measurement point ki
 	y_thru = gp_throughput.eval_gp_cond(measurement_pts, stddev)
+	#print(y_thru, flush=True)
 	
 	#apply the 0..1 boundaries
 	for i,yi in enumerate(y_thru):
@@ -131,11 +136,11 @@ def measure_thru_sigmoid(params, d_meas_pts, wave_min, wave_max, meas_stddev, er
 			
 	#convert measurements back to y params
 	lval, step_pt, rval, power = sigmoid_fit_throughput(measurement_pts, y_thru, doPlot=False, doErr=False)
-		
+	
 	return [lval, step_pt, rval, power]
 	
 	
-def measure_thru_poly(params, d_meas_pts, wave_min, wave_max, meas_stddev, err=True):
+def measure_thru_vph(params, d_meas_pts, wave_min, wave_max, meas_stddev, err=True):
 	if err:
 		stddev = x["vph_meas_stddev"]
 	else:
@@ -147,9 +152,10 @@ def measure_thru_poly(params, d_meas_pts, wave_min, wave_max, meas_stddev, err=T
 	gp_throughput = define_functional(lambda_pts, thru_pts, order=1)
 	
 	#choose the measurement points
-	measurement_pts = np.linspace(wave_min, wave_max, num=d_meas_pts)
+	measurement_pts = np.linspace(wave_min, wave_max, num=d_meas_pts+2)
+	measurement_pts = measurement_pts[1:-1]
 	
-	#make the measurements, assuming that there is one y_i for each measurement point ki
+	#make the measurements
 	y_thru = gp_throughput.eval_gp_cond(measurement_pts, stddev)
 	
 	#apply the 0..1 boundaries
@@ -160,7 +166,8 @@ def measure_thru_poly(params, d_meas_pts, wave_min, wave_max, meas_stddev, err=T
 			y_thru[i] = 1
 			
 	#convert measurements back to y params
-	popt = poly_fit_throughput(measurement_pts, y_thru, 3, doPlot=False, doErr=False)
+	#NOTE: we assume, historically, that the VPH throughput is parabolic.
+	popt = poly_fit_throughput(measurement_pts, y_thru, 2, doPlot=False, doErr=False)
 		
 	return popt
 	
@@ -317,7 +324,7 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x, err=True):
 #recombination within the bulk silicon itself, surface reflection, and, for very long or 
 #short wavelengths, losses due to the almost complete lack of absorption by the CCD"
 #- Howell, Handbook of CCD Astronomy - instead, it models how we might measure intrinsic QE
-def quantum_efficiency_exp(params, gain, rn, n_qe, t_qe, wave_min, wave_max, _x, err=True):
+def quantum_efficiency_exp(params, gain, rn, n_qe, t_qe, wave_min, wave_max, full_bandpass, _x, err=True):
 	#define parameters
 	S_pd = _x["S_pd"] #functional
 	S_pd_err = _x["S_pd_meas_err"]
@@ -325,12 +332,19 @@ def quantum_efficiency_exp(params, gain, rn, n_qe, t_qe, wave_min, wave_max, _x,
 	spectral_power = _x["spectral_power"] #W / nm
 	h = 6.62607015e-34 #J*Hz−1 #Planck's constant
 	c = 299792458 #m/s #speed of light
-		
+	
 	#choose the measurement points
 	measure_pts = np.linspace(wave_min, wave_max, n_qe)
 	
 	#get the qe at each measurement point
 	qe_sample = throughput_from_linfourier_coeffs(params[1:], params[0], 2, wave_max-wave_min, measure_pts)
+	
+	#apply the 0..1 boundaries to the qe
+	for i,yi in enumerate(qe_sample):
+		if yi < 0:
+			qe_sample[i] = 0
+		if yi > 1:
+			qe_sample[i] = 1
 	
 	if err:
 		S_pd_sample = S_pd.eval_gp_cond(measure_pts, S_pd_err)
@@ -355,7 +369,7 @@ def quantum_efficiency_exp(params, gain, rn, n_qe, t_qe, wave_min, wave_max, _x,
 		
 	
 	#convert measurements back to y params
-	coeffs, inter, _, _ = linreg_fourier_throughput(measure_pts, Signal_measure, 2, doPlot=False, doErr=False)
+	coeffs, inter, _, _ = linreg_fourier_throughput(measure_pts, Signal_measure, 2, full_bandpass, doPlot=False, doErr=False)
 		
 	return [inter, coeffs[0], coeffs[1], coeffs[2], coeffs[3]]
 	

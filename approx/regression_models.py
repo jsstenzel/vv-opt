@@ -62,7 +62,7 @@ h_lin_ff = sklearn.linear_model.LinearRegression().fit(ff, Y)
 utils.plot_data_and_fit(X, Y,
                         lambda x: h_lin_ff.predict(utils.fourier_features(x, ffk, div)), -20, 20)
 """
-def linreg_fourier_throughput_file(thru_file, order, doPlot=False, doErr=False):
+def linreg_fourier_throughput_file(thru_file, order, bandpass, doPlot=False, doErr=False):
 	lambda_pts = []
 	thru_pts = []
 	with open(thru_file, "r") as f:
@@ -74,19 +74,20 @@ def linreg_fourier_throughput_file(thru_file, order, doPlot=False, doErr=False):
 				lambda_pts.append(float(words[0]))
 				thru_pts.append(float(words[1]))
 				
-	return linreg_fourier_throughput(lambda_pts, thru_pts, order, doPlot=doPlot, doErr=doErr)
+	return linreg_fourier_throughput(lambda_pts, thru_pts, order, bandpass, doPlot=doPlot, doErr=doErr)
 
-def linreg_fourier_throughput(lambda_pts, thru_pts, order, doPlot=False, doErr=False):
+def linreg_fourier_throughput(lambda_pts, thru_pts, order, bandpass, doPlot=False, doErr=False):
 	domain_min = min(lambda_pts)
 	domain_max = max(lambda_pts)
 
 	X=np.array([[pt] for pt in lambda_pts])
 	Y=np.array(thru_pts)
 	#print(X)
-	div = domain_max - domain_min # roughly the domain of the data, to ensure we have a low-frequency component
+	div = bandpass # roughly the domain of the data, to ensure we have a low-frequency component
 	ff = fourier_features(X, order, div)
 	#print(ff)
 	h_lin_ff = sklearn.linear_model.LinearRegression().fit(ff, Y)
+	print(h_lin_ff.coef_, h_lin_ff.intercept_, flush=True)
 	
 	if doPlot:
 		plot_pts = np.array([[pt] for pt in np.linspace(domain_min, domain_max, 100)])
@@ -106,13 +107,25 @@ def linreg_fourier_throughput(lambda_pts, thru_pts, order, doPlot=False, doErr=F
 	#print(h_lin_ff.intercept_, h_lin_ff.coef_)
 	return h_lin_ff.coef_, h_lin_ff.intercept_, order, div
 	
-def throughput_from_linfourier_coeffs(coeffs, intercept, order, div, lambda_pts):
+def throughput_from_linfourier_coeffs(coeffs, intercept, order, div, lambda_pts, doPlot=False):
 	h_lin_ff = sklearn.linear_model.LinearRegression()
 	h_lin_ff.coef_ = np.array(coeffs)
 	h_lin_ff.intercept_ = float(intercept)
 	
 	X=np.array([[pt] for pt in lambda_pts])
 	thru_pts = h_lin_ff.predict(fourier_features(X, order, div))
+	
+	if doPlot:
+		domain_min = min(lambda_pts)
+		domain_max = max(lambda_pts)
+		plot_pts = np.array([[pt] for pt in np.linspace(domain_min, domain_max, 100)])
+		Yfit = h_lin_ff.predict(fourier_features(plot_pts, order, div))
+	
+		plt.plot(plot_pts, Yfit, c='orange')
+		plt.scatter(X, thru_pts, c='blue')
+		plt.xlim(domain_min, domain_max)
+		plt.show()
+	
 	return thru_pts
 	
 ####################################################
@@ -188,7 +201,7 @@ def throughput_from_sigmoidfit_coeffs(lval, step_pt, rval, power, lambda_pts):
 def poly_fn(x, params):
 	total = 0
 	for i,p in enumerate(params):
-		total += p * x**i
+		total += p * x**(len(params)-1-i)
 	return total
 	
 def poly_fit_throughput_file(thru_file, power, doPlot=False, doErr=False):

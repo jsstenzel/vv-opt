@@ -46,19 +46,19 @@ prior_dc_SN3 = ["gamma_mv", [0.00267,.001**2]]
 #ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_blue.txt", 3)
 #prior_qe_blu = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
 
-coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_dd.txt", 2, doPlot=False, doErr=True)
+coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_dd.txt", 2, _wave_max-_wave_min, doPlot=True, doErr=True)
 prior_qe_red_t0 = ["gaussian", [inter,thru_param_var]] 
 prior_qe_red_t1 = ["gaussian", [coeffs[0],thru_param_var]]
 prior_qe_red_t2 = ["gaussian", [coeffs[1],thru_param_var]]
 prior_qe_red_t3 = ["gaussian", [coeffs[2],thru_param_var]]
 prior_qe_red_t4 = ["gaussian", [coeffs[3],thru_param_var]]
-coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_green.txt", 2, doPlot=False, doErr=True)
+coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_green.txt", 2, _wave_max-_wave_min, doPlot=True, doErr=True)
 prior_qe_gre_t0 = ["gaussian", [inter,thru_param_var]]
 prior_qe_gre_t1 = ["gaussian", [coeffs[0],thru_param_var]]
 prior_qe_gre_t2 = ["gaussian", [coeffs[1],thru_param_var]]
 prior_qe_gre_t3 = ["gaussian", [coeffs[2],thru_param_var]]
 prior_qe_gre_t4 = ["gaussian", [coeffs[3],thru_param_var]]
-coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_blue.txt", 2, doPlot=False, doErr=True)
+coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_blue.txt", 2, _wave_max-_wave_min, doPlot=True, doErr=True)
 prior_qe_blu_t0 = ["gaussian", [inter,thru_param_var]]
 prior_qe_blu_t1 = ["gaussian", [coeffs[0],thru_param_var]]
 prior_qe_blu_t2 = ["gaussian", [coeffs[1],thru_param_var]]
@@ -72,21 +72,21 @@ prior_qe_blu_t4 = ["gaussian", [coeffs[3],thru_param_var]]
 #ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_blue.txt", 2)
 #prior_gp_vph_blu = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
 
-plist = poly_fit_throughput_file(_dir+"wasach_llamas2200_red.txt", 3, doPlot=False, doErr=True)
+plist = poly_fit_throughput_file(_dir+"wasach_llamas2200_red.txt", 2, doPlot=False, doErr=True)
 prior_vph_red_t0 = ["gaussian", [plist[0],thru_param_var]] 
 prior_vph_red_t1 = ["gaussian", [plist[1],thru_param_var]]
 prior_vph_red_t2 = ["gaussian", [plist[2],thru_param_var]]
-prior_vph_red_t3 = ["gaussian", [plist[3],thru_param_var]]
-plist = poly_fit_throughput_file(_dir+"wasach_llamas2200_green.txt", 3, doPlot=False, doErr=True)
+#prior_vph_red_t3 = ["gaussian", [plist[3],thru_param_var]]
+plist = poly_fit_throughput_file(_dir+"wasach_llamas2200_green.txt", 2, doPlot=False, doErr=True)
 prior_vph_gre_t0 = ["gaussian", [plist[0],thru_param_var]]
 prior_vph_gre_t1 = ["gaussian", [plist[1],thru_param_var]]
 prior_vph_gre_t2 = ["gaussian", [plist[2],thru_param_var]]
-prior_vph_gre_t3 = ["gaussian", [plist[3],thru_param_var]]
-plist = poly_fit_throughput_file(_dir+"wasach_llamas2200_blue.txt", 3, doPlot=False, doErr=True)
+#prior_vph_gre_t3 = ["gaussian", [plist[3],thru_param_var]]
+plist = poly_fit_throughput_file(_dir+"wasach_llamas2200_blue.txt", 2, doPlot=False, doErr=True)
 prior_vph_blu_t0 = ["gaussian", [plist[0],thru_param_var]]
 prior_vph_blu_t1 = ["gaussian", [plist[1],thru_param_var]]
 prior_vph_blu_t2 = ["gaussian", [plist[2],thru_param_var]]
-prior_vph_blu_t3 = ["gaussian", [plist[3],thru_param_var]]
+#prior_vph_blu_t3 = ["gaussian", [plist[3],thru_param_var]]
 
 #ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_sl_prior.txt", 3)
 #prior_gp_sl = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
@@ -140,17 +140,14 @@ theta_defs = [                             #mean, variance
 					["vph_red_t0", prior_vph_red_t0, "continuous"],
 					["vph_red_t1", prior_vph_red_t1, "continuous"],
 					["vph_red_t2", prior_vph_red_t2, "continuous"],
-					["vph_red_t3", prior_vph_red_t3, "continuous"],
 					#["vph_thru_gre", prior_gp_vph_gre, "functional"],
 					["vph_gre_t0", prior_vph_gre_t0, "continuous"],
 					["vph_gre_t1", prior_vph_gre_t1, "continuous"],
 					["vph_gre_t2", prior_vph_gre_t2, "continuous"],
-					["vph_gre_t3", prior_vph_gre_t3, "continuous"],
 					#["vph_thru_blu", prior_gp_vph_blu, "functional"],
 					["vph_blu_t0", prior_vph_blu_t0, "continuous"],
 					["vph_blu_t1", prior_vph_blu_t1, "continuous"],
 					["vph_blu_t2", prior_vph_blu_t2, "continuous"],
-					["vph_blu_t3", prior_vph_blu_t3, "continuous"],
 					#["sl_thru_dichroic", prior_gp_sl, "functional"],
 					["sl_t0", prior_sl_t0, "continuous"],
 					["sl_t1", prior_sl_t1, "continuous"],
@@ -193,21 +190,18 @@ y_defs = [
 				"y_qe_blu_t2", 
 				"y_qe_blu_t3", 
 				"y_qe_blu_t4", 
-				#"y_vph_red_pts",
-				"y_vph_red_t0", 
-				"y_vph_red_t1", 
-				"y_vph_red_t2", 
-				"y_vph_red_t3", 
-				#"y_vph_gre_pts",
-				"y_vph_gre_t0", 
-				"y_vph_gre_t1", 
-				"y_vph_gre_t2", 
-				"y_vph_gre_t3", 
-				#"y_vph_blu_pts",
-				"y_vph_blu_t0", 
-				"y_vph_blu_t1", 
-				"y_vph_blu_t2", 
-				"y_vph_blu_t3", 
+				#"y_vph_red_pts", but parabola
+				"y_vph_red_p0", 
+				"y_vph_red_p1", 
+				"y_vph_red_p2", 
+				#"y_vph_gre_pts", but parabola
+				"y_vph_gre_p0", 
+				"y_vph_gre_p1", 
+				"y_vph_gre_p2", 
+				#"y_vph_blu_pts", but parabola
+				"y_vph_blu_p0", 
+				"y_vph_blu_p1", 
+				"y_vph_blu_p2", 
 				#"y_sl_pts",
 				"y_sl_t0", 
 				"y_sl_t1", 

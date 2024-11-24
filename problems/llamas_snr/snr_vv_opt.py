@@ -31,7 +31,7 @@ def vv_nominal(problem, req, theta_nominal, y_nominal):
 	print("QoI requirement:", req)
 	QoI_nominal = problem.H(theta_nominal, verbose=True)
 	print("Given the nominal theta:", theta_nominal)
-	#print("Nominal y:", y_nominal)
+	print("Nominal y:", y_nominal)
 	print("Nominal QoI:", QoI_nominal)
 
 
