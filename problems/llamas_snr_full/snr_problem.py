@@ -12,8 +12,8 @@ from problems.problem_definition import *
 from problems.gaussian_process import *
 from approx.regression_models import *
 #llamas
-from problems.llamas_snr.snr_exp_models import *
-from problems.llamas_snr.snr_system_model import *
+from problems.llamas_snr_full.snr_exp_models import *
+from problems.llamas_snr_full.snr_system_model import *
 
 #set path variables
 _dir = "./llamas-etc/COATINGS/"
@@ -101,30 +101,14 @@ theta_defs = [                             #mean, variance
 					["sl_t", prior_sl_t, "continuous"],#dim = 4
 					["bg_t", prior_bg_t, "continuous"],#dim = 4
 					["coll_t", prior_coll_t, "continuous"],#dim = 4
-					["prism_red", prior_silica_thru, "continuous"],
-					["l1_red", prior_silica_thru, "continuous"],
-					["l2_red", prior_PBM8Y_thru, "continuous"],
-					["l3_red", prior_silica_thru, "continuous"],
-					["l4_red", prior_PBM8Y_thru, "continuous"],
-					["l5_red", prior_silica_thru, "continuous"],
-					["l6_red", prior_PBM8Y_thru, "continuous"],
-					["l7_red", prior_PBM8Y_thru, "continuous"],
-					["prism_gre", prior_silica_thru, "continuous"],
-					["l1_gre", prior_silica_thru, "continuous"],
-					["l2_gre", prior_PBM8Y_thru, "continuous"],
-					["l3_gre", prior_silica_thru, "continuous"],
-					["l4_gre", prior_PBM8Y_thru, "continuous"],
-					["l5_gre", prior_silica_thru, "continuous"],
-					["l6_gre", prior_PBM8Y_thru, "continuous"],
-					["l7_gre", prior_PBM8Y_thru, "continuous"],
-					["prism_gre", prior_silica_thru, "continuous"],
-					["l1_blu", prior_silica_thru, "continuous"],
-					["l2_blu", prior_PBM8Y_thru, "continuous"],
-					["l3_blu", prior_silica_thru, "continuous"],
-					["l4_blu", prior_PBM8Y_thru, "continuous"],
-					["l5_blu", prior_silica_thru, "continuous"],
-					["l6_blu", prior_PBM8Y_thru, "continuous"],
-					["l7_blu", prior_PBM8Y_thru, "continuous"],
+					["prism_t", prior_silica_thru, "continuous"],
+					["l1_t", prior_silica_thru, "continuous"],
+					["l2_t", prior_PBM8Y_thru, "continuous"],
+					["l3_t", prior_silica_thru, "continuous"],
+					["l4_t", prior_PBM8Y_thru, "continuous"],
+					["l5_t", prior_silica_thru, "continuous"],
+					["l6_t", prior_PBM8Y_thru, "continuous"],
+					["l7_t", prior_PBM8Y_thru, "continuous"],
 					["fiber_frd", prior_frd, "continuous"]
 				]
 
@@ -171,6 +155,18 @@ y_defs = [
 				"y_bg_t1", 
 				"y_bg_t2", 
 				"y_bg_t3", 
+				"y_coll_t0",
+				"y_coll_t1",
+				"y_coll_t2",
+				"y_coll_t3",
+				"y_prism_red",
+				"y_l1_t",
+				"y_l2_t",
+				"y_l3_t",
+				"y_l4_t",
+				"y_l5_t",
+				"y_l6_t",
+				"y_l7_t",
 				"y_frd"
 			]
 
@@ -187,6 +183,8 @@ d_defs = [
 				
 				["d_vph_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
 				["d_dichroic_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
+				["d_coll_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
+				["d_lens_n_pts", ['uniform', [0,_bandpass*10]], "discrete"], #i guess??
 				["d_frd_n_meas", ['uniform', [0,2400]], "discrete"],
 			]
 	
@@ -261,14 +259,6 @@ x_defs = [
 				["frd_meas_err", [], "continuous", 0.068], #analysis based on test measuring a few fibers
 				#spectrograph
 				["spect_model_tracker", [], "object", spectrograph_models],
-				["prism", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
-				["lens1", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
-				["lens2", [], "functional", define_functional_from_file(_dir+"ECI_PBM8Y.txt")],
-				["lens3", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
-				["lens4", [], "functional", define_functional_from_file(_dir+"ECI_PBM8Y.txt")],
-				["lens5", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
-				["lens6", [], "functional", define_functional_from_file(_dir+"ECI_PBM8Y.txt")],
-				["lens7", [], "functional", define_functional_from_file(_dir+"ECI_PBM8Y.txt")],
 				["sensor_window", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
 				["sensor_glass_red", [], "functional", define_functional_from_file(_dir+"llamas_internal_red.txt")],
 				["sensor_glass_gre", [], "functional", define_functional_from_file(_dir+"llamas_internal.txt")],
@@ -277,6 +267,8 @@ x_defs = [
 				["vph_meas_stddev", [], "continuous", .001], #need actual historical
 				["sl_meas_stddev", [], "continuous", .001], #WAG
 				["bg_meas_stddev", [], "continuous", .001], #WAG
+				["coll_meas_stddev", [], "continuous", .001], #WAG
+				["lens_meas_err", [], "continuous", .001], #WAG
 				#cost
 				["testbed_setup", ["nonrandom", [1800]], "continuous", 1800], #WAG
 				#["C_engineer", ["nonrandom", [0.00694444444]], "continuous", 0.00694444444] #WAG $/s, from $25/hr
@@ -289,5 +281,3 @@ eta = snr_likelihood_fn
 H = sensitivity_hlva
 Gamma = cost_model
 llamas_snr = ProblemDefinition(eta, H, Gamma, theta_defs, y_defs, d_defs, x_defs)
-
-print(llamas_snr.prior_rvs(2))

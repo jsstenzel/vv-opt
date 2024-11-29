@@ -10,7 +10,7 @@ import dill
 
 sys.path.append('../..')
 #llamas
-from problems.llamas_snr.snr_problem import *
+from problems.llamas_snr_full.snr_problem import *
 #analysis
 from obed.obed_multivar import *
 from obed.obed_gbi import *
@@ -182,6 +182,8 @@ if __name__ == '__main__':
 						2,  #t_qe
 						3, #d_vph_n_pts
 						800, #d_dichroic_n_pts
+						100, #d_coll_n_pts #WAG
+						10, #d_lens_n_pts #WAG
 						10 #d_frd_n_meas
 					]
 	problem = llamas_snr

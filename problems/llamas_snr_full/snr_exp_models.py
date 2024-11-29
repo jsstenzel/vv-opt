@@ -88,9 +88,26 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	y_sl_t = measure_thru_sigmoid(sl_params, d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["sl_meas_stddev"], err)
 	y_bg_t = measure_thru_sigmoid(bg_params, d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["bg_meas_stddev"], err)
 	
+	#collimator
+	coll_params = [theta["coll_t0"], theta["coll_t1"], theta["coll_t2"], theta["coll_t3"]]
+	y_coll_t = measure_thru_sigmoid(coll_params, d["d_coll_n_pts"], x["wave_min"], x["wave_max"], x["coll_meas_stddev"], err)
+	
+	#lenses
+	y_prism_t = simple_measurement(theta["prism_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
+	y_l1_t = simple_measurement(theta["l1_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
+	y_l2_t = simple_measurement(theta["l2_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
+	y_l3_t = simple_measurement(theta["l3_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
+	y_l4_t = simple_measurement(theta["l4_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
+	y_l5_t = simple_measurement(theta["l5_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
+	y_l6_t = simple_measurement(theta["l6_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
+	y_l7_t = simple_measurement(theta["l7_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
+	y_lenses = [
+		y_prism_t, y_l1_t, y_l2_t, y_l3_t, y_l4_t, y_l5_t, y_l6_t, y_l7_t,
+	]
+	
 	y_frd = simple_measurement(theta["fiber_frd"], x["frd_meas_err"], d["d_frd_n_meas"], err)
 	
-	y = [*y_gain, *y_rn, *y_dc, *y_qe_red_t, *y_qe_gre_t, *y_qe_blu_t, *y_vph_red_t, *y_vph_gre_t, *y_vph_blu_t, *y_sl_t, *y_bg_t, y_frd]
+	y = [*y_gain, *y_rn, *y_dc, *y_qe_red_t, *y_qe_gre_t, *y_qe_blu_t, *y_vph_red_t, *y_vph_gre_t, *y_vph_blu_t, *y_sl_t, *y_bg_t, *y_coll_t, *y_lenses, y_frd]
 	return y
 
 	
@@ -120,6 +137,12 @@ def measure_thru_sigmoid(params, d_meas_pts, wave_min, wave_max, meas_stddev, er
 	else:
 		stddev = 0
 		
+	#Handle measurement number: you can do 0, or 4 or more
+	if d_meas_pts < 4:
+		num_pts = 4
+	else:
+		num_pts = d_meas_pts
+		
 	#convert the theta params to a GP
 	lambda_pts = np.linspace(wave_min, wave_max, num=math.ceil((wave_max-wave_min)/0.1))
 	#print(lambda_pts, flush=True)
@@ -128,7 +151,7 @@ def measure_thru_sigmoid(params, d_meas_pts, wave_min, wave_max, meas_stddev, er
 	gp_throughput = define_functional(lambda_pts, thru_pts, order=1)
 	
 	#choose the measurement points
-	measurement_pts = np.linspace(wave_min, wave_max, num=d_meas_pts)
+	measurement_pts = np.linspace(wave_min, wave_max, num=num_pts)
 	#print(measurement_pts, flush=True)
 	
 	#make the measurements, assuming that there is one y_i for each measurement point ki
@@ -143,7 +166,7 @@ def measure_thru_sigmoid(params, d_meas_pts, wave_min, wave_max, meas_stddev, er
 			y_thru[i] = 1
 			
 	#convert measurements back to y params
-	lval, step_pt, rval, power = sigmoid_fit_throughput(measurement_pts, y_thru, doPlot=False, doErr=False)
+	lval, step_pt, rval, power, _ = sigmoid_fit_throughput(measurement_pts, y_thru, doPlot=False, doErr=False)
 	
 	return [lval, step_pt, rval, power]
 	
@@ -154,13 +177,19 @@ def measure_thru_vph(params, d_meas_pts, wave_min, wave_max, meas_stddev, err=Tr
 	else:
 		stddev = 0
 		
+	#Handle measurement number: you can do 0, or 3 or more
+	if d_meas_pts < 3:
+		num_pts = 3
+	else:
+		num_pts = d_meas_pts
+		
 	#convert the theta params to a GP
 	lambda_pts = np.linspace(wave_min, wave_max, num=math.ceil((wave_max-wave_min)/0.1))
 	thru_pts = throughput_from_polyfit_coeffs(params, lambda_pts)
 	gp_throughput = define_functional(lambda_pts, thru_pts, order=1)
 	
-	#choose the measurement points
-	measurement_pts = np.linspace(wave_min, wave_max, num=d_meas_pts+2)
+	#choose the measurement points; this +2 -2 thing is to make sure im not measuring the endpoints
+	measurement_pts = np.linspace(wave_min, wave_max, num=num_pts+2)
 	measurement_pts = measurement_pts[1:-1]
 	
 	#make the measurements
@@ -175,7 +204,7 @@ def measure_thru_vph(params, d_meas_pts, wave_min, wave_max, meas_stddev, err=Tr
 			
 	#convert measurements back to y params
 	#NOTE: we assume, historically, that the VPH throughput is parabolic.
-	popt = poly_fit_throughput(measurement_pts, y_thru, 2, doPlot=False, doErr=False)
+	popt, _ = poly_fit_throughput(measurement_pts, y_thru, 2, doPlot=False, doErr=False, doCov=False)
 		
 	return popt
 	
@@ -341,8 +370,14 @@ def quantum_efficiency_exp(params, gain, rn, n_qe, t_qe, wave_min, wave_max, ful
 	h = 6.62607015e-34 #J*Hz−1 #Planck's constant
 	c = 299792458 #m/s #speed of light
 	
+	#Handle measurement number: you can do 0, or 3 or more
+	if n_qe < 3:
+		num_pts = 3
+	else:
+		num_pts = n_qe
+	
 	#choose the measurement points
-	measure_pts = np.linspace(wave_min, wave_max, n_qe)
+	measure_pts = np.linspace(wave_min, wave_max, num_pts)
 	
 	#get the qe at each measurement point
 	qe_sample = throughput_from_linfourier_coeffs(params[1:], params[0], 2, wave_max-wave_min, measure_pts)
