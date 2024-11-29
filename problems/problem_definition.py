@@ -16,12 +16,30 @@ class ProblemDefinition:
 		self._internal_H = _H #H(theta, x)
 		self._internal_G = _G #G(d, x)
 		
+		#First, need to process the multivariate priors in theta
+		dimtheta=0
+		thetanames=[]
+		thetamasks=[]
+		for theta_def in _theta_defs:
+			name = theta_def[0]
+			dtype = theta_def[1][0]
+			params = theta_def[1][1]
+			mask = theta_def[2]
+			if dtype == "gaussian_multivar":
+				dimtheta+= len(params[0])
+				thetanames.extend([name+str(i) for i,_ in enumerate(params[0])])
+				thetamasks.extend([mask for _ in params[0]])
+			else:
+				dimtheta+=1 
+				thetanames.append(name)
+				thetamasks.append(mask)
+		
 		#get dimensions, set default parameters
 		self.dim_d = len(_d_defs)
 		self.dim_y = len(_y_defs)
-		self.dim_theta = len(_theta_defs)
 		self.dim_x = len(_x_defs)
 		self.x_default = [default for name,dist,mask,default in _x_defs]
+		self.dim_theta = dimtheta #self.dim_theta = len(_theta_defs)
 		
 		#hack the x_defs to save wasted effort:
 		for xdef in _x_defs:
@@ -32,27 +50,27 @@ class ProblemDefinition:
 		#so it's a list of pairs, first is type and second is the list of corresponding parameters
 		#type checks:
 		for _,prior,mask in _theta_defs + _d_defs + [x[:-1] for x in _x_defs]:
-			type = prior[0]
+			dtype = prior[0]
 			params = prior[1]
 			
-			if type not in self._allowable_prior_types.keys():
-				raise ValueError("Incorrect prior probability function definition: "+str(type)+" not recognized.")
-			if len(params) != self._allowable_prior_types[type]:
-				raise ValueError('Wrong number of arguments for prior type '+str(type)+'; got '+str(len(params))+' and expected '+str(self._allowable_prior_types[type]))
+			if dtype not in self._allowable_prior_types.keys():
+				raise ValueError("Incorrect prior probability function definition: "+str(dtype)+" not recognized.")
+			if len(params) != self._allowable_prior_types[dtype]:
+				raise ValueError('Wrong number of arguments for prior type '+str(dtype)+'; got '+str(len(params))+' and expected '+str(self._allowable_prior_types[dtype]))
 			if not (mask in ['continuous','discrete','functional','object']):
 				raise ValueError('Variable mask not an expected value: '+str(mask))
 
 		#if you pass all of that,
-		self.priors  = [prior for _,prior,_ in _theta_defs]
+		self.priors  = [prior for _,prior,_ in _theta_defs] #now this is <= dim_theta w/ gaussian_multivar
 		self.d_dists = [dist for _,dist,_ in _d_defs]
 		self.x_dists = [dist for _,dist,_,_ in _x_defs]
 		
-		self.theta_masks = [mask for _,_,mask in _theta_defs]
+		self.theta_masks = thetamasks #self.theta_masks = [mask for _,_,mask in _theta_defs]
 		self.d_masks     = [mask for _,_,mask in _d_defs]
 		self.x_masks     = [mask for _,_,mask,_ in _x_defs]
 		
 		#for documentation:
-		self.theta_names=[name for name,_,_ in _theta_defs]
+		self.theta_names= thetanames #self.theta_names=[name for name,_,_ in _theta_defs]
 		self.y_names=_y_defs
 		self.d_names=[name for name,_,_ in _d_defs]
 		self.x_names=[name for name,default,dist,mask in _x_defs]
