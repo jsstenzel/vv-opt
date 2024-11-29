@@ -37,8 +37,8 @@ utils.plot_data_and_fit(X, Y, h_knn.predict, -20, 20)
 ## Neural Network
 """
 neural_net = sklearn.neural_network.MLPRegressor(hidden_layer_sizes=(50, 50, 50, 50),
-                                                 verbose=False,
-                                                 max_iter=1000)
+												 verbose=False,
+												 max_iter=1000)
 h_net = neural_net.fit(X, Y.ravel())
 utils.plot_data_and_fit(X, Y, h_net.predict, -11, 20)
 """
@@ -49,13 +49,13 @@ pk = 9
 dpf = utils.polynomial_features(X, pk)
 h_lin_pf = sklearn.linear_model.LinearRegression().fit(dpf, Y)
 utils.plot_data_and_fit(X, Y,
-                        lambda x: h_lin_pf.predict(utils.polynomial_features(x, pk)), -10, 20)
+						lambda x: h_lin_pf.predict(utils.polynomial_features(x, pk)), -10, 20)
 """
 
 ## Linear regression with fourier features
 def fourier_features(X, k, div):
-    return np.hstack([np.cos(np.pi * i * X / div) for i in range(1, k + 1)] +
-                     [np.sin(np.pi * i * X / div) for i in range(1, k + 1)])
+	return np.hstack([np.cos(np.pi * i * X / div) for i in range(1, k + 1)] +
+					 [np.sin(np.pi * i * X / div) for i in range(1, k + 1)])
 
 """
 ffk = 5
@@ -63,7 +63,7 @@ div = 10 # roughly the domain of the data, to ensure we have a low-frequency com
 ff = utils.fourier_features(X, ffk, div)
 h_lin_ff = sklearn.linear_model.LinearRegression().fit(ff, Y)
 utils.plot_data_and_fit(X, Y,
-                        lambda x: h_lin_ff.predict(utils.fourier_features(x, ffk, div)), -20, 20)
+						lambda x: h_lin_ff.predict(utils.fourier_features(x, ffk, div)), -20, 20)
 """
 def linreg_fourier_throughput_file(thru_file, order, bandpass, doPlot=False, doErr=False):
 	lambda_pts = []
@@ -186,6 +186,17 @@ def sigmoid_fit_throughput(lambda_pts, thru_pts, doPlot=False, doErr=False):
 		print("sigmoid MSE:", MSE)
 		
 	return lval, step_pt, rval, power, pcov
+	
+def throughput_from_sigmoidfit_coeffs(lval, step_pt, rval, power, lambda_pts):
+	   X=np.array(lambda_pts)
+	   thru_pts = [sigmoid_step(x, lval, step_pt, rval, power) for x in X]
+
+	   #plt.plot(X, thru_pts, c='blue')
+	   #plt.show()
+
+	   return thru_pts
+	   
+#throughput_from_sigmoidfit_coeffs(-40, 0, 10, 20/1, np.linspace(-10,10,100))
 
 	
 ####################################################
@@ -210,7 +221,7 @@ def poly_fit_throughput_file(thru_file, power, doPlot=False, doErr=False):
 	
 	return poly_fit_throughput(lambda_pts, thru_pts, power, doPlot=doPlot, doErr=doErr)
 	
-def poly_fit_throughput(lambda_pts, thru_pts, power, doPlot=False, doErr=False):
+def poly_fit_throughput(lambda_pts, thru_pts, power, doPlot=False, doErr=False, doCov=True):
 	domain_min = min(lambda_pts)
 	domain_max = max(lambda_pts)
 	range_min = min(thru_pts)
@@ -219,7 +230,11 @@ def poly_fit_throughput(lambda_pts, thru_pts, power, doPlot=False, doErr=False):
 	X=np.array(lambda_pts)
 	Y=np.array(thru_pts)
 	
-	popt, V = np.polyfit(X, Y, power, cov=True)
+	if doCov:
+		popt, V = np.polyfit(X, Y, power, cov=True)
+	else:
+		popt = np.polyfit(X, Y, power)
+		V = None
 	
 	if doPlot:
 		plot_pts = np.array(np.linspace(domain_min, domain_max, len(lambda_pts)*10))
@@ -249,8 +264,6 @@ def throughput_from_polyfit_coeffs(popt, lambda_pts):
 	return thru_pts
 	
 	
-#throughput_from_sigmoidfit_coeffs(-40, 0, 10, 20/1, np.linspace(-10,10,100))
-
 ###################################################################################
 
 def fit_uniform_thru_to_beta_file(thru_file, doPlot=False, doErr=False):
@@ -305,26 +318,26 @@ def fit_uniform_thru_to_beta(lambda_pts, thru_pts, doPlot=False, doErr=False):
 
 ## Bayesian linear regression
 RegressionResult = namedtuple('RegressionResult',
-                                    ['params', 'predict'])
+									['params', 'predict'])
 
 # Assume known fixed prediction error sigma_y
 # Prior on w is N(mu_w, sigma_w)
 def bayes_lin_reg(X_in, y, mu_w, sigma_w, sigma_y):
-    X = np.hstack([np.ones((X_in.shape[0], 1)), X_in]) # add fixed feature for offset; n x d+1
+	X = np.hstack([np.ones((X_in.shape[0], 1)), X_in]) # add fixed feature for offset; n x d+1
 
-    s = (1.0/sigma_y**2)
-    sigma_w_post = np.linalg.inv(np.linalg.inv(sigma_w) + s * X.T @ X)
-    mu_w_post = sigma_w_post @ (np.linalg.inv(sigma_w) @ mu_w + s * (X.T @ y))
+	s = (1.0/sigma_y**2)
+	sigma_w_post = np.linalg.inv(np.linalg.inv(sigma_w) + s * X.T @ X)
+	mu_w_post = sigma_w_post @ (np.linalg.inv(sigma_w) @ mu_w + s * (X.T @ y))
 
-    def pred(X_in, return_std=False):
-        X = np.hstack([np.ones((X_in.shape[0], 1)), X_in])
-        if return_std:
-            # Instead of einsum we could write :  sigma_y + np.sum(X @ sigma_w_post.* X, axis=1)
-            return np.einsum('xd, da -> x', X, mu_w_post), \
-                    np.sqrt(sigma_y**2 + np.einsum('xd,de,xe -> x', X, sigma_w_post, X))
-        else:
-            return X @ mu_w_post
-    return RegressionResult((mu_w_post, sigma_w_post), pred)
+	def pred(X_in, return_std=False):
+		X = np.hstack([np.ones((X_in.shape[0], 1)), X_in])
+		if return_std:
+			# Instead of einsum we could write :  sigma_y + np.sum(X @ sigma_w_post.* X, axis=1)
+			return np.einsum('xd, da -> x', X, mu_w_post), \
+					np.sqrt(sigma_y**2 + np.einsum('xd,de,xe -> x', X, sigma_w_post, X))
+		else:
+			return X @ mu_w_post
+	return RegressionResult((mu_w_post, sigma_w_post), pred)
 
 """
 ### linear data
@@ -345,7 +358,7 @@ X_orig, y = data_gen.regression_data_gen(1, 1, lambda x: np.sin(x), n, sigma, -1
 X = utils.polynomial_features(X_orig, pk)
 blr2 = bayes_lin_reg(X, y, np.zeros((dim, 1)), 10*np.eye(dim), sigma)
 def predict(X_in, return_std=False):
-    X = utils.polynomial_features(X_in, pk)
-    return blr2.predict(X, return_std)
+	X = utils.polynomial_features(X_in, pk)
+	return blr2.predict(X, return_std)
 utils.plot_data_and_fit_with_stdev(X_orig, y, predict, -10, 10)
 """
