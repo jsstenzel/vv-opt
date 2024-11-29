@@ -11,10 +11,13 @@ import sklearn.neural_network
 import pandas as pd
 from collections import namedtuple
 from scipy.optimize import curve_fit
+from scipy.stats import beta
 
 sys.path.append('..')
 from problems.problem_definition import *
 from uq.plotmatrix import *
+from uq.uncertainty_propagation import *
+
 
 ## Linear Regression
 """
@@ -85,9 +88,7 @@ def linreg_fourier_throughput(lambda_pts, thru_pts, order, bandpass, doPlot=Fals
 	#print(X)
 	div = bandpass # roughly the domain of the data, to ensure we have a low-frequency component
 	ff = fourier_features(X, order, div)
-	#print(ff)
 	h_lin_ff = sklearn.linear_model.LinearRegression().fit(ff, Y)
-	#print(h_lin_ff.coef_, h_lin_ff.intercept_, flush=True)
 	
 	if doPlot:
 		plot_pts = np.array([[pt] for pt in np.linspace(domain_min, domain_max, 100)])
@@ -184,16 +185,8 @@ def sigmoid_fit_throughput(lambda_pts, thru_pts, doPlot=False, doErr=False):
 		MSE = np.mean(Y_diffs)
 		print("sigmoid MSE:", MSE)
 		
-	return lval, step_pt, rval, power
-	
-def throughput_from_sigmoidfit_coeffs(lval, step_pt, rval, power, lambda_pts):
-	X=np.array(lambda_pts)
-	thru_pts = [sigmoid_step(x, lval, step_pt, rval, power) for x in X]
-	
-	#plt.plot(X, thru_pts, c='blue')
-	#plt.show()
-		
-	return thru_pts
+	return lval, step_pt, rval, power, pcov
+
 	
 ####################################################
 
@@ -226,7 +219,7 @@ def poly_fit_throughput(lambda_pts, thru_pts, power, doPlot=False, doErr=False):
 	X=np.array(lambda_pts)
 	Y=np.array(thru_pts)
 	
-	popt=np.polyfit(X, Y, power)
+	popt, V = np.polyfit(X, Y, power, cov=True)
 	
 	if doPlot:
 		plot_pts = np.array(np.linspace(domain_min, domain_max, len(lambda_pts)*10))
@@ -242,8 +235,9 @@ def poly_fit_throughput(lambda_pts, thru_pts, power, doPlot=False, doErr=False):
 		Y_diffs = (Yfit - Y)**2
 		MSE = np.mean(Y_diffs)
 		print("polyfit MSE:", MSE)
+		print(V)
 		
-	return popt
+	return popt, V
 	
 def throughput_from_polyfit_coeffs(popt, lambda_pts):
 	X=np.array(lambda_pts)
@@ -254,7 +248,60 @@ def throughput_from_polyfit_coeffs(popt, lambda_pts):
 		
 	return thru_pts
 	
+	
 #throughput_from_sigmoidfit_coeffs(-40, 0, 10, 20/1, np.linspace(-10,10,100))
+
+###################################################################################
+
+def fit_uniform_thru_to_beta_file(thru_file, doPlot=False, doErr=False):
+	lambda_pts = []
+	thru_pts = []
+	with open(thru_file, "r") as f:
+		for line in f:
+			words = line.split()
+			if len(words)==0:
+				continue
+			if "#" not in words[0]:
+				lambda_pts.append(float(words[0]))
+				thru_pts.append(float(words[1]))
+	
+	return fit_uniform_thru_to_beta(lambda_pts, thru_pts, doPlot=doPlot, doErr=doErr)
+	
+def fit_uniform_thru_to_beta(lambda_pts, thru_pts, doPlot=False, doErr=False):
+	domain_min = min(lambda_pts)
+	domain_max = max(lambda_pts)
+	range_min = min(thru_pts)
+	range_max = max(thru_pts)
+	
+	X=np.array(lambda_pts)
+	Y=np.array(thru_pts)
+	
+	avg_val=np.mean(Y)
+	a, b, loc, scale = beta.fit(Y, floc=0, fscale=1)
+	
+	if doPlot:
+		#parameter space:
+		plot_pts = np.array(np.linspace(domain_min, domain_max, len(lambda_pts)*10))
+		plt.plot(X, Y, c='k')
+		plt.plot(plot_pts, [avg_val for _ in plot_pts], c='orange')
+		plt.xlim(domain_min, domain_max)
+		plt.show()
+		
+		#probability space:
+		dist = beta(a, b, loc, scale)
+		
+		plt.hist(Y, bins=30, density=True, alpha=0.6, label='Data')
+		plt.plot(Y, dist.pdf(Y), 'r-', lw=2, label='Fitted Beta PDF')
+		plt.legend()
+		plt.show()
+		
+	if doErr:
+		Y_diffs = [(beta.mean(a,b) - y)**2 for y in Y]
+		MSE = np.mean(Y_diffs)
+		print("beta dist fit MSE:", MSE)
+		
+	return a,b
+	
 
 ## Bayesian linear regression
 RegressionResult = namedtuple('RegressionResult',

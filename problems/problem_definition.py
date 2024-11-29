@@ -106,8 +106,10 @@ class ProblemDefinition:
 	
 	_allowable_prior_types = {
 		'gaussian': 2, #mu, sigma
+		'gaussian_multivar': 2, #mean vector, covariance
 		'gamma_ab': 2, #alpha, beta
 		'gamma_mv': 2, #mean, variance
+		'beta': 2, #a, b
 		'lognorm': 2, #mean, variance
 		'uniform': 2, #left, right
 		'nonrandom': 1, #return value
@@ -137,45 +139,62 @@ class ProblemDefinition:
 		for prior in dist_def: ###iterate over dim_theta
 			dtype = prior[0]
 			params = prior[1]
-			thetas_i = [] #need to do this carefully, we have multiple thetas and multiple samples
+			#need to do this carefully, we have multiple thetas and multiple samples
 	
 			#generate the rvs for this one particular theta
 			if dtype == 'gaussian':
 				mu = params[0]
 				sigma = params[1]
 				thetas_i = scipy.stats.norm.rvs(size=num_vals, loc=mu, scale=sigma)
+				vals.append(thetas_i.tolist())
+			elif dtype == 'gaussian_multivar':
+				mean_vector = np.array(params[0])
+				covariance = np.array(params[1])
+				multisamples = scipy.stats.multivariate_normal.rvs(size=num_vals, mean=mean_vector, cov=covariance)
+				for thetas_i in multisamples.T: #i think im breaking this down in the wrong direction...
+					vals.append(thetas_i.tolist())
 			elif dtype == 'gamma_ab':
 				alpha = params[0]
 				beta = params[1]
 				thetas_i = scipy.stats.gamma.rvs(size=num_vals, a=alpha, scale=1.0/beta)
+				vals.append(thetas_i.tolist())
 			elif dtype == 'gamma_mv':
 				mean = params[0]
 				variance = params[1]
 				alpha = mean**2 / variance
 				beta = mean / variance
 				thetas_i = scipy.stats.gamma.rvs(size=num_vals, a=alpha, scale=1.0/beta)
+				vals.append(thetas_i.tolist())
+			elif dtype == 'beta':
+				a = params[0]
+				b = params[1]
+				thetas_i = scipy.stats.beta.rvs(a=a, b=b, size=num_vals)
+				vals.append(thetas_i.tolist())
 			elif dtype == 'lognorm':
 				mu = params[0]
 				sigma = params[1]
 				thetas_i = scipy.stats.lognorm.rvs(size=num_vals, s=sigma, scale=np.exp(mu))
+				vals.append(thetas_i.tolist())
 			elif dtype == 'uniform':
 				left = params[0]
 				right = params[1]
 				thetas_i = scipy.stats.uniform.rvs(size=num_vals, loc=left, scale=right-left) #dist is [loc, loc + scale]
+				vals.append(thetas_i.tolist())
 			elif dtype == 'nonrandom':
 				thetas_i = [param[0] for _ in range(num_vals)]
+				vals.append(thetas_i.tolist())
 			elif dtype == 'gp_expquad':
 				variance = params[0]
 				ls = params[1]
 				prior_pts = params[2]
 				mean_fn = params[3]
 				thetas_i = [sample_gp_prior(variance, ls, prior_pts, mean_fn) for _ in range(num_vals)]
+				vals.append(thetas_i.tolist())
 			else:
 				raise ValueError("_dist_rvs did not expect prior type "+str(type))
-				
-			vals.append(thetas_i)
-	
+
 		#turn from list of rvs at each prior, to list of theta rvs
+		print(vals)
 		vals = np.transpose(vals)
 	
 		#return
@@ -239,6 +258,10 @@ class ProblemDefinition:
 			if dtype == 'gaussian':
 				mu = params[0]
 				tnom.append(mu)
+			elif dtype == 'gaussian_multivar':
+				mean_vector = params[0]
+				for mu in mean_vector:
+					tnom.append(mu)
 			elif dtype == 'gamma_ab':
 				alpha = params[0]
 				beta = params[1]
@@ -246,6 +269,10 @@ class ProblemDefinition:
 			elif dtype == 'gamma_mv':
 				mean = params[0]
 				tnom.append(mean)
+			elif dtype == 'beta':
+				a = params[0]
+				b = params[1]
+				tnom.append(a/(a+b))
 			elif dtype == 'lognorm':
 				mu = params[0]
 				tnom.append(mu)
