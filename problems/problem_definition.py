@@ -17,7 +17,6 @@ class ProblemDefinition:
 		self._internal_G = _G #G(d, x)
 		
 		#First, need to process the multivariate priors in theta
-		dimtheta=0
 		thetanames=[]
 		thetamasks=[]
 		for theta_def in _theta_defs:
@@ -26,20 +25,19 @@ class ProblemDefinition:
 			params = theta_def[1][1]
 			mask = theta_def[2]
 			if dtype == "gaussian_multivar":
-				dimtheta+= len(params[0])
 				thetanames.extend([name+str(i) for i,_ in enumerate(params[0])])
 				thetamasks.extend([mask for _ in params[0]])
 			else:
-				dimtheta+=1 
 				thetanames.append(name)
 				thetamasks.append(mask)
+		dimtheta=len(thetanames)
 		
 		#get dimensions, set default parameters
 		self.dim_d = len(_d_defs)
 		self.dim_y = len(_y_defs)
 		self.dim_x = len(_x_defs)
-		self.x_default = [default for name,dist,mask,default in _x_defs]
 		self.dim_theta = dimtheta #self.dim_theta = len(_theta_defs)
+		self.x_default = [default for name,dist,mask,default in _x_defs]
 		
 		#hack the x_defs to save wasted effort:
 		for xdef in _x_defs:
@@ -212,7 +210,6 @@ class ProblemDefinition:
 				raise ValueError("_dist_rvs did not expect prior type "+str(type))
 
 		#turn from list of rvs at each prior, to list of theta rvs
-		print(vals)
 		vals = np.transpose(vals)
 	
 		#return
