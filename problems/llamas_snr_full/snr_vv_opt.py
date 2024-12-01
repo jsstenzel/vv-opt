@@ -37,6 +37,13 @@ def vv_nominal(problem, req, theta_nominal, y_nominal):
 
 
 ###uncertainty analysis
+def vv_UA_theta(problem, n=10**4):
+	#uncertainty propagation of HLVA
+	uq_thetas = problem.prior_rvs(n)
+	
+	covmatrix_heatmap(uq_thetas, names=problem.theta_names, rescale=True)
+	
+	
 def vv_UP_QoI(problem, req, n=10**4):
 	#uncertainty propagation of HLVA
 	uq_thetas = problem.prior_rvs(n)
@@ -48,7 +55,7 @@ def vv_UP_QoI(problem, req, n=10**4):
 			print(Q, flush=True)
 			Qs.append(Q)
 		except:
-			0
+			print("System model eval fail?", flush=True)
 	print(Qs)
 	#uncertainty_prop_plot([theta[0] for theta in uq_thetas], xlab="How to plot this...")
 	uncertainty_prop_plot(Qs, xlab="QoI: SNR", vline=[req])
@@ -63,12 +70,26 @@ def vv_UP_QoI(problem, req, n=10**4):
 
 #sensitivity analysis of HLVA
 def vv_SA_QoI(problem, p=5):
+	#annoyingly, I need to process the prior dists:
+	thetadists=[]
+	thetabounds=[]
+	for theta_prior in problem.priors:
+		dtype = theta_prior[0]
+		params = theta_prior[1]
+		if dtype == "gaussian_multivar":
+			thetadists.extend(["gaussian" for _ in params[0]])
+			param_get = [[mean, stddev] for mean,stddev in zip(params[0],np.diagonal(params[1]))]
+			thetabounds.extend(param_get)
+		else:
+			thetadists.append(dtype)
+			thetabounds.append(params)
+	
 	#it'll be straightforward to see the dependence of QoI on theta
 	Si = sobol_saltelli(problem.H, 
 						2**p, #SALib wants powers of 2 for convergence
 						var_names=problem.theta_names, 
-						var_dists=[prior[0] for prior in problem.priors], 
-						var_bounds=[prior[1] for prior in problem.priors],
+						var_dists=thetadists, 
+						var_bounds=thetabounds,
 						conf=0.95, doSijCalc=False, doPlot=True, doPrint=True)
 
 #Uncertainty analysis of the experiment models
@@ -196,11 +217,14 @@ if __name__ == '__main__':
 	if args.run == "nominal":
 		vv_nominal(problem, req, theta_nominal, y_nominal)
 	
+	if args.run == "UA_theta":
+		vv_UA_theta(problem, n=10**2)
+	
 	if args.run == "UP_QoI":
 		vv_UP_QoI(problem, req, n=250)
 	
 	if args.run == "SA_QoI":
-		vv_SA_QoI(problem, p=3)
+		vv_SA_QoI(problem, p=5)
 	
 	if args.run == "UP_exp":
 		vv_UP_exp(problem, d_historical, theta_nominal, n=10)

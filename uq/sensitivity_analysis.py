@@ -51,6 +51,9 @@ def sobol_saltelli(function, N, var_names, var_dists, var_bounds, conf = 0.95, d
 		if dist == 'gamma_mv' or dist == 'gamma_ab':
 			dists[j] = 'unif'
 			bounds[j] = [0,1]
+		elif dist == 'beta':
+			dists[j] = 'unif'
+			bounds[j] = [0,1]
 		elif dist == 'unif' or dist == 'uniform':
 			dists[j] = 'unif'
 		elif dist == 'triang' or dist == 'triangle':
@@ -76,6 +79,8 @@ def sobol_saltelli(function, N, var_names, var_dists, var_bounds, conf = 0.95, d
 	}
 	
 	###generate param values
+	if doPrint:
+		print("Generating Sobol sequence sample...", flush=True)
 	param_values = saltelli.sample(problem, N, calc_second_order=doSijCalc)
 	
 	#apply the distributions unsupported by SALib
@@ -83,21 +88,35 @@ def sobol_saltelli(function, N, var_names, var_dists, var_bounds, conf = 0.95, d
 	for j,dist in enumerate(var_dists):
 		if dist == 'gamma_mv':
 			mean = var_bounds[j][0]
-			variance = bounds[j][1]
+			variance = var_bounds[j][1]
 			alpha = mean**2 / variance
 			beta = mean / variance
 			param_values[:,j] = scipy.stats.gamma.ppf(param_values[:,j], a=alpha, scale=1.0/beta)
 		if dist == 'gamma_ab':
 			alpha = var_bounds[j][0]
-			beta = bounds[j][1]
+			beta = var_bounds[j][1]
 			param_values[:,j] = scipy.stats.gamma.ppf(param_values[:,j], a=alpha, scale=1.0/beta)
+		if dist == 'beta':
+			a = var_bounds[j][0]
+			b = var_bounds[j][1]
+			param_values[:,j] = scipy.stats.beta.ppf(param_values[:,j], a=a, b=b)
 		if dist == 'nonrandom':
 			param_values[:,j] = np.repeat(var_bounds[j][0], len(param_values[:,j]))
 	
 	###run model
-	Y = np.array([function(x) for x in param_values])
+	if doPrint:
+		print("Running the model over the Sobol samples...", flush=True)
+		Yget = []
+		for i,x in enumerate(param_values):
+			Yget.append(function(x))
+			print(str(i+1)+"/"+str(len(param_values)),'\t', flush=True, end='\r')
+		Y = np.array(Yget)
+	else:
+		Y = np.array([function(x) for x in param_values])
 	
 	###calculate indices
+	if doPrint:
+		print("Analyzing Sobol indices...", flush=True)
 	Si = sobol.analyze(problem, Y, calc_second_order=doSijCalc, conf_level=conf, print_to_console=doPrint, parallel=False, n_processors=None) 
 	if doPrint:
 		print("Confidence levels on each parameter calculated at ",conf,flush=True)
@@ -190,6 +209,7 @@ def plot_gsa(varnames, Si=None, filename=None, logplot=False):
 	plt.xlabel('Parameters', fontweight ='bold', fontsize = 10)
 	plt.ylabel('S_T', fontweight ='bold', fontsize = 10)
 	#plt.xticks([r + barWidth for r in range(len(varnames))], varnames)
+	plt.xticks(rotation=90)
 	plt.tight_layout()
 	if logplot:
 		plt.yscale('log')	

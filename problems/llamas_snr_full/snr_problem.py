@@ -159,7 +159,7 @@ y_defs = [
 				"y_coll_t1",
 				"y_coll_t2",
 				"y_coll_t3",
-				"y_prism_red",
+				"y_prism_t",
 				"y_l1_t",
 				"y_l2_t",
 				"y_l3_t",
