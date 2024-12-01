@@ -250,7 +250,7 @@ def poly_fit_throughput(lambda_pts, thru_pts, power, doPlot=False, doErr=False, 
 		Y_diffs = (Yfit - Y)**2
 		MSE = np.mean(Y_diffs)
 		print("polyfit MSE:", MSE)
-		print(V)
+		#print(V)
 		
 	return popt, V
 	
