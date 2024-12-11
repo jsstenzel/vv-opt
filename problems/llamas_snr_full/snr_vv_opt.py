@@ -203,9 +203,9 @@ if __name__ == '__main__':
 						2,  #t_qe
 						3, #d_vph_n_pts
 						800, #d_dichroic_n_pts
-						100, #d_coll_n_pts #WAG
-						10, #d_lens_n_pts #WAG
-						10 #d_frd_n_meas
+						1501, #d_coll_n_pts #MIT Run 9-2730		
+						0, #d_lens_n_pts #WAG
+						10 #d_frd_n_meas #from evaluating_cleaving_through_bigger.xlsx
 					]
 	problem = llamas_snr
 	

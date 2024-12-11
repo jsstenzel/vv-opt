@@ -34,6 +34,7 @@ ELEMENT		L4 	   2 BSM51Y 	 ECI_PBM8Y.txt 	     ECI placeholder
 ELEMENT		L5 	   2 CaF2 	 ECI_FusedSilica.txt ECI placeholder
 ELEMENT		L6 	   2 PBM2Y 	 ECI_PBM8Y.txt 	     ECI placeholder
 ELEMENT		L7 	   2 SNBH52 	 ECI_PBM8Y.txt 	     ECI placeholder
+ELEMENT		L8 	   2 SNBH52 	 ECI_PBM8Y.txt 	     ECI placeholder
 ELEMENT		WINDOW 	   2 Sapphire 	 ECI_FusedSilica.txt ECI placeholder
 ELEMENT		GLASSTRANS 1 Composite	 llamas_internal_blue.txt MIT model
 SENSOR		CCD42-40_BLUE CCD42-40_dd.txt 2.65 0.00107 13.5

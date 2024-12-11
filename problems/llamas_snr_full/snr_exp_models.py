@@ -93,6 +93,7 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	y_coll_t = measure_thru_sigmoid(coll_params, d["d_coll_n_pts"], x["wave_min"], x["wave_max"], x["coll_meas_stddev"], err)
 	
 	#lenses
+	#TODO get rid of prism, replace this with 3 experiments that each measure the total thru of a full camera
 	y_prism_t = simple_measurement(theta["prism_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
 	y_l1_t = simple_measurement(theta["l1_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
 	y_l2_t = simple_measurement(theta["l2_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
@@ -101,8 +102,9 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	y_l5_t = simple_measurement(theta["l5_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
 	y_l6_t = simple_measurement(theta["l6_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
 	y_l7_t = simple_measurement(theta["l7_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
+	y_l8_t = simple_measurement(theta["l8_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
 	y_lenses = [
-		y_prism_t, y_l1_t, y_l2_t, y_l3_t, y_l4_t, y_l5_t, y_l6_t, y_l7_t,
+		y_prism_t, y_l1_t, y_l2_t, y_l3_t, y_l4_t, y_l5_t, y_l6_t, y_l7_t, y_l8_t,
 	]
 	
 	y_frd = simple_measurement(theta["fiber_frd"], x["frd_meas_err"], d["d_frd_n_meas"], err)

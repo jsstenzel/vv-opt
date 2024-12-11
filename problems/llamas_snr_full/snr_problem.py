@@ -41,40 +41,47 @@ prior_rn_SN3 = ["gamma_mv", [2.35,0.25**2]]
 prior_dc_SN3 = ["gamma_mv", [0.00267,.001**2]]
 
 ###Quantum efficiency priors
-coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_dd.txt", 2, _wave_max-_wave_min, doPlot=False, doErr=True)
+coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_dd.txt", 2, _wave_max-_wave_min, doPlot=True, doErr=True)
 prior_qe_red_t = ["gaussian_multivar", [[inter, coeffs[0], coeffs[1], coeffs[2], coeffs[3]], thru_param_var*np.identity(5)]] #dim = 5
 
-coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_green.txt", 2, _wave_max-_wave_min, doPlot=False, doErr=True)
+coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_green.txt", 2, _wave_max-_wave_min, doPlot=True, doErr=True)
 prior_qe_gre_t = ["gaussian_multivar", [[inter, coeffs[0], coeffs[1], coeffs[2], coeffs[3]], thru_param_var*np.identity(5)]] #dim = 5
 
-coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_blue.txt", 2, _wave_max-_wave_min, doPlot=False, doErr=True)
+coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_blue.txt", 2, _wave_max-_wave_min, doPlot=True, doErr=True)
 prior_qe_blu_t = ["gaussian_multivar", [[inter, coeffs[0], coeffs[1], coeffs[2], coeffs[3]], thru_param_var*np.identity(5)]] #dim = 5
 
 
 ###VPH priors
-plist, pcov = poly_fit_throughput_file(_dir+"wasach_llamas2200_red.txt", 2, doPlot=False, doErr=True)
-prior_vph_red_t = ["gaussian_multivar", [plist, pcov]] #dim = 3
-plist, pcov = poly_fit_throughput_file(_dir+"wasach_llamas2200_green.txt", 2, doPlot=False, doErr=True)
-prior_vph_gre_t = ["gaussian_multivar", [plist, pcov]] #dim = 3
-plist, pcov = poly_fit_throughput_file(_dir+"wasach_llamas2200_blue.txt", 2, doPlot=False, doErr=True)
-prior_vph_blu_t = ["gaussian_multivar", [plist, pcov]] #dim = 3
+plist, pcov = poly_fit_throughput_file(_dir+"vph_llamas_red.txt", 3, doPlot=True, doErr=True)
+prior_vph_red_t = ["gaussian_multivar", [plist, pcov]] #dim = 4
+plist, pcov = poly_fit_throughput_file(_dir+"vph_llamas_blue.txt", 3, doPlot=True, doErr=True)
+prior_vph_gre_t = ["gaussian_multivar", [plist, pcov]] #dim = 4
+plist, pcov = poly_fit_throughput_file(_dir+"vph_llamas_blue.txt", 3, doPlot=True, doErr=True)
+prior_vph_blu_t = ["gaussian_multivar", [plist, pcov]] #dim = 4
 
 ###Dichroic priors
-lval, steppt, rval, power, pcov = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_sl_prior.txt", doPlot=False, doErr=True)
+lval, steppt, rval, power, pcov = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_sl_prior.txt", doPlot=True, doErr=True)
 prior_sl_t = ["gaussian_multivar",[[lval, steppt, rval, power], pcov]] #dim = 4
 
-lval, steppt, rval, power, pcov = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_bg_prior.txt", doPlot=False, doErr=True)
+lval, steppt, rval, power, pcov = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_bg_prior.txt", doPlot=True, doErr=True)
 prior_bg_t = ["gaussian_multivar",[[lval, steppt, rval, power], pcov]] #dim = 4
 
 ###Collimator priors
-lval, steppt, rval, power, pcov = sigmoid_fit_throughput_file(_dir+"dielectric_mirror.txt", doPlot=False, doErr=True)
+#TODO replace with ECI coating curve, LLAMAS_collimator_coatings_ECI_20210504
+lval, steppt, rval, power, pcov = sigmoid_fit_throughput_file(_dir+"dielectric_mirror.txt", doPlot=True, doErr=True)
 prior_coll_t = ["gaussian_multivar",[[lval, steppt, rval, power], pcov]] #dim = 4
 
 ###Lens priors
-a,b = fit_uniform_thru_to_beta_file(_dir+"ECI_FusedSilica.txt", doPlot=False, doErr=True)
+#TODO replace these with real priors -- manufacturer curves for 60-30110
+#which I guess means there was never any in-house testing?
+#or should I count the testing for protoLLAMAS, design_vs_asbuilt_LLAMASprotoBlue etc?
+#no, that was to validate the design... but that does give me the idea that the lens test should test full camera throughput
+#using manufacturer curves means I should have separate thetas for the r,g,b lenses... do that and get rid of prisms
+
+a,b = fit_uniform_thru_to_beta_file(_dir+"ECI_FusedSilica.txt", doPlot=True, doErr=True)
 prior_silica_thru = ["beta", [a,b]]
 
-a,b = fit_uniform_thru_to_beta_file(_dir+"ECI_PBM8Y.txt", doPlot=False, doErr=True)
+a,b = fit_uniform_thru_to_beta_file(_dir+"ECI_PBM8Y.txt", doPlot=True, doErr=True)
 prior_PBM8Y_thru = ["beta", [a,b]]
 
 ###Fiber priors
@@ -95,9 +102,9 @@ theta_defs = [                             #mean, variance
 					["qe_red_t", prior_qe_red_t, "continuous"],#dim = 5
 					["qe_gre_t", prior_qe_gre_t, "continuous"],#dim = 5
 					["qe_blu_t", prior_qe_blu_t, "continuous"],#dim = 5
-					["vph_red_t", prior_vph_red_t, "continuous"],#dim = 3
-					["vph_gre_t", prior_vph_gre_t, "continuous"],#dim = 3
-					["vph_blu_t", prior_vph_blu_t, "continuous"],#dim = 3
+					["vph_red_t", prior_vph_red_t, "continuous"],#dim = 4
+					["vph_gre_t", prior_vph_gre_t, "continuous"],#dim = 4
+					["vph_blu_t", prior_vph_blu_t, "continuous"],#dim = 4
 					["sl_t", prior_sl_t, "continuous"],#dim = 4
 					["bg_t", prior_bg_t, "continuous"],#dim = 4
 					["coll_t", prior_coll_t, "continuous"],#dim = 4
@@ -109,6 +116,7 @@ theta_defs = [                             #mean, variance
 					["l5_t", prior_silica_thru, "continuous"],
 					["l6_t", prior_PBM8Y_thru, "continuous"],
 					["l7_t", prior_PBM8Y_thru, "continuous"],
+					["l8_t", prior_PBM8Y_thru, "continuous"],
 					["fiber_frd", prior_frd, "continuous"]
 				]
 
@@ -141,12 +149,15 @@ y_defs = [
 				"y_vph_red_p0", 
 				"y_vph_red_p1", 
 				"y_vph_red_p2", 
+				"y_vph_red_p3", 
 				"y_vph_gre_p0", 
 				"y_vph_gre_p1", 
-				"y_vph_gre_p2", 
+				"y_vph_gre_p2",
+				"y_vph_gre_p3",
 				"y_vph_blu_p0", 
 				"y_vph_blu_p1", 
 				"y_vph_blu_p2", 
+				"y_vph_blu_p3", 
 				"y_sl_t0", 
 				"y_sl_t1", 
 				"y_sl_t2", 
@@ -167,6 +178,7 @@ y_defs = [
 				"y_l5_t",
 				"y_l6_t",
 				"y_l7_t",
+				"y_l8_t",
 				"y_frd"
 			]
 
@@ -221,14 +233,10 @@ x_defs = [
 				["w", ["uniform", [3.64 + (2.12*.00025)*(300-_temp-1),3.70 + (2.80*.00025)*(300-_temp+1)]], "continuous", _w], #eV/e- #uncertainty in T, w(300K), a
 				["activity_cd109", ["uniform", [1e-6,10e-6]], "continuous", 5e-6], #Ci #radioactivity of sample
 				["grade_size", ["nonrandom", [3]], "discrete", 3], #3x3 event grade sizes
-				["t_gain_setup", ["nonrandom", [1200]], "continuous", 1200], #WAG
-				["t_gain_buffer", ["nonrandom", [5]], "continuous", 5], #WAG
 				#rn exp
 				["t_rn", [], "continuous", .1], #100 ms exposure
-				["t_rn_buffer", [], "continuous", 5], #WAG
 				#dc exp
 				["t_0", [], "continuous", 0.1], #100ms baseline exposure assumed
-				["t_dc_buffer", [], "continuous", 5], #WAG
 				#qe
 				["S_pd", [], "functional", define_functional([p[0] for p in photodiode], [p[1] for p in photodiode], order=3)],
 				["S_pd_meas_err", [], "continuous", .01],  #mA/W
@@ -265,14 +273,30 @@ x_defs = [
 				["sensor_glass_blu", [], "functional", define_functional_from_file(_dir+"llamas_internal_blue.txt")],
 				#optical measurements
 				["vph_meas_stddev", [], "continuous", .001], #need actual historical
-				["sl_meas_stddev", [], "continuous", .001], #WAG
-				["bg_meas_stddev", [], "continuous", .001], #WAG
-				["coll_meas_stddev", [], "continuous", .001], #WAG
-				["lens_meas_err", [], "continuous", .001], #WAG
+				["sl_meas_stddev", [], "continuous", .001], #Measurement Considerations When Specifying Optical Coatings, Pete Kupinski and Angus Macleod. This paper indicates a best case +- 0.1% T for commercial measurements of highly transmissive coatings.
+				["bg_meas_stddev", [], "continuous", .001], #ibid.
+				["coll_meas_stddev", [], "continuous", .001], #ibid.
+				["lens_meas_err", [], "continuous", .001], #ibid.
 				#cost
-				["testbed_setup", ["nonrandom", [1800]], "continuous", 1800], #WAG
-				#["C_engineer", ["nonrandom", [0.00694444444]], "continuous", 0.00694444444] #WAG $/s, from $25/hr
-				["C_engineer", ["nonrandom", [1]], "continuous", 1] #just count time
+				["t_gain_setup", [], "continuous", 1200], #rough estimate based on experience
+				["t_gain_buffer", [], "continuous", 5], #rough estimate based on experience
+				["t_rn_buffer", [], "continuous", 5], #rough estimate based on experience
+				["t_dc_buffer", [], "continuous", 5], #rough estimate based on experience
+				["fp_testbed_setup", [], "continuous", 1800], #rough estimate based on experience
+				["t_qe_setup", [], "continuous", 1200], #WAG, best i can do
+				["t_qe_buffer", [], "continuous", 5], #WAG, best i can do
+				["t_vph_setup", [], "continuous", 1200], #WAG just assuming all setups are 1hr
+				["t_vph_per_pt", [], "continuous", 5], #WAG assuming all thru exposures + buffers are 5sec
+				["t_dichroic_setup", [], "continuous", 1200], #WAG just assuming all setups are 1hr
+				["t_dichroic_per_pt", [], "continuous", 5], #WAG assuming all thru exposures + buffers are 5sec
+				["t_coll_setup", [], "continuous", 1200], #WAG just assuming all setups are 1hr
+				["t_coll_per_pt", [], "continuous", 5], #WAG assuming all thru exposures + buffers are 5sec
+				["t_camera_test_setup", [], "continuous", 1800], #WAG this setup is probably more complicated
+				["t_camera_per_pt", [], "continuous", 5], #WAG assuming all thru exposures + buffers are 5sec
+				["t_frd_setup", [], "continuous", 1200], #WAG just assuming all setups are 1hr
+				["t_frd_test", [], "continuous", 600], #WAG i think this test was probably pretty fiddly, since we only tested 10
+				#["C_engineer", [], "continuous", 0.00694444444] #WAG $/s, from $25/hr
+				["C_engineer", [], "continuous", 1] #just count time
 			]
 
 

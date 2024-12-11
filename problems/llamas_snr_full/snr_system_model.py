@@ -173,6 +173,7 @@ def sensitivity_hlva(theta, x, verbose=True):
 	elem_lens5 = [theta["l5_t"] for _ in lambda_pts]
 	elem_lens6 = [theta["l6_t"] for _ in lambda_pts]
 	elem_lens7 = [theta["l7_t"] for _ in lambda_pts]
+	elem_lens8 = [theta["l8_t"] for _ in lambda_pts]
 	
 	fiber_frd = theta["fiber_frd"]
 	
@@ -295,8 +296,10 @@ def sensitivity_hlva(theta, x, verbose=True):
 	for surf in llamas_blue.elements[10].surfaces:
 		surf.setThroughputTab(lambda_pts, elem_lens7)
 	for surf in llamas_blue.elements[11].surfaces:
-		surf.setThroughputTab(elem_window.prior_pts, thru(elem_window))
+		surf.setThroughputTab(lambda_pts, elem_lens8)
 	for surf in llamas_blue.elements[12].surfaces:
+		surf.setThroughputTab(elem_window.prior_pts, thru(elem_window))
+	for surf in llamas_blue.elements[13].surfaces:
 		surf.setThroughputTab(elem_glass_blu.prior_pts, thru(elem_glass_blu))
 	
 	#update sensors
