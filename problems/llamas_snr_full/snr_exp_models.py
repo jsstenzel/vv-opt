@@ -94,7 +94,6 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	
 	#lenses
 	#TODO get rid of prism, replace this with 3 experiments that each measure the total thru of a full camera
-	y_prism_t = simple_measurement(theta["prism_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
 	y_l1_t = simple_measurement(theta["l1_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
 	y_l2_t = simple_measurement(theta["l2_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
 	y_l3_t = simple_measurement(theta["l3_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
@@ -104,7 +103,7 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	y_l7_t = simple_measurement(theta["l7_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
 	y_l8_t = simple_measurement(theta["l8_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
 	y_lenses = [
-		y_prism_t, y_l1_t, y_l2_t, y_l3_t, y_l4_t, y_l5_t, y_l6_t, y_l7_t, y_l8_t,
+		y_l1_t, y_l2_t, y_l3_t, y_l4_t, y_l5_t, y_l6_t, y_l7_t, y_l8_t,
 	]
 	
 	y_frd = simple_measurement(theta["fiber_frd"], x["frd_meas_err"], d["d_frd_n_meas"], err)
@@ -133,7 +132,7 @@ def simple_measurement(theta, stddev_meas, n_meas, err=True):
 		return 0 #placeholder
 
 	
-def measure_thru_sigmoid(params, d_meas_pts, wave_min, wave_max, meas_stddev, err=True):
+def measure_thru_sigmoid(theta_gp, d_meas_pts, wave_min, wave_max, meas_stddev, err=True):
 	if err:
 		stddev = x["vph_meas_stddev"]
 	else:
@@ -144,20 +143,13 @@ def measure_thru_sigmoid(params, d_meas_pts, wave_min, wave_max, meas_stddev, er
 		num_pts = 4
 	else:
 		num_pts = d_meas_pts
-		
-	#convert the theta params to a GP
-	lambda_pts = np.linspace(wave_min, wave_max, num=math.ceil((wave_max-wave_min)/0.1))
-	#print(lambda_pts, flush=True)
-	thru_pts = throughput_from_sigmoidfit_coeffs(params[0], params[1], params[2], params[3], lambda_pts)
-	#print(thru_pts, flush=True)
-	gp_throughput = define_functional(lambda_pts, thru_pts, order=1)
 	
 	#choose the measurement points
 	measurement_pts = np.linspace(wave_min, wave_max, num=num_pts)
 	#print(measurement_pts, flush=True)
 	
 	#make the measurements, assuming that there is one y_i for each measurement point ki
-	y_thru = gp_throughput.eval_gp_cond(measurement_pts, stddev)
+	y_thru = theta_gp.eval_gp_cond(measurement_pts, stddev)
 	#print(y_thru, flush=True)
 	
 	#apply the 0..1 boundaries
@@ -173,7 +165,7 @@ def measure_thru_sigmoid(params, d_meas_pts, wave_min, wave_max, meas_stddev, er
 	return [lval, step_pt, rval, power]
 	
 	
-def measure_thru_vph(params, d_meas_pts, wave_min, wave_max, meas_stddev, err=True):
+def measure_thru_vph(theta_gp, d_meas_pts, wave_min, wave_max, meas_stddev, err=True):
 	if err:
 		stddev = x["vph_meas_stddev"]
 	else:
@@ -184,18 +176,13 @@ def measure_thru_vph(params, d_meas_pts, wave_min, wave_max, meas_stddev, err=Tr
 		num_pts = 3
 	else:
 		num_pts = d_meas_pts
-		
-	#convert the theta params to a GP
-	lambda_pts = np.linspace(wave_min, wave_max, num=math.ceil((wave_max-wave_min)/0.1))
-	thru_pts = throughput_from_polyfit_coeffs(params, lambda_pts)
-	gp_throughput = define_functional(lambda_pts, thru_pts, order=1)
 	
 	#choose the measurement points; this +2 -2 thing is to make sure im not measuring the endpoints
 	measurement_pts = np.linspace(wave_min, wave_max, num=num_pts+2)
 	measurement_pts = measurement_pts[1:-1]
 	
 	#make the measurements
-	y_thru = gp_throughput.eval_gp_cond(measurement_pts, stddev)
+	y_thru = theta_gp.eval_gp_cond(measurement_pts, stddev)
 	
 	#apply the 0..1 boundaries
 	for i,yi in enumerate(y_thru):
@@ -359,11 +346,7 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x, err=True):
 	return m
 	
 	
-#This experiment does not model "photon losses due to the gate structures, electron 
-#recombination within the bulk silicon itself, surface reflection, and, for very long or 
-#short wavelengths, losses due to the almost complete lack of absorption by the CCD"
-#- Howell, Handbook of CCD Astronomy - instead, it models how we might measure intrinsic QE
-def quantum_efficiency_exp(params, gain, rn, n_qe, t_qe, wave_min, wave_max, full_bandpass, _x, err=True):
+def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, wave_min, wave_max, _x, err=True):
 	#define parameters
 	S_pd = _x["S_pd"] #functional
 	S_pd_err = _x["S_pd_meas_err"]
@@ -378,23 +361,20 @@ def quantum_efficiency_exp(params, gain, rn, n_qe, t_qe, wave_min, wave_max, ful
 	else:
 		num_pts = n_qe
 	
-	#choose the measurement points
+	#define design variables
+	#n_qe number of evenly-separated measurement points
+	#t_qe exposure time
+	#I_qe photocurrent of light source - spectral power * wavelength, see Krishnamurthy et al. 2016
+	
+	#Take sample measurements of source and qe
 	measure_pts = np.linspace(wave_min, wave_max, num_pts)
-	
-	#get the qe at each measurement point
-	qe_sample = throughput_from_linfourier_coeffs(params[1:], params[0], 2, wave_max-wave_min, measure_pts)
-	
-	#apply the 0..1 boundaries to the qe
-	for i,yi in enumerate(qe_sample):
-		if yi < 0:
-			qe_sample[i] = 0
-		if yi > 1:
-			qe_sample[i] = 1
 	
 	if err:
 		S_pd_sample = S_pd.eval_gp_cond(measure_pts, S_pd_err)
 	else:
 		S_pd_sample = S_pd.eval_gp_cond(measure_pts, 0)
+
+	qe_sample = qe.eval_gp_cond(measure_pts, 0)
 	
 	Signal_measure = []
 	for lambda_i, qe_i, S_i in zip(measure_pts, qe_sample, S_pd_sample):
@@ -407,18 +387,12 @@ def quantum_efficiency_exp(params, gain, rn, n_qe, t_qe, wave_min, wave_max, ful
 		Signal = gain * qe_i * num_photons
 		
 		if err:
-			ccd_error = math.sqrt(rn**2 + (sigma_dc*t_qe))
+			ccd_error = math.sqrt(rn**2 + (sigma_dc*t_qe)**2)
 			Signal += scipy.stats.norm.rvs(scale = ccd_error)
 		
 		Signal_measure.append(Signal)
 		
-	
 	#convert measurements back to y params
 	coeffs, inter, _, _ = linreg_fourier_throughput(measure_pts, Signal_measure, 2, full_bandpass, doPlot=False, doErr=False)
 		
 	return [inter, coeffs[0], coeffs[1], coeffs[2], coeffs[3]]
-	
-	
-	
-def cost_model(theta, x):
-	return 0

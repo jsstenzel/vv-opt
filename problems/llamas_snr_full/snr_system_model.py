@@ -133,39 +133,28 @@ def sensitivity_hlva(theta, x, verbose=True):
 
 	lambda_pts = np.linspace(wave_min, wave_max, num=math.ceil((wave_max-wave_min)/0.1))
 	
-	#elem_qe_red = theta["qe_red"]#CCD42-40_dd.txt
-	coeffs = [theta["qe_red_t1"], theta["qe_red_t2"], theta["qe_red_t3"], theta["qe_red_t4"]]
-	elem_qe_red = throughput_from_linfourier_coeffs(coeffs, theta["qe_red_t0"], 2, wave_max-wave_min, lambda_pts, doPlot=verbose)
+	#update qe
+	llamas_red.sensor.qe.setThroughputTab(elem_qe_red.prior_pts, thru(elem_qe_red))
+	llamas_green.sensor.qe.setThroughputTab(elem_qe_gre.prior_pts, thru(elem_qe_gre))
+	llamas_blue.sensor.qe.setThroughputTab(elem_qe_blu.prior_pts, thru(elem_qe_blu))
 	
-	#elem_qe_gre = theta["qe_gre"]#CCD42-40_green.txt
-	coeffs = [theta["qe_gre_t1"], theta["qe_gre_t2"], theta["qe_gre_t3"], theta["qe_gre_t4"]]
-	elem_qe_gre = throughput_from_linfourier_coeffs(coeffs, theta["qe_gre_t0"], 2, wave_max-wave_min, lambda_pts, doPlot=verbose)
+	#update vph
+	llamas_red.grating.blaze.setThroughputTab(elem_vph_red.prior_pts, thru(elem_vph_red))
+	llamas_green.grating.blaze.setThroughputTab(elem_vph_gre.prior_pts, thru(elem_vph_gre))
+	llamas_blue.grating.blaze.setThroughputTab(elem_vph_blu.prior_pts, thru(elem_vph_blu))
 	
-	#elem_qe_blu = theta["qe_blu"]#CCD42-40_blue.txt
-	coeffs = [theta["qe_blu_t1"], theta["qe_blu_t2"], theta["qe_blu_t3"], theta["qe_blu_t4"]]
-	elem_qe_blu = throughput_from_linfourier_coeffs(coeffs, theta["qe_blu_t0"], 2, wave_max-wave_min, lambda_pts, doPlot=verbose)
+	#update collimator throughputs
+	llamas_red.elements[0].surfaces[0].setThroughputTab(elem_collimator.prior_pts, thru(elem_collimator))
+	llamas_green.elements[0].surfaces[0].setThroughputTab(elem_collimator.prior_pts, thru(elem_collimator))
+	llamas_blue.elements[0].surfaces[0].setThroughputTab(elem_collimator.prior_pts, thru(elem_collimator))
+			
+	#update dichroic throughputs
+	llamas_red.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.prior_pts, thru(elem_dichroic_sl))
+	llamas_green.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.prior_pts, [1.0-t for t in thru(elem_dichroic_sl)])		
+	llamas_green.elements[2].surfaces[0].setThroughputTab(elem_dichroic_bg.prior_pts, elem_dichroic_bg.evaluate())
+	llamas_blue.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.prior_pts, [1.0-t for t in thru(elem_dichroic_sl)])
+	llamas_blue.elements[2].surfaces[0].setThroughputTab(elem_dichroic_bg.prior_pts, [1.0-t for t in thru(elem_dichroic_bg)])
 	
-	#elem_vph_red = theta["vph_thru_red"]#wasach_llamas2200_red.txt
-	popt = [theta["vph_red_t0"], theta["vph_red_t1"], theta["vph_red_t2"]]#, theta["vph_red_t3"]]
-	elem_vph_red = throughput_from_polyfit_coeffs(popt, lambda_pts)
-	
-	#elem_vph_gre = theta["vph_thru_gre"]#wasach_llamas2200_green.txt
-	popt = [theta["vph_gre_t0"], theta["vph_gre_t1"], theta["vph_gre_t2"]]#, theta["vph_gre_t3"]]
-	elem_vph_gre = throughput_from_polyfit_coeffs(popt, lambda_pts)
-	
-	#elem_vph_blu = theta["vph_thru_blu"]#wasach_llamas2200_blue.txt
-	popt = [theta["vph_blu_t0"], theta["vph_blu_t1"], theta["vph_blu_t2"]]#, theta["vph_blu_t3"]]
-	elem_vph_blu = throughput_from_polyfit_coeffs(popt, lambda_pts)
-	
-	#elem_dichroic_sl = theta["sl_thru_dichroic"]#ECI_FusedSilica.txt
-	elem_dichroic_sl = throughput_from_sigmoidfit_coeffs(theta["sl_t0"], theta["sl_t1"], theta["sl_t2"], theta["sl_t3"], lambda_pts)
-	
-	#elem_dichroic_bg = theta["bg_thru_dichroic"]#ECI_FusedSilica.txt
-	elem_dichroic_bg = throughput_from_sigmoidfit_coeffs(theta["bg_t0"], theta["bg_t1"], theta["bg_t2"], theta["bg_t3"], lambda_pts)
-	
-	elem_collimator = throughput_from_sigmoidfit_coeffs(theta["coll_t0"], theta["coll_t1"], theta["coll_t2"], theta["coll_t3"], lambda_pts)
-	
-	elem_prism = [theta["prism_t"] for _ in lambda_pts]
 	elem_lens1 = [theta["l1_t"] for _ in lambda_pts]
 	elem_lens2 = [theta["l2_t"] for _ in lambda_pts]
 	elem_lens3 = [theta["l3_t"] for _ in lambda_pts]
@@ -204,23 +193,6 @@ def sensitivity_hlva(theta, x, verbose=True):
 			surf.setThroughputTab(elem_ar.prior_pts, thru(elem_ar))
 		for surf in llamas_channel.fiber.elements[2].surfaces: #fiber
 			surf.setThroughputTab(elem_fiber.prior_pts, thru(elem_fiber))
-
-	#update vph
-	llamas_red.grating.blaze.setThroughputTab(lambda_pts, elem_vph_red)
-	llamas_green.grating.blaze.setThroughputTab(lambda_pts, elem_vph_gre)
-	llamas_blue.grating.blaze.setThroughputTab(lambda_pts, elem_vph_blu)
-	
-	#update collimator throughputs
-	llamas_red.elements[0].surfaces[0].setThroughputTab(lambda_pts, elem_collimator)
-	llamas_green.elements[0].surfaces[0].setThroughputTab(lambda_pts, elem_collimator)
-	llamas_blue.elements[0].surfaces[0].setThroughputTab(lambda_pts, elem_collimator)
-			
-	#update dichroic throughputs
-	llamas_red.elements[1].surfaces[0].setThroughputTab(lambda_pts, elem_dichroic_sl)
-	llamas_green.elements[1].surfaces[0].setThroughputTab(lambda_pts, [1.0-t for t in elem_dichroic_sl])		
-	llamas_green.elements[2].surfaces[0].setThroughputTab(lambda_pts, elem_dichroic_bg)
-	llamas_blue.elements[1].surfaces[0].setThroughputTab(lambda_pts, [1.0-t for t in elem_dichroic_sl])
-	llamas_blue.elements[2].surfaces[0].setThroughputTab(lambda_pts, [1.0-t for t in elem_dichroic_bg])
 	
 	#red_elem_list = ['elem_collimator', 'elem_dichroic_sl', elem_prism, elem_lens1, elem_lens2, elem_lens3, elem_lens4, elem_lens5, elem_lens6, elem_lens7, elem_window, elem_glass_red]
 	#gre_elem_list = ['elem_collimator', 'elem_dichroic_sl', 'elem_dichroic_bg', elem_prism, elem_lens1, elem_lens2, elem_lens3, elem_lens4, elem_lens5, elem_lens6, elem_lens7, elem_window, elem_glass_gre]
@@ -230,21 +202,21 @@ def sensitivity_hlva(theta, x, verbose=True):
 	#0 is collimator
 	#1 is DichroicRG
 	for surf in llamas_red.elements[2].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_prism)
+		surf.setThroughputTab(elem_prism.prior_pts, thru(elem_prism)) #TODO fix
 	for surf in llamas_red.elements[3].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens1)
+		surf.setThroughputTab(elem_lens1.prior_pts, thru(elem_lens1))
 	for surf in llamas_red.elements[4].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens2)
+		surf.setThroughputTab(elem_lens2.prior_pts, thru(elem_lens2))
 	for surf in llamas_red.elements[5].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens3)
+		surf.setThroughputTab(elem_lens3.prior_pts, thru(elem_lens3))
 	for surf in llamas_red.elements[6].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens4)
+		surf.setThroughputTab(elem_lens4.prior_pts, thru(elem_lens4))
 	for surf in llamas_red.elements[7].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens5)
+		surf.setThroughputTab(elem_lens5.prior_pts, thru(elem_lens5))
 	for surf in llamas_red.elements[8].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens6)
+		surf.setThroughputTab(elem_lens6.prior_pts, thru(elem_lens6))
 	for surf in llamas_red.elements[9].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens7)
+		surf.setThroughputTab(elem_lens7.prior_pts, thru(elem_lens7))
 	for surf in llamas_red.elements[10].surfaces:
 		surf.setThroughputTab(elem_window.prior_pts, thru(elem_window))
 	for surf in llamas_red.elements[11].surfaces:

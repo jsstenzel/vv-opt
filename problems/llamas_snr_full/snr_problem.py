@@ -15,6 +15,8 @@ from approx.regression_models import *
 from problems.llamas_snr_full.snr_exp_models import *
 from problems.llamas_snr_full.snr_system_model import *
 
+verbose_probdef=False
+
 #set path variables
 _dir = "./llamas-etc/COATINGS/"
 
@@ -41,35 +43,38 @@ prior_rn_SN3 = ["gamma_mv", [2.35,0.25**2]]
 prior_dc_SN3 = ["gamma_mv", [0.00267,.001**2]]
 
 ###Quantum efficiency priors
-coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_dd.txt", 2, _wave_max-_wave_min, doPlot=True, doErr=True)
-prior_qe_red_t = ["gaussian_multivar", [[inter, coeffs[0], coeffs[1], coeffs[2], coeffs[3]], thru_param_var*np.identity(5)]] #dim = 5
-
-coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_green.txt", 2, _wave_max-_wave_min, doPlot=True, doErr=True)
-prior_qe_gre_t = ["gaussian_multivar", [[inter, coeffs[0], coeffs[1], coeffs[2], coeffs[3]], thru_param_var*np.identity(5)]] #dim = 5
-
-coeffs, inter, _, _ = linreg_fourier_throughput_file(_dir+"CCD42-40_blue.txt", 2, _wave_max-_wave_min, doPlot=True, doErr=True)
-prior_qe_blu_t = ["gaussian_multivar", [[inter, coeffs[0], coeffs[1], coeffs[2], coeffs[3]], thru_param_var*np.identity(5)]] #dim = 5
-
+ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_dd.txt", 3, doPlot=verbose_probdef)
+prior_gp_qe_red = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
+ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_green.txt", 3, doPlot=verbose_probdef)
+prior_gp_qe_gre = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
+ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_blue.txt", 3, doPlot=verbose_probdef)
+prior_gp_qe_blu = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
 
 ###VPH priors
-plist, pcov = poly_fit_throughput_file(_dir+"vph_llamas_red.txt", 3, doPlot=True, doErr=True)
-prior_vph_red_t = ["gaussian_multivar", [plist, pcov]] #dim = 4
-plist, pcov = poly_fit_throughput_file(_dir+"vph_llamas_blue.txt", 3, doPlot=True, doErr=True)
-prior_vph_gre_t = ["gaussian_multivar", [plist, pcov]] #dim = 4
-plist, pcov = poly_fit_throughput_file(_dir+"vph_llamas_blue.txt", 3, doPlot=True, doErr=True)
-prior_vph_blu_t = ["gaussian_multivar", [plist, pcov]] #dim = 4
+ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_red.txt", 2, doPlot=verbose_probdef)
+prior_gp_vph_red = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
+ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_green.txt", 2, doPlot=verbose_probdef)
+prior_gp_vph_gre = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
+ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_blue.txt", 2, doPlot=verbose_probdef)
+prior_gp_vph_blu = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
 
-###Dichroic priors
-lval, steppt, rval, power, pcov = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_sl_prior.txt", doPlot=True, doErr=True)
-prior_sl_t = ["gaussian_multivar",[[lval, steppt, rval, power], pcov]] #dim = 4
+###Dichroic priors, use a different meanfn for sigmoid
+ppts, _ = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_sl_prior.txt", 3, doPlot=False)
+lval_sl, steppt_sl, rval_sl, power_sl, _ = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_sl_prior.txt", doPlot=verbose_probdef, doErr=False)
+def meanfn_sl_prior(t):
+	return throughput_from_sigmoidfit_coeffs(lval_sl, steppt_sl, rval_sl, power_sl, t)
+prior_gp_sl = ["gp_expquad", [.1, _lengthscale, ppts, meanfn_sl_prior]]
 
-lval, steppt, rval, power, pcov = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_bg_prior.txt", doPlot=True, doErr=True)
-prior_bg_t = ["gaussian_multivar",[[lval, steppt, rval, power], pcov]] #dim = 4
+ppts, _ = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_bg_prior.txt", 3, doPlot=False)
+lval_bg, steppt_bg, rval_bg, power_bg, _ = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_bg_prior.txt", doPlot=verbose_probdef, doErr=False)
+def meanfn_bg_prior(t):
+	return throughput_from_sigmoidfit_coeffs(lval_bg, steppt_bg, rval_bg, power_bg, t)
+prior_gp_bg = ["gp_expquad", [.1, _lengthscale, ppts, meanfn_bg_prior]]
 
 ###Collimator priors
 #TODO replace with ECI coating curve, LLAMAS_collimator_coatings_ECI_20210504
-lval, steppt, rval, power, pcov = sigmoid_fit_throughput_file(_dir+"dielectric_mirror.txt", doPlot=True, doErr=True)
-prior_coll_t = ["gaussian_multivar",[[lval, steppt, rval, power], pcov]] #dim = 4
+ppts, meanfn = get_ppts_meanfn_file(_dir+"dielectric_mirror.txt", 2, doPlot=True)
+prior_gp_coll = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
 
 ###Lens priors
 #TODO replace these with real priors -- manufacturer curves for 60-30110
@@ -78,15 +83,14 @@ prior_coll_t = ["gaussian_multivar",[[lval, steppt, rval, power], pcov]] #dim = 
 #no, that was to validate the design... but that does give me the idea that the lens test should test full camera throughput
 #using manufacturer curves means I should have separate thetas for the r,g,b lenses... do that and get rid of prisms
 
-a,b = fit_uniform_thru_to_beta_file(_dir+"ECI_FusedSilica.txt", doPlot=True, doErr=True)
-prior_silica_thru = ["beta", [a,b]]
+ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica.txt", 3, doPlot=verbose_probdef)
+prior_gp_silica = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
 
-a,b = fit_uniform_thru_to_beta_file(_dir+"ECI_PBM8Y.txt", doPlot=True, doErr=True)
-prior_PBM8Y_thru = ["beta", [a,b]]
+ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica.txt", 3, doPlot=verbose_probdef)
+prior_gp_PBM8Y = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
 
 ###Fiber priors
 prior_frd = ["gamma_mv", [0.077,0.022**2]]
-
 
 #these priors are based on requirements that were met, see Camera Qual Report
 theta_defs = [                             #mean, variance
@@ -99,24 +103,23 @@ theta_defs = [                             #mean, variance
 					["dc_red", prior_dc_SN1, "continuous"],
 					["dc_gre", prior_dc_SN3, "continuous"],
 					["dc_blu", prior_dc_SN3, "continuous"],
-					["qe_red_t", prior_qe_red_t, "continuous"],#dim = 5
-					["qe_gre_t", prior_qe_gre_t, "continuous"],#dim = 5
-					["qe_blu_t", prior_qe_blu_t, "continuous"],#dim = 5
-					["vph_red_t", prior_vph_red_t, "continuous"],#dim = 4
-					["vph_gre_t", prior_vph_gre_t, "continuous"],#dim = 4
-					["vph_blu_t", prior_vph_blu_t, "continuous"],#dim = 4
-					["sl_t", prior_sl_t, "continuous"],#dim = 4
-					["bg_t", prior_bg_t, "continuous"],#dim = 4
-					["coll_t", prior_coll_t, "continuous"],#dim = 4
-					["prism_t", prior_silica_thru, "continuous"],
-					["l1_t", prior_silica_thru, "continuous"],
-					["l2_t", prior_PBM8Y_thru, "continuous"],
-					["l3_t", prior_silica_thru, "continuous"],
-					["l4_t", prior_PBM8Y_thru, "continuous"],
-					["l5_t", prior_silica_thru, "continuous"],
-					["l6_t", prior_PBM8Y_thru, "continuous"],
-					["l7_t", prior_PBM8Y_thru, "continuous"],
-					["l8_t", prior_PBM8Y_thru, "continuous"],
+					["qe_red_t", prior_gp_qe_red, "continuous"],
+					["qe_gre_t", prior_gp_qe_gre, "continuous"],
+					["qe_blu_t", prior_gp_qe_blu, "continuous"],
+					["vph_red_t", prior_gp_vph_red, "continuous"],
+					["vph_gre_t", prior_gp_vph_gre, "continuous"],
+					["vph_blu_t", prior_gp_vph_blu, "continuous"],
+					["sl_t", prior_gp_sl, "continuous"],
+					["bg_t", prior_gp_bg, "continuous"],
+					["coll_t", prior_gp_coll, "continuous"],
+					["l1_t", prior_gp_silica, "continuous"],
+					["l2_t", prior_gp_PBM8Y, "continuous"],
+					["l3_t", prior_gp_silica, "continuous"],
+					["l4_t", prior_gp_PBM8Y, "continuous"],
+					["l5_t", prior_gp_silica, "continuous"],
+					["l6_t", prior_gp_PBM8Y, "continuous"],
+					["l7_t", prior_gp_PBM8Y, "continuous"],
+					["l8_t", prior_gp_PBM8Y, "continuous"],
 					["fiber_frd", prior_frd, "continuous"]
 				]
 
@@ -170,7 +173,6 @@ y_defs = [
 				"y_coll_t1",
 				"y_coll_t2",
 				"y_coll_t3",
-				"y_prism_t",
 				"y_l1_t",
 				"y_l2_t",
 				"y_l3_t",

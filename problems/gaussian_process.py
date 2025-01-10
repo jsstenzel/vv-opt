@@ -58,7 +58,7 @@ def define_functional_mean(prior_pts, mean_fn=_zero_mean):
 # Helper fns to do it from files
 #######################################
 	
-def get_ppts_meanfn_file(filename, order=3):
+def get_ppts_meanfn_file(filename, order=3, doPlot=False):
 	prior_pts = []
 	mean_pts = []
 	with open(filename, "r") as f:
@@ -78,6 +78,15 @@ def get_ppts_meanfn_file(filename, order=3):
 			return 0.0
 		return val
 
+	if doPlot:
+		plot_pts = np.array(np.linspace(min(prior_pts), max(prior_pts), len(prior_pts)*10))
+		Yfit = [mean_fn_from_file(x) for x in plot_pts]
+	
+		plt.plot(prior_pts, mean_pts, c='k')
+		plt.plot(plot_pts, Yfit, c='orange')
+		plt.xlim(min(prior_pts), max(prior_pts))
+		plt.title(filename)
+		plt.show()
 
 	return prior_pts, mean_fn_from_file
 	
