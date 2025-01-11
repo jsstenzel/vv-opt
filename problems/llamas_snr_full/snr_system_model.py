@@ -174,7 +174,7 @@ def sensitivity_hlva(theta, x, verbose=True):
 	elem_lens7 = theta["l7_t"]#[theta["l7_t"] for _ in lambda_pts]
 	elem_lens8 = theta["l8_t"]#[theta["l8_t"] for _ in lambda_pts]
 	
-	fiber_frd = theta["fiber_frd"]
+	fiber_frd = theta["fiber_frd"] if theta["fiber_frd"]>0 else 0
 	
 	##############################
 	###Load in the new values to the spect_models
