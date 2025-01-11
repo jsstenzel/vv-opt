@@ -6,11 +6,11 @@ from problems.gaussian_process import *
 
 	
 """
-d: 
-x parameters: sigma_stray, sigma_dc, nx, ny
+theta: 
+x parameters: 
 This notional cost model just sums up the times and costs of each isolated decision
 """
-def fp_cost_simple(d, x):
+def snr_cost(d, x):
 	#define design vars:
 	t_gain = d["t_gain"]
 	I_gain = d["I_gain"]

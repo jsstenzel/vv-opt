@@ -222,12 +222,12 @@ if __name__ == '__main__':
 	
 	if args.run == "UP_QoI":
 		vv_UP_QoI(problem, req, n=250)
+		
+	if args.run == "UP_exp":
+		vv_UP_exp(problem, d_historical, theta_nominal, n=10)
 	
 	if args.run == "SA_QoI":
 		vv_SA_QoI(problem, p=5)
-	
-	if args.run == "UP_exp":
-		vv_UP_exp(problem, d_historical, theta_nominal, n=10)
 	
 	#Still needs massaging...
 	#if args.run == "SA_exp":

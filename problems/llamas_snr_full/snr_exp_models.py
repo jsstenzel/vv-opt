@@ -69,28 +69,19 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	y_dc_blu = dark_current_exp(theta["gain_blu"], theta["rn_blu"],  theta["dc_blu"], d_num, d_max, d_pow, x, err)
 	y_dc = [y_dc_red, y_dc_gre, y_dc_blu]
 	
-	qe_red_params = [theta["qe_red_t0"], theta["qe_red_t1"], theta["qe_red_t2"], theta["qe_red_t3"], theta["qe_red_t4"]]
-	qe_gre_params = [theta["qe_gre_t0"], theta["qe_gre_t1"], theta["qe_gre_t2"], theta["qe_gre_t3"], theta["qe_gre_t4"]]
-	qe_blu_params = [theta["qe_blu_t0"], theta["qe_blu_t1"], theta["qe_blu_t2"], theta["qe_blu_t3"], theta["qe_blu_t4"]]
-	y_qe_red_t = quantum_efficiency_exp(qe_red_params, theta["gain_red"], theta["rn_red"], n_qe, t_qe, red_min, red_max, red_max-blu_min, x, err)
-	y_qe_gre_t = quantum_efficiency_exp(qe_gre_params, theta["gain_gre"], theta["rn_gre"], n_qe, t_qe, gre_min, gre_max, red_max-blu_min, x, err)
-	y_qe_blu_t = quantum_efficiency_exp(qe_blu_params, theta["gain_blu"], theta["rn_blu"], n_qe, t_qe, blu_min, blu_max, red_max-blu_min, x, err)
+	y_qe_red_t = quantum_efficiency_exp(theta["qe_red_t"], theta["gain_red"], theta["rn_red"], n_qe, t_qe, red_min, red_max, red_max-blu_min, x, err)
+	y_qe_gre_t = quantum_efficiency_exp(theta["qe_gre_t"], theta["gain_gre"], theta["rn_gre"], n_qe, t_qe, gre_min, gre_max, red_max-blu_min, x, err)
+	y_qe_blu_t = quantum_efficiency_exp(theta["qe_blu_t"], theta["gain_blu"], theta["rn_blu"], n_qe, t_qe, blu_min, blu_max, red_max-blu_min, x, err)
 	
-	vph_red_params = [theta["vph_red_t0"], theta["vph_red_t1"], theta["vph_red_t2"]]#, theta["vph_red_t3"]]
-	vph_gre_params = [theta["vph_gre_t0"], theta["vph_gre_t1"], theta["vph_gre_t2"]]#, theta["vph_gre_t3"]]
-	vph_blu_params = [theta["vph_blu_t0"], theta["vph_blu_t1"], theta["vph_blu_t2"]]#, theta["vph_blu_t3"]]
-	y_vph_red_t = measure_thru_vph(vph_red_params, d["d_vph_n_pts"], red_min, red_max, x["vph_meas_stddev"], err)
-	y_vph_gre_t = measure_thru_vph(vph_gre_params, d["d_vph_n_pts"], gre_min, gre_max, x["vph_meas_stddev"], err)
-	y_vph_blu_t = measure_thru_vph(vph_blu_params, d["d_vph_n_pts"], blu_min, blu_max, x["vph_meas_stddev"], err)
+	y_vph_red_t = measure_thru_vph(theta["vph_red_t"], d["d_vph_n_pts"], red_min, red_max, x["vph_meas_stddev"], err)
+	y_vph_gre_t = measure_thru_vph(theta["vph_gre_t"], d["d_vph_n_pts"], gre_min, gre_max, x["vph_meas_stddev"], err)
+	y_vph_blu_t = measure_thru_vph(theta["vph_blu_t"], d["d_vph_n_pts"], blu_min, blu_max, x["vph_meas_stddev"], err)
 	
-	sl_params = [theta["sl_t0"], theta["sl_t1"], theta["sl_t2"], theta["sl_t3"]]
-	bg_params = [theta["bg_t0"], theta["bg_t1"], theta["bg_t2"], theta["bg_t3"]]
-	y_sl_t = measure_thru_sigmoid(sl_params, d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["sl_meas_stddev"], err)
-	y_bg_t = measure_thru_sigmoid(bg_params, d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["bg_meas_stddev"], err)
+	y_sl_t = measure_thru_sigmoid(theta["sl_t"], d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["sl_meas_stddev"], err)
+	y_bg_t = measure_thru_sigmoid(theta["bg_t"], d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["bg_meas_stddev"], err)
 	
 	#collimator
-	coll_params = [theta["coll_t0"], theta["coll_t1"], theta["coll_t2"], theta["coll_t3"]]
-	y_coll_t = measure_thru_sigmoid(coll_params, d["d_coll_n_pts"], x["wave_min"], x["wave_max"], x["coll_meas_stddev"], err)
+	y_coll_t = measure_thru_sigmoid(theta["coll_t"], d["d_coll_n_pts"], x["wave_min"], x["wave_max"], x["coll_meas_stddev"], err)
 	
 	#lenses
 	#TODO get rid of prism, replace this with 3 experiments that each measure the total thru of a full camera
@@ -346,7 +337,7 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x, err=True):
 	return m
 	
 	
-def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, wave_min, wave_max, _x, err=True):
+def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, wave_min, wave_max, full_bandpass, _x, err=True):
 	#define parameters
 	S_pd = _x["S_pd"] #functional
 	S_pd_err = _x["S_pd_meas_err"]

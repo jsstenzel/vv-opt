@@ -14,6 +14,7 @@ from approx.regression_models import *
 #llamas
 from problems.llamas_snr_full.snr_exp_models import *
 from problems.llamas_snr_full.snr_system_model import *
+from problems.llamas_snr_full.snr_cost_model import *
 
 verbose_probdef=False
 
@@ -62,18 +63,20 @@ prior_gp_vph_blu = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
 ppts, _ = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_sl_prior.txt", 3, doPlot=False)
 lval_sl, steppt_sl, rval_sl, power_sl, _ = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_sl_prior.txt", doPlot=verbose_probdef, doErr=False)
 def meanfn_sl_prior(t):
-	return throughput_from_sigmoidfit_coeffs(lval_sl, steppt_sl, rval_sl, power_sl, t)
+	thru = throughput_from_sigmoidfit_coeffs(lval_sl, steppt_sl, rval_sl, power_sl, [t])
+	return thru[0]
 prior_gp_sl = ["gp_expquad", [.1, _lengthscale, ppts, meanfn_sl_prior]]
 
 ppts, _ = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_bg_prior.txt", 3, doPlot=False)
 lval_bg, steppt_bg, rval_bg, power_bg, _ = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_bg_prior.txt", doPlot=verbose_probdef, doErr=False)
 def meanfn_bg_prior(t):
-	return throughput_from_sigmoidfit_coeffs(lval_bg, steppt_bg, rval_bg, power_bg, t)
+	thru = throughput_from_sigmoidfit_coeffs(lval_bg, steppt_bg, rval_bg, power_bg, [t])
+	return thru[0]
 prior_gp_bg = ["gp_expquad", [.1, _lengthscale, ppts, meanfn_bg_prior]]
 
 ###Collimator priors
 #TODO replace with ECI coating curve, LLAMAS_collimator_coatings_ECI_20210504
-ppts, meanfn = get_ppts_meanfn_file(_dir+"dielectric_mirror.txt", 2, doPlot=True)
+ppts, meanfn = get_ppts_meanfn_file(_dir+"dielectric_mirror.txt", 2, doPlot=verbose_probdef)
 prior_gp_coll = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
 
 ###Lens priors
@@ -269,6 +272,7 @@ x_defs = [
 				["frd_meas_err", [], "continuous", 0.068], #analysis based on test measuring a few fibers
 				#spectrograph
 				["spect_model_tracker", [], "object", spectrograph_models],
+				["prism", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
 				["sensor_window", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
 				["sensor_glass_red", [], "functional", define_functional_from_file(_dir+"llamas_internal_red.txt")],
 				["sensor_glass_gre", [], "functional", define_functional_from_file(_dir+"llamas_internal.txt")],
@@ -305,5 +309,5 @@ x_defs = [
 #_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
 eta = snr_likelihood_fn
 H = sensitivity_hlva
-Gamma = cost_model
+Gamma = snr_cost
 llamas_snr = ProblemDefinition(eta, H, Gamma, theta_defs, y_defs, d_defs, x_defs)

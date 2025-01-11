@@ -97,6 +97,7 @@ def sensitivity_hlva(theta, x, verbose=True):
 	elem_fiber = x["fiber_internal"]#"Polymicro_FBPI_8m.txt")]
 	#spectrograph
 	#elem_collimator = x["collimator"]#"dielectric_mirror.txt")]
+	elem_prism = x["prism"]#"ECI_FusedSilica.txt")]
 	#elem_prism = x["prism"]#"ECI_FusedSilica.txt")]
 	#elem_lens1 = x["lens1"]#"ECI_FusedSilica.txt")]
 	#elem_lens2 = x["lens2"]#"ECI_PBM8Y.txt")]
@@ -134,35 +135,44 @@ def sensitivity_hlva(theta, x, verbose=True):
 	lambda_pts = np.linspace(wave_min, wave_max, num=math.ceil((wave_max-wave_min)/0.1))
 	
 	#update qe
+	elem_qe_red = theta["qe_red_t"]#CCD42-40_dd.txt
+	elem_qe_gre = theta["qe_gre_t"]#CCD42-40_green.txt
+	elem_qe_blu = theta["qe_blu_t"]#CCD42-40_blue.txt
 	llamas_red.sensor.qe.setThroughputTab(elem_qe_red.prior_pts, thru(elem_qe_red))
 	llamas_green.sensor.qe.setThroughputTab(elem_qe_gre.prior_pts, thru(elem_qe_gre))
 	llamas_blue.sensor.qe.setThroughputTab(elem_qe_blu.prior_pts, thru(elem_qe_blu))
 	
 	#update vph
+	elem_vph_red = theta["vph_red_t"]#wasach_llamas2200_red.txt
+	elem_vph_gre = theta["vph_gre_t"]#wasach_llamas2200_green.txt
+	elem_vph_blu = theta["vph_blu_t"]#wasach_llamas2200_blue.txt
 	llamas_red.grating.blaze.setThroughputTab(elem_vph_red.prior_pts, thru(elem_vph_red))
 	llamas_green.grating.blaze.setThroughputTab(elem_vph_gre.prior_pts, thru(elem_vph_gre))
 	llamas_blue.grating.blaze.setThroughputTab(elem_vph_blu.prior_pts, thru(elem_vph_blu))
 	
 	#update collimator throughputs
+	elem_collimator = theta["coll_t"]
 	llamas_red.elements[0].surfaces[0].setThroughputTab(elem_collimator.prior_pts, thru(elem_collimator))
 	llamas_green.elements[0].surfaces[0].setThroughputTab(elem_collimator.prior_pts, thru(elem_collimator))
 	llamas_blue.elements[0].surfaces[0].setThroughputTab(elem_collimator.prior_pts, thru(elem_collimator))
 			
 	#update dichroic throughputs
+	elem_dichroic_sl = theta["sl_t"]#ECI_FusedSilica.txt
+	elem_dichroic_bg = theta["bg_t"]#ECI_FusedSilica.txt
 	llamas_red.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.prior_pts, thru(elem_dichroic_sl))
 	llamas_green.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.prior_pts, [1.0-t for t in thru(elem_dichroic_sl)])		
 	llamas_green.elements[2].surfaces[0].setThroughputTab(elem_dichroic_bg.prior_pts, elem_dichroic_bg.evaluate())
 	llamas_blue.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.prior_pts, [1.0-t for t in thru(elem_dichroic_sl)])
 	llamas_blue.elements[2].surfaces[0].setThroughputTab(elem_dichroic_bg.prior_pts, [1.0-t for t in thru(elem_dichroic_bg)])
 	
-	elem_lens1 = [theta["l1_t"] for _ in lambda_pts]
-	elem_lens2 = [theta["l2_t"] for _ in lambda_pts]
-	elem_lens3 = [theta["l3_t"] for _ in lambda_pts]
-	elem_lens4 = [theta["l4_t"] for _ in lambda_pts]
-	elem_lens5 = [theta["l5_t"] for _ in lambda_pts]
-	elem_lens6 = [theta["l6_t"] for _ in lambda_pts]
-	elem_lens7 = [theta["l7_t"] for _ in lambda_pts]
-	elem_lens8 = [theta["l8_t"] for _ in lambda_pts]
+	elem_lens1 = theta["l1_t"]#[theta["l1_t"] for _ in lambda_pts]
+	elem_lens2 = theta["l2_t"]#[theta["l2_t"] for _ in lambda_pts]
+	elem_lens3 = theta["l3_t"]#[theta["l3_t"] for _ in lambda_pts]
+	elem_lens4 = theta["l4_t"]#[theta["l4_t"] for _ in lambda_pts]
+	elem_lens5 = theta["l5_t"]#[theta["l5_t"] for _ in lambda_pts]
+	elem_lens6 = theta["l6_t"]#[theta["l6_t"] for _ in lambda_pts]
+	elem_lens7 = theta["l7_t"]#[theta["l7_t"] for _ in lambda_pts]
+	elem_lens8 = theta["l8_t"]#[theta["l8_t"] for _ in lambda_pts]
 	
 	fiber_frd = theta["fiber_frd"]
 	
@@ -202,7 +212,7 @@ def sensitivity_hlva(theta, x, verbose=True):
 	#0 is collimator
 	#1 is DichroicRG
 	for surf in llamas_red.elements[2].surfaces:
-		surf.setThroughputTab(elem_prism.prior_pts, thru(elem_prism)) #TODO fix
+		surf.setThroughputTab(elem_prism.prior_pts, thru(elem_prism))
 	for surf in llamas_red.elements[3].surfaces:
 		surf.setThroughputTab(elem_lens1.prior_pts, thru(elem_lens1))
 	for surf in llamas_red.elements[4].surfaces:
@@ -227,21 +237,21 @@ def sensitivity_hlva(theta, x, verbose=True):
 	#1 is DichroicRG
 	#2 is DichroicBG
 	for surf in llamas_green.elements[3].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_prism)
+		surf.setThroughputTab(elem_prism.prior_pts, thru(elem_prism))
 	for surf in llamas_green.elements[4].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens1)
+		surf.setThroughputTab(elem_lens1.prior_pts, thru(elem_lens1))
 	for surf in llamas_green.elements[5].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens2)
+		surf.setThroughputTab(elem_lens2.prior_pts, thru(elem_lens2))
 	for surf in llamas_green.elements[6].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens3)
+		surf.setThroughputTab(elem_lens3.prior_pts, thru(elem_lens3))
 	for surf in llamas_green.elements[7].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens4)
+		surf.setThroughputTab(elem_lens4.prior_pts, thru(elem_lens4))
 	for surf in llamas_green.elements[8].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens5)
+		surf.setThroughputTab(elem_lens5.prior_pts, thru(elem_lens5))
 	for surf in llamas_green.elements[9].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens6)
+		surf.setThroughputTab(elem_lens6.prior_pts, thru(elem_lens6))
 	for surf in llamas_green.elements[10].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens7)
+		surf.setThroughputTab(elem_lens7.prior_pts, thru(elem_lens7))
 	for surf in llamas_green.elements[11].surfaces:
 		surf.setThroughputTab(elem_window.prior_pts, thru(elem_window))
 	for surf in llamas_green.elements[12].surfaces:
@@ -252,23 +262,23 @@ def sensitivity_hlva(theta, x, verbose=True):
 	#1 is DichroicRG
 	#2 is DichroicBG
 	for surf in llamas_blue.elements[3].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_prism)
+		surf.setThroughputTab(elem_prism.prior_pts, thru(elem_prism))
 	for surf in llamas_blue.elements[4].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens1)
+		surf.setThroughputTab(elem_lens1.prior_pts, thru(elem_lens1))
 	for surf in llamas_blue.elements[5].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens2)
+		surf.setThroughputTab(elem_lens2.prior_pts, thru(elem_lens2))
 	for surf in llamas_blue.elements[6].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens3)
+		surf.setThroughputTab(elem_lens3.prior_pts, thru(elem_lens3))
 	for surf in llamas_blue.elements[7].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens4)
+		surf.setThroughputTab(elem_lens4.prior_pts, thru(elem_lens4))
 	for surf in llamas_blue.elements[8].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens5)
+		surf.setThroughputTab(elem_lens5.prior_pts, thru(elem_lens5))
 	for surf in llamas_blue.elements[9].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens6)
+		surf.setThroughputTab(elem_lens6.prior_pts, thru(elem_lens6))
 	for surf in llamas_blue.elements[10].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens7)
+		surf.setThroughputTab(elem_lens7.prior_pts, thru(elem_lens7))
 	for surf in llamas_blue.elements[11].surfaces:
-		surf.setThroughputTab(lambda_pts, elem_lens8)
+		surf.setThroughputTab(elem_lens8.prior_pts, thru(elem_lens8))
 	for surf in llamas_blue.elements[12].surfaces:
 		surf.setThroughputTab(elem_window.prior_pts, thru(elem_window))
 	for surf in llamas_blue.elements[13].surfaces:
@@ -282,15 +292,15 @@ def sensitivity_hlva(theta, x, verbose=True):
 	
 	llamas_red.sensor.rn = rn_red
 	llamas_red.sensor.dark = dc_red
-	llamas_red.sensor.qe.setThroughputTab(lambda_pts, elem_qe_red)
+	llamas_red.sensor.qe.setThroughputTab(elem_qe_red.prior_pts, thru(elem_qe_red))
 	
 	llamas_green.sensor.rn = rn_gre
 	llamas_green.sensor.dark = dc_gre
-	llamas_green.sensor.qe.setThroughputTab(lambda_pts, elem_qe_gre)
+	llamas_green.sensor.qe.setThroughputTab(elem_qe_gre.prior_pts, thru(elem_qe_gre))
 	
 	llamas_blue.sensor.rn = rn_blu
 	llamas_blue.sensor.dark = dc_blu
-	llamas_blue.sensor.qe.setThroughputTab(lambda_pts, elem_qe_blu)
+	llamas_blue.sensor.qe.setThroughputTab(elem_qe_blu.prior_pts, thru(elem_qe_blu))
 	
 	#And at last, we recalculate the throughputs based on the new data
 	llamas_red.throughput = llamas_red.calc_throughput(waves)
