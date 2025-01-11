@@ -83,8 +83,7 @@ prior_gp_coll = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
 #TODO replace these with real priors -- manufacturer curves for 60-30110
 #which I guess means there was never any in-house testing?
 #or should I count the testing for protoLLAMAS, design_vs_asbuilt_LLAMASprotoBlue etc?
-#no, that was to validate the design... but that does give me the idea that the lens test should test full camera throughput
-#using manufacturer curves means I should have separate thetas for the r,g,b lenses... do that and get rid of prisms
+#no, that was to validate the design... but that does inform me that the lens test should test full camera throughput, not individual lenses
 
 ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica.txt", 3, doPlot=verbose_probdef)
 prior_gp_silica = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
@@ -176,14 +175,9 @@ y_defs = [
 				"y_coll_t1",
 				"y_coll_t2",
 				"y_coll_t3",
-				"y_l1_t",
-				"y_l2_t",
-				"y_l3_t",
-				"y_l4_t",
-				"y_l5_t",
-				"y_l6_t",
-				"y_l7_t",
-				"y_l8_t",
+				"y_red_cam_t",
+				"y_gre_cam_t",
+				"y_blu_cam_t",
 				"y_frd"
 			]
 

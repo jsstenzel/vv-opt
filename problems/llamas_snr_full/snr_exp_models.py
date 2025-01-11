@@ -85,16 +85,14 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	
 	#lenses
 	#TODO get rid of prism, replace this with 3 experiments that each measure the total thru of a full camera
-	y_l1_t = simple_measurement(theta["l1_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
-	y_l2_t = simple_measurement(theta["l2_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
-	y_l3_t = simple_measurement(theta["l3_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
-	y_l4_t = simple_measurement(theta["l4_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
-	y_l5_t = simple_measurement(theta["l5_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
-	y_l6_t = simple_measurement(theta["l6_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
-	y_l7_t = simple_measurement(theta["l7_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
-	y_l8_t = simple_measurement(theta["l8_t"], x["lens_meas_err"], d["d_lens_n_pts"], err)
+	redgreen_lenses = [theta["l1_t"],theta["l2_t"],theta["l3_t"],theta["l4_t"],theta["l5_t"],theta["l6_t"],theta["l7_t"]]
+	blue_lenses = [theta["l1_t"],theta["l2_t"],theta["l3_t"],theta["l4_t"],theta["l5_t"],theta["l6_t"],theta["l7_t"],theta["l8_t"]]
+	y_red_cam = camera_measurement(redgreen_lenses, d["d_lens_n_pts"], red_min, red_max, err)
+	y_gre_cam = camera_measurement(redgreen_lenses, d["d_lens_n_pts"], gre_min, gre_max, err)
+	y_blu_cam = camera_measurement(blue_lenses, d["d_lens_n_pts"], blu_min, blu_max, err)
+	
 	y_lenses = [
-		y_l1_t, y_l2_t, y_l3_t, y_l4_t, y_l5_t, y_l6_t, y_l7_t, y_l8_t,
+		y_red_cam, y_gre_cam, y_blu_cam
 	]
 	
 	y_frd = simple_measurement(theta["fiber_frd"], x["frd_meas_err"], d["d_frd_n_meas"], err)
@@ -122,6 +120,33 @@ def simple_measurement(theta, stddev_meas, n_meas, err=True):
 		#oh but wait... the exp model shouldn't normally know the prior
 		return 0 #placeholder
 
+
+def camera_measurement(elem_list, n_meas, wave_min, wave_max, err=True):
+	if err:
+		stddev = x["lens_meas_err"]
+	else:
+		stddev = 0
+		
+	if n_meas > 1:
+		measurement_pts = np.linspace(wave_min, wave_max, num=n_meas)
+		
+		#Measure each element, and stack all the curves on top of each other
+		y_thru = []
+		for elem in elem_list:
+			thru_i = elem.eval_gp_cond(measurement_pts, stddev)
+			if y_thru == []:
+				y_thru = thru_i
+			else:
+				y_thru = [y*i for y,i in zip(y_thru, thru_i)]
+
+		return np.mean(y_thru)
+		
+	else: 
+		#This means we don't run the experiment
+		#Model the imputation that would occur: assume prior is exactly right
+		
+		#oh but wait... the exp model shouldn't normally know the prior
+		return 0 #placeholder
 	
 def measure_thru_sigmoid(theta_gp, d_meas_pts, wave_min, wave_max, meas_stddev, err=True):
 	if err:
