@@ -29,16 +29,19 @@ def snr_cost(d, x):
 	t_rn = x["t_rn"] #exposure time
 	t_rn_buffer = x["t_rn_buffer"]
 	#qe
+	#Handle measurement number: you can do 0, or 3 or more
 	t_qe = d["t_qe"]
-	n_qe = d["n_qe"]
+	n_qe = d["n_qe"] if (d["n_qe"]==0 or d["n_qe"]>3) else 3
 	qe_setup = x["t_qe_setup"]
 	qe_buffer = x["t_qe_buffer"]
 	#VPH
-	d_vph_n_pts = d["d_vph_n_pts"]
+	#Handle measurement number: you can do 0, or 3 or more
+	d_vph_n_pts = d["d_vph_n_pts"] if (d["d_vph_n_pts"]==0 or d["d_vph_n_pts"]>3) else 3
 	vph_setup = x["t_vph_setup"]
 	vph_exposure_per_pt = x["t_vph_per_pt"]
 	#Dichroic
-	d_dichroic_n_pts = d["d_dichroic_n_pts"]
+	#Handle measurement number: you can do 0, or 4 or more
+	d_dichroic_n_pts = d["d_dichroic_n_pts"] if (d["d_dichroic_n_pts"]==0 or d["d_dichroic_n_pts"]>4) else 4
 	dichroic_setup = x["t_dichroic_setup"]
 	dichroic_exposure_per_pt = x["t_dichroic_per_pt"]
 	#Collimator
@@ -50,7 +53,7 @@ def snr_cost(d, x):
 	camera_test_setup = x["t_camera_test_setup"]
 	camera_exposure_per_pt = x["t_camera_per_pt"]
 	#Fiber
-	fiber_frd = d["d_frd_n_meas"]
+	d_frd_n_meas = d["d_frd_n_meas"]
 	frd_setup = x["t_frd_setup"]
 	frd_test_time = x["t_frd_test"]
 	#cost
@@ -63,15 +66,18 @@ def snr_cost(d, x):
 	# CCD Experiments
 	###################################################
 	#gain experiment time
-	time_gain = t_gain_setup + (I_gain + 1) * (t_gain + t_gain_buffer) #additional dark exposure on top of I_gain
+	time_gain = t_gain_setup + (I_gain + 1) * (t_gain + t_gain_buffer) if I_gain>0 else 0.0 #additional dark exposure on top of I_gain
 	
 	#dark current experiment time
 	t_list = []
-	for i in range(d_num):
-		t = dark_current_time_fn(i, tmin=dc_t0, dmax=d_max, dpow=d_pow, dnum=d_num)
-		t_list.append(t)
+	if d_num > 0:
+		for i in range(d_num):
+			t = dark_current_time_fn(i, tmin=dc_t0, dmax=d_max, dpow=d_pow, dnum=d_num)
+			t_list.append(t)
 	
-	time_dc = sum([ti+t_dc_buffer for ti in t_list])
+		time_dc = sum([ti+t_dc_buffer for ti in t_list])
+	else:
+		time_dc = 0.0
 
 	#read noise experiment time
 	time_rn = (t_rn + t_rn_buffer) * n_meas_rn
@@ -84,20 +90,22 @@ def snr_cost(d, x):
 		
 	###########
 	# QE experiment
-	time_qe = qe_setup + n_qe * (t_qe + qe_buffer)
+	time_qe = qe_setup + n_qe * (t_qe + qe_buffer) if n_qe > 0 else 0.0
 	
 	#Figure out how these experiment times fit over days
-	measurement_time = fp_testbed_setup + time_gain + time_rn + time_dc + time_qe
-	measurement_perday = measurement_time
+	fp_time = time_gain + time_rn + time_dc + time_qe
+	if fp_time > 0.0:
+		fp_time += fp_testbed_setup #only add setup if you actually do fp experiments!
+	measurement_perday = fp_time
 	measurement_days = 1
 	while measurement_perday > 8*3600: #seconds in a workday
 		#need to spend another day doing the experiment
 		measurement_days += 1
-		measurement_time += fp_testbed_setup
+		fp_time += fp_testbed_setup
 		#now see if n days is long enough to do all the experiments
-		measurement_perday = measurement_time / measurement_days
+		measurement_perday = fp_time / measurement_days
 	
-	fp_measurement_time *= 3 #for each of the 3 cameras, which require a new setup each time
+	fp_time *= 3 #for each of the 3 cameras, which require a new setup each time
 	
 	###################################################
 	# Component Measurements
@@ -120,5 +128,5 @@ def snr_cost(d, x):
 	#Fiber
 	time_frd = frd_setup + d_frd_n_meas * frd_test_time if d_frd_n_meas>0 else 0.0
 	
-	cost = C_engineer * (fp_measurement_time + time_vph + time_dichroic + time_coll + time_lenses + time_frd) 
+	cost = C_engineer * (fp_time + time_vph + time_dichroic + time_coll + time_lenses + time_frd) 
 	return cost

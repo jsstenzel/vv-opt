@@ -67,6 +67,9 @@ class ProblemDefinition:
 		self.d_masks     = [mask for _,_,mask in _d_defs]
 		self.x_masks     = [mask for _,_,mask,_ in _x_defs]
 		
+		#Get theta_nominal only once, to save repetition
+		self.theta_nominal = self._theta_nominal()
+		
 		#for documentation:
 		self.theta_names= thetanames #self.theta_names=[name for name,_,_ in _theta_defs]
 		self.y_names=_y_defs
@@ -89,7 +92,10 @@ class ProblemDefinition:
 		theta_dict = dict(zip(self.theta_names, theta_masked))
 		d_dict = dict(zip(self.d_names, d_masked))
 		x_dict = dict(zip(self.x_names, x))
-		return self._internal_eta(theta_dict, d_dict, x_dict, err)
+		#provide prior means, in case they're needed for imputation
+		prior_means = self.theta_nominal
+		prior_mean_dict = dict(zip(self.theta_names, prior_means))
+		return self._internal_eta(theta_dict, d_dict, x_dict, prior_mean_dict, err)
 	
 	def G(self, d, x=[]):
 		if x == []: #default x
@@ -263,7 +269,14 @@ class ProblemDefinition:
 		return probabilities
 	"""
 	
-	def theta_nominal(self):
+	def _theta_nominal(self):
+		"""
+		Standard behavior is to return a list of nominal error-free values of every theta, including error-free mean functions
+		This is so you can get a "nominal" value for y with the following expression:
+		y_nominal = problem.eta(problem.theta_nominal(), d, err=False)
+		
+		For GP's, the behavior is to provide a GP that is exactly evaluated at the value of the mean function
+		"""
 		tnom = []
 		for prior in self.priors: ###iterate over dim_theta
 			dtype = prior[0]
@@ -303,7 +316,7 @@ class ProblemDefinition:
 				funct = define_functional_mean(prior_pts, mean_fn)
 				tnom.append(funct)
 			else:
-				return 0 #fail!
+				raise ValueError("_theta_nominal couldn't construct vector with "+str(dtype))
 		return tnom
 		
 	def __str__(self): #handsome little format for printing the object

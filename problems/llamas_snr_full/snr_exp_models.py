@@ -27,7 +27,7 @@ from approx.regression_models import *
 """
 Full matrix experiment model
 """
-def snr_likelihood_fn(theta, d, x, err=True):
+def snr_likelihood_fn(theta, d, x, prior_mean, err=True):
 	#define interest params:
 	if type(theta) is not dict:
 		print("oh howd that happen now?")
@@ -54,55 +54,61 @@ def snr_likelihood_fn(theta, d, x, err=True):
 	blu_max = x["wave_greenblue"]
 	blu_min = x["wave_min"]
 	
-	y_gain_red = gain_exp(theta["gain_red"], theta["rn_red"], theta["dc_red"], t_gain, I_gain, x, err)
-	y_gain_gre = gain_exp(theta["gain_gre"], theta["rn_gre"], theta["dc_gre"], t_gain, I_gain, x, err)
-	y_gain_blu = gain_exp(theta["gain_blu"], theta["rn_blu"], theta["dc_blu"], t_gain, I_gain, x, err)
+	y_gain_red = gain_exp(theta["gain_red"], theta["rn_red"], theta["dc_red"], t_gain, I_gain, x, prior_mean["gain_red"], err)
+	y_gain_gre = gain_exp(theta["gain_gre"], theta["rn_gre"], theta["dc_gre"], t_gain, I_gain, x, prior_mean["gain_gre"], err)
+	y_gain_blu = gain_exp(theta["gain_blu"], theta["rn_blu"], theta["dc_blu"], t_gain, I_gain, x, prior_mean["gain_blu"], err)
 	y_gain = [y_gain_red, y_gain_gre, y_gain_blu]
 	
-	y_rn_red = read_noise_exp(theta["gain_red"], theta["rn_red"], n_meas_rn, x, err)
-	y_rn_gre = read_noise_exp(theta["gain_gre"], theta["rn_gre"], n_meas_rn, x, err)
-	y_rn_blu = read_noise_exp(theta["gain_blu"], theta["rn_blu"], n_meas_rn, x, err)
+	y_rn_red = read_noise_exp(theta["gain_red"], theta["rn_red"], n_meas_rn, x, prior_mean["rn_red"], err)
+	y_rn_gre = read_noise_exp(theta["gain_gre"], theta["rn_gre"], n_meas_rn, x, prior_mean["rn_gre"], err)
+	y_rn_blu = read_noise_exp(theta["gain_blu"], theta["rn_blu"], n_meas_rn, x, prior_mean["rn_blu"], err)
 	y_rn = [y_rn_red, y_rn_gre, y_rn_blu]
 	
-	y_dc_red = dark_current_exp(theta["gain_red"], theta["rn_red"],  theta["dc_red"], d_num, d_max, d_pow, x, err)
-	y_dc_gre = dark_current_exp(theta["gain_gre"], theta["rn_gre"],  theta["dc_gre"], d_num, d_max, d_pow, x, err)
-	y_dc_blu = dark_current_exp(theta["gain_blu"], theta["rn_blu"],  theta["dc_blu"], d_num, d_max, d_pow, x, err)
+	y_dc_red = dark_current_exp(theta["gain_red"], theta["rn_red"],  theta["dc_red"], d_num, d_max, d_pow, x, prior_mean["dc_red"], err)
+	y_dc_gre = dark_current_exp(theta["gain_gre"], theta["rn_gre"],  theta["dc_gre"], d_num, d_max, d_pow, x, prior_mean["dc_gre"], err)
+	y_dc_blu = dark_current_exp(theta["gain_blu"], theta["rn_blu"],  theta["dc_blu"], d_num, d_max, d_pow, x, prior_mean["dc_blu"], err)
 	y_dc = [y_dc_red, y_dc_gre, y_dc_blu]
 	
-	y_qe_red_t = quantum_efficiency_exp(theta["qe_red_t"], theta["gain_red"], theta["rn_red"], n_qe, t_qe, red_min, red_max, red_max-blu_min, x, err)
-	y_qe_gre_t = quantum_efficiency_exp(theta["qe_gre_t"], theta["gain_gre"], theta["rn_gre"], n_qe, t_qe, gre_min, gre_max, red_max-blu_min, x, err)
-	y_qe_blu_t = quantum_efficiency_exp(theta["qe_blu_t"], theta["gain_blu"], theta["rn_blu"], n_qe, t_qe, blu_min, blu_max, red_max-blu_min, x, err)
+	y_qe_red_t = quantum_efficiency_exp(theta["qe_red_t"], theta["gain_red"], theta["rn_red"], n_qe, t_qe, red_min, red_max, red_max-blu_min, x, prior_mean["qe_red_t"], err)
+	y_qe_gre_t = quantum_efficiency_exp(theta["qe_gre_t"], theta["gain_gre"], theta["rn_gre"], n_qe, t_qe, gre_min, gre_max, red_max-blu_min, x, prior_mean["qe_gre_t"], err)
+	y_qe_blu_t = quantum_efficiency_exp(theta["qe_blu_t"], theta["gain_blu"], theta["rn_blu"], n_qe, t_qe, blu_min, blu_max, red_max-blu_min, x, prior_mean["qe_blu_t"], err)
 	
-	y_vph_red_t = measure_thru_vph(theta["vph_red_t"], d["d_vph_n_pts"], red_min, red_max, x["vph_meas_stddev"], err)
-	y_vph_gre_t = measure_thru_vph(theta["vph_gre_t"], d["d_vph_n_pts"], gre_min, gre_max, x["vph_meas_stddev"], err)
-	y_vph_blu_t = measure_thru_vph(theta["vph_blu_t"], d["d_vph_n_pts"], blu_min, blu_max, x["vph_meas_stddev"], err)
+	y_vph_red_t = measure_thru_vph(theta["vph_red_t"], d["d_vph_n_pts"], red_min, red_max, x["vph_meas_stddev"], prior_mean["vph_red_t"], err)
+	y_vph_gre_t = measure_thru_vph(theta["vph_gre_t"], d["d_vph_n_pts"], gre_min, gre_max, x["vph_meas_stddev"], prior_mean["vph_gre_t"], err)
+	y_vph_blu_t = measure_thru_vph(theta["vph_blu_t"], d["d_vph_n_pts"], blu_min, blu_max, x["vph_meas_stddev"], prior_mean["vph_blu_t"], err)
 	
-	y_sl_t = measure_thru_sigmoid(theta["sl_t"], d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["sl_meas_stddev"], err)
-	y_bg_t = measure_thru_sigmoid(theta["bg_t"], d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["bg_meas_stddev"], err)
+	y_sl_t = measure_thru_sigmoid(theta["sl_t"], d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["sl_meas_stddev"], prior_mean["sl_t"], err)
+	y_bg_t = measure_thru_sigmoid(theta["bg_t"], d["d_dichroic_n_pts"], x["wave_min"], x["wave_max"], x["bg_meas_stddev"], prior_mean["bg_t"], err)
 	
 	#collimator
-	y_coll_t = measure_thru_sigmoid(theta["coll_t"], d["d_coll_n_pts"], x["wave_min"], x["wave_max"], x["coll_meas_stddev"], err)
+	y_coll_t = thru_measurement([theta["coll_t"]], d["d_coll_n_pts"], x["wave_min"], x["wave_max"], x["coll_meas_stddev"], [prior_mean["coll_t"]], err)
 	
 	#lenses
 	#TODO get rid of prism, replace this with 3 experiments that each measure the total thru of a full camera
 	redgreen_lenses = [theta["l1_t"],theta["l2_t"],theta["l3_t"],theta["l4_t"],theta["l5_t"],theta["l6_t"],theta["l7_t"]]
+	redgreen_priormeans = [prior_mean["l1_t"],prior_mean["l2_t"],prior_mean["l3_t"],prior_mean["l4_t"],prior_mean["l5_t"],prior_mean["l6_t"],prior_mean["l7_t"]]
 	blue_lenses = [theta["l1_t"],theta["l2_t"],theta["l3_t"],theta["l4_t"],theta["l5_t"],theta["l6_t"],theta["l7_t"],theta["l8_t"]]
-	y_red_cam = camera_measurement(redgreen_lenses, d["d_lens_n_pts"], red_min, red_max, err)
-	y_gre_cam = camera_measurement(redgreen_lenses, d["d_lens_n_pts"], gre_min, gre_max, err)
-	y_blu_cam = camera_measurement(blue_lenses, d["d_lens_n_pts"], blu_min, blu_max, err)
+	blue_priormeans = [prior_mean["l1_t"],prior_mean["l2_t"],prior_mean["l3_t"],prior_mean["l4_t"],prior_mean["l5_t"],prior_mean["l6_t"],prior_mean["l7_t"],prior_mean["l8_t"]]
+	y_red_cam = thru_measurement(redgreen_lenses, d["d_lens_n_pts"], red_min, red_max, x["lens_meas_err"], redgreen_priormeans, err)
+	y_gre_cam = thru_measurement(redgreen_lenses, d["d_lens_n_pts"], gre_min, gre_max, x["lens_meas_err"], redgreen_priormeans, err)
+	y_blu_cam = thru_measurement(blue_lenses, d["d_lens_n_pts"], blu_min, blu_max, x["lens_meas_err"], blue_priormeans, err)
 	
 	y_lenses = [
 		y_red_cam, y_gre_cam, y_blu_cam
 	]
 	
-	y_frd = simple_measurement(theta["fiber_frd"], x["frd_meas_err"], d["d_frd_n_meas"], err)
+	y_frd = simple_measurement(theta["fiber_frd"], x["frd_meas_err"], d["d_frd_n_meas"], prior_mean["fiber_frd"], err)
 	
-	y = [*y_gain, *y_rn, *y_dc, *y_qe_red_t, *y_qe_gre_t, *y_qe_blu_t, *y_vph_red_t, *y_vph_gre_t, *y_vph_blu_t, *y_sl_t, *y_bg_t, *y_coll_t, *y_lenses, y_frd]
+	y = [*y_gain, *y_rn, *y_dc, *y_qe_red_t, *y_qe_gre_t, *y_qe_blu_t, *y_vph_red_t, *y_vph_gre_t, *y_vph_blu_t, *y_sl_t, *y_bg_t, y_coll_t, *y_lenses, y_frd]
 	return y
 
 	
-#Adding standard error to a direct measurement of the input
-def simple_measurement(theta, stddev_meas, n_meas, err=True):
+"""
+Add standard error to a direct measurement of the input
+theta: float
+prior_mean: float
+"""
+def simple_measurement(theta, stddev_meas, n_meas, prior_mean, err=True):
 	if n_meas > 1:
 		y = theta
 		stddev = stddev_meas / np.sqrt(n_meas)
@@ -115,20 +121,27 @@ def simple_measurement(theta, stddev_meas, n_meas, err=True):
 		
 	else: 
 		#This means we don't run the experiment
-		#Model the imputation that would occur: assume prior is exactly right
+		#Model the imputation that would occur: 
+		# - Ignore the provided theta and assume theta is the mean of the prior
+		# - calculate the y that would result in
 		
-		#oh but wait... the exp model shouldn't normally know the prior
-		return 0 #placeholder
+		return prior_mean
 
-
-def camera_measurement(elem_list, n_meas, wave_min, wave_max, err=True):
+"""
+measure the mean throughput of one or more optical elements
+elem_list: list of Gaussian Process objects
+prior_mean_list: list of Gaussian Process objects
+"""
+def thru_measurement(elem_list, n_meas, wave_min, wave_max, meas_stddev, prior_mean_list, err=True):
 	if err:
-		stddev = x["lens_meas_err"]
+		stddev = meas_stddev
 	else:
 		stddev = 0
 		
 	if n_meas > 1:
-		measurement_pts = np.linspace(wave_min, wave_max, num=n_meas)
+		#choose the measurement points; this +2 -2 thing is to make sure im not measuring the endpoints
+		measurement_pts = np.linspace(wave_min, wave_max, num=n_meas+2)
+		measurement_pts = measurement_pts[1:-1]
 		
 		#Measure each element, and stack all the curves on top of each other
 		y_thru = []
@@ -138,25 +151,45 @@ def camera_measurement(elem_list, n_meas, wave_min, wave_max, err=True):
 				y_thru = thru_i
 			else:
 				y_thru = [y*i for y,i in zip(y_thru, thru_i)]
-
-		return np.mean(y_thru)
-		
 	else: 
 		#This means we don't run the experiment
-		#Model the imputation that would occur: assume prior is exactly right
-		
-		#oh but wait... the exp model shouldn't normally know the prior
-		return 0 #placeholder
+		#Model the imputation that would occur: 
+		# - Ignore the provided theta and assume theta is the mean of the prior
+		# - calculate the y that would result in
+		max_pts = np.linspace(wave_min, wave_max, num=100000)
+		y_thru = []
+		for elem in prior_mean_list:
+			thru_i = elem.eval_gp_cond(max_pts, 0)
+			if y_thru == []:
+				y_thru = thru_i
+			else:
+				y_thru = [y*i for y,i in zip(y_thru, thru_i)]
+
+	return np.mean(y_thru)
 	
-def measure_thru_sigmoid(theta_gp, d_meas_pts, wave_min, wave_max, meas_stddev, err=True):
+"""
+measure and fit a sigmoid to a throughput
+theta_gp: Gaussian Process object
+prior_mean: Gaussian Process object
+"""
+def measure_thru_sigmoid(theta_gp, d_meas_pts, wave_min, wave_max, meas_stddev, prior_mean, err=True):
 	if err:
-		stddev = x["vph_meas_stddev"]
+		stddev = meas_stddev
 	else:
 		stddev = 0
 		
 	#Handle measurement number: you can do 0, or 4 or more
-	if d_meas_pts < 4:
-		num_pts = 4
+	if d_meas_pts == 0:
+		#This means we don't run the experiment
+		#Model the imputation that would occur: 
+		# - Ignore the provided theta and assume theta is the mean of the prior
+		# - calculate the y that would result in
+		max_pts = np.linspace(wave_min, wave_max, num=100000)
+		y_thru = prior_mean.eval_gp_cond(max_pts, 0)
+		lval, step_pt, rval, power, _ = sigmoid_fit_throughput(max_pts, y_thru, doPlot=False, doErr=False)
+		return [lval, step_pt, rval, power]
+	elif d_meas_pts < 4:
+		num_pts = 4 #I could do smarter stuff here
 	else:
 		num_pts = d_meas_pts
 	
@@ -180,16 +213,29 @@ def measure_thru_sigmoid(theta_gp, d_meas_pts, wave_min, wave_max, meas_stddev, 
 	
 	return [lval, step_pt, rval, power]
 	
-	
-def measure_thru_vph(theta_gp, d_meas_pts, wave_min, wave_max, meas_stddev, err=True):
+"""
+Measure and fit a parabola to a throughput
+theta_gp: Gaussian Process object
+prior_mean: Gaussian Process object
+"""
+def measure_thru_vph(theta_gp, d_meas_pts, wave_min, wave_max, meas_stddev, prior_mean, err=True):
 	if err:
-		stddev = x["vph_meas_stddev"]
+		stddev = meas_stddev
 	else:
 		stddev = 0
 		
 	#Handle measurement number: you can do 0, or 3 or more
-	if d_meas_pts < 3:
-		num_pts = 3
+	if d_meas_pts == 0:
+		#This means we don't run the experiment
+		#Model the imputation that would occur: 
+		# - Ignore the provided theta and assume theta is the mean of the prior
+		# - calculate the y that would result in
+		max_pts = np.linspace(wave_min, wave_max, num=100000)
+		y_thru = prior_mean.eval_gp_cond(max_pts, 0)
+		popt, _ = poly_fit_throughput(max_pts, y_thru, 2, doPlot=False, doErr=False, doCov=False)
+		return popt
+	elif d_meas_pts < 3:
+		num_pts = 3 #I could do smarter stuff here
 	else:
 		num_pts = d_meas_pts
 	
@@ -223,7 +269,17 @@ Assumptions:
 * Signal and noise events will never overlap
 * w has no uncertainty
 """
-def gain_exp(gain, rn, dc, t, I, _x, err=True):
+def gain_exp(theta_gain, rn, dc, t, I, _x, prior_mean, err=True):
+	if I <= 0 or t <= 0:
+		#This means we don't run the experiment
+		#Model the imputation that would occur: 
+		# - Ignore the provided theta and assume theta is the mean of the prior
+		# - calculate the y that would result in
+		gain = prior_mean
+		err = False
+	else:
+		gain = theta_gain
+		
 	#define parameters:
 	P_signal = _x["P_signal"] #probability of a signal event being correctly identified as an event; 1-P_signal is false negative rate
 	P_noise = _x["P_noise"] #probability of noise being incorrectly identified as an event; P_noise is false positive rate
@@ -257,13 +313,13 @@ def gain_exp(gain, rn, dc, t, I, _x, err=True):
 	p = n_signal / n
 	
 	#calculate mixture distribution parameters, X = pS + (1-p)N
-	mu_x = p*E0*gain/w
-	var_x = p * (sigma_E/w)**2 + rn**2 + sigma_dc**2 + p*(1-p)*(E0/w)**2
-	sigma_x = math.sqrt(var_x)
-	stddev = sigma_x/np.sqrt(math.sqrt(I)*n)
+	mu_x = p*E0*gain/w	
 	
-	random = scipy.stats.norm.rvs(scale = stddev)
 	if err:
+		var_x = p * (sigma_E/w)**2 + rn**2 + sigma_dc**2 + p*(1-p)*(E0/w)**2
+		sigma_x = math.sqrt(var_x)
+		stddev = sigma_x/np.sqrt(math.sqrt(I)*n)
+		random = scipy.stats.norm.rvs(scale = stddev)
 		y = mu_x + random
 	else:
 		y = mu_x
@@ -275,7 +331,14 @@ theta: [0] gain [1] read noise [2] dark current
 d: [0] number exposures
 x parameters: sigma_stray, sigma_dc, nx, ny
 """
-def read_noise_exp(gain, rn, n_meas, _x, err=True):
+def read_noise_exp(gain, rn, n_meas, _x, prior_mean, err=True):
+	if n_meas <= 0:
+		#This means we don't run the experiment
+		#Model the imputation that would occur: 
+		# - Ignore the provided theta and assume theta is the mean of the prior
+		# - calculate the y that would result in
+		return gain * prior_mean
+		
 	#define parameters:
 	nx = _x["nx"]
 	ny = _x["ny"]
@@ -288,12 +351,11 @@ def read_noise_exp(gain, rn, n_meas, _x, err=True):
 	
 	sigma_si = gain * math.sqrt(rn**2 + (sigma_dc*t)**2 + (sigma_stray*t)**2)
 	
-	n = nx * ny * n_meas
-	random_var = (2/n) * sigma_si**4
-	random_sigma = math.sqrt(random_var)
-	random = scipy.stats.norm.rvs(scale = random_sigma)
-	
 	if err:
+		n = nx * ny * n_meas
+		random_var = (2/n) * sigma_si**4
+		random_sigma = math.sqrt(random_var)
+		random = scipy.stats.norm.rvs(scale = random_sigma)
 		y = sigma_si + random
 	else:
 		y = sigma_si
@@ -316,7 +378,14 @@ theta: [0] gain [1] read noise [2] dark current
 d: 
 x parameters: sigma_stray, sigma_dc, nx, ny
 """
-def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x, err=True):
+def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x, prior_mean, err=True):
+	if d_num <= 0:
+		#This means we don't run the experiment
+		#Model the imputation that would occur: 
+		# - Ignore the provided theta and assume theta is the mean of the prior
+		# - calculate the y that would result in
+		return prior_mean
+		
 	#define parameters:
 	mu_stray = _x["mu_stray"]
 	sigma_stray = _x["sigma_stray"]
@@ -361,8 +430,12 @@ def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x, err=True):
 	m = Sxy / Sx2
 	return m
 	
-	
-def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, wave_min, wave_max, full_bandpass, _x, err=True):
+"""
+Measure the signal of a QE experiment, and fit a linear regression with fourier elements to the signal
+qe: Gaussian Process object
+prior_mean: Gaussian Process object
+"""
+def quantum_efficiency_exp(theta_qe, gain, rn, n_qe, t_qe, wave_min, wave_max, full_bandpass, _x, prior_mean, err=True):				
 	#define parameters
 	S_pd = _x["S_pd"] #functional
 	S_pd_err = _x["S_pd_meas_err"]
@@ -372,10 +445,20 @@ def quantum_efficiency_exp(qe, gain, rn, n_qe, t_qe, wave_min, wave_max, full_ba
 	c = 299792458 #m/s #speed of light
 	
 	#Handle measurement number: you can do 0, or 3 or more
-	if n_qe < 3:
+	if n_qe <= 0 or t_qe <= 0:
+		#This means we don't run the experiment
+		#Model the imputation that would occur: 
+		# - Ignore the provided theta and assume theta is the mean of the prior
+		# - calculate the y that would result in
+		qe = prior_mean
+		num_pts = 100000
+		err = False
+	elif n_qe < 3:
 		num_pts = 3
+		qe = theta_qe
 	else:
 		num_pts = n_qe
+		qe = theta_qe
 	
 	#define design variables
 	#n_qe number of evenly-separated measurement points

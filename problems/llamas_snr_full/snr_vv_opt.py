@@ -35,7 +35,6 @@ def vv_nominal(problem, req, theta_nominal, y_nominal):
 	print("Nominal y:", y_nominal)
 	print("Nominal QoI:", QoI_nominal)
 
-
 ###uncertainty analysis
 def vv_UA_theta(problem, n=10**4):
 	#uncertainty propagation of HLVA
@@ -207,15 +206,39 @@ if __name__ == '__main__':
 						11, #d_lens_n_pts #protoLLAMAS camera testing
 						10 #d_frd_n_meas #from evaluating_cleaving_through_bigger.xlsx
 					]
-	problem = llamas_snr
+					
+	d_min = [
+						0, #t_gain 				0-length exposure for gain exp
+						0, #I_gain 				no measurements for gain exp
+						0, #n_meas_rn 			no measurements for rn exp
+						0, #d_num 				no measurements for dc exp
+						0, #d_max 				dc exp filer
+						0, #d_pow 				dc exp filler
+						0, #n_qe 				no measurements for qe exp
+						0, #t_qe 				0-length exposure for qe exp
+						0, #d_vph_n_pts 		no measurements for vph exp
+						0, #d_dichroic_n_pts 	no measurements for dichroic exp
+						0, #d_coll_n_pts		no measurements for collimator exp
+						0, #d_lens_n_pts		no measurements for camera exp
+						0  #d_frd_n_meas 		no measurements for FRD exp
+					]
+	problem = construct_llamas_snr_problem()
 	
 	req = 3.0
-	theta_nominal = problem.theta_nominal()
+	theta_nominal = problem.theta_nominal
 	y_nominal = problem.eta(theta_nominal, d_historical, err=False)
 
 	###Uncertainty Quantification
 	if args.run == "nominal":
 		vv_nominal(problem, req, theta_nominal, y_nominal)
+		
+	if args.run == "cheap_design":
+		print("Given the nominal theta:", theta_nominal)
+		print("and the cheapest design:", d_min)
+		y_cheap = problem.eta(theta_nominal, d_min, err=True)
+		
+		print("Cheapest y:", y_cheap)
+		print("Cost of design:", problem.G(d_min))
 	
 	if args.run == "UA_theta":
 		vv_UA_theta(problem, n=10**2)
