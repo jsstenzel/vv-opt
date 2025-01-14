@@ -30,7 +30,7 @@ def snr_cost(d, x):
 	t_rn_buffer = x["t_rn_buffer"]
 	#qe
 	#Handle measurement number: you can do 0, or 3 or more
-	t_qe = d["t_qe"]
+	t_qe = d["t_qe"] if d["t_qe"]>0.1 else 0.1 #times smaller than this just aren't meaningful
 	n_qe = d["n_qe"] if (d["n_qe"]==0 or d["n_qe"]>3) else 3
 	qe_setup = x["t_qe_setup"]
 	qe_buffer = x["t_qe_buffer"]

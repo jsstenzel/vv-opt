@@ -270,17 +270,7 @@ Assumptions:
 * Signal and noise events will never overlap
 * w has no uncertainty
 """
-def gain_exp(theta_gain, rn, dc, t, I, _x, prior_mean, err=True):
-	if I <= 0 or t <= 0:
-		#This means we don't run the experiment
-		#Model the imputation that would occur: 
-		# - Ignore the provided theta and assume theta is the mean of the prior
-		# - calculate the y that would result in
-		gain = prior_mean
-		err = False
-	else:
-		gain = theta_gain
-		
+def gain_exp(gain, rn, dc, t, I, _x, prior_mean, err=True):	
 	#define parameters:
 	P_signal = _x["P_signal"] #probability of a signal event being correctly identified as an event; 1-P_signal is false negative rate
 	P_noise = _x["P_noise"] #probability of noise being incorrectly identified as an event; P_noise is false positive rate
@@ -306,6 +296,15 @@ def gain_exp(theta_gain, rn, dc, t, I, _x, prior_mean, err=True):
 	Activity_s = activity_cd109 * 3.7e10 #convert to decay/s
 	N_decays = Activity_s * t
 	
+	if I <= 0 or t <= 0:
+		#This means we don't run the experiment
+		#Model the imputation that would occur: 
+		# - Ignore the provided theta and assume theta is the mean of the prior
+		# - calculate the y that would result in
+		p = 1 #this is what happens if you assume no false positives, perfect experiment, just get the right units
+		mu_x = p*E0*prior_mean/w	
+		return mu_x
+	
 	#calculate derived values
 	grade_area = grade_size**2
 	n_signal = N_decays * P_signal
@@ -319,7 +318,7 @@ def gain_exp(theta_gain, rn, dc, t, I, _x, prior_mean, err=True):
 	if err:
 		var_x = p * (sigma_E/w)**2 + rn**2 + sigma_dc**2 + p*(1-p)*(E0/w)**2
 		sigma_x = math.sqrt(var_x)
-		stddev = sigma_x/np.sqrt(math.sqrt(I)*n)
+		stddev = sigma_x/np.sqrt(I*n)
 		random = scipy.stats.norm.rvs(scale = stddev)
 		y = mu_x + random
 	else:
@@ -446,7 +445,7 @@ def quantum_efficiency_exp(theta_qe, gain, rn, n_qe, t_qe, wave_min, wave_max, f
 	c = 299792458 #m/s #speed of light
 	
 	#Handle measurement number: you can do 0, or 3 or more
-	if n_qe <= 0 or t_qe <= 0:
+	if n_qe <= 0:
 		#This means we don't run the experiment
 		#Model the imputation that would occur: 
 		# - Ignore the provided theta and assume theta is the mean of the prior
@@ -466,6 +465,12 @@ def quantum_efficiency_exp(theta_qe, gain, rn, n_qe, t_qe, wave_min, wave_max, f
 	#t_qe exposure time
 	#I_qe photocurrent of light source - spectral power * wavelength, see Krishnamurthy et al. 2016
 	
+	#times smaller than this just aren't meaningful
+	if t_qe <= 0.1:
+		t = 0.1
+	else:
+		t = t_qe
+	
 	#Take sample measurements of source and qe
 	measure_pts = np.linspace(wave_min, wave_max, num_pts)
 	
@@ -483,11 +488,11 @@ def quantum_efficiency_exp(theta_qe, gain, rn, n_qe, t_qe, wave_min, wave_max, f
 		power_pd = I_qe / S_i
 		energy = h*c / (lambda_i*1e-9)
 		photon_rate = power_pd / energy	
-		num_photons = photon_rate * t_qe
+		num_photons = photon_rate * t
 		Signal = gain * qe_i * num_photons
 		
 		if err:
-			ccd_error = math.sqrt(rn**2 + (sigma_dc*t_qe)**2)
+			ccd_error = math.sqrt(rn**2 + (sigma_dc*t)**2)
 			Signal += scipy.stats.norm.rvs(scale = ccd_error)
 		
 		Signal_measure.append(Signal)

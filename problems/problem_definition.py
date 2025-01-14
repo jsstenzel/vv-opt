@@ -75,15 +75,19 @@ class ProblemDefinition:
 		self.y_names=_y_defs
 		self.d_names=[name for name,_,_ in _d_defs]
 		self.x_names=[name for name,default,dist,mask in _x_defs]
+		
+		#pre-construct some of the dicts, so I never have to repeat it unnecessarily
+		self.x_dict = dict(zip(self.x_names, self.x_default))
+		self.prior_mean_dict = dict(zip(self.theta_names, self.theta_nominal))
 	
 	def eta(self, theta, d, x=[], err=True):
 		if x == []: #default x
-			x = deepcopy(self.x_default)
+			x_dict = deepcopy(self.x_dict)
 		if len(theta) != self.dim_theta:
 			raise ValueError("Input to ProblemDefinition eta: theta size "+str(self.dim_theta)+" expected, "+str(len(theta))+" provided.")
 		if len(d) != self.dim_d:
 			raise ValueError("Input to ProblemDefinition eta: d size "+str(self.dim_d)+" expected, "+str(len(d))+" provided.")
-		if len(x) != self.dim_x:
+		if len(x_dict) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition eta: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
 		#apply discrete mask to theta and d and x
 		theta_masked = [(math.floor(tt) if self.theta_masks[i]=='discrete' else tt) for i,tt in enumerate(theta)]
@@ -91,38 +95,33 @@ class ProblemDefinition:
 		#make dicts for inputs w/ defs, to ensure consistency
 		theta_dict = dict(zip(self.theta_names, theta_masked))
 		d_dict = dict(zip(self.d_names, d_masked))
-		x_dict = dict(zip(self.x_names, x))
-		#provide prior means, in case they're needed for imputation
-		prior_means = self.theta_nominal
-		prior_mean_dict = dict(zip(self.theta_names, prior_means))
-		return self._internal_eta(theta_dict, d_dict, x_dict, prior_mean_dict, err)
+		#provide prior means here, in case they're needed for imputation
+		return self._internal_eta(theta_dict, d_dict, x_dict, self.prior_mean_dict, err)
 	
 	def G(self, d, x=[]):
 		if x == []: #default x
-			x = deepcopy(self.x_default)
+			x_dict = deepcopy(self.x_dict)
 		if len(d) != self.dim_d:
 			raise ValueError("Input to ProblemDefinition G: theta size "+str(self.dim_d)+" expected, "+str(len(d))+" provided.")
-		if len(x) != self.dim_x:
+		if len(x_dict) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition G: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
 		#apply discrete mask to d and x
 		d_masked = [(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
 		#make dicts for inputs w/ defs, to ensure consistency
 		d_dict = dict(zip(self.d_names, d_masked))
-		x_dict = dict(zip(self.x_names, x))
 		return self._internal_G(d_dict, x_dict)
 	
 	def H(self, theta, x=[], verbose=False):
 		if x == []: #default x
-			x = deepcopy(self.x_default)
+			x_dict = deepcopy(self.x_dict)
 		if len(theta) != self.dim_theta:
 			raise ValueError("Input to ProblemDefinition H: theta size "+str(self.dim_theta)+" expected, "+str(len(theta))+" provided.")
-		if len(x) != self.dim_x:
+		if len(x_dict) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition H: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
 		#apply discrete mask to theta and x
 		theta_masked = [(math.floor(tt) if self.theta_masks[i]=='discrete' else tt) for i,tt in enumerate(theta)]
 		#make dicts for inputs w/ defs, to ensure consistency
 		theta_dict = dict(zip(self.theta_names, theta_masked))
-		x_dict = dict(zip(self.x_names, x))
 		return self._internal_H(theta_dict, x_dict, verbose)
 	
 	
