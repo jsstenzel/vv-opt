@@ -23,6 +23,7 @@ sys.path.insert(0, "..")
 #from problems.llamas_snr import *
 from approx.regression_models import *
 
+__max_lambda_pts = 1000 #There is some loss here, but thats acceptable
 
 """
 Full matrix experiment model
@@ -156,7 +157,7 @@ def thru_measurement(elem_list, n_meas, wave_min, wave_max, meas_stddev, prior_m
 		#Model the imputation that would occur: 
 		# - Ignore the provided theta and assume theta is the mean of the prior
 		# - calculate the y that would result in
-		max_pts = np.linspace(wave_min, wave_max, num=100000)
+		max_pts = np.linspace(wave_min, wave_max, num=__max_lambda_pts)
 		y_thru = []
 		for elem in prior_mean_list:
 			thru_i = elem.eval_gp_cond(max_pts, 0)
@@ -184,7 +185,7 @@ def measure_thru_sigmoid(theta_gp, d_meas_pts, wave_min, wave_max, meas_stddev, 
 		#Model the imputation that would occur: 
 		# - Ignore the provided theta and assume theta is the mean of the prior
 		# - calculate the y that would result in
-		max_pts = np.linspace(wave_min, wave_max, num=100000)
+		max_pts = np.linspace(wave_min, wave_max, num=__max_lambda_pts)
 		y_thru = prior_mean.eval_gp_cond(max_pts, 0)
 		lval, step_pt, rval, power, _ = sigmoid_fit_throughput(max_pts, y_thru, doPlot=False, doErr=False)
 		return [lval, step_pt, rval, power]
@@ -230,7 +231,7 @@ def measure_thru_vph(theta_gp, d_meas_pts, wave_min, wave_max, meas_stddev, prio
 		#Model the imputation that would occur: 
 		# - Ignore the provided theta and assume theta is the mean of the prior
 		# - calculate the y that would result in
-		max_pts = np.linspace(wave_min, wave_max, num=100000)
+		max_pts = np.linspace(wave_min, wave_max, num=__max_lambda_pts)
 		y_thru = prior_mean.eval_gp_cond(max_pts, 0)
 		popt, _ = poly_fit_throughput(max_pts, y_thru, 2, doPlot=False, doErr=False, doCov=False)
 		return popt
@@ -451,7 +452,7 @@ def quantum_efficiency_exp(theta_qe, gain, rn, n_qe, t_qe, wave_min, wave_max, f
 		# - Ignore the provided theta and assume theta is the mean of the prior
 		# - calculate the y that would result in
 		qe = prior_mean
-		num_pts = 100000
+		num_pts = __max_lambda_pts
 		err = False
 	elif n_qe < 3:
 		num_pts = 3

@@ -28,7 +28,7 @@ from opt.ngsa import *
 ################################
 
 def vv_nominal(problem, req, theta_nominal, y_nominal):
-	print(llamas_snr)
+	print(problem)
 	print("QoI requirement:", req)
 	QoI_nominal = problem.H(theta_nominal, verbose=True)
 	print("Given the nominal theta:", theta_nominal)
@@ -227,6 +227,31 @@ if __name__ == '__main__':
 	req = 3.0
 	theta_nominal = problem.theta_nominal
 	y_nominal = problem.eta(theta_nominal, d_historical, err=False)
+	
+	###Diagnostics
+	if args.run == "eta_profile":
+		#profile with cProfile
+		import cProfile
+		def eta_profile():
+			return problem.eta(theta_nominal, d_min, err=True) #y_nominal
+		cProfile.run('eta_profile()', 'eta_stats.prof')
+		
+		#analyze with pstats
+		import pstats
+		p = pstats.Stats('eta_stats.prof')
+		p.sort_stats('time').print_stats(100)  # Print top 10 functions by time
+		
+	if args.run == "H_profile":
+		#profile with cProfile
+		import cProfile
+		def H_profile():
+			return problem.H(theta_nominal, verbose=False) #y_nominal
+		cProfile.run('H_profile()', 'H_stats.prof')
+		
+		#analyze with pstats
+		import pstats
+		p = pstats.Stats('H_stats.prof')
+		p.sort_stats('time').print_stats(100)  # Print top 10 functions by time
 
 	###Uncertainty Quantification
 	if args.run == "nominal":

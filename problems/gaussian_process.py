@@ -37,7 +37,7 @@ def sample_gp_prior(variance, ls, prior_pts, mean_fn=_zero_mean):
 	sample = GaussianProcess1D(theta_gp, prior_pts, mean_fn, prior)
 	return sample
 	
-def define_functional(prior_pts, eval_pts, order=3):
+def define_functional(prior_pts, eval_pts, order=1):
 	f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(eval_pts), kind=order)
 	
 	def mean_fn_from_pts(t):
@@ -72,8 +72,11 @@ def get_ppts_meanfn_file(filename, order=3, doPlot=False):
 
 	def mean_fn_from_file(t):
 		try:
-			f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(mean_pts), kind=order)
-			val = f(t)
+			#scipy
+			#f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(mean_pts), kind=order)
+			#val = f(t)
+			#numpy
+			val = np.interp(t, prior_pts, mean_pts)
 		except ValueError:
 			return 0.0
 		return val
