@@ -331,6 +331,23 @@ def __ishigami(X):
 #ST2 = 0.44241114
 #ST3 = 0.24368366
 
+def __print_ishigami_indices(a=7, b=0.1):
+	print("Expected first-order indices:")
+	VY = a**2/8 + (b*np.pi**4)/5 + b**2 * (np.pi**8)/18 + 0.5 
+	V1 = 0.5 * (1 + (b*np.pi**4)/5)**2
+	V2 = a**2 / 8
+	V3 = 0
+	print("S1 =", V1/VY)
+	print("S2 =", V2/VY)
+	print("S3 =", V3/VY)
+	print("Expected total-effect indices:")
+	VT1 = 0.5 * (1 + (b*np.pi**4)/5)**2 + (8*b*b*np.pi**8)/225
+	VT2 = a**2 / 8
+	VT3 = (8*b*b*np.pi**8)/225
+	print("ST1 =", VT1/VY)
+	print("ST2 =", VT2/VY)
+	print("ST3 =", VT3/VY)
+
 if __name__ == '__main__':  
 	###########################
 	#Full demonstration
@@ -354,6 +371,7 @@ if __name__ == '__main__':
 	plist = np.arange(1,16)
 	Si_list = []
 	
+	"""
 	###Do loop of calculating indices and re-sampling
 	for j,p in enumerate(plist):
 		N = 2**p
@@ -375,3 +393,9 @@ if __name__ == '__main__':
 		plt.plot(plist, [Si[i] for Si in Si_list])
 	plt.legend(var_names)
 	plt.show()
+	"""
+	
+	param_values, Y = sobol_generate_samples(__ishigami, 2**16, problem, dists, bounds, doSijCalc=False, doPrint=True, writeSamples=sample_file)
+	Si = sobol_analyze_samples(problem, Y, doSijCalc=False, conf=conf, doPrint=True)
+	
+	__print_ishigami_indices()
