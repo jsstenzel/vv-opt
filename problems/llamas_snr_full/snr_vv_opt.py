@@ -17,6 +17,7 @@ from obed.obed_gbi import *
 from obed.pdf_estimation import *
 from uq.uncertainty_propagation import *
 from uq.sensitivity_analysis import *
+from uq.saltelli_gsa import *
 from opt.ngsa import *
 
 ################################
@@ -41,7 +42,6 @@ def vv_UA_theta(problem, n=10**4):
 	uq_thetas = problem.prior_rvs(n)
 	
 	covmatrix_heatmap(uq_thetas, names=problem.theta_names, rescale=True)
-	
 	
 def vv_UP_QoI(problem, req, n=10**4):
 	#uncertainty propagation of HLVA
@@ -82,12 +82,12 @@ def vv_SA_QoI(problem, p=5):
 		else:
 			thetadists.append(dtype)
 			thetabounds.append(params)
-	
+
 	#it'll be straightforward to see the dependence of QoI on theta
-	Si = sobol_saltelli(problem.H, 
+	Si = sobol_saltelli(problem.H,
 						2**p, #SALib wants powers of 2 for convergence
-						var_names=problem.theta_names, 
-						var_dists=thetadists, 
+						var_names=problem.theta_names,
+						var_dists=thetadists,
 						var_bounds=thetabounds,
 						conf=0.95, doSijCalc=False, doPlot=True, doPrint=True)
 
@@ -201,9 +201,11 @@ if __name__ == '__main__':
 						12,  #n_qe #questionable; kind of wasn't measured
 						2,  #t_qe
 						3, #d_vph_n_pts
-						800, #d_dichroic_n_pts
+						801, #d_dichroic_n_pts
 						1501, #d_coll_n_pts #MIT Run 9-2730		
-						11, #d_lens_n_pts #protoLLAMAS camera testing
+						11, #d_redcam_n_pts #protoLLAMAS camera testing
+						0, #d_greencam_n_pts #protoLLAMAS camera testing
+						11, #d_bluecam_n_pts #protoLLAMAS camera testing
 						10 #d_frd_n_meas #from evaluating_cleaving_through_bigger.xlsx
 					]
 					
@@ -219,7 +221,9 @@ if __name__ == '__main__':
 						0, #d_vph_n_pts 		no measurements for vph exp
 						0, #d_dichroic_n_pts 	no measurements for dichroic exp
 						0, #d_coll_n_pts		no measurements for collimator exp
-						0, #d_lens_n_pts		no measurements for camera exp
+						0, #d_redcam_n_pts		no measurements for camera exp
+						0, #d_greencam_n_pts		no measurements for camera exp
+						0, #d_bluecam_n_pts		no measurements for camera exp
 						0  #d_frd_n_meas 		no measurements for FRD exp
 					]
 	problem = construct_llamas_snr_problem()

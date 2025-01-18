@@ -90,9 +90,9 @@ def snr_likelihood_fn(theta, d, x, prior_mean, err=True):
 	redgreen_priormeans = [prior_mean["l1_t"],prior_mean["l2_t"],prior_mean["l3_t"],prior_mean["l4_t"],prior_mean["l5_t"],prior_mean["l6_t"],prior_mean["l7_t"]]
 	blue_lenses = [theta["l1_t"],theta["l2_t"],theta["l3_t"],theta["l4_t"],theta["l5_t"],theta["l6_t"],theta["l7_t"],theta["l8_t"]]
 	blue_priormeans = [prior_mean["l1_t"],prior_mean["l2_t"],prior_mean["l3_t"],prior_mean["l4_t"],prior_mean["l5_t"],prior_mean["l6_t"],prior_mean["l7_t"],prior_mean["l8_t"]]
-	y_red_cam = thru_measurement(redgreen_lenses, d["d_lens_n_pts"], red_min, red_max, x["lens_meas_err"], redgreen_priormeans, err)
-	y_gre_cam = thru_measurement(redgreen_lenses, d["d_lens_n_pts"], gre_min, gre_max, x["lens_meas_err"], redgreen_priormeans, err)
-	y_blu_cam = thru_measurement(blue_lenses, d["d_lens_n_pts"], blu_min, blu_max, x["lens_meas_err"], blue_priormeans, err)
+	y_red_cam = thru_measurement(redgreen_lenses, d["d_redcam_n_pts"], red_min, red_max, x["lens_meas_err"], redgreen_priormeans, err)
+	y_gre_cam = thru_measurement(redgreen_lenses, d["d_greencam_n_pts"], gre_min, gre_max, x["lens_meas_err"], redgreen_priormeans, err)
+	y_blu_cam = thru_measurement(blue_lenses, d["d_bluecam_n_pts"], blu_min, blu_max, x["lens_meas_err"], blue_priormeans, err)
 	
 	y_lenses = [
 		y_red_cam, y_gre_cam, y_blu_cam

@@ -1,7 +1,7 @@
 FOCAL PLANES:
 Experiment models are based off of historically-performed experiments, as described in Stenzel 2022.
 
-Historical valdiation data is TODO
+Historical valdiation data is located in a plotting script. This is not the latest data; after I performed my testing, a number of the focal planes needed to be refitted and retested, but it will do for validation data.
 
 QUANTUM EFFICIENCY:
 QE was never historically measured in-house for the focal planes.
@@ -16,21 +16,16 @@ TODO think about how to represent testing of 1 spectrograph vs 8 spectrographs i
 SL DICHROIC:
 There were 2 lots of the dichroics provided, A and B. I'm not sure how many of each we received, but a dichroic from each lot was tested, at 801 measurement points. I threw them together in one excel sheet, SL_run_comparison, to see how they differed.
 
-TODO update historical test plan.
-
 BG DICHROIC:
 There was 1 lot of dichroics provided, 1 dichroic was tested at 801 measurement points.
-
-TODO update historical test plan.
 
 COLLIMATOR:
 In-house testing of a collimator was done, with 1501 measurement points.
 
 LENSES:
+It does not seem that camera throughput testing was done for LLAMAS. Plenty of optical tolerancing work was done on LLAMAS, but that is a separate set of parameters that serve other quantities of interest.
 
-TODO I am not sure how camera testing was done for LLAMAS, check Box for that.
-
-Also located here are test results for detailed camera testing of the protoLLAMAS lenses. Here, the camera lens assemblies were tested all together, at 11 points each for the red and blue cameras.
+Also located here are test results for detailed camera testing of the protoLLAMAS lenses. Here, the camera lens assemblies were tested all together, at 11 points each for the red and blue cameras. This constitutes the full historical camera throughput testing that was done.
 
 FRD:
 From evaluating_cleavage...

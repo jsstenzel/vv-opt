@@ -76,10 +76,20 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	prior_gp_bg = ["gp_expquad", [.1, _lengthscale, ppts, meanfn_bg_prior]]
 
 	###Collimator priors
-	#TODO replace with ECI coating curve, LLAMAS_collimator_coatings_ECI_20210504
-	ppts, meanfn = get_ppts_meanfn_file(_dir+"dielectric_mirror.txt", 2, doPlot=verbose_probdef)
-	prior_gp_coll = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
-
+	coll_prior_pts = list(np.arange(325,975,1))
+	coll_mean_pts = [0.99 for _ in coll_prior_pts]
+	coll_prior_pts.append(1000)
+	coll_mean_pts.append(0.98)
+	var = 0.000006
+	ls = 8
+	def coll_fn(t):
+		try:
+			val = np.interp(t, coll_prior_pts, coll_mean_pts)
+		except ValueError:
+			return 0.0
+		return val
+	prior_gp_coll = ["gp_expquad", [var, ls, coll_prior_pts, coll_fn]]
+	
 	###Lens priors
 	#TODO replace these with real priors -- manufacturer curves for 60-30110
 	#which I guess means there was never any in-house testing?
@@ -93,7 +103,7 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	prior_gp_PBM8Y = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
 
 	###Fiber priors
-	prior_frd = ["gamma_mv", [0.077,0.022**2]]
+	prior_frd = ["gamma_ab", [1.575,1.25]]
 
 	#these priors are based on requirements that were met, see Camera Qual Report
 	theta_defs = [                             #mean, variance
@@ -193,7 +203,9 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 					["d_vph_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
 					["d_dichroic_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
 					["d_coll_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
-					["d_lens_n_pts", ['uniform', [0,_bandpass*10]], "discrete"], #i guess??
+					["d_redcam_n_pts", ['uniform', [0,_bandpass*10]], "discrete"], #i guess??
+					["d_greencam_n_pts", ['uniform', [0,_bandpass*10]], "discrete"], #i guess??
+					["d_bluecam_n_pts", ['uniform', [0,_bandpass*10]], "discrete"], #i guess??
 					["d_frd_n_meas", ['uniform', [0,2400]], "discrete"],
 				]
 		
@@ -307,5 +319,5 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	return llamas_snr
 	
 if __name__ == '__main__':  
-	llamas_snr = construct_llamas_snr_problem(verbose_probdef=True)
+	llamas_snr = construct_llamas_snr_problem(verbose_probdef=False)
 	print(llamas_snr)

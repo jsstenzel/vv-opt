@@ -373,6 +373,6 @@ def sensitivity_hlva(theta, x, verbose=True):
 			print(waves[i], "noise nan")
 	"""
 			
-	return(mean_snr)
+	return mean_snr
 	
 
