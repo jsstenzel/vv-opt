@@ -102,6 +102,10 @@ def define_functional_from_file(filename, order=3):
 	prior_pts, mean_fn_from_file = get_ppts_meanfn_file(filename, order)
 
 	return define_functional_mean(prior_pts, mean_fn_from_file)
+	
+#######################################
+# Class definition
+#######################################
 
 #This class is intended to work with the sample_gp_prior function
 #Usually, that function is used to specify & sample a prior, returning this object

@@ -39,3 +39,7 @@ Previously I used evaluating_cleaving_through_bugger.xlsx as the prior, but this
 So instead, I'll use a design prior. Requirements say throughput loss has to be less than 5%. So, I'll make the prior a gamma distribution that has a CDF near 1.0 at x=5, and is somewhat linear below that.
 This gives:
 gamma(alpha=1.575, beta=1.25)
+
+GENERAL CONSIDERATIONS:
+"Measurement Considerations When Specifying Optical Coatings," Pete Kupinski and Angus Macleod. This paper indicates a best case +- 0.1% T for commercial measurements of highly transmissive coatings.
+Therefore, I should assume that any experiment I might do has that uncertainty, unless otherwise stated.

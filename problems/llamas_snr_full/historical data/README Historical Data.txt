@@ -32,3 +32,7 @@ From evaluating_cleavage...
 The average of the sample of 10 stripped is 92.3%, and the scatter is 2.4%.
 Previously I used this as the prior, but this wouldn't have been known before testing.
 This is more appropriately used as validation data.
+
+GENERAL CONSIDERATIONS:
+"Measurement Considerations When Specifying Optical Coatings," Pete Kupinski and Angus Macleod. This paper indicates a best case +- 0.1% T for commercial measurements of highly transmissive coatings.
+Therefore, I should assume that any historical data has that uncertainty, unless otherwise stated.
