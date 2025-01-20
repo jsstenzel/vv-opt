@@ -86,12 +86,16 @@ def snr_likelihood_fn(theta, d, x, prior_mean, err=True):
 	
 	#lenses
 	#TODO get rid of prism, replace this with 3 experiments that each measure the total thru of a full camera
-	redgreen_lenses = [theta["l1_t"],theta["l2_t"],theta["l3_t"],theta["l4_t"],theta["l5_t"],theta["l6_t"],theta["l7_t"]]
-	redgreen_priormeans = [prior_mean["l1_t"],prior_mean["l2_t"],prior_mean["l3_t"],prior_mean["l4_t"],prior_mean["l5_t"],prior_mean["l6_t"],prior_mean["l7_t"]]
-	blue_lenses = [theta["l1_t"],theta["l2_t"],theta["l3_t"],theta["l4_t"],theta["l5_t"],theta["l6_t"],theta["l7_t"],theta["l8_t"]]
-	blue_priormeans = [prior_mean["l1_t"],prior_mean["l2_t"],prior_mean["l3_t"],prior_mean["l4_t"],prior_mean["l5_t"],prior_mean["l6_t"],prior_mean["l7_t"],prior_mean["l8_t"]]
-	y_red_cam = thru_measurement(redgreen_lenses, d["d_redcam_n_pts"], red_min, red_max, x["lens_meas_err"], redgreen_priormeans, err)
-	y_gre_cam = thru_measurement(redgreen_lenses, d["d_greencam_n_pts"], gre_min, gre_max, x["lens_meas_err"], redgreen_priormeans, err)
+	red_lenses = [theta["red_l1_t"],theta["red_l2_t"],theta["red_l3_t"],theta["red_l4_t"],theta["red_l5_t"],theta["red_l6_t"],theta["red_l7_t"]]
+	red_priormeans = [prior_mean["red_l1_t"],prior_mean["red_l2_t"],prior_mean["red_l3_t"],prior_mean["red_l4_t"],prior_mean["red_l5_t"],prior_mean["red_l6_t"],prior_mean["red_l7_t"]]
+	y_red_cam = thru_measurement(red_lenses, d["d_redcam_n_pts"], red_min, red_max, x["lens_meas_err"], red_priormeans, err)
+	
+	gre_lenses = [theta["gre_l1_t"],theta["gre_l2_t"],theta["gre_l3_t"],theta["gre_l4_t"],theta["gre_l5_t"],theta["gre_l6_t"],theta["gre_l7_t"]]
+	gre_priormeans = [prior_mean["gre_l1_t"],prior_mean["gre_l2_t"],prior_mean["gre_l3_t"],prior_mean["gre_l4_t"],prior_mean["gre_l5_t"],prior_mean["gre_l6_t"],prior_mean["gre_l7_t"]]
+	y_gre_cam = thru_measurement(gre_lenses, d["d_greencam_n_pts"], gre_min, gre_max, x["lens_meas_err"], gre_priormeans, err)
+	
+	blu_lenses = [theta["blu_l1_t"],theta["blu_l2_t"],theta["blu_l3_t"],theta["blu_l4_t"],theta["blu_l5_t"],theta["blu_l6_t"],theta["blu_l7_t"],theta["blu_l8_t"]]
+	blu_priormeans = [prior_mean["blu_l1_t"],prior_mean["blu_l2_t"],prior_mean["blu_l3_t"],prior_mean["blu_l4_t"],prior_mean["blu_l5_t"],prior_mean["blu_l6_t"],prior_mean["blu_l7_t"],prior_mean["blu_l8_t"]]
 	y_blu_cam = thru_measurement(blue_lenses, d["d_bluecam_n_pts"], blu_min, blu_max, x["lens_meas_err"], blue_priormeans, err)
 	
 	y_lenses = [

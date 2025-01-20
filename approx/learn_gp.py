@@ -8,7 +8,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import ConstantKernel, RBF
 
 sys.path.append('..')
-from problems.gaussian_process import *
+from approx.gaussian_process import *
 
 
 
@@ -29,17 +29,21 @@ def learn_gp_prior(wave_pts, thru_pts, err_pts=[], doPlot=False, doPrint=False):
 	Y = np.array(thru_pts)
 	Xmin = min(wave_pts)
 	Xmax = max(wave_pts)
-	kernel = ConstantKernel(0.0001, constant_value_bounds=(1e-10, 1.0)) * RBF(10.0, length_scale_bounds=(1.0,1000.0))
+	kernel = ConstantKernel(0.0001, constant_value_bounds=(1e-10, 1.0)) * RBF(100.0, length_scale_bounds=(10.0,1000.0))
 	
 	if err_pts:
 		variances = np.array([s**2 for s in err_pts])
-		gpr = GaussianProcessRegressor(kernel=kernel, random_state=0, alpha=variances)
+		gpr = GaussianProcessRegressor(kernel=kernel, random_state=0, alpha=variances, normalize_y=False)
 	else:
-		gpr = GaussianProcessRegressor(kernel=kernel, random_state=0)
+		gpr = GaussianProcessRegressor(kernel=kernel, random_state=0, normalize_y=False)
 		
 	gpr.fit([[x] for x in X], Y)
 	xplot = np.arange(Xmin,Xmax,1.0)
 	mu, std = gpr.predict([[x] for x in xplot], return_std=True)
+	
+	#For the prior points, use the measurement locations that were provided, sorted and without diplicates
+	#This makes it so that future samples from this GP have the same amount of uncertainty coming from sample locations... I think that matters
+	prior_pts = sorted(list(set(wave_pts)))
 	
 	#Define the mean fn
 	def mean_fn_from_training(t):
@@ -57,6 +61,7 @@ def learn_gp_prior(wave_pts, thru_pts, err_pts=[], doPlot=False, doPrint=False):
 		print(params['k1'], params['k2'], flush=True)
 	
 	if doPlot:	
+		"""
 		#Relying a little on https://stackoverflow.com/questions/74151442/how-to-incorporate-individual-measurement-uncertainties-into-gaussian-process
 		plt.scatter(X, Y)
 		plt.xlabel('wavelength')
@@ -76,6 +81,7 @@ def learn_gp_prior(wave_pts, thru_pts, err_pts=[], doPlot=False, doPrint=False):
 		plt.title('GP fit')
 		plt.show()
 		plt.clf()
+		"""
 		
 		#here's the real moneymaker
 		fine_plot = np.arange(Xmin,Xmax,0.1)
@@ -89,12 +95,16 @@ def learn_gp_prior(wave_pts, thru_pts, err_pts=[], doPlot=False, doPrint=False):
 		plt.show()
 		plt.clf()
 	
-	return expquad_variance, expquad_ls, xplot, mean_fn_from_training
+	return expquad_variance, expquad_ls, prior_pts, mean_fn_from_training
 
 
 def learn_gp_prior_from_files(filenames, meas_std, doPlot=False, doPrint=False):
 	wavelengths = []
 	throughputs = []
+	
+	if doPrint:
+		print(filenames,flush=True)
+	
 	for filename in filenames:
 		with open(filename, "r") as f:
 			for line in f:
@@ -109,7 +119,7 @@ def learn_gp_prior_from_files(filenames, meas_std, doPlot=False, doPrint=False):
 				throughputs.append(float(words[1]))
 	
 	#0.1% T number from Kupinski & Macleod
-	errs = [meas_std**2 for _ in wavelengths]
+	errs = [meas_std**2 for _ in wavelengths] if meas_std > 0 else []
 	variance, ls, prior_pts, mean_fn = learn_gp_prior(wavelengths, throughputs, errs, doPlot=doPlot, doPrint=doPrint)
 	
 	if doPlot:

@@ -9,7 +9,8 @@ import csv
 
 sys.path.append('../..')
 from problems.problem_definition import *
-from problems.gaussian_process import *
+from approx.gaussian_process import *
+from approx.learn_gp import *
 from approx.regression_models import *
 #llamas
 from problems.llamas_snr_full.snr_exp_models import *
@@ -17,10 +18,14 @@ from problems.llamas_snr_full.snr_system_model import *
 from problems.llamas_snr_full.snr_cost_model import *
 
 def construct_llamas_snr_problem(verbose_probdef=False):
-	print("Constructing llamas_snr_full ...",flush=True)
+	print("Constructing llamas_snr_full priors ...",flush=True)
 
 	#set path variables
 	_dir = "./llamas-etc/COATINGS/"
+	_reddir = "./vendor data/lenses/camera_RED/"
+	_gredir = "./vendor data/lenses/camera_GREEN/"
+	_bludir = "./vendor data/lenses/camera_BLUE/"
+	_qedir = "./vendor data/quantum efficiency/"
 
 	_wave_min = 350.0
 	_wave_max = 975.0
@@ -33,7 +38,7 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	#so for lambda=350, dlambda=0.159
 	#and for lambda=975, dlambda=0.443
 	_lengthscale = 1.0
-	thru_param_var = .01**2
+	T_std = 0.0001
 
 	###Camera priors
 	prior_gain_SN1 = ["gamma_mv",  [0.999,0.2**2]] #mean, variance
@@ -45,22 +50,34 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	prior_dc_SN3 = ["gamma_mv", [0.00267,.001**2]]
 
 	###Quantum efficiency priors
-	ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_dd.txt", 3, doPlot=verbose_probdef)
-	prior_gp_qe_red = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
-	ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_green.txt", 3, doPlot=verbose_probdef)
-	prior_gp_qe_gre = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
-	ppts, meanfn = get_ppts_meanfn_file(_dir+"CCD42-40_blue.txt", 3, doPlot=verbose_probdef)
-	prior_gp_qe_blu = ["gp_expquad", [.05, _lengthscale, ppts, meanfn]]
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_qedir+"qe_red_basic_nir.txt"],
+		0.01, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_gp_qe_red = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_qedir+"qe_green_basic_midband.txt"],
+		0.01, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_gp_qe_gre = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_qedir+"qe_blue_enhanced_broadband.txt"],
+		0.01, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_gp_qe_blu = ["gp_expquad", [var, ls, ppts, meanfn]]
 
 	###VPH priors
-	ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_red.txt", 2, doPlot=verbose_probdef)
-	prior_gp_vph_red = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
-	ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_green.txt", 2, doPlot=verbose_probdef)
-	prior_gp_vph_gre = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
-	ppts, meanfn = get_ppts_meanfn_file(_dir+"wasach_llamas2200_blue.txt", 2, doPlot=verbose_probdef)
-	prior_gp_vph_blu = ["gp_expquad", [.0267, _lengthscale, ppts, meanfn]]
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_dir+"wasach_llamas2200_red.txt"],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_gp_vph_red = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_dir+"wasach_llamas2200_green.txt"],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_gp_vph_gre = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_dir+"wasach_llamas2200_blue.txt"],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_gp_vph_blu = ["gp_expquad", [var, ls, ppts, meanfn]]
 
-	###Dichroic priors, use a different meanfn for sigmoid
+	###Dichroic priors
+	#TODO gp_expquad is not really a suitable kernel for learning a GP prior, due to the big discontinuity
+	#So for now, I will continue to define the mean function and kernel properties manually
 	ppts, _ = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_sl_prior.txt", 3, doPlot=False)
 	lval_sl, steppt_sl, rval_sl, power_sl, _ = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_sl_prior.txt", doPlot=verbose_probdef, doErr=False)
 	def meanfn_sl_prior(t):
@@ -75,7 +92,7 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 		return thru[0]
 	prior_gp_bg = ["gp_expquad", [.1, _lengthscale, ppts, meanfn_bg_prior]]
 
-	###Collimator priors
+	###Collimator priors, TODO I can do better later
 	coll_prior_pts = list(np.arange(325,975,1))
 	coll_mean_pts = [0.99 for _ in coll_prior_pts]
 	coll_prior_pts.append(1000)
@@ -90,17 +107,99 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 		return val
 	prior_gp_coll = ["gp_expquad", [var, ls, coll_prior_pts, coll_fn]]
 	
-	###Lens priors
-	#TODO replace these with real priors -- manufacturer curves for 60-30110
-	#which I guess means there was never any in-house testing?
-	#or should I count the testing for protoLLAMAS, design_vs_asbuilt_LLAMASprotoBlue etc?
-	#no, that was to validate the design... but that does inform me that the lens test should test full camera throughput, not individual lenses
+	###Red Lens priors -- manufacturer curves for 60-30110
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_reddir+"red1_2241C.txt", _reddir+'red1_2243C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_red1 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_reddir+"red2_2209C.txt", _reddir+'red2_2212C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_red2 = ["gp_expquad", [var, ls, ppts, meanfn]]
 
-	ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica.txt", 3, doPlot=verbose_probdef)
-	prior_gp_silica = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_reddir+"red3_2205C.txt", _reddir+'red3_2208C.txt', _reddir+'red3_2209C.txt', _reddir+'red3_2212C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_red3 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_reddir+"red4_2209C.txt", _reddir+'red4_2214C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_red4 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_reddir+'red5_2217C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_red5 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_reddir+'red6_9671C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_red6 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_reddir+'red7_2241C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_red7 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	###Green Lens priors -- manufacturer curves for 60-30110
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_gredir+"green1_8992C.txt", _gredir+'green1_8995C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_gre1 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_gredir+"green2_9455C.txt", _gredir+'green2_9459C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_gre2 = ["gp_expquad", [var, ls, ppts, meanfn]]
 
-	ppts, meanfn = get_ppts_meanfn_file(_dir+"ECI_FusedSilica.txt", 3, doPlot=verbose_probdef)
-	prior_gp_PBM8Y = ["gp_expquad", [.1, _lengthscale, ppts, meanfn]]
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_gredir+"green3_9463C.txt", _gredir+'green3_9466C.txt', _gredir+'green3_9468C.txt', _gredir+'green3_9480C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_gre3 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_gredir+"green4_9455C.txt", _gredir+'green4_9459C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_gre4 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_gredir+'green5_9476C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_gre5 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_gredir+'green6_8970C.txt', _gredir+'green6_9506C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_gre6 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_gredir+'green7_9478C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_gre7 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	###Blue Lens priors -- manufacturer curves for 60-30110
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_bludir+"blue1_9371C.txt", _bludir+'blue1_9376C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_blu1 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_bludir+"blue2_1961C.txt", _bludir+'blue2_1965C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_blu2 = ["gp_expquad", [var, ls, ppts, meanfn]]
+
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_bludir+"blue3_9360C.txt", _bludir+'blue3_9363C.txt', _bludir+'blue3_9371C.txt', _bludir+'blue3_9366C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_blu3 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_bludir+"blue4_9363C.txt", _bludir+'blue4_9373C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_blu4 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_bludir+'blue5_1961C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_blu5 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_bludir+'blue6_1961C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_blu6 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_bludir+'blue7_9360C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_blu7 = ["gp_expquad", [var, ls, ppts, meanfn]]
+	
+	var, ls, ppts, meanfn = learn_gp_prior_from_files([_bludir+'blue8_9412C.txt', _bludir+'blue8_9414C.txt'],
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+	prior_blu8 = ["gp_expquad", [var, ls, ppts, meanfn]]
 
 	###Fiber priors
 	prior_frd = ["gamma_ab", [1.575,1.25]]
@@ -125,14 +224,28 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 						["sl_t", prior_gp_sl, "continuous"],
 						["bg_t", prior_gp_bg, "continuous"],
 						["coll_t", prior_gp_coll, "continuous"],
-						["l1_t", prior_gp_silica, "continuous"],
-						["l2_t", prior_gp_PBM8Y, "continuous"],
-						["l3_t", prior_gp_silica, "continuous"],
-						["l4_t", prior_gp_PBM8Y, "continuous"],
-						["l5_t", prior_gp_silica, "continuous"],
-						["l6_t", prior_gp_PBM8Y, "continuous"],
-						["l7_t", prior_gp_PBM8Y, "continuous"],
-						["l8_t", prior_gp_PBM8Y, "continuous"],
+						["red_l1_t", prior_red1, "continuous"],
+						["red_l2_t", prior_red2, "continuous"],
+						["red_l3_t", prior_red3, "continuous"],
+						["red_l4_t", prior_red4, "continuous"],
+						["red_l5_t", prior_red5, "continuous"],
+						["red_l6_t", prior_red6, "continuous"],
+						["red_l7_t", prior_red7, "continuous"],
+						["gre_l1_t", prior_gre1, "continuous"],
+						["gre_l2_t", prior_gre2, "continuous"],
+						["gre_l3_t", prior_gre3, "continuous"],
+						["gre_l4_t", prior_gre4, "continuous"],
+						["gre_l5_t", prior_gre5, "continuous"],
+						["gre_l6_t", prior_gre6, "continuous"],
+						["gre_l7_t", prior_gre7, "continuous"],
+						["blu_l1_t", prior_blu1, "continuous"],
+						["blu_l2_t", prior_blu2, "continuous"],
+						["blu_l3_t", prior_blu3, "continuous"],
+						["blu_l4_t", prior_blu4, "continuous"],
+						["blu_l5_t", prior_blu5, "continuous"],
+						["blu_l6_t", prior_blu6, "continuous"],
+						["blu_l7_t", prior_blu7, "continuous"],
+						["blu_l8_t", prior_blu8, "continuous"],
 						["fiber_frd", prior_frd, "continuous"]
 					]
 
@@ -319,5 +432,5 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	return llamas_snr
 	
 if __name__ == '__main__':  
-	llamas_snr = construct_llamas_snr_problem(verbose_probdef=False)
+	llamas_snr = construct_llamas_snr_problem(verbose_probdef=True)
 	print(llamas_snr)

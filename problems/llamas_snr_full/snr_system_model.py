@@ -98,14 +98,6 @@ def sensitivity_hlva(theta, x, verbose=True):
 	#spectrograph
 	#elem_collimator = x["collimator"]#"dielectric_mirror.txt")]
 	elem_prism = x["prism"]#"ECI_FusedSilica.txt")]
-	#elem_prism = x["prism"]#"ECI_FusedSilica.txt")]
-	#elem_lens1 = x["lens1"]#"ECI_FusedSilica.txt")]
-	#elem_lens2 = x["lens2"]#"ECI_PBM8Y.txt")]
-	#elem_lens3 = x["lens3"]#"ECI_FusedSilica.txt")]
-	#elem_lens4 = x["lens4"]#"ECI_PBM8Y.txt")]
-	#elem_lens5 = x["lens5"]#"ECI_FusedSilica.txt")]
-	#elem_lens6 = x["lens6"]#"ECI_PBM8Y.txt")]
-	#elem_lens7 = x["lens7"]#"ECI_PBM8Y.txt")]
 	elem_window = x["sensor_window"]#"ECI_FusedSilica.txt")]
 	elem_glass_red = x["sensor_glass_red"]#"llamas_internal_red.txt")]
 	elem_glass_gre = x["sensor_glass_gre"]#"llamas_internal.txt")]
@@ -204,85 +196,35 @@ def sensitivity_hlva(theta, x, verbose=True):
 		for surf in llamas_channel.fiber.elements[2].surfaces: #fiber
 			surf.setThroughputTab(elem_fiber.prior_pts, thru(elem_fiber))
 	
-	#red_elem_list = ['elem_collimator', 'elem_dichroic_sl', elem_prism, elem_lens1, elem_lens2, elem_lens3, elem_lens4, elem_lens5, elem_lens6, elem_lens7, elem_window, elem_glass_red]
-	#gre_elem_list = ['elem_collimator', 'elem_dichroic_sl', 'elem_dichroic_bg', elem_prism, elem_lens1, elem_lens2, elem_lens3, elem_lens4, elem_lens5, elem_lens6, elem_lens7, elem_window, elem_glass_gre]
-	#blu_elem_list = ['elem_collimator', 'elem_dichroic_sl', 'elem_dichroic_bg', elem_prism, elem_lens1, elem_lens2, elem_lens3, elem_lens4, elem_lens5, elem_lens6, elem_lens7, elem_window, elem_glass_blu]
+	red_elem_list = [elem_prism, theta["red_l1_t"], theta["red_l2_t"], theta["red_l3_t"], theta["red_l4_t"], theta["red_l5_t"], theta["red_l6_t"], theta["red_l7_t"], elem_window, elem_glass_red]
+	gre_elem_list = [elem_prism, theta["gre_l1_t"], theta["gre_l2_t"], theta["gre_l3_t"], theta["gre_l4_t"], theta["gre_l5_t"], theta["gre_l6_t"], theta["gre_l7_t"], elem_window, elem_glass_gre]
+	blu_elem_list = [elem_prism, theta["blu_l1_t"], theta["blu_l2_t"], theta["blu_l3_t"], theta["blu_l4_t"], theta["blu_l5_t"], theta["blu_l6_t"], theta["blu_l7_t"],  theta["blu_l7_t"], elem_window, elem_glass_blu]
 	
 	#update other red spect elem throughputs:
 	#0 is collimator
 	#1 is DichroicRG
-	for surf in llamas_red.elements[2].surfaces:
-		surf.setThroughputTab(elem_prism.prior_pts, thru(elem_prism))
-	for surf in llamas_red.elements[3].surfaces:
-		surf.setThroughputTab(elem_lens1.prior_pts, thru(elem_lens1))
-	for surf in llamas_red.elements[4].surfaces:
-		surf.setThroughputTab(elem_lens2.prior_pts, thru(elem_lens2))
-	for surf in llamas_red.elements[5].surfaces:
-		surf.setThroughputTab(elem_lens3.prior_pts, thru(elem_lens3))
-	for surf in llamas_red.elements[6].surfaces:
-		surf.setThroughputTab(elem_lens4.prior_pts, thru(elem_lens4))
-	for surf in llamas_red.elements[7].surfaces:
-		surf.setThroughputTab(elem_lens5.prior_pts, thru(elem_lens5))
-	for surf in llamas_red.elements[8].surfaces:
-		surf.setThroughputTab(elem_lens6.prior_pts, thru(elem_lens6))
-	for surf in llamas_red.elements[9].surfaces:
-		surf.setThroughputTab(elem_lens7.prior_pts, thru(elem_lens7))
-	for surf in llamas_red.elements[10].surfaces:
-		surf.setThroughputTab(elem_window.prior_pts, thru(elem_window))
-	for surf in llamas_red.elements[11].surfaces:
-		surf.setThroughputTab(elem_glass_red.prior_pts, thru(elem_glass_red))
+	for i,elem in enumerate(red_elem_list):
+		e = 2 + i
+		for surf in llamas_red.elements[e].surfaces:
+			surf.setThroughputTab(elem.prior_pts, thru(elem))
 
 	#update other green spect elem throughputs:
 	#0 is collimator
 	#1 is DichroicRG
 	#2 is DichroicBG
-	for surf in llamas_green.elements[3].surfaces:
-		surf.setThroughputTab(elem_prism.prior_pts, thru(elem_prism))
-	for surf in llamas_green.elements[4].surfaces:
-		surf.setThroughputTab(elem_lens1.prior_pts, thru(elem_lens1))
-	for surf in llamas_green.elements[5].surfaces:
-		surf.setThroughputTab(elem_lens2.prior_pts, thru(elem_lens2))
-	for surf in llamas_green.elements[6].surfaces:
-		surf.setThroughputTab(elem_lens3.prior_pts, thru(elem_lens3))
-	for surf in llamas_green.elements[7].surfaces:
-		surf.setThroughputTab(elem_lens4.prior_pts, thru(elem_lens4))
-	for surf in llamas_green.elements[8].surfaces:
-		surf.setThroughputTab(elem_lens5.prior_pts, thru(elem_lens5))
-	for surf in llamas_green.elements[9].surfaces:
-		surf.setThroughputTab(elem_lens6.prior_pts, thru(elem_lens6))
-	for surf in llamas_green.elements[10].surfaces:
-		surf.setThroughputTab(elem_lens7.prior_pts, thru(elem_lens7))
-	for surf in llamas_green.elements[11].surfaces:
-		surf.setThroughputTab(elem_window.prior_pts, thru(elem_window))
-	for surf in llamas_green.elements[12].surfaces:
-		surf.setThroughputTab(elem_glass_gre.prior_pts, thru(elem_glass_gre))
+	for i,elem in enumerate(gre_elem_list):
+		e = 3 + i
+		for surf in llamas_red.elements[e].surfaces:
+			surf.setThroughputTab(elem.prior_pts, thru(elem))
 			
 	#update other blue spect elem throughputs:
 	#0 is collimator
 	#1 is DichroicRG
 	#2 is DichroicBG
-	for surf in llamas_blue.elements[3].surfaces:
-		surf.setThroughputTab(elem_prism.prior_pts, thru(elem_prism))
-	for surf in llamas_blue.elements[4].surfaces:
-		surf.setThroughputTab(elem_lens1.prior_pts, thru(elem_lens1))
-	for surf in llamas_blue.elements[5].surfaces:
-		surf.setThroughputTab(elem_lens2.prior_pts, thru(elem_lens2))
-	for surf in llamas_blue.elements[6].surfaces:
-		surf.setThroughputTab(elem_lens3.prior_pts, thru(elem_lens3))
-	for surf in llamas_blue.elements[7].surfaces:
-		surf.setThroughputTab(elem_lens4.prior_pts, thru(elem_lens4))
-	for surf in llamas_blue.elements[8].surfaces:
-		surf.setThroughputTab(elem_lens5.prior_pts, thru(elem_lens5))
-	for surf in llamas_blue.elements[9].surfaces:
-		surf.setThroughputTab(elem_lens6.prior_pts, thru(elem_lens6))
-	for surf in llamas_blue.elements[10].surfaces:
-		surf.setThroughputTab(elem_lens7.prior_pts, thru(elem_lens7))
-	for surf in llamas_blue.elements[11].surfaces:
-		surf.setThroughputTab(elem_lens8.prior_pts, thru(elem_lens8))
-	for surf in llamas_blue.elements[12].surfaces:
-		surf.setThroughputTab(elem_window.prior_pts, thru(elem_window))
-	for surf in llamas_blue.elements[13].surfaces:
-		surf.setThroughputTab(elem_glass_blu.prior_pts, thru(elem_glass_blu))
+	for i,elem in enumerate(blu_elem_list):
+		e = 3 + i
+		for surf in llamas_red.elements[e].surfaces:
+			surf.setThroughputTab(elem.prior_pts, thru(elem))
 	
 	#update sensors
 	for llamas_channel in [llamas_red, llamas_green, llamas_blue]:

@@ -2,7 +2,7 @@ import sys
 import math
 
 sys.path.append('../..')
-from problems.gaussian_process import *
+from approx.gaussian_process import *
 
 	
 """

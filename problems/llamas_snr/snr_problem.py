@@ -9,7 +9,7 @@ import csv
 
 sys.path.append('../..')
 from problems.problem_definition import *
-from problems.gaussian_process import *
+from approx.gaussian_process import *
 from approx.regression_models import *
 #llamas
 from problems.llamas_snr.snr_exp_models import *

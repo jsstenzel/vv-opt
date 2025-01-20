@@ -4,7 +4,7 @@ import numpy as np
 from scipy.stats import norm, poisson
 
 sys.path.append('../..')
-from problems.gaussian_process import *
+from approx.gaussian_process import *
 
 """
 Full matrix experiment model
