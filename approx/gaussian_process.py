@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import time
 import scipy.stats
 import scipy.interpolate
+from scipy.stats import logistic
 
 import pymc
 
@@ -23,6 +24,15 @@ sys.path.append('../..')
 def _zero_mean(x):
 	return 0
 	
+def t_to_u(t):
+	#Maps [0,1] to [-inf,inf]
+	return scipy.stats.logistic.ppf(t, scale=2)
+	
+def u_to_t(u):
+	#Maps [-inf,inf] to [0,1]
+	return scipy.stats.logistic.cdf(u, scale=2)
+
+
 #######################################
 # Generators for GaussianProcess1D
 #######################################
@@ -38,11 +48,12 @@ def sample_gp_prior(variance, ls, prior_pts, mean_fn=_zero_mean):
 	return sample
 	
 def define_functional(prior_pts, eval_pts, order=1):
-	f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(eval_pts), kind=order)
-	
+	#Convert to define mean function in u
+	eval_pts_u = t_to_u(eval_pts)
+		
 	def mean_fn_from_pts(t):
 		try:
-			val = f(t)
+			val = np.interp(t, prior_pts, eval_pts_u)
 		except ValueError:
 			return 0.0
 		return val
@@ -70,13 +81,16 @@ def get_ppts_meanfn_file(filename, order=3, doPlot=False):
 				prior_pts.append(float(words[0]))
 				mean_pts.append(float(words[1]))
 
+	#Convert to define mean function in u
+	mean_pts_u = t_to_u(mean_pts)
+
 	def mean_fn_from_file(t):
 		try:
 			#scipy
 			#f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(mean_pts), kind=order)
 			#val = f(t)
 			#numpy
-			val = np.interp(t, prior_pts, mean_pts)
+			val = np.interp(t, prior_pts, mean_pts_u)
 		except ValueError:
 			return 0.0
 		return val
@@ -114,7 +128,7 @@ class GaussianProcess1D:
 	def __init__(self, gp, prior_pts, mean_fn, prior):
 		self.gp = gp
 		self.prior_pts = prior_pts
-		self.mean_fn = mean_fn
+		self.mean_fn = mean_fn #this is defined in u-domain
 		self.prior = prior
 		
 		if gp==None and prior==None:
@@ -135,7 +149,9 @@ class GaussianProcess1D:
 			meas_data = [y + self.mean_fn(meas_pts[i]) + scipy.stats.norm.rvs(scale=noise) for i,y in enumerate(posterior_data)]
 		else:
 			meas_data = [y + self.mean_fn(meas_pts[i]) for i,y in enumerate(posterior_data)]
-		return meas_data
+		#Mean fn is innately in u, nNeed to convert back to t
+		meas_data_t = u_to_t(meas_data)
+		return meas_data_t
 	
 	#I think this is true...
 	#just doing a conditional at the same prior points, with no noise applied
@@ -147,16 +163,20 @@ class GaussianProcess1D:
 		#apply mean fn?
 		for i,pt in enumerate(data):
 			data[i] += self.mean_fn(self.prior_pts[i])
-		return data
+		#Mean fn is innately in u, need to convert back to t
+		data_t = u_to_t(data)
+		return data_t
 	
-	def plot_prior(self, plotMean=True, plotDataX=[], plotDataY=[]):
+	def plot_prior(self, plotMean=True, plotDataX=[], plotDataY=[], showPlot=True):
 		data = self.evaluate()
-		plt.plot(self.prior_pts, self.evaluate(),'r')
+		plt.plot(self.prior_pts, data, c=np.random.rand(3))
 		if plotMean:
-			plt.plot(self.prior_pts, [self.mean_fn(xi) for xi in self.prior_pts],'g-')
-		if plotDataX and plotDataY:
+			plt.plot(self.prior_pts, u_to_t([self.mean_fn(xi) for xi in self.prior_pts]),'k-')
+		if list(plotDataX) and list(plotDataY):
 			plt.scatter(plotDataX, plotDataY, c='b')
-		plt.show()
+		plt.title("Sample of the Gaussian Process")
+		if showPlot:
+			plt.show()
 
 
 if __name__ == "__main__":

@@ -24,31 +24,40 @@ thru_pts = all of the throughputs of all samples, including from multiple source
 err_pts = all of the standard deviations of the uncertainties in Y of each sample
 """
 
-def learn_gp_prior(wave_pts, thru_pts, err_pts=[], doPlot=False, doPrint=False):
+def learn_gp_prior(wave_pts, thru_pts, err_pts=[], doPlot=False, doPrint=False, careful=False):
 	X = np.array(wave_pts)
-	Y = np.array(thru_pts)
+	Y = np.array(t_to_u(thru_pts)) #convert t to u-domain
 	Xmin = min(wave_pts)
 	Xmax = max(wave_pts)
-	kernel = ConstantKernel(0.0001, constant_value_bounds=(1e-10, 1.0)) * RBF(100.0, length_scale_bounds=(10.0,1000.0))
+	kernel = ConstantKernel(0.01, constant_value_bounds=(1e-4, 100.0)) * RBF(100.0, length_scale_bounds=(5.0,1000.0))
+	
+	n_runs = 3 if careful else 0
 	
 	if err_pts:
-		variances = np.array([s**2 for s in err_pts])
-		gpr = GaussianProcessRegressor(kernel=kernel, random_state=0, alpha=variances, normalize_y=False)
-	else:
-		gpr = GaussianProcessRegressor(kernel=kernel, random_state=0, normalize_y=False)
+		#variances = np.array([s**2 for s in err_pts]) #I know this isnt right
 		
-	gpr.fit([[x] for x in X], Y)
+		#convert standard deviation to u-domain
+		#I need to do some cleverness here. I need to convert the standard deviation from the t domain to the u domain, but that conversion has to take into account where in u-space we are.
+		#So, for each std_i, make it t_to_u(t_i + std_i) - (u_i)
+		stddevs_over = [t_to_u(t+s) - t_to_u(t) for t,s in zip(thru_pts,err_pts)]
+		stddevs_under = [t_to_u(t) - t_to_u(t-s) for t,s in zip(thru_pts,err_pts)]
+		variances = np.array([ov*un for ov,un in zip(stddevs_over,stddevs_under)])
+		gpr = GaussianProcessRegressor(kernel=kernel, alpha=variances, normalize_y=True, n_restarts_optimizer=n_runs)
+	else:
+		gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True, n_restarts_optimizer=n_runs)
+		
+	gpr.fit([[x] for x in X], Y) #fitting in u-domain
 	xplot = np.arange(Xmin,Xmax,1.0)
-	mu, std = gpr.predict([[x] for x in xplot], return_std=True)
+	mu_u, std_u = gpr.predict([[x] for x in xplot], return_std=True)
 	
 	#For the prior points, use the measurement locations that were provided, sorted and without diplicates
 	#This makes it so that future samples from this GP have the same amount of uncertainty coming from sample locations... I think that matters
 	prior_pts = sorted(list(set(wave_pts)))
 	
-	#Define the mean fn
+	#Define the mean fn, in u-domain
 	def mean_fn_from_training(t):
 		try:
-			val = np.interp(t, xplot, mu)
+			val = np.interp(t, xplot, mu_u)
 		except ValueError:
 			return 0.0
 		return val
@@ -60,24 +69,25 @@ def learn_gp_prior(wave_pts, thru_pts, err_pts=[], doPlot=False, doPrint=False):
 	if doPrint:
 		print(params['k1'], params['k2'], flush=True)
 	
-	if doPlot:	
+	if doPlot:		
 		"""
 		#Relying a little on https://stackoverflow.com/questions/74151442/how-to-incorporate-individual-measurement-uncertainties-into-gaussian-process
 		plt.scatter(X, Y)
 		plt.xlabel('wavelength')
-		plt.ylabel('throughput')
+		plt.ylabel('throughput (u-domain)')
 		plt.title('Provided data to fit')
 		plt.show()
 		plt.clf()
 	
-		#plt.scatter(X, Y)
-		plt.fill_between(xplot, (mu - std), (mu + std), facecolor='grey')
-		plt.plot(xplot, mu, c='r')
+		#mu = u_to_t(mu_u) #need to plot in t-domain
+		#std = u_to_t(std_u) #need to plot in t-domain
+		plt.fill_between(xplot, (mu_u - std_u), (mu_u + std_u), facecolor='grey')
+		plt.plot(xplot, mu_u, c='r')
 		if err_pts:
 			plt.errorbar(X, Y, yerr=err_pts, ls='none')
 			
 		plt.xlabel('wavelength')
-		plt.ylabel('throughput')
+		plt.ylabel('throughput (u-domain)')
 		plt.title('GP fit')
 		plt.show()
 		plt.clf()
@@ -85,12 +95,12 @@ def learn_gp_prior(wave_pts, thru_pts, err_pts=[], doPlot=False, doPrint=False):
 		
 		#here's the real moneymaker
 		fine_plot = np.arange(Xmin,Xmax,0.1)
-		gp_std = np.array([np.sqrt(expquad_variance) for _ in fine_plot])
-		mean_pts = np.array([mean_fn_from_training(f) for f in fine_plot])
+		gp_std = np.array([np.sqrt(expquad_variance) for _ in fine_plot]) #plotting in u-domain
+		mean_pts = np.array([mean_fn_from_training(f) for f in fine_plot]) #plotting in u-domain
 		plt.fill_between(fine_plot, (mean_pts - gp_std), (mean_pts + gp_std), facecolor='grey')
 		plt.plot(fine_plot, mean_pts)
 		plt.xlabel('wavelength')
-		plt.ylabel('throughput')
+		plt.ylabel('throughput (u-domain)')
 		plt.title('The GP prior we learned')
 		plt.show()
 		plt.clf()
@@ -98,7 +108,7 @@ def learn_gp_prior(wave_pts, thru_pts, err_pts=[], doPlot=False, doPrint=False):
 	return expquad_variance, expquad_ls, prior_pts, mean_fn_from_training
 
 
-def learn_gp_prior_from_files(filenames, meas_std, doPlot=False, doPrint=False):
+def learn_gp_prior_from_files(filenames, meas_std, doPlot=False, doPrint=False, careful=False):
 	wavelengths = []
 	throughputs = []
 	
@@ -119,12 +129,17 @@ def learn_gp_prior_from_files(filenames, meas_std, doPlot=False, doPrint=False):
 				throughputs.append(float(words[1]))
 	
 	#0.1% T number from Kupinski & Macleod
-	errs = [meas_std**2 for _ in wavelengths] if meas_std > 0 else []
+	errs = [meas_std for _ in wavelengths] if meas_std > 0 else []
 	variance, ls, prior_pts, mean_fn = learn_gp_prior(wavelengths, throughputs, errs, doPlot=doPlot, doPrint=doPrint)
 	
 	if doPlot:
 		sample = sample_gp_prior(variance, ls, prior_pts, mean_fn)
-		sample.plot_prior()
+		sample.plot_prior(showPlot=False)
+		sample = sample_gp_prior(variance, ls, prior_pts, mean_fn)
+		sample.plot_prior(showPlot=False)
+		sample = sample_gp_prior(variance, ls, prior_pts, mean_fn)
+		sample.plot_prior(showPlot=False)
+		plt.show()
 	
 	return variance, ls, prior_pts, mean_fn
 	

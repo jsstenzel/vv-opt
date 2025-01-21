@@ -38,7 +38,9 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	#so for lambda=350, dlambda=0.159
 	#and for lambda=975, dlambda=0.443
 	_lengthscale = 1.0
-	T_std = 0.0001
+	#T_std = 1 #This made really nice plots, but isnt physically motivated
+	T_std = 0.0001 #is more physically correct, dT = 0.01%
+	QE_std = 0.01
 
 	###Camera priors
 	prior_gain_SN1 = ["gamma_mv",  [0.999,0.2**2]] #mean, variance
@@ -51,28 +53,28 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 
 	###Quantum efficiency priors
 	var, ls, ppts, meanfn = learn_gp_prior_from_files([_qedir+"qe_red_basic_nir.txt"],
-		0.01, doPlot=verbose_probdef, doPrint=verbose_probdef)
+		QE_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
 	prior_gp_qe_red = ["gp_expquad", [var, ls, ppts, meanfn]]
 	
 	var, ls, ppts, meanfn = learn_gp_prior_from_files([_qedir+"qe_green_basic_midband.txt"],
-		0.01, doPlot=verbose_probdef, doPrint=verbose_probdef)
+		QE_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
 	prior_gp_qe_gre = ["gp_expquad", [var, ls, ppts, meanfn]]
 	
 	var, ls, ppts, meanfn = learn_gp_prior_from_files([_qedir+"qe_blue_enhanced_broadband.txt"],
-		0.01, doPlot=verbose_probdef, doPrint=verbose_probdef)
+		QE_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
 	prior_gp_qe_blu = ["gp_expquad", [var, ls, ppts, meanfn]]
 
 	###VPH priors
 	var, ls, ppts, meanfn = learn_gp_prior_from_files([_dir+"wasach_llamas2200_red.txt"],
-		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef, careful=True)
 	prior_gp_vph_red = ["gp_expquad", [var, ls, ppts, meanfn]]
 	
 	var, ls, ppts, meanfn = learn_gp_prior_from_files([_dir+"wasach_llamas2200_green.txt"],
-		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef, careful=True)
 	prior_gp_vph_gre = ["gp_expquad", [var, ls, ppts, meanfn]]
 	
 	var, ls, ppts, meanfn = learn_gp_prior_from_files([_dir+"wasach_llamas2200_blue.txt"],
-		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef)
+		T_std, doPlot=verbose_probdef, doPrint=verbose_probdef, careful=True)
 	prior_gp_vph_blu = ["gp_expquad", [var, ls, ppts, meanfn]]
 
 	###Dichroic priors
