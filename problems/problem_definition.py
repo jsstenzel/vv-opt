@@ -203,14 +203,14 @@ class ProblemDefinition:
 				vals.append(thetas_i.tolist())
 			elif dtype == 'nonrandom':
 				thetas_i = [param[0] for _ in range(num_vals)]
-				vals.append(thetas_i.tolist())
+				vals.append(thetas_i)
 			elif dtype == 'gp_expquad':
 				variance = params[0]
 				ls = params[1]
 				prior_pts = params[2]
 				mean_fn = params[3]
 				thetas_i = [sample_gp_prior(variance, ls, prior_pts, mean_fn) for _ in range(num_vals)]
-				vals.append(thetas_i.tolist())
+				vals.append(thetas_i)
 			else:
 				raise ValueError("_dist_rvs did not expect prior type "+str(type))
 

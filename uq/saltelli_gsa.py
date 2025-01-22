@@ -118,23 +118,21 @@ def problem_saltelli_sobol(p, base_name, var_names, var_dists, var_params, model
 		return saltelli_indices(base_name, var_names, do_subset=2**p, doPrint=doPrint)
 
 
-def saltelli_eval(new_samples, base_name, var_names, model):
+def saltelli_eval(new_samples, base_name, var_names, model, doPrint=False):
 	if len(new_samples) % 2 != 0:
 		print("Need an even number of new samples to saltelli_eval", flush=True)
 		sys.exit()
 		
 	new_A = []
 	new_B = []
-	###Split 2M into A and B deterministically
-	"""
+	###Split 2M into A and B "deterministically"
 	for m,row in enumerate(new_samples):
 		if m % 2 == 0:
 			new_A.append(list(row))
 		else:
 			new_B.append(list(row))
-	"""
-	new_A = new_samples[:len(new_samples)/2]
-	new_B = new_samples[len(new_samples)/2:]
+	#new_A = list(new_samples[:int(len(new_samples)/2)]) #doesnt work if its a deep np array. but i dont want to deal with checking for whether it is or not
+	#new_B = list(new_samples[int(len(new_samples)/2):])
 			
 	###Construct the p Ci matrices
 	new_C = []
@@ -153,6 +151,9 @@ def saltelli_eval(new_samples, base_name, var_names, model):
 		new_C.append(new_Ci)
 		
 	###Perform the M*(2+p) model evaluations, append onto each row of the new matrices
+	if doPrint:
+		print("Performing",len(new_samples),"model evaluations ...",flush=True)
+		
 	for m,a_row in enumerate(new_A):
 		yA = model(a_row)
 		new_A[m].append(yA)
@@ -167,6 +168,9 @@ def saltelli_eval(new_samples, base_name, var_names, model):
 			new_Ci[m].append(yCi)
 		
 	###Finally, append these new matrices onto each of the 2+p files
+	if doPrint:
+		print("Saving samples to",base_name,"...",flush=True)
+		
 	aw = 'a'# if os.path.exists(base_name+'_A.csv') else 'w+'
 	with open(base_name+'_A.csv', aw, newline='') as csvfile:
 		writer = csv.writer(csvfile)
@@ -186,7 +190,7 @@ def saltelli_eval(new_samples, base_name, var_names, model):
 			for row in new_Ci:
 				writer.writerow(row)
 
-#TODO add an argument here to let me use a subset of the saved samples
+#do_subset argument lets us use a subset of the saved samples. Should be <= 2M
 def saltelli_indices(base_name, var_names, do_subset=0, doPrint=True):
 	if not os.path.isfile(base_name+'_A.csv'):
 		print("File",base_name+'_A.csv',"is missing")
@@ -581,6 +585,37 @@ def __compare_samplers(n, base1 = "ishigami", base2 = "ishigami_sobol"):
 	covmatrix_heatmap(samples2, ["x1","x2","x3","y"])
 		
 	sys.exit()
+	
+def plot_gsa_histograms(varnames, S=None, ST=None, title="", logplot=False):
+	things = [S, ST]
+	for i,thing in enumerate(things):
+		if thing is not None:
+			# set width of bar
+			barWidth = 0.2
+			#fig = plt.subplots(figsize =(10, 5))
+
+			# Make the plot
+			plt.bar(varnames, ST, color='orange', width = barWidth, edgecolor='grey',)
+			plt.title(title)
+			
+			if i==0:
+				plt.ylabel('First-order Sobol index', fontweight ='bold', fontsize = 10)
+			elif i==1:
+				plt.ylabel('Total-effect Sobol index', fontweight ='bold', fontsize = 10)
+			
+			# Adding Xticks
+			plt.xlabel('Parameters', fontweight ='bold', fontsize = 10)
+			#plt.xticks([r + barWidth for r in range(len(varnames))], varnames)
+			plt.xticks(rotation=90)
+			plt.tight_layout()
+			if logplot:
+				plt.yscale('log')	
+				
+			#add names (no whiskers)
+			plt.errorbar(varnames, thing, yerr=0, fmt='|', color='k')
+			plt.grid(axis = 'y')
+			
+			plt.show()
 
 if __name__ == '__main__':  
 	__compare_samplers(2**12)

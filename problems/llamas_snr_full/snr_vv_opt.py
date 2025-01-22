@@ -69,11 +69,32 @@ def vv_UP_QoI(problem, req, n=10**4):
 
 #sensitivity analysis of HLVA
 def vv_SA_QoI(problem, N=10000):
+	#Set up the problem. Use theta exactly for the parameters, sample here
+	var_names = problem.theta_names
+
+	def model(theta):
+		return problem.H(theta, verbose=False)
+		
+	###Generate some new samples and save
+	print("Sampling...",flush=True)
+	new_samples = problem.prior_rvs(N)
+	saltelli_eval(new_samples, "SA_QoI", var_names, model, doPrint=True)
+
+	###Perform the analysis at a few evaluation points
+	list_S = []
+	list_ST = []
+	list_n = []
+	for i in range(1):
+		S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=0, doPrint=True)
+		list_S.append(S)
+		list_ST.append(ST)
+		list_n.append(n_eval)
+
+#sensitivity analysis of HLVA
+def vv_SA_QoI_sobol(problem, N=10000):
 	#Set up the problem. The parameters are mostly theta,
 	#Except replace every Gaussian Process with a prior with a hyperparameter on the precision, p=1/sigma^2
 	#And put a gamma distribution as the prior for that
-	0
-	"""
 	param_defs = [                             
 						["gain_red", [0.999,0.2**2], "gamma_mv"],
 						["gain_gre", [1.008,0.2**2], "gamma_mv"],
@@ -93,30 +114,35 @@ def vv_SA_QoI(problem, N=10000):
 						["sl_prec", prior_gp_sl, "gamma_mv"],
 						["bg_prec", prior_gp_bg, "gamma_mv"],
 						["coll_prec", prior_gp_coll, "gamma_mv"],
-						["l1_prec", prior_gp_silica, "gamma_mv"],
-						["l2_prec", prior_gp_PBM8Y, "gamma_mv"],
-						["l3_prec", prior_gp_silica, "gamma_mv"],
-						["l4_prec", prior_gp_PBM8Y, "gamma_mv"],
-						["l5_prec", prior_gp_silica, "gamma_mv"],
-						["l6_prec", prior_gp_PBM8Y, "gamma_mv"],
-						["l7_prec", prior_gp_PBM8Y, "gamma_mv"],
-						["l8_prec", prior_gp_PBM8Y, "gamma_mv"],
-						["fiber_frd", [], "gamma_mv"]
+						["red_l1_prec", prior_red1, "gamma_mv"],
+						["red_l2_t", prior_red2, "gamma_mv"],
+						["red_l3_prec", prior_red3, "gamma_mv"],
+						["red_l4_prec", prior_red4, "gamma_mv"],
+						["red_l5_prec", prior_red5, "gamma_mv"],
+						["red_l6_prec", prior_red6, "gamma_mv"],
+						["red_l7_prec", prior_red7, "gamma_mv"],
+						["gre_l1_prec", prior_gre1, "gamma_mv"],
+						["gre_l2_prec", prior_gre2, "gamma_mv"],
+						["gre_l3_prec", prior_gre3, "gamma_mv"],
+						["gre_l4_prec", prior_gre4, "gamma_mv"],
+						["gre_l5_prec", prior_gre5, "gamma_mv"],
+						["gre_l6_prec", prior_gre6, "gamma_mv"],
+						["gre_l7_prec", prior_gre7, "gamma_mv"],
+						["blu_l1_prec", prior_blu1, "gamma_mv"],
+						["blu_l2_prec", prior_blu2, "gamma_mv"],
+						["blu_l3_prec", prior_blu3, "gamma_mv"],
+						["blu_l4_prec", prior_blu4, "gamma_mv"],
+						["blu_l5_prec", prior_blu5, "gamma_mv"],
+						["blu_l6_prec", prior_blu6, "gamma_mv"],
+						["blu_l7_prec", prior_blu7, "gamma_mv"],
+						["blu_l8_prec", prior_blu8, "gamma_mv"],
+						["fiber_frd", [3.434339623321249, 133.9392453095287], "beta"]
 					]
 	var_names = [pdef[0] for pdef in param_defs]
 	bounds = [pdef[1] for pdef in param_defs]
 	dists = [pdef[2] for pdef in param_defs]
-
-	def model()
-		#First, sample the GP's using the appropriate precision hyperparameters
-		
-		#Lastly, return the QoI
-		return problem.H(theta, verbose=False)
-
-	for i in range(len(list_p)):
-		Sr, STr, _ = problem_saltelli_sample(list_N[i], "snr_vv_SA_QoI", var_names, dists, bounds, model, doPrint=(i==len(list_p)-1))
-		list_S_random.append(Sr)
-	"""
+	
+	#Not implementing this further, because Sobol sampling is just not working for me currently
 
 #Uncertainty analysis of the experiment models
 def vv_UP_exp(problem, dd, theta_nominal, n=10**4, savefig=False):
@@ -281,7 +307,7 @@ if __name__ == '__main__':
 		vv_UP_exp(problem, d_historical, theta_nominal, n=10)
 	
 	if args.run == "SA_QoI":
-		vv_SA_QoI(problem, p=5)
+		vv_SA_QoI(problem, N=10)
 	
 	#Still needs massaging...
 	#if args.run == "SA_exp":
