@@ -55,9 +55,9 @@ def plot_throughput(llamas_red, llamas_green, llamas_blue):
    plt.show()
    
    #print("VPH")
-   vph_b = llamas_blue.elements[3].throughput(llamas_blue.waves)
-   vph_g = llamas_green.elements[3].throughput(llamas_green.waves)
-   vph_r = llamas_red.elements[2].throughput(llamas_red.waves)
+   vph_b = llamas_blue.grating.blaze.throughput(llamas_blue.waves)
+   vph_g = llamas_green.grating.blaze.throughput(llamas_green.waves)
+   vph_r = llamas_red.grating.blaze.throughput(llamas_red.waves)
 
    plt.plot(llamas_blue.waves, vph_b, c='b')
    plt.plot(llamas_green.waves, vph_g, c='g')
@@ -69,7 +69,7 @@ def plot_throughput(llamas_red, llamas_green, llamas_blue):
    plt.ylabel("Throughput ratio")
    plt.show()
    
-   return 0
+   #return 0
 
    print("FIBER RUN")
    plt.plot(llamas_blue.waves, llamas_blue.fiber.throughput(llamas_blue.waves), c='b')
@@ -80,12 +80,6 @@ def plot_throughput(llamas_red, llamas_green, llamas_blue):
                     llamas_green.fiber.throughput(llamas_green.waves), \
                     llamas_red.fiber.throughput(llamas_red.waves)])
    #print(fiber_run_med)
-
-   plt.title('Fiber Run Throughput')
-   plt.ylim(-0.05,1.05)
-   plt.xlabel("Wavelength [nm]")
-   plt.ylabel("Throughput ratio")
-   plt.show()
    
    plt.title('Fiber Run Throughput')
    plt.ylim(0,1)
@@ -120,6 +114,7 @@ def plot_throughput(llamas_red, llamas_green, llamas_blue):
    plt.ylabel("Throughput ratio")
    plt.show()
 
+   """
    print("PURE FIBER")
 
    # This is the AR coating + internal transmission
@@ -142,6 +137,7 @@ def plot_throughput(llamas_red, llamas_green, llamas_blue):
    plt.show()
 
    print(np.median(ft))
+   """
 
    return red_med, green_med, blue_med, fiber_run_med
 

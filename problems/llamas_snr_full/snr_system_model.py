@@ -157,15 +157,6 @@ def sensitivity_hlva(theta, x, verbose=True):
 	llamas_blue.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.prior_pts, [1.0-t for t in thru(elem_dichroic_sl)])
 	llamas_blue.elements[2].surfaces[0].setThroughputTab(elem_dichroic_bg.prior_pts, [1.0-t for t in thru(elem_dichroic_bg)])
 	
-	elem_lens1 = theta["l1_t"]#[theta["l1_t"] for _ in lambda_pts]
-	elem_lens2 = theta["l2_t"]#[theta["l2_t"] for _ in lambda_pts]
-	elem_lens3 = theta["l3_t"]#[theta["l3_t"] for _ in lambda_pts]
-	elem_lens4 = theta["l4_t"]#[theta["l4_t"] for _ in lambda_pts]
-	elem_lens5 = theta["l5_t"]#[theta["l5_t"] for _ in lambda_pts]
-	elem_lens6 = theta["l6_t"]#[theta["l6_t"] for _ in lambda_pts]
-	elem_lens7 = theta["l7_t"]#[theta["l7_t"] for _ in lambda_pts]
-	elem_lens8 = theta["l8_t"]#[theta["l8_t"] for _ in lambda_pts]
-	
 	fiber_frd = theta["fiber_frd"] if theta["fiber_frd"]>0 else 0
 	
 	##############################
@@ -214,7 +205,7 @@ def sensitivity_hlva(theta, x, verbose=True):
 	#2 is DichroicBG
 	for i,elem in enumerate(gre_elem_list):
 		e = 3 + i
-		for surf in llamas_red.elements[e].surfaces:
+		for surf in llamas_green.elements[e].surfaces:
 			surf.setThroughputTab(elem.prior_pts, thru(elem))
 			
 	#update other blue spect elem throughputs:
@@ -223,7 +214,7 @@ def sensitivity_hlva(theta, x, verbose=True):
 	#2 is DichroicBG
 	for i,elem in enumerate(blu_elem_list):
 		e = 3 + i
-		for surf in llamas_red.elements[e].surfaces:
+		for surf in llamas_blue.elements[e].surfaces:
 			surf.setThroughputTab(elem.prior_pts, thru(elem))
 	
 	#update sensors

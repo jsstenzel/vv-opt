@@ -96,7 +96,7 @@ def snr_likelihood_fn(theta, d, x, prior_mean, err=True):
 	
 	blu_lenses = [theta["blu_l1_t"],theta["blu_l2_t"],theta["blu_l3_t"],theta["blu_l4_t"],theta["blu_l5_t"],theta["blu_l6_t"],theta["blu_l7_t"],theta["blu_l8_t"]]
 	blu_priormeans = [prior_mean["blu_l1_t"],prior_mean["blu_l2_t"],prior_mean["blu_l3_t"],prior_mean["blu_l4_t"],prior_mean["blu_l5_t"],prior_mean["blu_l6_t"],prior_mean["blu_l7_t"],prior_mean["blu_l8_t"]]
-	y_blu_cam = thru_measurement(blue_lenses, d["d_bluecam_n_pts"], blu_min, blu_max, x["lens_meas_err"], blue_priormeans, err)
+	y_blu_cam = thru_measurement(blu_lenses, d["d_bluecam_n_pts"], blu_min, blu_max, x["lens_meas_err"], blu_priormeans, err)
 	
 	y_lenses = [
 		y_red_cam, y_gre_cam, y_blu_cam

@@ -35,10 +35,12 @@ We have Optimax throughput curves from the vendor for each lens in a spectrograp
 TODO sadly, I have to turn all of these into throughput curves and use em
 
 FRD:
-Previously I used evaluating_cleaving_through_bugger.xlsx as the prior, but this wouldn't have been known before testing.
-So instead, I'll use a design prior. Requirements say throughput loss has to be less than 5%. So, I'll make the prior a gamma distribution that has a CDF near 1.0 at x=5, and is somewhat linear below that.
-This gives:
-gamma(alpha=1.575, beta=1.25)
+Previously I used evaluating_cleaving_through_bugger.xlsx as the prior (mean 7.7%, stddev 2.4%), but this wouldn't have been known before testing.
+
+Because this is a throughput loss (1-thru) it must be defined on the domain [0,1] -- hence, a Beta distribution, which has the same support.
+
+I'll use a Beta design prior. Requirements say throughput loss has to be less than 5%. So, I'll make the prior a beta distribution that has a CDF of 0.95 at x=0.05, and a mean of 0.25. That gives:
+Beta(a=3.434339623321249, b=133.9392453095287)
 
 GENERAL CONSIDERATIONS:
 "Measurement Considerations When Specifying Optical Coatings," Pete Kupinski and Angus Macleod. This paper indicates a best case +- 0.1% T for commercial measurements of highly transmissive coatings.

@@ -68,28 +68,55 @@ def vv_UP_QoI(problem, req, n=10**4):
 	print("Probability of meeting requirement given priors:", prob_meetreq)
 
 #sensitivity analysis of HLVA
-def vv_SA_QoI(problem, p=5):
-	#annoyingly, I need to process the prior dists:
-	thetadists=[]
-	thetabounds=[]
-	for theta_prior in problem.priors:
-		dtype = theta_prior[0]
-		params = theta_prior[1]
-		if dtype == "gaussian_multivar":
-			thetadists.extend(["gaussian" for _ in params[0]])
-			param_get = [[mean, stddev] for mean,stddev in zip(params[0],np.diagonal(params[1]))]
-			thetabounds.extend(param_get)
-		else:
-			thetadists.append(dtype)
-			thetabounds.append(params)
+def vv_SA_QoI(problem, N=10000):
+	#Set up the problem. The parameters are mostly theta,
+	#Except replace every Gaussian Process with a prior with a hyperparameter on the precision, p=1/sigma^2
+	#And put a gamma distribution as the prior for that
+	0
+	"""
+	param_defs = [                             
+						["gain_red", [0.999,0.2**2], "gamma_mv"],
+						["gain_gre", [1.008,0.2**2], "gamma_mv"],
+						["gain_blu", [1.008,0.2**2], "gamma_mv"],
+						["rn_red", [2.32,0.25**2], "gamma_mv"],
+						["rn_gre", [2.35,0.25**2], "gamma_mv"],
+						["rn_blu", [2.35,0.25**2], "gamma_mv"],
+						["dc_red", [0.00238,.001**2], "gamma_mv"],
+						["dc_gre", [0.00267,.001**2], "gamma_mv"],
+						["dc_blu", [0.00267,.001**2], "gamma_mv"],
+						["qe_red_prec", prior_gp_qe_red, "gamma_mv"],
+						["qe_gre_prec", prior_gp_qe_gre, "gamma_mv"],
+						["qe_blu_prec", prior_gp_qe_blu, "gamma_mv"],
+						["vph_red_prec", prior_gp_vph_red, "gamma_mv"],
+						["vph_gre_prec", prior_gp_vph_gre, "gamma_mv"],
+						["vph_blu_prec", prior_gp_vph_blu, "gamma_mv"],
+						["sl_prec", prior_gp_sl, "gamma_mv"],
+						["bg_prec", prior_gp_bg, "gamma_mv"],
+						["coll_prec", prior_gp_coll, "gamma_mv"],
+						["l1_prec", prior_gp_silica, "gamma_mv"],
+						["l2_prec", prior_gp_PBM8Y, "gamma_mv"],
+						["l3_prec", prior_gp_silica, "gamma_mv"],
+						["l4_prec", prior_gp_PBM8Y, "gamma_mv"],
+						["l5_prec", prior_gp_silica, "gamma_mv"],
+						["l6_prec", prior_gp_PBM8Y, "gamma_mv"],
+						["l7_prec", prior_gp_PBM8Y, "gamma_mv"],
+						["l8_prec", prior_gp_PBM8Y, "gamma_mv"],
+						["fiber_frd", [], "gamma_mv"]
+					]
+	var_names = [pdef[0] for pdef in param_defs]
+	bounds = [pdef[1] for pdef in param_defs]
+	dists = [pdef[2] for pdef in param_defs]
 
-	#it'll be straightforward to see the dependence of QoI on theta
-	Si = sobol_saltelli(problem.H,
-						2**p, #SALib wants powers of 2 for convergence
-						var_names=problem.theta_names,
-						var_dists=thetadists,
-						var_bounds=thetabounds,
-						conf=0.95, doSijCalc=False, doPlot=True, doPrint=True)
+	def model()
+		#First, sample the GP's using the appropriate precision hyperparameters
+		
+		#Lastly, return the QoI
+		return problem.H(theta, verbose=False)
+
+	for i in range(len(list_p)):
+		Sr, STr, _ = problem_saltelli_sample(list_N[i], "snr_vv_SA_QoI", var_names, dists, bounds, model, doPrint=(i==len(list_p)-1))
+		list_S_random.append(Sr)
+	"""
 
 #Uncertainty analysis of the experiment models
 def vv_UP_exp(problem, dd, theta_nominal, n=10**4, savefig=False):

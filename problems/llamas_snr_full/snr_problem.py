@@ -84,14 +84,14 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	lval_sl, steppt_sl, rval_sl, power_sl, _ = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_sl_prior.txt", doPlot=verbose_probdef, doErr=False)
 	def meanfn_sl_prior(t):
 		thru = throughput_from_sigmoidfit_coeffs(lval_sl, steppt_sl, rval_sl, power_sl, [t])
-		return thru[0]
+		return t_to_u(thru[0])
 	prior_gp_sl = ["gp_expquad", [.1, _lengthscale, ppts, meanfn_sl_prior]]
 
 	ppts, _ = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_bg_prior.txt", 3, doPlot=False)
 	lval_bg, steppt_bg, rval_bg, power_bg, _ = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_bg_prior.txt", doPlot=verbose_probdef, doErr=False)
 	def meanfn_bg_prior(t):
 		thru = throughput_from_sigmoidfit_coeffs(lval_bg, steppt_bg, rval_bg, power_bg, [t])
-		return thru[0]
+		return t_to_u(thru[0])
 	prior_gp_bg = ["gp_expquad", [.1, _lengthscale, ppts, meanfn_bg_prior]]
 
 	###Collimator priors, TODO I can do better later
@@ -204,7 +204,7 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	prior_blu8 = ["gp_expquad", [var, ls, ppts, meanfn]]
 
 	###Fiber priors
-	prior_frd = ["gamma_ab", [1.575,1.25]]
+	prior_frd = ["beta", [3.434339623321249, 133.9392453095287]]
 
 	#these priors are based on requirements that were met, see Camera Qual Report
 	theta_defs = [                             #mean, variance
