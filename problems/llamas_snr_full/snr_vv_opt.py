@@ -68,7 +68,7 @@ def vv_UP_QoI(problem, req, n=10**4):
 	print("Probability of meeting requirement given priors:", prob_meetreq)
 
 #sensitivity analysis of HLVA
-def vv_SA_QoI(problem, N=10000):
+def vv_SA_QoI_sample(problem, N=10000):
 	#Set up the problem. The parameters are mostly theta,
 	#Except replace every Gaussian Process with a prior with a hyperparameter on the precision, p=1/sigma^2
 	#And put a gamma distribution as the prior for that, according to the principle of maximum entropy
@@ -176,18 +176,20 @@ def vv_SA_QoI(problem, N=10000):
 		return problem.H(theta, verbose=False)
 		
 	###Generate some new samples and save
-	#print("Sampling...",flush=True)
-	saltelli_eval_sample("SA_QoI", N, var_names, var_dists, var_bounds, model, doPrint=True)
+	#I want to save samples as often as possible. Therefore, iterate through N two at a time, corresponding to 2(p+2) model evals at a time
+	for _ in range(int(N/2))
+		saltelli_eval_sample("SA_QoI", 2, var_names, var_dists, var_bounds, model, doPrint=True)
 
+#sensitivity analysis of HLVA
+def vv_SA_QoI_evaluate(problem, N=10000):
 	###Perform the analysis at a few evaluation points
 	list_S = []
 	list_ST = []
-	list_n = []
-	for i in range(1):
+	list_n = [10,100,1000,10000]
+	for n in list_n:
 		S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=0, doPrint=True)
 		list_S.append(S)
 		list_ST.append(ST)
-		list_n.append(n_eval)
 
 #Uncertainty analysis of the experiment models
 def vv_UP_exp(problem, dd, theta_nominal, n=10**4, savefig=False):
