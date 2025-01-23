@@ -3,6 +3,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import re
+import csv
 
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import ConstantKernel, RBF
@@ -29,7 +30,7 @@ def learn_gp_prior(wave_pts, thru_pts, err_pts=[], doPlot=False, doPrint=False, 
 	Y = np.array(t_to_u(thru_pts)) #convert t to u-domain
 	Xmin = min(wave_pts)
 	Xmax = max(wave_pts)
-	kernel = ConstantKernel(0.01, constant_value_bounds=(1e-4, 100.0)) * RBF(100.0, length_scale_bounds=(5.0,1000.0))
+	kernel = ConstantKernel(0.01, constant_value_bounds=(1e-4, 100.0)) * RBF(100.0, length_scale_bounds=(1.0,1000.0))
 	
 	n_runs = 3 if careful else 0
 	
@@ -142,7 +143,53 @@ def learn_gp_prior_from_files(filenames, meas_std, doPlot=False, doPrint=False, 
 		plt.show()
 	
 	return variance, ls, prior_pts, mean_fn
+
+def save_gp_prior_to_file(save_file, filenames, meas_std, save=True, doPlot=False, doPrint=False, careful=False):
+	variance, ls, prior_pts, mean_fn = learn_gp_prior_from_files(filenames, meas_std, doPlot=doPlot, doPrint=doPrint, careful=careful)
 	
+	#grab the mean fn points straight from the fn, so still in the u-domain
+	mean_fn_pts_u = [mean_fn(pt) for pt in prior_pts]
+	
+	save_file_name = save_file if save_file.endswith('.csv') else save_file+'.csv'
+	if save:
+		with open(save_file_name, 'w+', newline='') as csvfile:
+			writer = csv.writer(csvfile)
+			writer.writerow([variance])
+			writer.writerow([ls])
+			for p,m in zip(prior_pts, mean_fn_pts_u):
+				writer.writerow([p, m])
+
+def load_gp_prior_from_file(load_file, returnObj=False):
+	prior_pts = []
+	mean_fn_pts_u = []
+
+	load_file_name = load_file if load_file.endswith('.csv') else load_file+'.csv'
+	if not os.path.isfile(load_file_name):
+		print("Couldn't find GP prior save file",load_file_name)
+		sys.exit()
+	
+	variance = 0
+	ls = 0	
+	with open(load_file_name, 'r', newline='') as csvfile:
+		reader = csv.reader(csvfile)
+		for i,row in enumerate(reader):
+			if i==0:
+				variance=float(row[0])
+			elif i==1:
+				ls=float(row[0])
+			else:
+				prior_pts.append(float(row[0]))
+				mean_fn_pts_u.append(float(row[1]))
+			
+	def mean_fn_load_gp(t):
+		try:
+			val = np.interp(t, prior_pts, mean_fn_pts_u)
+		except ValueError:
+			return 0.0
+		return val
+	
+	return variance, ls, prior_pts, mean_fn_load_gp
+
 
 if __name__ == '__main__':  
 	import argparse

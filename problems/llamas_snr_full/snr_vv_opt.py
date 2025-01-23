@@ -69,8 +69,55 @@ def vv_UP_QoI(problem, req, n=10**4):
 
 #sensitivity analysis of HLVA
 def vv_SA_QoI(problem, N=10000):
-	#Set up the problem. Use theta exactly for the parameters, sample here
-	var_names = problem.theta_names
+	#Set up the problem. The parameters are mostly theta,
+	#Except replace every Gaussian Process with a prior with a hyperparameter on the precision, p=1/sigma^2
+	#And put a gamma distribution as the prior for that
+	param_defs = [                             
+		["gain_red", [0.999,0.2**2], "gamma_mv"],
+		["gain_gre", [1.008,0.2**2], "gamma_mv"],
+		["gain_blu", [1.008,0.2**2], "gamma_mv"],
+		["rn_red", [2.32,0.25**2], "gamma_mv"],
+		["rn_gre", [2.35,0.25**2], "gamma_mv"],
+		["rn_blu", [2.35,0.25**2], "gamma_mv"],
+		["dc_red", [0.00238,.001**2], "gamma_mv"],
+		["dc_gre", [0.00267,.001**2], "gamma_mv"],
+		["dc_blu", [0.00267,.001**2], "gamma_mv"],
+		["qe_red_prec", prior_gp_qe_red, "gamma_mv"], #for each precision, the mean is the nominal value, and the var
+		["qe_gre_prec", prior_gp_qe_gre, "gamma_mv"],
+		["qe_blu_prec", prior_gp_qe_blu, "gamma_mv"],
+		["vph_red_prec", prior_gp_vph_red, "gamma_mv"],
+		["vph_gre_prec", prior_gp_vph_gre, "gamma_mv"],
+		["vph_blu_prec", prior_gp_vph_blu, "gamma_mv"],
+		["sl_prec", prior_gp_sl, "gamma_mv"],
+		["bg_prec", prior_gp_bg, "gamma_mv"],
+		["coll_prec", prior_gp_coll, "gamma_mv"],
+		["red_l1_prec", prior_red1, "gamma_mv"],
+		["red_l2_t", prior_red2, "gamma_mv"],
+		["red_l3_prec", prior_red3, "gamma_mv"],
+		["red_l4_prec", prior_red4, "gamma_mv"],
+		["red_l5_prec", prior_red5, "gamma_mv"],
+		["red_l6_prec", prior_red6, "gamma_mv"],
+		["red_l7_prec", prior_red7, "gamma_mv"],
+		["gre_l1_prec", prior_gre1, "gamma_mv"],
+		["gre_l2_prec", prior_gre2, "gamma_mv"],
+		["gre_l3_prec", prior_gre3, "gamma_mv"],
+		["gre_l4_prec", prior_gre4, "gamma_mv"],
+		["gre_l5_prec", prior_gre5, "gamma_mv"],
+		["gre_l6_prec", prior_gre6, "gamma_mv"],
+		["gre_l7_prec", prior_gre7, "gamma_mv"],
+		["blu_l1_prec", prior_blu1, "gamma_mv"],
+		["blu_l2_prec", prior_blu2, "gamma_mv"],
+		["blu_l3_prec", prior_blu3, "gamma_mv"],
+		["blu_l4_prec", prior_blu4, "gamma_mv"],
+		["blu_l5_prec", prior_blu5, "gamma_mv"],
+		["blu_l6_prec", prior_blu6, "gamma_mv"],
+		["blu_l7_prec", prior_blu7, "gamma_mv"],
+		["blu_l8_prec", prior_blu8, "gamma_mv"],
+		["fiber_frd", [3.434339623321249, 133.9392453095287], "beta"]
+	]
+	var_names = [pdef[0] for pdef in param_defs]
+	bounds = [pdef[1] for pdef in param_defs]
+	dists = [pdef[2] for pdef in param_defs]
 
 	def model(theta):
 		return problem.H(theta, verbose=False)
@@ -96,48 +143,48 @@ def vv_SA_QoI_sobol(problem, N=10000):
 	#Except replace every Gaussian Process with a prior with a hyperparameter on the precision, p=1/sigma^2
 	#And put a gamma distribution as the prior for that
 	param_defs = [                             
-						["gain_red", [0.999,0.2**2], "gamma_mv"],
-						["gain_gre", [1.008,0.2**2], "gamma_mv"],
-						["gain_blu", [1.008,0.2**2], "gamma_mv"],
-						["rn_red", [2.32,0.25**2], "gamma_mv"],
-						["rn_gre", [2.35,0.25**2], "gamma_mv"],
-						["rn_blu", [2.35,0.25**2], "gamma_mv"],
-						["dc_red", [0.00238,.001**2], "gamma_mv"],
-						["dc_gre", [0.00267,.001**2], "gamma_mv"],
-						["dc_blu", [0.00267,.001**2], "gamma_mv"],
-						["qe_red_prec", prior_gp_qe_red, "gamma_mv"],
-						["qe_gre_prec", prior_gp_qe_gre, "gamma_mv"],
-						["qe_blu_prec", prior_gp_qe_blu, "gamma_mv"],
-						["vph_red_prec", prior_gp_vph_red, "gamma_mv"],
-						["vph_gre_prec", prior_gp_vph_gre, "gamma_mv"],
-						["vph_blu_prec", prior_gp_vph_blu, "gamma_mv"],
-						["sl_prec", prior_gp_sl, "gamma_mv"],
-						["bg_prec", prior_gp_bg, "gamma_mv"],
-						["coll_prec", prior_gp_coll, "gamma_mv"],
-						["red_l1_prec", prior_red1, "gamma_mv"],
-						["red_l2_t", prior_red2, "gamma_mv"],
-						["red_l3_prec", prior_red3, "gamma_mv"],
-						["red_l4_prec", prior_red4, "gamma_mv"],
-						["red_l5_prec", prior_red5, "gamma_mv"],
-						["red_l6_prec", prior_red6, "gamma_mv"],
-						["red_l7_prec", prior_red7, "gamma_mv"],
-						["gre_l1_prec", prior_gre1, "gamma_mv"],
-						["gre_l2_prec", prior_gre2, "gamma_mv"],
-						["gre_l3_prec", prior_gre3, "gamma_mv"],
-						["gre_l4_prec", prior_gre4, "gamma_mv"],
-						["gre_l5_prec", prior_gre5, "gamma_mv"],
-						["gre_l6_prec", prior_gre6, "gamma_mv"],
-						["gre_l7_prec", prior_gre7, "gamma_mv"],
-						["blu_l1_prec", prior_blu1, "gamma_mv"],
-						["blu_l2_prec", prior_blu2, "gamma_mv"],
-						["blu_l3_prec", prior_blu3, "gamma_mv"],
-						["blu_l4_prec", prior_blu4, "gamma_mv"],
-						["blu_l5_prec", prior_blu5, "gamma_mv"],
-						["blu_l6_prec", prior_blu6, "gamma_mv"],
-						["blu_l7_prec", prior_blu7, "gamma_mv"],
-						["blu_l8_prec", prior_blu8, "gamma_mv"],
-						["fiber_frd", [3.434339623321249, 133.9392453095287], "beta"]
-					]
+		["gain_red", [0.999,0.2**2], "gamma_mv"],
+		["gain_gre", [1.008,0.2**2], "gamma_mv"],
+		["gain_blu", [1.008,0.2**2], "gamma_mv"],
+		["rn_red", [2.32,0.25**2], "gamma_mv"],
+		["rn_gre", [2.35,0.25**2], "gamma_mv"],
+		["rn_blu", [2.35,0.25**2], "gamma_mv"],
+		["dc_red", [0.00238,.001**2], "gamma_mv"],
+		["dc_gre", [0.00267,.001**2], "gamma_mv"],
+		["dc_blu", [0.00267,.001**2], "gamma_mv"],
+		["qe_red_prec", prior_gp_qe_red, "gamma_mv"],
+		["qe_gre_prec", prior_gp_qe_gre, "gamma_mv"],
+		["qe_blu_prec", prior_gp_qe_blu, "gamma_mv"],
+		["vph_red_prec", prior_gp_vph_red, "gamma_mv"],
+		["vph_gre_prec", prior_gp_vph_gre, "gamma_mv"],
+		["vph_blu_prec", prior_gp_vph_blu, "gamma_mv"],
+		["sl_prec", prior_gp_sl, "gamma_mv"],
+		["bg_prec", prior_gp_bg, "gamma_mv"],
+		["coll_prec", prior_gp_coll, "gamma_mv"],
+		["red_l1_prec", prior_red1, "gamma_mv"],
+		["red_l2_t", prior_red2, "gamma_mv"],
+		["red_l3_prec", prior_red3, "gamma_mv"],
+		["red_l4_prec", prior_red4, "gamma_mv"],
+		["red_l5_prec", prior_red5, "gamma_mv"],
+		["red_l6_prec", prior_red6, "gamma_mv"],
+		["red_l7_prec", prior_red7, "gamma_mv"],
+		["gre_l1_prec", prior_gre1, "gamma_mv"],
+		["gre_l2_prec", prior_gre2, "gamma_mv"],
+		["gre_l3_prec", prior_gre3, "gamma_mv"],
+		["gre_l4_prec", prior_gre4, "gamma_mv"],
+		["gre_l5_prec", prior_gre5, "gamma_mv"],
+		["gre_l6_prec", prior_gre6, "gamma_mv"],
+		["gre_l7_prec", prior_gre7, "gamma_mv"],
+		["blu_l1_prec", prior_blu1, "gamma_mv"],
+		["blu_l2_prec", prior_blu2, "gamma_mv"],
+		["blu_l3_prec", prior_blu3, "gamma_mv"],
+		["blu_l4_prec", prior_blu4, "gamma_mv"],
+		["blu_l5_prec", prior_blu5, "gamma_mv"],
+		["blu_l6_prec", prior_blu6, "gamma_mv"],
+		["blu_l7_prec", prior_blu7, "gamma_mv"],
+		["blu_l8_prec", prior_blu8, "gamma_mv"],
+		["fiber_frd", [3.434339623321249, 133.9392453095287], "beta"]
+	]
 	var_names = [pdef[0] for pdef in param_defs]
 	bounds = [pdef[1] for pdef in param_defs]
 	dists = [pdef[2] for pdef in param_defs]
@@ -240,7 +287,8 @@ def uncertainty_mc(problem, dd, n_mc=10**2, n_gmm=10**2, n_test=10**2):
 if __name__ == '__main__':  
 	import argparse
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--run', metavar='string', required=True, help='Functions to run for this vvopt analysis')
+	parser.add_argument('--run', metavar='string', required=True, help='Function to run for this vvopt analysis')
+	parser.add_argument('-n', type=int, required=True, help='Number of iterations to give to the function')
 	args = parser.parse_args()
 	
 	###Problem Definition
@@ -298,16 +346,16 @@ if __name__ == '__main__':
 		print("Cost of design:", problem.G(d_min))
 	
 	if args.run == "UA_theta":
-		vv_UA_theta(problem, n=10**2)
+		vv_UA_theta(problem, n=args.n)
 	
 	if args.run == "UP_QoI":
-		vv_UP_QoI(problem, req, n=250)
+		vv_UP_QoI(problem, req, n=args.n)
 		
 	if args.run == "UP_exp":
-		vv_UP_exp(problem, d_historical, theta_nominal, n=10)
+		vv_UP_exp(problem, d_historical, theta_nominal, n=args.n)
 	
 	if args.run == "SA_QoI":
-		vv_SA_QoI(problem, N=10)
+		vv_SA_QoI(problem, N=args.n)
 	
 	#Still needs massaging...
 	#if args.run == "SA_exp":
