@@ -32,6 +32,21 @@ def u_to_t(u):
 	#Maps [-inf,inf] to [0,1]
 	return scipy.stats.logistic.cdf(u, scale=2)
 
+#Wanted to see if this is faster than np.interp -- its not
+def fast_interp(x, xpoints, ypoints):
+	i1 = 0
+	if xpoints[i1] > x:
+		raise ValueError("fast_interp was asked to interpolate to the left of domain")
+	while xpoints[i1+1] < x:
+		i1 += 1
+		if i1 == len(xpoints):
+			raise ValueError("fast_interp was asked to interpolate to the right of domain")
+	x1 = xpoints[i1]
+	x2 = xpoints[i1+1]
+	y1 = ypoints[i1]
+	y2 = ypoints[i1+1]
+	return ((y2 - y1) * x + x2 * y1 - x1 * y2) / (x2 - x1)
+	
 
 #######################################
 # Generators for GaussianProcess1D
@@ -177,6 +192,8 @@ class GaussianProcess1D:
 		plt.title("Sample of the Gaussian Process")
 		if showPlot:
 			plt.show()
+		
+	
 
 
 if __name__ == "__main__":

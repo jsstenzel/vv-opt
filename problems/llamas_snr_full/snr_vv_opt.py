@@ -71,7 +71,46 @@ def vv_UP_QoI(problem, req, n=10**4):
 def vv_SA_QoI(problem, N=10000):
 	#Set up the problem. The parameters are mostly theta,
 	#Except replace every Gaussian Process with a prior with a hyperparameter on the precision, p=1/sigma^2
-	#And put a gamma distribution as the prior for that
+	#And put a gamma distribution as the prior for that, according to the principle of maximum entropy
+	#Note that all of these variances are in u-space
+	sloc = './priors/'
+	gp_variance_list = [
+		list(load_gp_prior_from_file(sloc+'prior_gp_qe_red'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_gp_qe_gre'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_gp_qe_blu'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_gp_vph_red'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_gp_vph_gre'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_gp_vph_blu'))[0],
+		1.0, #sl,
+		1.0, #bg
+		1.0, #coll
+		list(load_gp_prior_from_file(sloc+'prior_red1'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_red2'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_red3'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_red4'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_red5'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_red6'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_red7'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_gre1'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_gre2'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_gre3'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_gre4'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_gre5'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_gre6'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_gre7'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_blu1'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_blu2'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_blu3'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_blu4'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_blu5'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_blu6'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_blu7'))[0],
+		list(load_gp_prior_from_file(sloc+'prior_blu8'))[0]
+	]
+	gp_prec_list = [1/v for v in gp_variance_list]
+	hyper_mean, hyper_std = uncertainty_prop(gp_prec_list, False, False)
+	#This is the best info I have about the priors, so I should use it in the development of a prior for the hyperparameters
+	
 	param_defs = [                             
 		["gain_red", [0.999,0.2**2], "gamma_mv"],
 		["gain_gre", [1.008,0.2**2], "gamma_mv"],
@@ -82,50 +121,63 @@ def vv_SA_QoI(problem, N=10000):
 		["dc_red", [0.00238,.001**2], "gamma_mv"],
 		["dc_gre", [0.00267,.001**2], "gamma_mv"],
 		["dc_blu", [0.00267,.001**2], "gamma_mv"],
-		["qe_red_prec", prior_gp_qe_red, "gamma_mv"], #for each precision, the mean is the nominal value, and the var
-		["qe_gre_prec", prior_gp_qe_gre, "gamma_mv"],
-		["qe_blu_prec", prior_gp_qe_blu, "gamma_mv"],
-		["vph_red_prec", prior_gp_vph_red, "gamma_mv"],
-		["vph_gre_prec", prior_gp_vph_gre, "gamma_mv"],
-		["vph_blu_prec", prior_gp_vph_blu, "gamma_mv"],
-		["sl_prec", prior_gp_sl, "gamma_mv"],
-		["bg_prec", prior_gp_bg, "gamma_mv"],
-		["coll_prec", prior_gp_coll, "gamma_mv"],
-		["red_l1_prec", prior_red1, "gamma_mv"],
-		["red_l2_t", prior_red2, "gamma_mv"],
-		["red_l3_prec", prior_red3, "gamma_mv"],
-		["red_l4_prec", prior_red4, "gamma_mv"],
-		["red_l5_prec", prior_red5, "gamma_mv"],
-		["red_l6_prec", prior_red6, "gamma_mv"],
-		["red_l7_prec", prior_red7, "gamma_mv"],
-		["gre_l1_prec", prior_gre1, "gamma_mv"],
-		["gre_l2_prec", prior_gre2, "gamma_mv"],
-		["gre_l3_prec", prior_gre3, "gamma_mv"],
-		["gre_l4_prec", prior_gre4, "gamma_mv"],
-		["gre_l5_prec", prior_gre5, "gamma_mv"],
-		["gre_l6_prec", prior_gre6, "gamma_mv"],
-		["gre_l7_prec", prior_gre7, "gamma_mv"],
-		["blu_l1_prec", prior_blu1, "gamma_mv"],
-		["blu_l2_prec", prior_blu2, "gamma_mv"],
-		["blu_l3_prec", prior_blu3, "gamma_mv"],
-		["blu_l4_prec", prior_blu4, "gamma_mv"],
-		["blu_l5_prec", prior_blu5, "gamma_mv"],
-		["blu_l6_prec", prior_blu6, "gamma_mv"],
-		["blu_l7_prec", prior_blu7, "gamma_mv"],
-		["blu_l8_prec", prior_blu8, "gamma_mv"],
+		["qe_red_prec", [hyper_mean, hyper_std**2], "gamma_mv"], #for each precision, the mean is the nominal value, and the var is 
+		["qe_gre_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["qe_blu_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["vph_red_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["vph_gre_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["vph_blu_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["sl_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["bg_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["coll_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["red_l1_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["red_l2_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["red_l3_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["red_l4_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["red_l5_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["red_l6_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["red_l7_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["gre_l1_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["gre_l2_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["gre_l3_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["gre_l4_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["gre_l5_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["gre_l6_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["gre_l7_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["blu_l1_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["blu_l2_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["blu_l3_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["blu_l4_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["blu_l5_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["blu_l6_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["blu_l7_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
+		["blu_l8_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
 		["fiber_frd", [3.434339623321249, 133.9392453095287], "beta"]
 	]
 	var_names = [pdef[0] for pdef in param_defs]
-	bounds = [pdef[1] for pdef in param_defs]
-	dists = [pdef[2] for pdef in param_defs]
+	var_bounds = [pdef[1] for pdef in param_defs]
+	var_dists = [pdef[2] for pdef in param_defs]
 
-	def model(theta):
+	def model(params):
+		###First, process theta, sampling using the new precisions:
+		theta = []
+		for i,name in enumerate(var_names):
+			if name.endswith('_prec'):
+				variance = params[i] #the hyperparameter
+				ls = problem.priors[i][1][1]
+				prior_pts = problem.priors[i][1][2]
+				mean_fn = problem.priors[i][1][3]
+				sample = sample_gp_prior(variance, ls, prior_pts, mean_fn)
+				theta.append(sample)
+			else:
+				theta.append(params[i])
+		
+		###Finally, return QoI
 		return problem.H(theta, verbose=False)
 		
 	###Generate some new samples and save
-	print("Sampling...",flush=True)
-	new_samples = problem.prior_rvs(N)
-	saltelli_eval(new_samples, "SA_QoI", var_names, model, doPrint=True)
+	#print("Sampling...",flush=True)
+	saltelli_eval_sample("SA_QoI", N, var_names, var_dists, var_bounds, model, doPrint=True)
 
 	###Perform the analysis at a few evaluation points
 	list_S = []
@@ -136,60 +188,6 @@ def vv_SA_QoI(problem, N=10000):
 		list_S.append(S)
 		list_ST.append(ST)
 		list_n.append(n_eval)
-
-#sensitivity analysis of HLVA
-def vv_SA_QoI_sobol(problem, N=10000):
-	#Set up the problem. The parameters are mostly theta,
-	#Except replace every Gaussian Process with a prior with a hyperparameter on the precision, p=1/sigma^2
-	#And put a gamma distribution as the prior for that
-	param_defs = [                             
-		["gain_red", [0.999,0.2**2], "gamma_mv"],
-		["gain_gre", [1.008,0.2**2], "gamma_mv"],
-		["gain_blu", [1.008,0.2**2], "gamma_mv"],
-		["rn_red", [2.32,0.25**2], "gamma_mv"],
-		["rn_gre", [2.35,0.25**2], "gamma_mv"],
-		["rn_blu", [2.35,0.25**2], "gamma_mv"],
-		["dc_red", [0.00238,.001**2], "gamma_mv"],
-		["dc_gre", [0.00267,.001**2], "gamma_mv"],
-		["dc_blu", [0.00267,.001**2], "gamma_mv"],
-		["qe_red_prec", prior_gp_qe_red, "gamma_mv"],
-		["qe_gre_prec", prior_gp_qe_gre, "gamma_mv"],
-		["qe_blu_prec", prior_gp_qe_blu, "gamma_mv"],
-		["vph_red_prec", prior_gp_vph_red, "gamma_mv"],
-		["vph_gre_prec", prior_gp_vph_gre, "gamma_mv"],
-		["vph_blu_prec", prior_gp_vph_blu, "gamma_mv"],
-		["sl_prec", prior_gp_sl, "gamma_mv"],
-		["bg_prec", prior_gp_bg, "gamma_mv"],
-		["coll_prec", prior_gp_coll, "gamma_mv"],
-		["red_l1_prec", prior_red1, "gamma_mv"],
-		["red_l2_t", prior_red2, "gamma_mv"],
-		["red_l3_prec", prior_red3, "gamma_mv"],
-		["red_l4_prec", prior_red4, "gamma_mv"],
-		["red_l5_prec", prior_red5, "gamma_mv"],
-		["red_l6_prec", prior_red6, "gamma_mv"],
-		["red_l7_prec", prior_red7, "gamma_mv"],
-		["gre_l1_prec", prior_gre1, "gamma_mv"],
-		["gre_l2_prec", prior_gre2, "gamma_mv"],
-		["gre_l3_prec", prior_gre3, "gamma_mv"],
-		["gre_l4_prec", prior_gre4, "gamma_mv"],
-		["gre_l5_prec", prior_gre5, "gamma_mv"],
-		["gre_l6_prec", prior_gre6, "gamma_mv"],
-		["gre_l7_prec", prior_gre7, "gamma_mv"],
-		["blu_l1_prec", prior_blu1, "gamma_mv"],
-		["blu_l2_prec", prior_blu2, "gamma_mv"],
-		["blu_l3_prec", prior_blu3, "gamma_mv"],
-		["blu_l4_prec", prior_blu4, "gamma_mv"],
-		["blu_l5_prec", prior_blu5, "gamma_mv"],
-		["blu_l6_prec", prior_blu6, "gamma_mv"],
-		["blu_l7_prec", prior_blu7, "gamma_mv"],
-		["blu_l8_prec", prior_blu8, "gamma_mv"],
-		["fiber_frd", [3.434339623321249, 133.9392453095287], "beta"]
-	]
-	var_names = [pdef[0] for pdef in param_defs]
-	bounds = [pdef[1] for pdef in param_defs]
-	dists = [pdef[2] for pdef in param_defs]
-	
-	#Not implementing this further, because Sobol sampling is just not working for me currently
 
 #Uncertainty analysis of the experiment models
 def vv_UP_exp(problem, dd, theta_nominal, n=10**4, savefig=False):

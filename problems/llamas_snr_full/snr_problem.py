@@ -120,29 +120,31 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	def meanfn_sl_prior(t):
 		thru = throughput_from_sigmoidfit_coeffs(lval_sl, steppt_sl, rval_sl, power_sl, [t])
 		return t_to_u(thru[0])
-	prior_gp_sl = ["gp_expquad", [.1, _lengthscale, ppts, meanfn_sl_prior]]
+	var_u = 1.0 #kind of a WAG
+	prior_gp_sl = ["gp_expquad", [var_u, _lengthscale, ppts, meanfn_sl_prior]]
 
 	ppts, _ = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_bg_prior.txt", 3, doPlot=False)
 	lval_bg, steppt_bg, rval_bg, power_bg, _ = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_bg_prior.txt", doPlot=verbose_probdef, doErr=False)
 	def meanfn_bg_prior(t):
 		thru = throughput_from_sigmoidfit_coeffs(lval_bg, steppt_bg, rval_bg, power_bg, [t])
 		return t_to_u(thru[0])
-	prior_gp_bg = ["gp_expquad", [.1, _lengthscale, ppts, meanfn_bg_prior]]
+	var_u = 1.0 #kind of a WAG
+	prior_gp_bg = ["gp_expquad", [var_u, _lengthscale, ppts, meanfn_bg_prior]]
 
 	###Collimator priors, TODO I can do better later
 	coll_prior_pts = list(np.arange(325,975,1))
 	coll_mean_pts = [0.99 for _ in coll_prior_pts]
 	coll_prior_pts.append(1000)
 	coll_mean_pts.append(0.98)
-	var = 0.000006
+	var_u = 1.0 #kind of a WAG
 	ls = 8
 	def coll_fn(t):
 		try:
 			val = np.interp(t, coll_prior_pts, coll_mean_pts)
 		except ValueError:
 			return 0.0
-		return val
-	prior_gp_coll = ["gp_expquad", [var, ls, coll_prior_pts, coll_fn]]
+		return t_to_u(val)
+	prior_gp_coll = ["gp_expquad", [var_u, ls, coll_prior_pts, coll_fn]]
 	
 	###Red Lens priors -- manufacturer curves for 60-30110
 	prior_red1 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_red1'))]	

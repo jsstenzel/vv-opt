@@ -152,7 +152,8 @@ def saltelli_eval(new_samples, base_name, var_names, model, doPrint=False):
 		
 	###Perform the M*(2+p) model evaluations, append onto each row of the new matrices
 	if doPrint:
-		print("Performing",len(new_samples),"model evaluations ...",flush=True)
+		nevals = int((len(new_samples)/2) * (2+len(var_names)))
+		print("Performing",nevals,"model evaluations ...",flush=True)
 		
 	for m,a_row in enumerate(new_A):
 		yA = model(a_row)
@@ -295,6 +296,7 @@ def saltelli_indices(base_name, var_names, do_subset=0, doPrint=True):
 		print("Parameter",'\t','\t',"S_i",)
 		for p,name in enumerate(var_names):
 			print(name,'\t','\t',S[p])
+		print("-------------------------------------")
 		print("Parameter",'\t','\t',"S_Ti")
 		for p,name in enumerate(var_names):
 			print(name,'\t','\t',ST[p])
@@ -396,7 +398,7 @@ def saltelli_eval_sample(base_name, sample_size, var_names, var_dists, var_param
 		print("Performing evaluation...",flush=True)
 	
 	###Then calls saltelli_eval
-	return saltelli_eval(vals, base_name, val_names, model)
+	return saltelli_eval(vals, base_name, val_names, model, doPrint=doPrint)
 	
 
 #Sobol sequence only has nice properties when sample size is a power of two
