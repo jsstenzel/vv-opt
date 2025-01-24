@@ -151,7 +151,7 @@ def thru_measurement(elem_list, n_meas, wave_min, wave_max, meas_stddev, prior_m
 		#Measure each element, and stack all the curves on top of each other
 		y_thru = []
 		for elem in elem_list:
-			thru_i = elem.eval_gp_cond(measurement_pts, stddev)
+			thru_i = elem.measure(measurement_pts, stddev)
 			if y_thru == []:
 				y_thru = thru_i
 			else:
@@ -164,7 +164,7 @@ def thru_measurement(elem_list, n_meas, wave_min, wave_max, meas_stddev, prior_m
 		max_pts = np.linspace(wave_min, wave_max, num=__max_lambda_pts)
 		y_thru = []
 		for elem in prior_mean_list:
-			thru_i = elem.eval_gp_cond(max_pts, 0)
+			thru_i = elem.measure(max_pts, 0)
 			if y_thru == []:
 				y_thru = thru_i
 			else:
@@ -190,7 +190,7 @@ def measure_thru_sigmoid(theta_gp, d_meas_pts, wave_min, wave_max, meas_stddev, 
 		# - Ignore the provided theta and assume theta is the mean of the prior
 		# - calculate the y that would result in
 		max_pts = np.linspace(wave_min, wave_max, num=__max_lambda_pts)
-		y_thru = prior_mean.eval_gp_cond(max_pts, 0)
+		y_thru = prior_mean.measure(max_pts, 0)
 		lval, step_pt, rval, power, _ = sigmoid_fit_throughput(max_pts, y_thru, doPlot=False, doErr=False)
 		return [lval, step_pt, rval, power]
 	elif d_meas_pts < 4:
@@ -203,7 +203,7 @@ def measure_thru_sigmoid(theta_gp, d_meas_pts, wave_min, wave_max, meas_stddev, 
 	#print(measurement_pts, flush=True)
 	
 	#make the measurements, assuming that there is one y_i for each measurement point ki
-	y_thru = theta_gp.eval_gp_cond(measurement_pts, stddev)
+	y_thru = theta_gp.measure(measurement_pts, stddev)
 	#print(y_thru, flush=True)
 	
 	#apply the 0..1 boundaries
@@ -236,7 +236,7 @@ def measure_thru_vph(theta_gp, d_meas_pts, wave_min, wave_max, meas_stddev, prio
 		# - Ignore the provided theta and assume theta is the mean of the prior
 		# - calculate the y that would result in
 		max_pts = np.linspace(wave_min, wave_max, num=__max_lambda_pts)
-		y_thru = prior_mean.eval_gp_cond(max_pts, 0)
+		y_thru = prior_mean.measure(max_pts, 0)
 		popt, _ = poly_fit_throughput(max_pts, y_thru, 2, doPlot=False, doErr=False, doCov=False)
 		return popt
 	elif d_meas_pts < 3:
@@ -249,7 +249,7 @@ def measure_thru_vph(theta_gp, d_meas_pts, wave_min, wave_max, meas_stddev, prio
 	measurement_pts = measurement_pts[1:-1]
 	
 	#make the measurements
-	y_thru = theta_gp.eval_gp_cond(measurement_pts, stddev)
+	y_thru = theta_gp.measure(measurement_pts, stddev)
 	
 	#apply the 0..1 boundaries
 	for i,yi in enumerate(y_thru):
@@ -479,11 +479,11 @@ def quantum_efficiency_exp(theta_qe, gain, rn, n_qe, t_qe, wave_min, wave_max, f
 	measure_pts = np.linspace(wave_min, wave_max, num_pts)
 	
 	if err:
-		S_pd_sample = S_pd.eval_gp_cond(measure_pts, S_pd_err)
+		S_pd_sample = S_pd.measure(measure_pts, S_pd_err)
 	else:
-		S_pd_sample = S_pd.eval_gp_cond(measure_pts, 0)
+		S_pd_sample = S_pd.measure(measure_pts, 0)
 
-	qe_sample = qe.eval_gp_cond(measure_pts, 0)
+	qe_sample = qe.measure(measure_pts, 0)
 	
 	Signal_measure = []
 	for lambda_i, qe_i, S_i in zip(measure_pts, qe_sample, S_pd_sample):

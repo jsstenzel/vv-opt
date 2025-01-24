@@ -34,42 +34,42 @@ def learn_llamas_snr_priors(verbose=True, doPlot=False, doSave=True):
 	sloc = './priors/'
 	
 	###Quantum efficiency priors
-	save_gp_prior_to_file(sloc+'prior_gp_qe_red', [_qedir+"qe_red_basic_nir.txt"], QE_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_gp_qe_gre', [_qedir+"qe_green_basic_midband.txt"], QE_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_gp_qe_blu', [_qedir+"qe_blue_enhanced_broadband.txt"], QE_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_gp_qe_red', [_qedir+"qe_red_basic_nir.txt"], QE_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_gp_qe_gre', [_qedir+"qe_green_basic_midband.txt"], QE_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_gp_qe_blu', [_qedir+"qe_blue_enhanced_broadband.txt"], QE_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
 
 	###VPH priors
-	save_gp_prior_to_file(sloc+'prior_gp_vph_red', [_dir+"wasach_llamas2200_red.txt"], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_gp_vph_gre', [_dir+"wasach_llamas2200_green.txt"], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_gp_vph_blu', [_dir+"wasach_llamas2200_blue.txt"], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_gp_vph_red', [_dir+"wasach_llamas2200_red.txt"], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_gp_vph_gre', [_dir+"wasach_llamas2200_green.txt"], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_gp_vph_blu', [_dir+"wasach_llamas2200_blue.txt"], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
 	
 	###Red Lens priors -- manufacturer curves for 60-30110
-	save_gp_prior_to_file(sloc+'prior_red1', [_reddir+"red1_2241C.txt", _reddir+'red1_2243C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_red2', [_reddir+"red2_2209C.txt", _reddir+'red2_2212C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_red3', [_reddir+"red3_2205C.txt", _reddir+'red3_2208C.txt', _reddir+'red3_2209C.txt', _reddir+'red3_2212C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_red4', [_reddir+"red4_2209C.txt", _reddir+'red4_2214C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_red5', [_reddir+'red5_2217C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_red6', [_reddir+'red6_9671C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_red7', [_reddir+'red7_2241C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_red1', [_reddir+"red1_2241C.txt", _reddir+'red1_2243C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_red2', [_reddir+"red2_2209C.txt", _reddir+'red2_2212C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_red3', [_reddir+"red3_2205C.txt", _reddir+'red3_2208C.txt', _reddir+'red3_2209C.txt', _reddir+'red3_2212C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_red4', [_reddir+"red4_2209C.txt", _reddir+'red4_2214C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_red5', [_reddir+'red5_2217C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_red6', [_reddir+'red6_9671C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_red7', [_reddir+'red7_2241C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
 	
 	###Green Lens priors -- manufacturer curves for 60-30110
-	save_gp_prior_to_file(sloc+'prior_gre1', [_gredir+"green1_8992C.txt", _gredir+'green1_8995C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_gre2', [_gredir+"green2_9455C.txt", _gredir+'green2_9459C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_gre3', [_gredir+"green3_9463C.txt", _gredir+'green3_9466C.txt', _gredir+'green3_9468C.txt', _gredir+'green3_9480C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_gre4', [_gredir+"green4_9455C.txt", _gredir+'green4_9459C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_gre5', [_gredir+'green5_9476C.txt'], T_std, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_gre6', [_gredir+'green6_8970C.txt', _gredir+'green6_9506C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_gre7', [_gredir+'green7_9478C.txt'], T_std, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_gre1', [_gredir+"green1_8992C.txt", _gredir+'green1_8995C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_gre2', [_gredir+"green2_9455C.txt", _gredir+'green2_9459C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_gre3', [_gredir+"green3_9463C.txt", _gredir+'green3_9466C.txt', _gredir+'green3_9468C.txt', _gredir+'green3_9480C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_gre4', [_gredir+"green4_9455C.txt", _gredir+'green4_9459C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_gre5', [_gredir+'green5_9476C.txt'], T_std, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_gre6', [_gredir+'green6_8970C.txt', _gredir+'green6_9506C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_gre7', [_gredir+'green7_9478C.txt'], T_std, doPlot=doPlot, doPrint=verbose, careful=True)
 	
 	###Blue Lens priors -- manufacturer curves for 60-30110
-	save_gp_prior_to_file(sloc+'prior_blu1', [_bludir+"blue1_9371C.txt", _bludir+'blue1_9376C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_blu2', [_bludir+"blue2_1961C.txt", _bludir+'blue2_1965C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_blu3', [_bludir+"blue3_9360C.txt", _bludir+'blue3_9363C.txt', _bludir+'blue3_9371C.txt', _bludir+'blue3_9366C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_blu4', [_bludir+"blue4_9363C.txt", _bludir+'blue4_9373C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_blu5', [_bludir+'blue5_1961C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_blu6', [_bludir+'blue6_1961C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_blu7', [_bludir+'blue7_9360C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	save_gp_prior_to_file(sloc+'prior_blu8', [_bludir+'blue8_9412C.txt', _bludir+'blue8_9414C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_blu1', [_bludir+"blue1_9371C.txt", _bludir+'blue1_9376C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_blu2', [_bludir+"blue2_1961C.txt", _bludir+'blue2_1965C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_blu3', [_bludir+"blue3_9360C.txt", _bludir+'blue3_9363C.txt', _bludir+'blue3_9371C.txt', _bludir+'blue3_9366C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_blu4', [_bludir+"blue4_9363C.txt", _bludir+'blue4_9373C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_blu5', [_bludir+'blue5_1961C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_blu6', [_bludir+'blue6_1961C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_blu7', [_bludir+'blue7_9360C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	learn_save_gp_prior_to_file(sloc+'prior_blu8', [_bludir+'blue8_9412C.txt', _bludir+'blue8_9414C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
 	
 
 def construct_llamas_snr_problem(verbose_probdef=False):
@@ -103,14 +103,14 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	prior_dc_SN3 = ["gamma_mv", [0.00267,.001**2]]
 
 	###Quantum efficiency priors
-	prior_gp_qe_red = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_gp_qe_red'))]
-	prior_gp_qe_gre = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_gp_qe_gre'))]
-	prior_gp_qe_blu = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_gp_qe_blu'))]
+	prior_gp_qe_red = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_gp_qe_red',doPlot=verbose_probdef))]
+	prior_gp_qe_gre = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_gp_qe_gre',doPlot=verbose_probdef))]
+	prior_gp_qe_blu = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_gp_qe_blu',doPlot=verbose_probdef))]
 
 	###VPH priors
-	prior_gp_vph_red = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_gp_vph_red'))]
-	prior_gp_vph_gre = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_gp_vph_gre'))]
-	prior_gp_vph_blu = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_gp_vph_blu'))]
+	prior_gp_vph_red = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_gp_vph_red',doPlot=verbose_probdef))]
+	prior_gp_vph_gre = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_gp_vph_gre',doPlot=verbose_probdef))]
+	prior_gp_vph_blu = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_gp_vph_blu',doPlot=verbose_probdef))]
 	
 	###Dichroic priors
 	#TODO gp_expquad is not really a suitable kernel for learning a GP prior, due to the big discontinuity
@@ -147,32 +147,32 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	prior_gp_coll = ["gp_expquad", [var_u, ls, coll_prior_pts, coll_fn]]
 	
 	###Red Lens priors -- manufacturer curves for 60-30110
-	prior_red1 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_red1'))]	
-	prior_red2 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_red2'))]
-	prior_red3 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_red3'))]	
-	prior_red4 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_red4'))]	
-	prior_red5 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_red5'))]	
-	prior_red6 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_red6'))]	
-	prior_red7 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_red7'))]
+	prior_red1 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_red1',doPlot=verbose_probdef))]	
+	prior_red2 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_red2',doPlot=verbose_probdef))]
+	prior_red3 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_red3',doPlot=verbose_probdef))]	
+	prior_red4 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_red4',doPlot=verbose_probdef))]	
+	prior_red5 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_red5',doPlot=verbose_probdef))]	
+	prior_red6 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_red6',doPlot=verbose_probdef))]	
+	prior_red7 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_red7',doPlot=verbose_probdef))]
 	
 	###Green Lens priors -- manufacturer curves for 60-30110
-	prior_gre1 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_gre1'))]	
-	prior_gre2 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_gre2'))]
-	prior_gre3 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_gre3'))]	
-	prior_gre4 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_gre4'))]	
-	prior_gre5 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_gre5'))]	
-	prior_gre6 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_gre6'))]	
-	prior_gre7 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_gre7'))]
+	prior_gre1 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_gre1',doPlot=verbose_probdef))]	
+	prior_gre2 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_gre2',doPlot=verbose_probdef))]
+	prior_gre3 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_gre3',doPlot=verbose_probdef))]	
+	prior_gre4 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_gre4',doPlot=verbose_probdef))]	
+	prior_gre5 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_gre5',doPlot=verbose_probdef))]	
+	prior_gre6 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_gre6',doPlot=verbose_probdef))]	
+	prior_gre7 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_gre7',doPlot=verbose_probdef))]
 	
 	###Blue Lens priors -- manufacturer curves for 60-30110
-	prior_blu1 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_blu1'))]
-	prior_blu2 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_blu2'))]
-	prior_blu3 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_blu3'))]
-	prior_blu4 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_blu4'))]
-	prior_blu5 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_blu5'))]
-	prior_blu6 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_blu6'))]
-	prior_blu7 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_blu7'))]
-	prior_blu8 = ["gp_expquad", list(load_gp_prior_from_file(sloc+'prior_blu8'))]
+	prior_blu1 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_blu1',doPlot=verbose_probdef))]
+	prior_blu2 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_blu2',doPlot=verbose_probdef))]
+	prior_blu3 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_blu3',doPlot=verbose_probdef))]
+	prior_blu4 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_blu4',doPlot=verbose_probdef))]
+	prior_blu5 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_blu5',doPlot=verbose_probdef))]
+	prior_blu6 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_blu6',doPlot=verbose_probdef))]
+	prior_blu7 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_blu7',doPlot=verbose_probdef))]
+	prior_blu8 = ["gp_expquad", list(learn_load_gp_prior_from_file(sloc+'prior_blu8',doPlot=verbose_probdef))]
 
 	###Fiber priors
 	prior_frd = ["beta", [3.434339623321249, 133.9392453095287]]
@@ -364,9 +364,9 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 					["spect_model_tracker", [], "object", spectrograph_models],
 					["prism", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
 					["sensor_window", [], "functional", define_functional_from_file(_dir+"ECI_FusedSilica.txt")],
-					["sensor_glass_red", [], "functional", define_functional_from_file(_dir+"llamas_internal_red.txt")],
-					["sensor_glass_gre", [], "functional", define_functional_from_file(_dir+"llamas_internal.txt")],
-					["sensor_glass_blu", [], "functional", define_functional_from_file(_dir+"llamas_internal_blue.txt")],
+					["sensor_glass_red", [], "functional", define_functional_from_file(_dir+"llamas_internal_red.txt", order=2)],
+					["sensor_glass_gre", [], "functional", define_functional_from_file(_dir+"llamas_internal.txt", order=2)],
+					["sensor_glass_blu", [], "functional", define_functional_from_file(_dir+"llamas_internal_blue.txt", order=2)],
 					#optical measurements
 					["vph_meas_stddev", [], "continuous", .001], #need actual historical
 					["sl_meas_stddev", [], "continuous", .001], #Measurement Considerations When Specifying Optical Coatings, Pete Kupinski and Angus Macleod. This paper indicates a best case +- 0.1% T for commercial measurements of highly transmissive coatings.

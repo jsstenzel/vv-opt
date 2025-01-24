@@ -167,7 +167,10 @@ def vv_SA_QoI_sample(problem, N=10000):
 				ls = problem.priors[i][1][1]
 				prior_pts = problem.priors[i][1][2]
 				mean_fn = problem.priors[i][1][3]
-				sample = sample_gp_prior(variance, ls, prior_pts, mean_fn)
+
+				gp_prior = GaussianProcessSample1D(variance, ls, prior_pts, mean_fn)
+				thetas_i = [gp_prior.sample() for _ in range(num_vals)]
+				vals.append(thetas_i)
 				theta.append(sample)
 			else:
 				theta.append(params[i])
@@ -288,7 +291,7 @@ if __name__ == '__main__':
 	import argparse
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--run', metavar='string', required=True, help='Function to run for this vvopt analysis')
-	parser.add_argument('-n', type=int, required=True, help='Number of iterations to give to the function')
+	parser.add_argument('-n', type=int, default=0, help='Number of iterations to give to the function')
 	args = parser.parse_args()
 	
 	###Problem Definition

@@ -1,24 +1,19 @@
 import sys
 import os
+import math
 import numpy as np
 import matplotlib.pyplot as plt
-import time
 import scipy.stats
 import scipy.interpolate
 from scipy.stats import logistic
 
-import pymc
+#from sklearn.gaussian_process import GaussianProcessRegressor
+#from sklearn.gaussian_process.kernels import ConstantKernel, RBF
 
-sys.path.append('../..')
-
-#I need a nice simple interface to deal with these general messy things
-#leave uncertainty handling to the prior fns!
-	
-	
 """
-########## Now I need to do Gaussian process
-#https://www.pymc.io/projects/docs/en/stable/api/gp.html
-#the prior is returned as a TensorVariable, see https://github.com/pymc-devs/pytensor/blob/e8693bdbebca0757ab11353f121eed0c9b3acf66/pytensor/tensor/variable.py#L25
+Gaussian process priors and samples, specifically modeling optical throughputs
+Based on the concept exhibited in this gist:
+https://gist.github.com/neubig/e859ef0cc1a63d1c2ea4
 """	
 
 def _zero_mean(x):
@@ -32,58 +27,136 @@ def u_to_t(u):
 	#Maps [-inf,inf] to [0,1]
 	return scipy.stats.logistic.cdf(u, scale=2)
 
-#Wanted to see if this is faster than np.interp -- its not
-def fast_interp(x, xpoints, ypoints):
-	i1 = 0
-	if xpoints[i1] > x:
-		raise ValueError("fast_interp was asked to interpolate to the left of domain")
-	while xpoints[i1+1] < x:
-		i1 += 1
-		if i1 == len(xpoints):
-			raise ValueError("fast_interp was asked to interpolate to the right of domain")
-	x1 = xpoints[i1]
-	x2 = xpoints[i1+1]
-	y1 = ypoints[i1]
-	y2 = ypoints[i1+1]
-	return ((y2 - y1) * x + x2 * y1 - x1 * y2) / (x2 - x1)
-	
 
 #######################################
-# Generators for GaussianProcess1D
+# Class definition
 #######################################
 
-def sample_gp_prior(variance, ls, prior_pts, mean_fn=_zero_mean):
-	with pymc.Model() as model:
-		cov_func = variance * pymc.gp.cov.ExpQuad(input_dim=1, ls=ls)
-		theta_gp = pymc.gp.Latent(cov_func=cov_func)
-		#this defines the prior for the theta_gp:
-		prior = theta_gp.prior("prior"+str(time.time()), np.array(prior_pts)[:, None])
-
-	sample = GaussianProcess1D(theta_gp, prior_pts, mean_fn, prior)
-	return sample
-	
-def define_functional(prior_pts, eval_pts, order=1):
-	#Convert to define mean function in u
-	eval_pts_u = t_to_u(eval_pts)
+#This class defines a Gaussian Process, such as a prior, and provides
+#a method to sample from that prior to get functionals int he form of GaussianProcessSample1D
+class GaussianProcessDist1D:
+	def __init__(self, variance, ls, prior_pts, mean_fn=_zero_mean):
+		#Variance: scaling parameter of the kernel
+		self.variance = variance
+		#Length scale: parameter of the kernel
+		self.ls = ls
+		#Mean funciton: A function defined over the whole domain, but scaled over the u-range
+		self.mean_fn = mean_fn
 		
-	def mean_fn_from_pts(t):
+		#A suitably fine grid over the relevant domain -- fine enough that you don't care about smaller details, but not so fine that it takes forever to sample
+		#This should be finer than the ls. Substitute in a new version if its not
+		"""
+		domain_min = min(prior_pts)
+		domain_max = max(prior_pts)
+		grid_step = (domain_max - domain_min)/len(prior_pts)
+		if grid_step > ls/5.0:
+			new_steps = math.ceil(5 * (domain_max - domain_min)/ls)
+			self.fine_domain = np.linspace(domain_min, domain_max, new_steps).tolist()
+		else:
+			self.fine_domain = prior_pts
+		"""
+		#Actually, it's probably best to leave that up to the user. Hard to make that trade-off perfectly a priori
+		self.fine_domain = prior_pts
+	
+	#Defines the radial basis function / squared exponential function that serves as the kernel
+	def _rbf_kernel(self, x1, x2, ls, var):
+		return var * math.exp(-1 * ((x1-x2) ** 2) / (2*ls**2))
+		
+	#Covariance matrix of every point in x with every other point
+	def _gram_matrix(self, xs):
+		mat = [[self._rbf_kernel(x1,x2,self.ls,self.variance) for x2 in xs] for x1 in xs]
+		return np.asarray(mat)
+
+	#Sample the prior in order to get a GaussianProcessSample1D
+	def sample(self):
+		#Sample from the Gaussian Process:
+		GP_mean = [self.mean_fn(pt) for pt in self.fine_domain]
+		GP_cov = self._gram_matrix(self.fine_domain)
+		sample_u = np.random.multivariate_normal(GP_mean, GP_cov)
+		
+		#Now, convert it back into the t-range:
+		sample_t = u_to_t(sample_u)
+		
+		#Return the functional:
+		return GaussianProcessSample1D(self.fine_domain, sample_t, u_to_t(GP_mean))
+		
+	def save_to_file(self, save_file, filenames, meas_std):
+		#grab the mean fn points straight from the fn, so still in the u-domain
+		mean_fn_pts_u = [self.mean_fn(pt) for pt in self.prior_pts]
+		
+		save_file_name = save_file if save_file.endswith('.csv') else save_file+'.csv'
+		if save:
+			with open(save_file_name, 'w+', newline='') as csvfile:
+				writer = csv.writer(csvfile)
+				writer.writerow([self.variance])
+				writer.writerow([self.ls])
+				for p,m in zip(self.prior_pts, mean_fn_pts_u):
+					writer.writerow([p, m])
+					
+	def calculate_posterior(self, meas_x, meas_y, meas_err):
+		0
+		#If I cared to, I could use sklearn's GaussianProcessRegression to:
+		#1. Take in measurement points, values, and errors
+		#2. Use fit(...) to find the new ls and var
+		#3. Use predict(...) to calculate the mean function
+		#4. Put these together to form a posterior GP (passing forward the prior_pts and meas_pts together as the new prior_pts)
+		#5. Make a new GaussianProcessDist1D representing that posterior
+		#However, I don't care to do this right now, because it isn't needed for any of llamas_snr_full's experiments
+
+#This class describes a functional sampled from a GP prior described by GaussianProcessDist1D
+#This is not something we can calculate a posterior from; it's just a prior
+class GaussianProcessSample1D:
+	def __init__(self, fine_domain, thru_pts, mean_pts=[]):
+		#A suitably fine grid over the relevant domain -- fine enough that you don't care about smaller details
+		#Note that any information between these grid points has been lost by this point. That's why it's important to choose a good grid in the prior.
+		self.fine_domain = fine_domain
+		#The throughput values of the functional, defined on fine_domain
+		self.thru_pts = thru_pts
+		#The mean values of the GP prior, defined on fine_domain. Just for plotting/reference
+		self.mean_pts = mean_pts
+
+	#The sample of the GP prior
+	#With no noise, this just evaluates the GP sample at the provided prior points
+	def evaluate(self):
+		return self.thru_pts
+		
+	#Linear interpolation is ok, because we're already (assumedly) using a fine grid for the domain
+	def _interp(self, t):
 		try:
-			val = np.interp(t, prior_pts, eval_pts_u)
+			val = np.interp(t, self.fine_domain, self.thru_pts)
 		except ValueError:
 			return 0.0
 		return val
+		
+	#Measurement of the sample
+	#With measurement points and noise, returns measured values
+	def measure(self, meas_pts, noise):
+		raw_data = self._interp(meas_pts)
+		if noise > 0:
+			meas_data = [pt + scipy.stats.norm.rvs(scale=noise) for pt in raw_data]
+		else:
+			meas_data = raw_data
+		return meas_data
+	
+	#Plot the evaluation given by evaluate()
+	def plot_prior(self, plotMean=True, plotDataX=[], plotDataY=[], showPlot=True):
+		plt.plot(self.fine_domain, self.thru_pts, c=np.random.rand(3))
+		title="Functional"
+		if plotMean and list(self.mean_pts):
+			plt.plot(self.fine_domain, self.mean_pts,'k-')
+			title="Sample of the Gaussian Process vs. the mean"
+		if list(plotDataX) and list(plotDataY):
+			plt.scatter(plotDataX, plotDataY, c='b')
+		plt.title(title)
+		if showPlot:
+			plt.show()
 
-	sample = GaussianProcess1D(None, prior_pts, mean_fn_from_pts, None)
-	return sample
-	
-def define_functional_mean(prior_pts, mean_fn=_zero_mean):
-	sample = GaussianProcess1D(None, prior_pts, mean_fn, None)
-	return sample
-	
-#######################################
-# Helper fns to do it from files
-#######################################
-	
+
+##############################################################################
+# Helper fns to build GaussianProcessDist1D from files
+##############################################################################
+
+#Extract prior_pts and mean_fn from a throughput file
 def get_ppts_meanfn_file(filename, order=3, doPlot=False):
 	prior_pts = []
 	mean_pts = []
@@ -121,7 +194,8 @@ def get_ppts_meanfn_file(filename, order=3, doPlot=False):
 		plt.show()
 
 	return prior_pts, mean_fn_from_file
-	
+
+""" TODO right now I think these aren't or shouldn't be used, check on that
 def sample_gp_from_file(filename, variance, ls, order=3):
 	prior_pts, mean_fn_from_file = get_ppts_meanfn_file(filename, order)
 
@@ -131,149 +205,119 @@ def define_functional_from_file(filename, order=3):
 	prior_pts, mean_fn_from_file = get_ppts_meanfn_file(filename, order)
 
 	return define_functional_mean(prior_pts, mean_fn_from_file)
-	
-#######################################
-# Class definition
-#######################################
+"""
 
-#This class is intended to work with the sample_gp_prior function
-#Usually, that function is used to specify & sample a prior, returning this object
-#Which contains the pymc gp which is the sample, and the mean fn for easy handling
-class GaussianProcess1D:
-	def __init__(self, gp, prior_pts, mean_fn, prior):
-		self.gp = gp
-		self.prior_pts = prior_pts
-		self.mean_fn = mean_fn #this is defined in u-domain
-		self.prior = prior
-		
-		if gp==None and prior==None:
-			self.static_flag = True
-		else:
-			self.static_flag = False
-		
-	#Takes the GP, measurement points and noise, and returns measured values
-	#This is useful for 
-	def eval_gp_cond(self, meas_pts, noise):
-		if not self.static_flag:		
-			with pymc.Model() as model:
-				posterior = self.gp.conditional("meas"+str(time.time()), Xnew=np.array(meas_pts)[:, None])
-				posterior_data = posterior.eval()
-		else:
-			posterior_data = [0]*len(meas_pts)
-		if noise > 0:
-			meas_data = [y + self.mean_fn(meas_pts[i]) + scipy.stats.norm.rvs(scale=noise) for i,y in enumerate(posterior_data)]
-		else:
-			meas_data = [y + self.mean_fn(meas_pts[i]) for i,y in enumerate(posterior_data)]
-		#Mean fn is innately in u, nNeed to convert back to t
-		meas_data_t = u_to_t(meas_data)
-		return meas_data_t
-	
-	#I think this is true...
-	#just doing a conditional at the same prior points, with no noise applied
-	def evaluate(self):
-		if not self.static_flag:
-			data = self.prior.eval()
-		else:
-			data = [0]*len(self.prior_pts)
-		#apply mean fn?
-		for i,pt in enumerate(data):
-			data[i] += self.mean_fn(self.prior_pts[i])
-		#Mean fn is innately in u, need to convert back to t
-		data_t = u_to_t(data)
-		return data_t
-	
-	def plot_prior(self, plotMean=True, plotDataX=[], plotDataY=[], showPlot=True):
-		data = self.evaluate()
-		plt.plot(self.prior_pts, data, c=np.random.rand(3))
-		if plotMean:
-			plt.plot(self.prior_pts, u_to_t([self.mean_fn(xi) for xi in self.prior_pts]),'k-')
-		if list(plotDataX) and list(plotDataY):
-			plt.scatter(plotDataX, plotDataY, c='b')
-		plt.title("Sample of the Gaussian Process")
-		if showPlot:
-			plt.show()
-		
-	
+##############################################################################
+# Constructors for GaussianProcessDist1D and GaussianProcessSample1D
+##############################################################################
 
+#This is the inverse of GaussianProcessDist1D's save_to_file()
+def load_gp_prior_from_file(load_file, returnObj=False, interp="linear"):
+	prior_pts = []
+	mean_fn_pts_u = []
 
-if __name__ == "__main__":
-	###Test 1
-	"""
-	with pymc.Model() as model:
-		cov_func = pymc.gp.cov.ExpQuad(input_dim=1, ls=0.1)
-		theta_gp = pymc.gp.Latent(cov_func=cov_func)
+	load_file_name = load_file if load_file.endswith('.csv') else load_file+'.csv'
+	if not os.path.isfile(load_file_name):
+		print("Couldn't find GP prior save file",load_file_name)
+		sys.exit()
+	
+	variance = 0
+	ls = 0	
+	with open(load_file_name, 'r', newline='') as csvfile:
+		reader = csv.reader(csvfile)
+		for i,row in enumerate(reader):
+			if i==0:
+				variance=float(row[0])
+			elif i==1:
+				ls=float(row[0])
+			else:
+				prior_pts.append(float(row[0]))
+				mean_fn_pts_u.append(float(row[1]))
+			
+	#if interp == "linear":		#could implement other versions later
+	def mean_fn_load_gp(t):
+		try:
+			val = np.interp(t, prior_pts, mean_fn_pts_u)
+		except ValueError:
+			return 0.0
+		return val
+	
+	if returnObj:
+		return GaussianProcessPrior1D(variance, ls, prior_pts, mean_fn_load_gp)
+	else:
+		variance, ls, prior_pts, mean_fn_load_gp
+
+#Constructor for GaussianProcessSample1D, allowing for finer polynomial interpolation
+#From raw points
+def define_functional(prior_pts, eval_pts, order=1):
+	#Define a fine grid to interpolate onto, using half-nm wavelength steps
+	fine_grid = np.arange(min(prior_pts), max(prior_pts), 0.5)
 		
-		X = np.linspace(0, 1, 10)[:, None]
-		samples = []
-		for i in range(10):
-			f = theta_gp.prior("f"+str(i), X) #one sample of the GP
-			samples.append(f.eval())
-	"""
-	
-	###Test 2
-	"""
-	#for sample in samples:
-	#	plt.plot(sample)
-	#plt.show()
+	#evaluate, interpolating with spline of appropriate order
+	if order==1:
+		eval_pts_fine = np.interp(fine_grid, prior_pts, eval_pts)
+	else:
+		spl = scipy.interpolate.make_interp_spline(prior_pts,eval_pts,order)
+		eval_pts_fine = spl(fine_grid)
+
+	functional = GaussianProcessSample1D(fine_grid, eval_pts_fine)
+	#functional.plot_prior()
+	return functional
+
+#Constructor for GaussianProcessSample1D, allowing for finer polynomial interpolation
+#From prior points (just to get the domain) and a u-range mean_fn on that domain
+def define_functional_from_meanfn(prior_pts, mean_fn):
+	#Define a fine grid to interpolate onto, using half-nm wavelength steps
+	fine_grid = np.arange(min(prior_pts), max(prior_pts), 0.5)
 		
-	#ok, now how do i update a prior? Do i use the Latent.conditional method?
-	#Once i have this, i can do the experiment model i think...
+	#evaluate, interpolating with spline of appropriate order
+	eval_pts_fine = u_to_t([mean_fn(w) for w in fine_grid])
+
+	functional = GaussianProcessSample1D(fine_grid, eval_pts_fine)
+	#functional.plot_prior()
+	return functional
+
+#Constructor for GaussianProcessSample1D, allowing for finer polynomial interpolation
+#From raw file
+def define_functional_from_file(filename, order=1):
+	prior_pts = []
+	mean_pts = []
+	with open(filename, "r") as f:
+		for line in f:
+			words = line.split()
+			if len(words)==0:
+				continue
+			if "#" not in words[0]:
+				prior_pts.append(float(words[0]))
+				mean_pts.append(float(words[1]))
 	
-	#define a prior in the shape of a parabola
-	prior_y = []
-	prior_x = np.linspace(0, 1, 11)[:, None]
-	prior2_x = np.linspace(0, 1, 20)[:, None]
-	for x in prior_x:
-		prior_y.append(-(x-5)**2 + 20)
-	prior_pts = [[x,p] for x,p in zip(prior_x[:],prior_y)]
-	print(prior_pts)
-	sigma=10
+	return define_functional(prior_pts, mean_pts, order)
+
+##############################################################################
+# Unit test
+##############################################################################
+
+if __name__ == "__main__":	
+	#define prior. Mean_fn must be on the range 0..1, and then transformed to u domain
+	def sinabs(x):
+		t_fn = 0.1 + 0.8*abs(math.sin(0.5*math.pi*x))
+		return t_to_u(t_fn)
 	
-	#https://www.pymc.io/projects/docs/en/stable/learn/core_notebooks/Gaussian_Processes.html#additive-gp
-	with pymc.Model() as model:
-		cov_func = sigma**2 * pymc.gp.cov.ExpQuad(input_dim=1, ls=0.1)
-		theta_gp = pymc.gp.Latent(cov_func=cov_func) #mean_func=
-		prior = theta_gp.prior("prior", prior_x)
-		
-		x_data = np.linspace(0, 1, 101)[:, None] #np.array([.1,.15,.7,.75])[:, None]
-		posterior = theta_gp.conditional("posterior", Xnew=x_data) #???
-		prior2 = theta_gp.prior("prior2", prior_x)
+	variance=1.0 #defined on u range
+	ls=.0001
+	prior_pts=np.linspace(0,7,1000)
+	mean_fn=sinabs
 	
-	print(prior.eval())
-	print(posterior.eval())
-	plt.plot(prior_x, prior.eval(),'r')
-	plt.plot(prior_x, prior2.eval(),'g')
-	plt.scatter(x_data, posterior.eval())
-	plt.show()
-	#this experiment shows that calling prior newly sets the prior of the gp
-	#then, when you call the conditional, its kind of like taking measurements at those points, and it gives you noisy measurements around that prior
-	#so now, all i have to do is create a class that systematizes this into something that lets me define a prior and an eta,
-	#and also includes the option to set any kind of mean prior as a function
-		
-	
-	#and how do i evaluate the probability density of the GP? Is this actually necessary for doing goal-based inference?
-	#nah!
-	"""
-	
-	###Real Test
-	#define prior
-	def parabola(x):
-		return -(x-4)**2 + 20
-	
-	variance=.5
-	ls=0.05
-	prior_pts=[0,1,2,3,4,5,6,7]
-	mean_fn=parabola
-	
-	print([parabola(xi) for xi in prior_pts])
+	#print([sinabs(xi) for xi in prior_pts])
 
 	#sample from the prior
-	sample = sample_gp_prior(variance, ls, prior_pts, mean_fn)
-	print(sample.evaluate())
+	gp_prior = GaussianProcessDist1D(variance, ls, prior_pts, mean_fn)
+	sample = gp_prior.sample()
+	#print(sample.evaluate())
 	
 	#measure the prior
-	meas_points = [0,2,4,6]
-	noise = 2.0
-	ymeas = sample.eval_gp_cond(meas_points, noise)
+	meas_points = [0,1,2,3,4,5,6]
+	noise = 0.01
+	ymeas = sample.measure(meas_points, noise)
 	print(ymeas)
 	sample.plot_prior(plotDataX=meas_points, plotDataY=ymeas)

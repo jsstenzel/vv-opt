@@ -209,7 +209,8 @@ class ProblemDefinition:
 				ls = params[1]
 				prior_pts = params[2]
 				mean_fn = params[3]
-				thetas_i = [sample_gp_prior(variance, ls, prior_pts, mean_fn) for _ in range(num_vals)]
+				gp_prior = GaussianProcessDist1D(variance, ls, prior_pts, mean_fn)
+				thetas_i = [gp_prior.sample() for _ in range(num_vals)]
 				vals.append(thetas_i)
 			else:
 				raise ValueError("_dist_rvs did not expect prior type "+str(type))
@@ -312,7 +313,7 @@ class ProblemDefinition:
 			elif dtype == 'gp_expquad':
 				prior_pts = params[2]
 				mean_fn = params[3]
-				funct = define_functional_mean(prior_pts, mean_fn)
+				funct = define_functional_from_meanfn(prior_pts, mean_fn)
 				tnom.append(funct)
 			else:
 				raise ValueError("_theta_nominal couldn't construct vector with "+str(dtype))

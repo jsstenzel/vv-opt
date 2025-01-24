@@ -385,8 +385,9 @@ def saltelli_eval_sample(base_name, sample_size, var_names, var_dists, var_param
 			ls = params[1]
 			prior_pts = params[2]
 			mean_fn = params[3]
-			samples = [sample_gp_prior(variance, ls, prior_pts, mean_fn) for _ in range(sample_size)]
-			vals.append(samples.tolist())
+			gp_prior = GaussianProcessSample1D(variance, ls, prior_pts, mean_fn)
+			thetas_i = [gp_prior.sample() for _ in range(num_vals)]
+			vals.append(thetas_i)
 			val_names.append(name)
 		else:
 			raise ValueError("saltelli_eval_sample did not expect prior type "+str(dtype))

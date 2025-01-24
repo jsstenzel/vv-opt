@@ -37,7 +37,7 @@ def learn_gp_prior(wave_pts, thru_pts, err_pts=[], doPlot=False, doPrint=False, 
 	if err_pts:
 		#variances = np.array([s**2 for s in err_pts]) #I know this isnt right
 		
-		#convert standard deviation to u-domain
+		#convert standard deviation to u-range
 		#I need to do some cleverness here. I need to convert the standard deviation from the t domain to the u domain, but that conversion has to take into account where in u-space we are.
 		#So, for each std_i, make it t_to_u(t_i + std_i) - (u_i)
 		stddevs_over = [t_to_u(t+s) - t_to_u(t) for t,s in zip(thru_pts,err_pts)]
@@ -47,7 +47,7 @@ def learn_gp_prior(wave_pts, thru_pts, err_pts=[], doPlot=False, doPrint=False, 
 	else:
 		gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True, n_restarts_optimizer=n_runs)
 		
-	gpr.fit([[x] for x in X], Y) #fitting in u-domain
+	gpr.fit([[x] for x in X], Y) #fitting in u-range
 	xplot = np.arange(Xmin,Xmax,1.0)
 	mu_u, std_u = gpr.predict([[x] for x in xplot], return_std=True)
 	
@@ -134,17 +134,18 @@ def learn_gp_prior_from_files(filenames, meas_std, doPlot=False, doPrint=False, 
 	variance, ls, prior_pts, mean_fn = learn_gp_prior(wavelengths, throughputs, errs, doPlot=doPlot, doPrint=doPrint)
 	
 	if doPlot:
-		sample = sample_gp_prior(variance, ls, prior_pts, mean_fn)
-		sample.plot_prior(showPlot=False)
-		sample = sample_gp_prior(variance, ls, prior_pts, mean_fn)
-		sample.plot_prior(showPlot=False)
-		sample = sample_gp_prior(variance, ls, prior_pts, mean_fn)
-		sample.plot_prior(showPlot=False)
+		gp_prior = GaussianProcessDist1D(variance, ls, prior_pts, mean_fn)
+		sample1 = gp_prior.sample()
+		sample1.plot_prior(showPlot=False)
+		sample2 = gp_prior.sample()
+		sample2.plot_prior(showPlot=False)
+		sample3 = gp_prior.sample()
+		sample3.plot_prior(showPlot=False)
 		plt.show()
 	
 	return variance, ls, prior_pts, mean_fn
 
-def save_gp_prior_to_file(save_file, filenames, meas_std, save=True, doPlot=False, doPrint=False, careful=False):
+def learn_save_gp_prior_to_file(save_file, filenames, meas_std, save=True, doPlot=False, doPrint=False, careful=False):
 	variance, ls, prior_pts, mean_fn = learn_gp_prior_from_files(filenames, meas_std, doPlot=doPlot, doPrint=doPrint, careful=careful)
 	
 	#grab the mean fn points straight from the fn, so still in the u-domain
@@ -159,7 +160,7 @@ def save_gp_prior_to_file(save_file, filenames, meas_std, save=True, doPlot=Fals
 			for p,m in zip(prior_pts, mean_fn_pts_u):
 				writer.writerow([p, m])
 
-def load_gp_prior_from_file(load_file, returnObj=False):
+def learn_load_gp_prior_from_file(load_file, returnObj=False, doPlot=False):
 	prior_pts = []
 	mean_fn_pts_u = []
 
@@ -187,6 +188,18 @@ def load_gp_prior_from_file(load_file, returnObj=False):
 		except ValueError:
 			return 0.0
 		return val
+		
+	if doPlot:
+		fine_plot = np.arange(min(prior_pts),max(prior_pts),0.1)
+		gp_std = np.array([np.sqrt(variance) for _ in fine_plot]) #plotting in u-domain
+		mean_pts = np.array([mean_fn_load_gp(f) for f in fine_plot]) #plotting in u-domain
+		plt.fill_between(fine_plot, (mean_pts - gp_std), (mean_pts + gp_std), facecolor='grey')
+		plt.plot(fine_plot, mean_pts)
+		plt.xlabel('wavelength')
+		plt.ylabel('throughput (u-domain)')
+		plt.title('GP prior '+load_file)
+		plt.show()
+		plt.clf()
 	
 	return variance, ls, prior_pts, mean_fn_load_gp
 

@@ -130,32 +130,32 @@ def sensitivity_hlva(theta, x, verbose=True):
 	elem_qe_red = theta["qe_red_t"]#CCD42-40_dd.txt
 	elem_qe_gre = theta["qe_gre_t"]#CCD42-40_green.txt
 	elem_qe_blu = theta["qe_blu_t"]#CCD42-40_blue.txt
-	llamas_red.sensor.qe.setThroughputTab(elem_qe_red.prior_pts, thru(elem_qe_red))
-	llamas_green.sensor.qe.setThroughputTab(elem_qe_gre.prior_pts, thru(elem_qe_gre))
-	llamas_blue.sensor.qe.setThroughputTab(elem_qe_blu.prior_pts, thru(elem_qe_blu))
+	llamas_red.sensor.qe.setThroughputTab(elem_qe_red.fine_domain, thru(elem_qe_red))
+	llamas_green.sensor.qe.setThroughputTab(elem_qe_gre.fine_domain, thru(elem_qe_gre))
+	llamas_blue.sensor.qe.setThroughputTab(elem_qe_blu.fine_domain, thru(elem_qe_blu))
 	
 	#update vph
 	elem_vph_red = theta["vph_red_t"]#wasach_llamas2200_red.txt
 	elem_vph_gre = theta["vph_gre_t"]#wasach_llamas2200_green.txt
 	elem_vph_blu = theta["vph_blu_t"]#wasach_llamas2200_blue.txt
-	llamas_red.grating.blaze.setThroughputTab(elem_vph_red.prior_pts, thru(elem_vph_red))
-	llamas_green.grating.blaze.setThroughputTab(elem_vph_gre.prior_pts, thru(elem_vph_gre))
-	llamas_blue.grating.blaze.setThroughputTab(elem_vph_blu.prior_pts, thru(elem_vph_blu))
+	llamas_red.grating.blaze.setThroughputTab(elem_vph_red.fine_domain, thru(elem_vph_red))
+	llamas_green.grating.blaze.setThroughputTab(elem_vph_gre.fine_domain, thru(elem_vph_gre))
+	llamas_blue.grating.blaze.setThroughputTab(elem_vph_blu.fine_domain, thru(elem_vph_blu))
 	
 	#update collimator throughputs
 	elem_collimator = theta["coll_t"]
-	llamas_red.elements[0].surfaces[0].setThroughputTab(elem_collimator.prior_pts, thru(elem_collimator))
-	llamas_green.elements[0].surfaces[0].setThroughputTab(elem_collimator.prior_pts, thru(elem_collimator))
-	llamas_blue.elements[0].surfaces[0].setThroughputTab(elem_collimator.prior_pts, thru(elem_collimator))
+	llamas_red.elements[0].surfaces[0].setThroughputTab(elem_collimator.fine_domain, thru(elem_collimator))
+	llamas_green.elements[0].surfaces[0].setThroughputTab(elem_collimator.fine_domain, thru(elem_collimator))
+	llamas_blue.elements[0].surfaces[0].setThroughputTab(elem_collimator.fine_domain, thru(elem_collimator))
 			
 	#update dichroic throughputs
 	elem_dichroic_sl = theta["sl_t"]#ECI_FusedSilica.txt
 	elem_dichroic_bg = theta["bg_t"]#ECI_FusedSilica.txt
-	llamas_red.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.prior_pts, thru(elem_dichroic_sl))
-	llamas_green.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.prior_pts, [1.0-t for t in thru(elem_dichroic_sl)])		
-	llamas_green.elements[2].surfaces[0].setThroughputTab(elem_dichroic_bg.prior_pts, elem_dichroic_bg.evaluate())
-	llamas_blue.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.prior_pts, [1.0-t for t in thru(elem_dichroic_sl)])
-	llamas_blue.elements[2].surfaces[0].setThroughputTab(elem_dichroic_bg.prior_pts, [1.0-t for t in thru(elem_dichroic_bg)])
+	llamas_red.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.fine_domain, thru(elem_dichroic_sl))
+	llamas_green.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.fine_domain, [1.0-t for t in thru(elem_dichroic_sl)])		
+	llamas_green.elements[2].surfaces[0].setThroughputTab(elem_dichroic_bg.fine_domain, elem_dichroic_bg.evaluate())
+	llamas_blue.elements[1].surfaces[0].setThroughputTab(elem_dichroic_sl.fine_domain, [1.0-t for t in thru(elem_dichroic_sl)])
+	llamas_blue.elements[2].surfaces[0].setThroughputTab(elem_dichroic_bg.fine_domain, [1.0-t for t in thru(elem_dichroic_bg)])
 	
 	fiber_frd = theta["fiber_frd"] if theta["fiber_frd"]>0 else 0
 	
@@ -181,11 +181,11 @@ def sensitivity_hlva(theta, x, verbose=True):
 		llamas_channel.fiber.theta_fib = fiber_theta
 		llamas_channel.fiber.dFib = fiber_dcore
 		for surf in llamas_channel.fiber.elements[0].surfaces: #mla
-			surf.setThroughputTab(elem_mla.prior_pts, thru(elem_mla))
+			surf.setThroughputTab(elem_mla.fine_domain, thru(elem_mla))
 		for surf in llamas_channel.fiber.elements[1].surfaces: #ar
-			surf.setThroughputTab(elem_ar.prior_pts, thru(elem_ar))
+			surf.setThroughputTab(elem_ar.fine_domain, thru(elem_ar))
 		for surf in llamas_channel.fiber.elements[2].surfaces: #fiber
-			surf.setThroughputTab(elem_fiber.prior_pts, thru(elem_fiber))
+			surf.setThroughputTab(elem_fiber.fine_domain, thru(elem_fiber))
 	
 	red_elem_list = [elem_prism, theta["red_l1_t"], theta["red_l2_t"], theta["red_l3_t"], theta["red_l4_t"], theta["red_l5_t"], theta["red_l6_t"], theta["red_l7_t"], elem_window, elem_glass_red]
 	gre_elem_list = [elem_prism, theta["gre_l1_t"], theta["gre_l2_t"], theta["gre_l3_t"], theta["gre_l4_t"], theta["gre_l5_t"], theta["gre_l6_t"], theta["gre_l7_t"], elem_window, elem_glass_gre]
@@ -197,7 +197,7 @@ def sensitivity_hlva(theta, x, verbose=True):
 	for i,elem in enumerate(red_elem_list):
 		e = 2 + i
 		for surf in llamas_red.elements[e].surfaces:
-			surf.setThroughputTab(elem.prior_pts, thru(elem))
+			surf.setThroughputTab(elem.fine_domain, thru(elem))
 
 	#update other green spect elem throughputs:
 	#0 is collimator
@@ -206,7 +206,7 @@ def sensitivity_hlva(theta, x, verbose=True):
 	for i,elem in enumerate(gre_elem_list):
 		e = 3 + i
 		for surf in llamas_green.elements[e].surfaces:
-			surf.setThroughputTab(elem.prior_pts, thru(elem))
+			surf.setThroughputTab(elem.fine_domain, thru(elem))
 			
 	#update other blue spect elem throughputs:
 	#0 is collimator
@@ -215,7 +215,7 @@ def sensitivity_hlva(theta, x, verbose=True):
 	for i,elem in enumerate(blu_elem_list):
 		e = 3 + i
 		for surf in llamas_blue.elements[e].surfaces:
-			surf.setThroughputTab(elem.prior_pts, thru(elem))
+			surf.setThroughputTab(elem.fine_domain, thru(elem))
 	
 	#update sensors
 	for llamas_channel in [llamas_red, llamas_green, llamas_blue]:
@@ -225,15 +225,15 @@ def sensitivity_hlva(theta, x, verbose=True):
 	
 	llamas_red.sensor.rn = rn_red
 	llamas_red.sensor.dark = dc_red
-	llamas_red.sensor.qe.setThroughputTab(elem_qe_red.prior_pts, thru(elem_qe_red))
+	llamas_red.sensor.qe.setThroughputTab(elem_qe_red.fine_domain, thru(elem_qe_red))
 	
 	llamas_green.sensor.rn = rn_gre
 	llamas_green.sensor.dark = dc_gre
-	llamas_green.sensor.qe.setThroughputTab(elem_qe_gre.prior_pts, thru(elem_qe_gre))
+	llamas_green.sensor.qe.setThroughputTab(elem_qe_gre.fine_domain, thru(elem_qe_gre))
 	
 	llamas_blue.sensor.rn = rn_blu
 	llamas_blue.sensor.dark = dc_blu
-	llamas_blue.sensor.qe.setThroughputTab(elem_qe_blu.prior_pts, thru(elem_qe_blu))
+	llamas_blue.sensor.qe.setThroughputTab(elem_qe_blu.fine_domain, thru(elem_qe_blu))
 	
 	#And at last, we recalculate the throughputs based on the new data
 	llamas_red.throughput = llamas_red.calc_throughput(waves)
