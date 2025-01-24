@@ -1,13 +1,17 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from pandas.plotting import scatter_matrix
 
-def plotmatrix(matrix, names=[], xlim=[], ylim=[], title='', c='#21aad3'):
+def plotmatrix(matrix, names=[], xlim=[], ylim=[], title='', c='#21aad3', rescale=False):
 	if len(names)==0:
 		names = ["index"+str(i) for i in range(len(matrix))]
 	
 	data_df = pd.DataFrame(matrix, columns=names)
+	
+	if rescale:
+		data_df = (data_df - data_df.mean())/data_df.std()
 	
 	hist_kwds = {'color':c}
 	axarr = scatter_matrix(data_df, hist_kwds=hist_kwds, alpha=0.2, figsize=(7, 6), diagonal='hist', c=c)
@@ -22,3 +26,19 @@ def plotmatrix(matrix, names=[], xlim=[], ylim=[], title='', c='#21aad3'):
 	plt.suptitle(title)
 	plt.show()
 	plt.close()
+
+def covmatrix_heatmap(matrix, names, rescale=True):
+	if len(names)==0:
+		names = ["index"+str(i) for i in range(len(matrix))]
+	
+	data_df = pd.DataFrame(matrix, columns=names)
+	
+	if rescale:
+		data_df = (data_df - data_df.mean())/data_df.std()
+
+	# Compute the covariance matrix
+	cov_matrix = data_df.cov()
+
+	# Create a heatmap using Seaborn
+	sns.heatmap(cov_matrix, annot=False, xticklabels=True, yticklabels=True, cmap='coolwarm')
+	plt.show()

@@ -1,6 +1,7 @@
 import spectrograph as spec
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 def plot_throughput(llamas_red, llamas_green, llamas_blue):
    plt.plot(llamas_blue.waves, llamas_blue.throughput, c='b')
@@ -11,7 +12,7 @@ def plot_throughput(llamas_red, llamas_green, llamas_blue):
    #thru_all = [llamas_blue.throughput,llamas_green.throughput,llamas_red.throughput]
    waves_all = llamas_red.waves
    thru_all = llamas_blue.throughput + llamas_green.throughput + llamas_red.throughput
-   print(np.median(thru_all))
+   print("Median throughput:", np.median(thru_all))
    
    plt.hlines(y=0.38, xmin=350, xmax=970, linewidth=2, color='orange')
    plt.hlines(y=0.3, xmin=400, xmax=900, linewidth=2, color='black')
@@ -53,6 +54,21 @@ def plot_throughput(llamas_red, llamas_green, llamas_blue):
    plt.ylabel("Throughput ratio")
    plt.show()
    
+   #print("VPH")
+   vph_b = llamas_blue.elements[3].throughput(llamas_blue.waves)
+   vph_g = llamas_green.elements[3].throughput(llamas_green.waves)
+   vph_r = llamas_red.elements[2].throughput(llamas_red.waves)
+
+   plt.plot(llamas_blue.waves, vph_b, c='b')
+   plt.plot(llamas_green.waves, vph_g, c='g')
+   plt.plot(llamas_red.waves, vph_r, c='r')
+
+   plt.title('VPH Throughput')
+   plt.ylim(-0.05,1.05)
+   plt.xlabel("Wavelength [nm]")
+   plt.ylabel("Throughput ratio")
+   plt.show()
+   
    return 0
 
    print("FIBER RUN")
@@ -63,7 +79,7 @@ def plot_throughput(llamas_red, llamas_green, llamas_blue):
    fiber_run_med = np.median([llamas_blue.fiber.throughput(llamas_blue.waves), \
                     llamas_green.fiber.throughput(llamas_green.waves), \
                     llamas_red.fiber.throughput(llamas_red.waves)])
-   print(fiber_run_med)
+   #print(fiber_run_med)
 
    plt.title('Fiber Run Throughput')
    plt.ylim(-0.05,1.05)
@@ -131,4 +147,18 @@ def plot_throughput(llamas_red, llamas_green, llamas_blue):
 
 
 if __name__ == '__main__':
-   plot_throughput("llamas_red.def","llamas_green.def","llamas_blue.def")
+   _dir = "./COATINGS/"
+   os.environ["COATINGS_PATH"] =_dir
+
+   llamas_red = spec.Spectrograph('LLAMAS_RED')
+   llamas_blue = spec.Spectrograph('LLAMAS_BLUE')
+   llamas_green = spec.Spectrograph('LLAMAS_GREEN') 
+
+   llamas_red.build_model('llamas_red1.def')
+   llamas_blue.build_model('llamas_blue1.def')
+   llamas_green.build_model('llamas_green1.def')
+   #llamas_waves = np.array(np.concatenate([llamas_blue.waves,llamas_green.waves,llamas_red.waves]))
+   llamas_waves = llamas_red.waves
+
+
+   plot_throughput(llamas_red,llamas_green,llamas_blue)

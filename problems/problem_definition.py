@@ -7,7 +7,7 @@ import math
 from copy import deepcopy
 
 sys.path.append('..')
-from problems.gaussian_process import *
+from approx.gaussian_process import *
 
 
 class ProblemDefinition:
@@ -16,11 +16,27 @@ class ProblemDefinition:
 		self._internal_H = _H #H(theta, x)
 		self._internal_G = _G #G(d, x)
 		
+		#First, need to process the multivariate priors in theta
+		thetanames=[]
+		thetamasks=[]
+		for theta_def in _theta_defs:
+			name = theta_def[0]
+			dtype = theta_def[1][0]
+			params = theta_def[1][1]
+			mask = theta_def[2]
+			if dtype == "gaussian_multivar":
+				thetanames.extend([name+str(i) for i,_ in enumerate(params[0])])
+				thetamasks.extend([mask for _ in params[0]])
+			else:
+				thetanames.append(name)
+				thetamasks.append(mask)
+		dimtheta=len(thetanames)
+		
 		#get dimensions, set default parameters
 		self.dim_d = len(_d_defs)
 		self.dim_y = len(_y_defs)
-		self.dim_theta = len(_theta_defs)
 		self.dim_x = len(_x_defs)
+		self.dim_theta = dimtheta #self.dim_theta = len(_theta_defs)
 		self.x_default = [default for name,dist,mask,default in _x_defs]
 		
 		#hack the x_defs to save wasted effort:
@@ -32,39 +48,46 @@ class ProblemDefinition:
 		#so it's a list of pairs, first is type and second is the list of corresponding parameters
 		#type checks:
 		for _,prior,mask in _theta_defs + _d_defs + [x[:-1] for x in _x_defs]:
-			type = prior[0]
+			dtype = prior[0]
 			params = prior[1]
 			
-			if type not in self._allowable_prior_types.keys():
-				raise ValueError("Incorrect prior probability function definition: "+str(type)+" not recognized.")
-			if len(params) != self._allowable_prior_types[type]:
-				raise ValueError('Wrong number of arguments for prior type '+str(type)+'; got '+str(len(params))+' and expected '+str(self._allowable_prior_types[type]))
+			if dtype not in self._allowable_prior_types.keys():
+				raise ValueError("Incorrect prior probability function definition: "+str(dtype)+" not recognized.")
+			if len(params) != self._allowable_prior_types[dtype]:
+				raise ValueError('Wrong number of arguments for prior type '+str(dtype)+'; got '+str(len(params))+' and expected '+str(self._allowable_prior_types[dtype]))
 			if not (mask in ['continuous','discrete','functional','object']):
 				raise ValueError('Variable mask not an expected value: '+str(mask))
 
 		#if you pass all of that,
-		self.priors  = [prior for _,prior,_ in _theta_defs]
+		self.priors  = [prior for _,prior,_ in _theta_defs] #now this is <= dim_theta w/ gaussian_multivar
 		self.d_dists = [dist for _,dist,_ in _d_defs]
 		self.x_dists = [dist for _,dist,_,_ in _x_defs]
 		
-		self.theta_masks = [mask for _,_,mask in _theta_defs]
+		self.theta_masks = thetamasks #self.theta_masks = [mask for _,_,mask in _theta_defs]
 		self.d_masks     = [mask for _,_,mask in _d_defs]
 		self.x_masks     = [mask for _,_,mask,_ in _x_defs]
 		
+		#Get theta_nominal only once, to save repetition
+		self.theta_nominal = self._theta_nominal()
+		
 		#for documentation:
-		self.theta_names=[name for name,_,_ in _theta_defs]
+		self.theta_names= thetanames #self.theta_names=[name for name,_,_ in _theta_defs]
 		self.y_names=_y_defs
 		self.d_names=[name for name,_,_ in _d_defs]
 		self.x_names=[name for name,default,dist,mask in _x_defs]
+		
+		#pre-construct some of the dicts, so I never have to repeat it unnecessarily
+		self.x_dict = dict(zip(self.x_names, self.x_default))
+		self.prior_mean_dict = dict(zip(self.theta_names, self.theta_nominal))
 	
 	def eta(self, theta, d, x=[], err=True):
 		if x == []: #default x
-			x = deepcopy(self.x_default)
+			x_dict = deepcopy(self.x_dict)
 		if len(theta) != self.dim_theta:
 			raise ValueError("Input to ProblemDefinition eta: theta size "+str(self.dim_theta)+" expected, "+str(len(theta))+" provided.")
 		if len(d) != self.dim_d:
 			raise ValueError("Input to ProblemDefinition eta: d size "+str(self.dim_d)+" expected, "+str(len(d))+" provided.")
-		if len(x) != self.dim_x:
+		if len(x_dict) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition eta: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
 		#apply discrete mask to theta and d and x
 		theta_masked = [(math.floor(tt) if self.theta_masks[i]=='discrete' else tt) for i,tt in enumerate(theta)]
@@ -72,42 +95,42 @@ class ProblemDefinition:
 		#make dicts for inputs w/ defs, to ensure consistency
 		theta_dict = dict(zip(self.theta_names, theta_masked))
 		d_dict = dict(zip(self.d_names, d_masked))
-		x_dict = dict(zip(self.x_names, x))
-		return self._internal_eta(theta_dict, d_dict, x_dict, err)
+		#provide prior means here, in case they're needed for imputation
+		return self._internal_eta(theta_dict, d_dict, x_dict, self.prior_mean_dict, err)
 	
 	def G(self, d, x=[]):
 		if x == []: #default x
-			x = deepcopy(self.x_default)
+			x_dict = deepcopy(self.x_dict)
 		if len(d) != self.dim_d:
 			raise ValueError("Input to ProblemDefinition G: theta size "+str(self.dim_d)+" expected, "+str(len(d))+" provided.")
-		if len(x) != self.dim_x:
+		if len(x_dict) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition G: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
 		#apply discrete mask to d and x
 		d_masked = [(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
 		#make dicts for inputs w/ defs, to ensure consistency
 		d_dict = dict(zip(self.d_names, d_masked))
-		x_dict = dict(zip(self.x_names, x))
 		return self._internal_G(d_dict, x_dict)
 	
 	def H(self, theta, x=[], verbose=False):
 		if x == []: #default x
-			x = deepcopy(self.x_default)
+			x_dict = deepcopy(self.x_dict)
 		if len(theta) != self.dim_theta:
 			raise ValueError("Input to ProblemDefinition H: theta size "+str(self.dim_theta)+" expected, "+str(len(theta))+" provided.")
-		if len(x) != self.dim_x:
+		if len(x_dict) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition H: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
 		#apply discrete mask to theta and x
 		theta_masked = [(math.floor(tt) if self.theta_masks[i]=='discrete' else tt) for i,tt in enumerate(theta)]
 		#make dicts for inputs w/ defs, to ensure consistency
 		theta_dict = dict(zip(self.theta_names, theta_masked))
-		x_dict = dict(zip(self.x_names, x))
 		return self._internal_H(theta_dict, x_dict, verbose)
 	
 	
 	_allowable_prior_types = {
 		'gaussian': 2, #mu, sigma
+		'gaussian_multivar': 2, #mean vector, covariance
 		'gamma_ab': 2, #alpha, beta
 		'gamma_mv': 2, #mean, variance
+		'beta': 2, #a, b
 		'lognorm': 2, #mean, variance
 		'uniform': 2, #left, right
 		'nonrandom': 1, #return value
@@ -120,8 +143,14 @@ class ProblemDefinition:
 		
 	def sample_d(self, num_vals):
 		d = self._dist_rvs(num_vals, self.d_dists)
-		d_masked = [(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
-		return d_masked
+		if num_vals == 1: #stupid, inefficient
+			d = [d]
+		d_masked = [[(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(dj)] for j,dj in enumerate(d)]
+		
+		if num_vals == 1: #also somewhat stupid
+			return d_masked[0] #this is a list (dim_d)
+		else:
+			return d_masked #this is a list (num_vals) of random variables (dim_d)
 		
 	def sample_x(self, num_vals):
 		return self._dist_rvs(num_vals, self.x_dists)
@@ -131,44 +160,60 @@ class ProblemDefinition:
 		for prior in dist_def: ###iterate over dim_theta
 			dtype = prior[0]
 			params = prior[1]
-			thetas_i = [] #need to do this carefully, we have multiple thetas and multiple samples
+			#need to do this carefully, we have multiple thetas and multiple samples
 	
 			#generate the rvs for this one particular theta
 			if dtype == 'gaussian':
 				mu = params[0]
 				sigma = params[1]
 				thetas_i = scipy.stats.norm.rvs(size=num_vals, loc=mu, scale=sigma)
+				vals.append(thetas_i.tolist())
+			elif dtype == 'gaussian_multivar':
+				mean_vector = np.array(params[0])
+				covariance = np.array(params[1])
+				multisamples = scipy.stats.multivariate_normal.rvs(size=num_vals, mean=mean_vector, cov=covariance)
+				for thetas_i in multisamples.T: #i think im breaking this down in the wrong direction...
+					vals.append(thetas_i.tolist())
 			elif dtype == 'gamma_ab':
 				alpha = params[0]
 				beta = params[1]
 				thetas_i = scipy.stats.gamma.rvs(size=num_vals, a=alpha, scale=1.0/beta)
+				vals.append(thetas_i.tolist())
 			elif dtype == 'gamma_mv':
 				mean = params[0]
 				variance = params[1]
 				alpha = mean**2 / variance
 				beta = mean / variance
 				thetas_i = scipy.stats.gamma.rvs(size=num_vals, a=alpha, scale=1.0/beta)
+				vals.append(thetas_i.tolist())
+			elif dtype == 'beta':
+				a = params[0]
+				b = params[1]
+				thetas_i = scipy.stats.beta.rvs(a=a, b=b, size=num_vals)
+				vals.append(thetas_i.tolist())
 			elif dtype == 'lognorm':
 				mu = params[0]
 				sigma = params[1]
 				thetas_i = scipy.stats.lognorm.rvs(size=num_vals, s=sigma, scale=np.exp(mu))
+				vals.append(thetas_i.tolist())
 			elif dtype == 'uniform':
 				left = params[0]
 				right = params[1]
 				thetas_i = scipy.stats.uniform.rvs(size=num_vals, loc=left, scale=right-left) #dist is [loc, loc + scale]
+				vals.append(thetas_i.tolist())
 			elif dtype == 'nonrandom':
 				thetas_i = [param[0] for _ in range(num_vals)]
+				vals.append(thetas_i)
 			elif dtype == 'gp_expquad':
 				variance = params[0]
 				ls = params[1]
 				prior_pts = params[2]
 				mean_fn = params[3]
 				thetas_i = [sample_gp_prior(variance, ls, prior_pts, mean_fn) for _ in range(num_vals)]
+				vals.append(thetas_i)
 			else:
 				raise ValueError("_dist_rvs did not expect prior type "+str(type))
-				
-			vals.append(thetas_i)
-	
+
 		#turn from list of rvs at each prior, to list of theta rvs
 		vals = np.transpose(vals)
 	
@@ -223,7 +268,14 @@ class ProblemDefinition:
 		return probabilities
 	"""
 	
-	def theta_nominal(self):
+	def _theta_nominal(self):
+		"""
+		Standard behavior is to return a list of nominal error-free values of every theta, including error-free mean functions
+		This is so you can get a "nominal" value for y with the following expression:
+		y_nominal = problem.eta(problem.theta_nominal(), d, err=False)
+		
+		For GP's, the behavior is to provide a GP that is exactly evaluated at the value of the mean function
+		"""
 		tnom = []
 		for prior in self.priors: ###iterate over dim_theta
 			dtype = prior[0]
@@ -233,6 +285,10 @@ class ProblemDefinition:
 			if dtype == 'gaussian':
 				mu = params[0]
 				tnom.append(mu)
+			elif dtype == 'gaussian_multivar':
+				mean_vector = params[0]
+				for mu in mean_vector:
+					tnom.append(mu)
 			elif dtype == 'gamma_ab':
 				alpha = params[0]
 				beta = params[1]
@@ -240,6 +296,10 @@ class ProblemDefinition:
 			elif dtype == 'gamma_mv':
 				mean = params[0]
 				tnom.append(mean)
+			elif dtype == 'beta':
+				a = params[0]
+				b = params[1]
+				tnom.append(a/(a+b))
 			elif dtype == 'lognorm':
 				mu = params[0]
 				tnom.append(mu)
@@ -255,7 +315,7 @@ class ProblemDefinition:
 				funct = define_functional_mean(prior_pts, mean_fn)
 				tnom.append(funct)
 			else:
-				return 0 #fail!
+				raise ValueError("_theta_nominal couldn't construct vector with "+str(dtype))
 		return tnom
 		
 	def __str__(self): #handsome little format for printing the object
@@ -319,4 +379,4 @@ if __name__ == "__main__":
 	"""print(toy.prior_pdf_unnorm([-1.5,1.5]))"""
 	print(toy.prior_rvs(5))
 	print(toy.prior_rvs(1))
-	print(toy.sample_d(1))
+	print(toy.sample_d(3))

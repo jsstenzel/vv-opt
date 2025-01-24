@@ -28,10 +28,11 @@ from opt.ngsa import *
 ################################
 
 def vv_nominal(problem, req, theta_nominal, y_nominal):
+	print(llamas_snr)
 	print("QoI requirement:", req)
 	QoI_nominal = problem.H(theta_nominal, verbose=True)
 	print("Given the nominal theta:", theta_nominal)
-	#print("Nominal y:", y_nominal)
+	print("Nominal y:", y_nominal)
 	print("Nominal QoI:", QoI_nominal)
 
 
@@ -197,10 +198,7 @@ if __name__ == '__main__':
 						1, #d_dichroic_n_pts
 						1 #d_frd_n_meas
 					]
-
-	design = d_worst
-	problem = update_llamas_problem(llamas_snr, design)
-	print("d_worst:",design)
+	problem = llamas_snr
 	
 	req = 3.0
 	theta_nominal = problem.theta_nominal()

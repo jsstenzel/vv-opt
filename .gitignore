@@ -1,0 +1,25 @@
+# Structures and tools
+########################
+.venv
+
+# Python-generated files
+########################
+*/__pycache__
+*/*/__pycache__
+*/*/*/__pycache__
+*/*/*/*/__pycache__
+*/__init__.py
+*/*/__init__.py
+*/*/*/__init__.py
+*/*/*/*/__init__.py
+
+
+# GSA sample files
+########################
+uq/ishigami_*.csv
+problems/llamas_snr_full/SA_QoI_*.csv
+
+
+# Profile files
+########################
+*/*/*.prof

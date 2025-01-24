@@ -13,9 +13,16 @@ class OpticalSurface:
         self.reflectance_tab  = np.array(0)
         
     def setThroughputTab(self, wv, thru):
+        #First, enforce the 0..1 bounds
+        for i,yi in enumerate(thru):
+            if yi < 0:
+                thru[i] = 0
+            if yi > 1:
+                thru[i] = 1
+    
         self.wv_tab = wv
         self.transmission_tab = thru
-        self.reflectance_tab  = [1-pt for pt in self.transmission_tab]
+        self.reflectance_tab  = [1-pt for pt in thru]
 
     def loadThroughputTab(self):
         if (os.path.isfile(self.coating_file)):

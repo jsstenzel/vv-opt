@@ -24,7 +24,7 @@ def uncertainty_prop_file(datafile, doPlot=False, doPrint=False):
 	return uncertainty_prop(y, doPlot, doPrint)
 
 #y_j: list of all model evaluation results, assumed to be single number
-def uncertainty_prop(y_j, doPlot=False, doPrint=False):
+def uncertainty_prop(y_j, doPlot=True, doPrint=True):
 	mean = statistics.mean(y_j)
 	stddev = statistics.stdev(y_j, mean) #note! This is sample stddev, not population stddev. Different n-factor in front
 
