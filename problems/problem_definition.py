@@ -223,6 +223,15 @@ class ProblemDefinition:
 			return vals[0] #this is a list (dim_theta)
 		else:
 			return vals #this is a list (num_vals) of random variables (dim_theta)
+			
+	def print_theta(self, theta):
+		for i,prior in enumerate(self.priors):
+			dtype = prior[0]
+			params = prior[1]
+			print(self.theta_names[i],theta[i], flush=True)
+			if dtype == 'gp_expquad':
+				gp_sample = theta[i]
+				gp_sample.plot_prior()
 	
 	#assumes single theta, not list of thetas
 	"""

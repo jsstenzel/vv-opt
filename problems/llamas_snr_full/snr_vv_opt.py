@@ -340,6 +340,18 @@ if __name__ == '__main__':
 	if args.run == "nominal":
 		vv_nominal(problem, req, theta_nominal, y_nominal)
 		
+	if args.run == "system_model":
+		if args.n <= 1:
+			theta = problem.prior_rvs(1)
+			problem.print_theta(theta)
+			QoI = problem.H(theta, verbose=True)
+			print("QoI:",QoI,flush=True)
+		else:
+			thetas = problem.prior_rvs(args.n)
+			for t in thetas:
+				QoI = problem.H(t, verbose=True)
+				print("QoI:",QoI,flush=True)
+		
 	if args.run == "cheap_design":
 		print("Given the nominal theta:", theta_nominal)
 		print("and the cheapest design:", d_min)
