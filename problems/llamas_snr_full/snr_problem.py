@@ -17,7 +17,7 @@ from problems.llamas_snr_full.snr_exp_models import *
 from problems.llamas_snr_full.snr_system_model import *
 from problems.llamas_snr_full.snr_cost_model import *
 
-def learn_llamas_snr_priors(verbose=True, doPlot=False, doSave=True):
+def learn_llamas_snr_priors(verbose=True, doPlot=True, doSave=True):
 	#Directories to find prior training data
 	_dir = "./llamas-etc/COATINGS/"
 	_reddir = "./vendor data/lenses/camera_RED/"
@@ -32,7 +32,7 @@ def learn_llamas_snr_priors(verbose=True, doPlot=False, doSave=True):
 	
 	#Directory to save new prior def files to
 	sloc = './priors/'
-	
+	"""
 	###Quantum efficiency priors
 	learn_save_gp_prior_to_file(sloc+'prior_gp_qe_red', [_qedir+"qe_red_basic_nir.txt"], QE_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
 	learn_save_gp_prior_to_file(sloc+'prior_gp_qe_gre', [_qedir+"qe_green_basic_midband.txt"], QE_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
@@ -65,6 +65,7 @@ def learn_llamas_snr_priors(verbose=True, doPlot=False, doSave=True):
 	learn_save_gp_prior_to_file(sloc+'prior_blu1', [_bludir+"blue1_9371C.txt", _bludir+'blue1_9376C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
 	learn_save_gp_prior_to_file(sloc+'prior_blu2', [_bludir+"blue2_1961C.txt", _bludir+'blue2_1965C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
 	learn_save_gp_prior_to_file(sloc+'prior_blu3', [_bludir+"blue3_9360C.txt", _bludir+'blue3_9363C.txt', _bludir+'blue3_9371C.txt', _bludir+'blue3_9366C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
+	"""
 	learn_save_gp_prior_to_file(sloc+'prior_blu4', [_bludir+"blue4_9363C.txt", _bludir+'blue4_9373C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
 	learn_save_gp_prior_to_file(sloc+'prior_blu5', [_bludir+'blue5_1961C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
 	learn_save_gp_prior_to_file(sloc+'prior_blu6', [_bludir+'blue6_1961C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
@@ -91,7 +92,7 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	#R = lambda / dlambda = 2200
 	#so for lambda=350, dlambda=0.159
 	#and for lambda=975, dlambda=0.443
-	_lengthscale = 1.0
+	_lengthscale = 50.0
 
 	###Camera priors
 	prior_gain_SN1 = ["gamma_mv",  [0.999,0.2**2]] #mean, variance
