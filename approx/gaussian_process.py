@@ -7,8 +7,8 @@ import scipy.stats
 import scipy.interpolate
 from scipy.stats import logistic
 
-#from sklearn.gaussian_process import GaussianProcessRegressor
-#from sklearn.gaussian_process.kernels import ConstantKernel, RBF
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import ConstantKernel, RBF
 
 """
 Gaussian process priors and samples, specifically modeling optical throughputs
@@ -44,19 +44,18 @@ class GaussianProcessDist1D:
 		self.mean_fn = mean_fn
 		
 		#A suitably fine grid over the relevant domain -- fine enough that you don't care about smaller details, but not so fine that it takes forever to sample
-		#This should be finer than the ls. Substitute in a new version if its not
-		"""
+		#Solution: otherwise leave it up to the user, but don't let it be finer than 1 wavelength resolution
 		domain_min = min(prior_pts)
-		domain_max = max(prior_pts)
-		grid_step = (domain_max - domain_min)/len(prior_pts)
-		if grid_step > ls/5.0:
-			new_steps = math.ceil(5 * (domain_max - domain_min)/ls)
-			self.fine_domain = np.linspace(domain_min, domain_max, new_steps).tolist()
-		else:
+		domain_max = max(prior_pts)		
+		finest_domain = np.arange(domain_min, domain_max, 1.0).tolist()
+		if len(finest_domain) > len(prior_pts):
 			self.fine_domain = prior_pts
-		"""
-		#Actually, it's probably best to leave that up to the user. Hard to make that trade-off perfectly a priori
-		self.fine_domain = prior_pts
+		else:
+			self.fine_domain = finest_domain
+		
+		#Make the scipy GP that you can sample from
+		kernel = ConstantKernel(constant_value=variance) * RBF(length_scale=ls)
+		self._gpr = GaussianProcessRegressor(kernel=kernel)
 	
 	#Defines the radial basis function / squared exponential function that serves as the kernel
 	def _rbf_kernel(self, x1, x2, ls, var):
@@ -71,11 +70,13 @@ class GaussianProcessDist1D:
 	def sample(self):
 		#Sample from the Gaussian Process:
 		GP_mean = [self.mean_fn(pt) for pt in self.fine_domain]
-		GP_cov = self._gram_matrix(self.fine_domain)
-		sample_u = np.random.multivariate_normal(GP_mean, GP_cov)
+		#GP_cov = self._gram_matrix(self.fine_domain)
+		#sample_u = np.random.multivariate_normal(GP_mean, GP_cov)
+		sample_u = self._gpr.sample_y(np.array(self.fine_domain).reshape(-1,1), n_samples=1).flatten()
+		sample_u_mean = [u+mean for u,mean in zip(GP_mean,sample_u)]
 		
 		#Now, convert it back into the t-range:
-		sample_t = u_to_t(sample_u)
+		sample_t = u_to_t(sample_u_mean)
 		
 		#Return the functional:
 		return GaussianProcessSample1D(self.fine_domain, sample_t, u_to_t(GP_mean))

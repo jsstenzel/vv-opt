@@ -86,13 +86,16 @@ if __name__ == '__main__':
 	if args.run == "eta_profile" :
 		profile_func(problem.eta, [theta_nominal, d_historical, [], True], 'eta_stats')
 		
-	if args.run == "eta_dmin_profile" :
+	elif args.run == "eta_dmin_profile" :
 		profile_func(problem.eta, [theta_nominal, d_min, [], True], 'eta_dmin_stats')
 		
-	if args.run == "H_profile":
+	elif args.run == "H_profile":
 		profile_func(problem.H, [theta_nominal, [], False], 'H_stats')
 		
-	if args.run == "gain_exp":
+	elif args.run == "ptheta_profile":
+		profile_func(problem.prior_rvs, [1], 'H_theta_stats')
+		
+	elif args.run == "gain_exp":
 		#Check to make sure the function works as expected over a range of inputs
 		
 		#First, for nominal design and no err, see range of gain						
@@ -138,3 +141,6 @@ if __name__ == '__main__':
 		plt.ylabel('t')
 		plt.xlabel('I')
 		plt.show()
+		
+	else:
+		print("Profile method not recognized.")
