@@ -1,0 +1,20 @@
+#!/bin/bash
+#SBATCH --ntasks-per-node=1
+#SBATCH --nodes=2 #Request nodes
+#SBATCH --cpus-per-task=1
+#SBATCH -t 0-6:00 #Request time
+#SBATCH -p newnodes
+#SBATCH --mem-per-cpu=1000 #Request .1G's of memory per CPU
+#SBATCH -o output_%j.txt #redirect output to output_JOBID.txt
+#SBATCH -e output_%j.txt #redirect errors to output_JOBID.txt
+#SBATCH --mail-type=BEGIN,END #Mail when job starts and ends
+#SBATCH --mail-user=jstenzel@mit.com #email recipient
+
+for i in {1..5}
+do
+  srun -n2 SA_QoI_call
+
+done
+
+wait
+
