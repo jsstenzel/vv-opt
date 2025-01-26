@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import scipy.stats
 import scipy.interpolate
 from scipy.stats import logistic
+import csv
 
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import ConstantKernel, RBF
@@ -213,7 +214,7 @@ def define_functional_from_file(filename, order=3):
 ##############################################################################
 
 #This is the inverse of GaussianProcessDist1D's save_to_file()
-def load_gp_prior_from_file(load_file, returnObj=False, interp="linear"):
+def load_gp_prior_from_file(load_file, returnObj=False, order="linear"):
 	prior_pts = []
 	mean_fn_pts_u = []
 
@@ -246,7 +247,7 @@ def load_gp_prior_from_file(load_file, returnObj=False, interp="linear"):
 	if returnObj:
 		return GaussianProcessPrior1D(variance, ls, prior_pts, mean_fn_load_gp)
 	else:
-		variance, ls, prior_pts, mean_fn_load_gp
+		return variance, ls, prior_pts, mean_fn_load_gp
 
 #Constructor for GaussianProcessSample1D, allowing for finer polynomial interpolation
 #From raw points

@@ -168,9 +168,8 @@ def vv_SA_QoI_sample(problem, N=10000):
 				prior_pts = problem.priors[i][1][2]
 				mean_fn = problem.priors[i][1][3]
 
-				gp_prior = GaussianProcessSample1D(variance, ls, prior_pts, mean_fn)
-				thetas_i = [gp_prior.sample() for _ in range(num_vals)]
-				vals.append(thetas_i)
+				gp_prior = GaussianProcessDist1D(variance, ls, prior_pts, mean_fn)
+				sample = gp_prior.sample()
 				theta.append(sample)
 			else:
 				theta.append(params[i])
