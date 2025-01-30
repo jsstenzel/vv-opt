@@ -172,20 +172,20 @@ def saltelli_eval(new_samples, base_name, var_names, model, doPrint=False):
 	if doPrint:
 		print("Saving samples to",base_name,"...",flush=True)
 		
-	aw = 'a'# if os.path.exists(base_name+'_A.csv') else 'w+'
+	aw = 'a+'# if os.path.exists(base_name+'_A.csv') else 'w+'
 	with open(base_name+'_A.csv', aw, newline='') as csvfile:
 		writer = csv.writer(csvfile)
 		for row in new_A:
 			writer.writerow(row)
 	
-	aw = 'a'# if os.path.exists(base_name+'_B.csv') else 'w+'
+	aw = 'a+'# if os.path.exists(base_name+'_B.csv') else 'w+'
 	with open(base_name+'_B.csv', aw, newline='') as csvfile:
 		writer = csv.writer(csvfile)
 		for row in new_B:
 			writer.writerow(row)
 
 	for p,new_Ci in enumerate(new_C):
-		aw = 'a'# if os.path.exists(base_name+'_C_'+var_names[p]+'.csv') else 'w+'
+		aw = 'a+'# if os.path.exists(base_name+'_C_'+var_names[p]+'.csv') else 'w+'
 		with open(base_name+'_C_'+var_names[p]+'.csv', aw, newline='') as csvfile:
 			writer = csv.writer(csvfile)
 			for row in new_Ci:
@@ -229,6 +229,8 @@ def saltelli_indices(base_name, var_names, do_subset=0, doPrint=True):
 				csvreader = csv.reader(csvfile, delimiter=',')
 				for row in csvreader:
 					Ciy.append([float(elem) for elem in row])
+				if not Ciy:
+					print(name, flush=True)
 			Cy.append(Ciy)
 	else:
 		lim = int(do_subset/2)

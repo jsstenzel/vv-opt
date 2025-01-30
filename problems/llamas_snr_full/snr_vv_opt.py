@@ -18,6 +18,7 @@ from obed.pdf_estimation import *
 from uq.uncertainty_propagation import *
 from uq.sensitivity_analysis import *
 from uq.saltelli_gsa import *
+from uq.gsa_convergence import *
 from opt.ngsa import *
 
 ################################
@@ -184,6 +185,11 @@ def vv_SA_QoI_sample(problem, N=10000):
 
 #sensitivity analysis of HLVA
 def vv_SA_QoI_evaluate(problem):
+	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
+
+	total_order_convergence_tests(1200, "SA_QoI", var_names, do_subset=0)
+	sys.exit()
+
 	###Perform the analysis at a few evaluation points
 	list_S = []
 	list_ST = []
