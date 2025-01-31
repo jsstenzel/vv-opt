@@ -252,15 +252,12 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 					"y_vph_red_p0", 
 					"y_vph_red_p1", 
 					"y_vph_red_p2", 
-					"y_vph_red_p3", 
 					"y_vph_gre_p0", 
 					"y_vph_gre_p1", 
 					"y_vph_gre_p2",
-					"y_vph_gre_p3",
 					"y_vph_blu_p0", 
 					"y_vph_blu_p1", 
 					"y_vph_blu_p2", 
-					"y_vph_blu_p3", 
 					"y_sl_t0", 
 					"y_sl_t1", 
 					"y_sl_t2", 
@@ -278,9 +275,9 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 
 	d_defs = [
 					["t_gain", ['uniform', [.1, 600]], "continuous"], #gain
-					["I_gain", ['uniform', [1, 100]], "discrete"],    #gain
-					["n_meas_rn", ['uniform', [1, 50]], "discrete"],  #rn
-					["d_num", ['uniform', [2, 25]], "discrete"],      #dc
+					["I_gain", ['uniform', [0, 100]], "discrete"],    #gain
+					["n_meas_rn", ['uniform', [0, 50]], "discrete"],  #rn
+					["d_num", ['uniform', [0, 25]], "discrete"],      #dc
 					["d_max", ['uniform', [1, 12000]], "continuous"], #dc
 					["d_pow", ['uniform', [0,3]], "continuous"],      #dc
 					
@@ -290,9 +287,9 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 					["d_vph_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
 					["d_dichroic_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
 					["d_coll_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
-					["d_redcam_n_pts", ['uniform', [0,_bandpass*10]], "discrete"], #i guess??
-					["d_greencam_n_pts", ['uniform', [0,_bandpass*10]], "discrete"], #i guess??
-					["d_bluecam_n_pts", ['uniform', [0,_bandpass*10]], "discrete"], #i guess??
+					["d_redcam_n_pts", ['uniform', [0,(_wave_max-_wave_redgreen)*10]], "discrete"], #i guess??
+					["d_greencam_n_pts", ['uniform', [0,(_wave_redgreen-_wave_greenblue)*10]], "discrete"], #i guess??
+					["d_bluecam_n_pts", ['uniform', [0,(_wave_greenblue-_wave_min)*10]], "discrete"], #i guess??
 					["d_frd_n_meas", ['uniform', [0,2400]], "discrete"],
 				]
 		

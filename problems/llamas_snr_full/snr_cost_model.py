@@ -49,7 +49,9 @@ def snr_cost(d, x):
 	coll_setup = x["t_coll_setup"]
 	coll_exposure_per_pt = x["t_coll_per_pt"]
 	#Lens
-	d_lens_n_pts = d["d_lens_n_pts"]
+	d_redcam_n_pts = d["d_redcam_n_pts"]
+	d_greencam_n_pts = d["d_greencam_n_pts"]
+	d_bluecam_n_pts = d["d_bluecam_n_pts"]
 	camera_test_setup = x["t_camera_test_setup"]
 	camera_exposure_per_pt = x["t_camera_per_pt"]
 	#Fiber
@@ -124,7 +126,9 @@ def snr_cost(d, x):
 	#Collimator
 	time_coll = coll_setup + d_coll_n_pts * (coll_exposure_per_pt) if d_coll_n_pts>0 else 0.0
 	#Camera
-	time_lenses = 3 * (camera_test_setup + d_lens_n_pts * (camera_exposure_per_pt)) if d_lens_n_pts>0 else 0.0
+	time_lenses = (camera_test_setup + d_redcam_n_pts * (camera_exposure_per_pt)) if d_redcam_n_pts>0 else 0.0
+	time_lenses += (camera_test_setup + d_greencam_n_pts * (camera_exposure_per_pt)) if d_greencam_n_pts>0 else 0.0
+	time_lenses += (camera_test_setup + d_bluecam_n_pts * (camera_exposure_per_pt)) if d_bluecam_n_pts>0 else 0.0
 	#Fiber
 	time_frd = frd_setup + d_frd_n_meas * frd_test_time if d_frd_n_meas>0 else 0.0
 	
