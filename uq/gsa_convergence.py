@@ -2,6 +2,7 @@ import os
 import sys
 import csv
 
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats
@@ -170,15 +171,24 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 		rho_sjk = sum([r*s for r,s in zip(rank_dists,index_scales)]) / denominator
 		return rho_sjk
 	
+	
 	#Evaluate this metric for all unique pairs of j =/= k resamples
 	rho_full = []
+	ranking_metric_quick = 0
+	rankingConverged = True
+	upper_triangular = int(0.5 * len(indices) * (len(indices)-1))
+	x_percentile_95 = math.ceil(0.05*upper_triangular)
 	for k,sk in enumerate(indices):
 		for j,sj in enumerate(indices):
 			if j>k:
-				rho_full.append(rho(sj, sk))
+				if rho(sj, sk) >= 1.0:
+					ranking_metric_quick += 1
+				if ranking_metric_quick >= x_percentile_95: #i can check early if the 95th percentile will be larger than 1
+					rankingConverged = False
+					break #if it is, fails to converge, stop calculating!
 	
-	ranking_metric = np.quantile(rho_full,0.95)
-	rankingConverged = ranking_metric < 1.0
+	#ranking_metric = np.quantile(rho_full,0.95)
+	#rankingConverged = ranking_metric < 1.0
 	#i.e. rankings are converged when the difference in rankings is on average less than one position
 	
 	###Convergence of input factor screening
@@ -210,7 +220,8 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 	print(str(int(bootstrap_size)),"bootstrap samples made")
 	print("Total order index convergence metric:",f"{indices_metric:.3f}","<",small_width_threshold)
 	print("Indices converged:","TRUE" if indicesConverged else "FALSE")
-	print("Total order index ranking convergence metric:",f"{ranking_metric:.3f}","< 1")
+	print("Total order index ranking convergence metric (quick): at least",ranking_metric_quick,"/",upper_triangular," pairs are > 1")
+	print('\t',"( 95th percentile is located at the top",x_percentile_95,')')
 	print("Rankings converged:","TRUE" if rankingConverged else "FALSE")
 	if len(screened_vars) > 0:
 		print("Screened variables (below",str(screening_threshold)+'):',screened_vars)
@@ -219,7 +230,7 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 	else:
 		print("No variables screened (below",str(screening_threshold)+').')
 	print("*****************************************************************", flush=True)
-	return indicesConverged, rankingConverged, screeningConverged
+	return indicesConverged, False, screeningConverged
 	
 if __name__ == '__main__':  
 	###########################

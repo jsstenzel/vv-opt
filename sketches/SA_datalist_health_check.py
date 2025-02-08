@@ -8,6 +8,8 @@ import scipy.stats
 
 from itertools import islice
 
+var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
+
 def read_SA_files(base_name,var_names,do_subset=0,doPrint=False):
 	doDiagnostic=doPrint
 	###Make sure the files exist
@@ -21,6 +23,20 @@ def read_SA_files(base_name,var_names,do_subset=0,doPrint=False):
 		if not os.path.isfile(base_name+'_C_'+name+'.csv'):
 			print("File",base_name+'_C_'+name+'.csv',"is missing")
 			sys.exit()
+			
+	##check for nulls:
+	"""
+	if '\0' in open(base_name+'_A.csv').read():
+		print("you have null bytes in",base_name+'_A.csv')
+		sys.exit()
+	if '\0' in open(base_name+'_B.csv').read():
+		print("you have null bytes in",base_name+'_B.csv')
+		sys.exit()
+	for p,name in enumerate(var_names):
+		if '\0' in open(base_name+'_C_'+name+'.csv').read():
+			print("you have null bytes in",base_name+'_C_'+name+'.csv')
+			sys.exit()
+	"""
 	
 	###Safely read out all of the samples into matrices
 	Ay = []
@@ -32,7 +48,7 @@ def read_SA_files(base_name,var_names,do_subset=0,doPrint=False):
 	
 	if do_subset == 0:
 		with open(base_name+'_A.csv') as csvfile:
-			csvreader = csv.reader(csvfile, delimiter=',')
+			csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
 			for l,row in enumerate(csvreader):
 				if len(row) != len(var_names)+1:
 					if doDiagnostic:
@@ -41,7 +57,7 @@ def read_SA_files(base_name,var_names,do_subset=0,doPrint=False):
 					Ay.append([float(elem) for elem in row])
 		
 		with open(base_name+'_B.csv') as csvfile:
-			csvreader = csv.reader(csvfile, delimiter=',')
+			csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
 			for l,row in enumerate(csvreader):
 				if len(row) != len(var_names)+1:
 					if doDiagnostic:
@@ -52,7 +68,7 @@ def read_SA_files(base_name,var_names,do_subset=0,doPrint=False):
 		for p,name in enumerate(var_names):
 			Ciy = []
 			with open(base_name+'_C_'+name+'.csv') as csvfile:
-				csvreader = csv.reader(csvfile, delimiter=',')
+				csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
 				for l,row in enumerate(csvreader):
 					if len(row) != len(var_names)+1:
 						if doDiagnostic:
@@ -64,7 +80,7 @@ def read_SA_files(base_name,var_names,do_subset=0,doPrint=False):
 		lim = int(do_subset/2)
 		###Optionally, we can analyze less than the full set of provided samples
 		with open(base_name+'_A.csv') as csvfile:
-			csvreader = csv.reader(csvfile, delimiter=',')
+			csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
 			for l,row in enumerate(islice(csvreader, lim)):
 				if len(row) != len(var_names)+1:
 					if doDiagnostic:
@@ -84,7 +100,7 @@ def read_SA_files(base_name,var_names,do_subset=0,doPrint=False):
 		for p,name in enumerate(var_names):
 			Ciy = []
 			with open(base_name+'_C_'+name+'.csv') as csvfile:
-				csvreader = csv.reader(csvfile, delimiter=',')
+				csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
 				for l,row in enumerate(islice(csvreader, lim)):
 					if len(row) != len(var_names)+1:
 						if doDiagnostic:
@@ -139,19 +155,12 @@ def oversave(base_name, var_names, Ay,By,Cy):
 			for row in Ciy:
 				writer.writerow(row)
 
-if __name__ == '__main__':  
-	base_name = "SA_QoI_extra"
-
-	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
-	
-	Ay,By,Cy = read_SA_files("SA_QoI_extra", var_names, do_subset=0, doPrint=True)
-	Ayo,Byo,Cyo = read_SA_files("SA_QoI", var_names, do_subset=0, doPrint=True)
-	Ay.extend(Ayo)
-	By.extend(Byo)
-	for p,Ciy in enumerate(Cy):
-		Cy[p].extend(Cyo[p])
-		
-	oversave("SA_QoI", var_names, Ay,By,Cy)
+def health_check(base_name, var_names, Ay=[], By=[], Cy=[], do_subset=0):
+	if not (Ay and By and Cy):
+		print("Health check:",base_name,flush=True)
+		Ay,By,Cy = read_SA_files(base_name, var_names, do_subset=do_subset, doPrint=True)
+	#else:
+		#ignore base name and use the provided lists
 			
 	###################################################
 	#See if A and B match:
@@ -212,6 +221,64 @@ if __name__ == '__main__':
 				print("Mismatch with",name,"on last line",flush=True)
 				first_err = True
 			i += 1
+	
+	###################################################
+	#Lastly, see if there are any duplicates across A+B
+	AB_seen = set()
+	A_duplicates = []
+	B_duplicates = []
+	for ii,item in enumerate(A):
+		fixed_item = tuple(item)
+		if fixed_item in AB_seen:
+			A_duplicates.append(ii)
+		else:
+			AB_seen.add(fixed_item)
+	for ii,item in enumerate(B):
+		fixed_item = tuple(item)
+		if fixed_item in AB_seen:
+			B_duplicates.append(ii)
+		else:
+			AB_seen.add(fixed_item)
+	for idx in A_duplicates:
+		print("duplicate in A:",idx)
+	for idx in B_duplicates:
+		print("duplicate in B:",idx, flush=True)
+
+def base_combine(primary_base, var_names, list_bases, save=False):
+	Ay,By,Cy = read_SA_files(primary_base, var_names, do_subset=0, doPrint=True)
+	
+	for base in list_bases:
+		Ay2,By2,Cy2 = read_SA_files(base, var_names, do_subset=0, doPrint=True)
 		
+		#Combine the files
+		Ay.extend(Ay2)
+		By.extend(By2)
+		for p,Ciy in enumerate(Cy2):
+			Cy[p].extend(Ciy)
+
+	if save:
+		oversave(primary_base, var_names, Ay,By,Cy)
+	else:
+		health_check("", var_names, Ay,By,Cy)
 		
+def base_trim(base_name, var_names, do_subset=0):	
+	Ay,By,Cy = read_SA_files(base_name, var_names, do_subset=do_subset, doPrint=True)
+	oversave(base_name, var_names, Ay,By,Cy)
 		
+if __name__ == '__main__':
+
+	#Check all bases
+	#base_names = ["SA_QoI_stretch"+str(i) for i in range(14,53)]
+	#print(base_names)
+	#for base in base_names:
+	#	health_check(base, var_names)
+		
+	#check some trimmed bases
+	health_check("SA_QoI", var_names)
+	#base_trim("SA_QoI_extend60", var_names, do_subset=107*2)
+	
+	#See if they all work ok combined
+	#base_combine("SA_QoI", var_names, base_names, False)
+	
+	#combine and save
+	#base_combine("SA_QoI", var_names, base_names, True)
