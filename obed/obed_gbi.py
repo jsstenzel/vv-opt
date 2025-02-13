@@ -53,7 +53,7 @@ def U_varH_gbi(d, problem, n_mc=10**5, n_gmm=10**4, ncomp=0, doPrint=False):
 	U = np.average(U_list)
 	return U, U_list
 	
-def U_varH_gbi_joint(d, problem, gmm_ydq, n_mc=10**5, ncomp=0, doPrint=False):   
+def U_varH_gbi_joint(d, problem, gmm_ydq, n_mc=10**5, doPrint=False):   
 	#Generate a list of y's sampled from likelihood fn, p(y|theta,d)p(theta)
 	pthetas = problem.prior_rvs(n_mc)
 	Y1_list = [problem.eta(theta, d) for theta in pthetas]

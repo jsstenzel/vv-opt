@@ -32,7 +32,7 @@ def learn_llamas_snr_priors(verbose=True, doPlot=True, doSave=True):
 	
 	#Directory to save new prior def files to
 	sloc = './priors/'
-	"""
+
 	###Quantum efficiency priors
 	learn_save_gp_prior_to_file(sloc+'prior_gp_qe_red', [_qedir+"qe_red_basic_nir.txt"], QE_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
 	learn_save_gp_prior_to_file(sloc+'prior_gp_qe_gre', [_qedir+"qe_green_basic_midband.txt"], QE_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
@@ -65,7 +65,7 @@ def learn_llamas_snr_priors(verbose=True, doPlot=True, doSave=True):
 	learn_save_gp_prior_to_file(sloc+'prior_blu1', [_bludir+"blue1_9371C.txt", _bludir+'blue1_9376C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
 	learn_save_gp_prior_to_file(sloc+'prior_blu2', [_bludir+"blue2_1961C.txt", _bludir+'blue2_1965C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
 	learn_save_gp_prior_to_file(sloc+'prior_blu3', [_bludir+"blue3_9360C.txt", _bludir+'blue3_9363C.txt', _bludir+'blue3_9371C.txt', _bludir+'blue3_9366C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
-	"""
+
 	learn_save_gp_prior_to_file(sloc+'prior_blu4', [_bludir+"blue4_9363C.txt", _bludir+'blue4_9373C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
 	learn_save_gp_prior_to_file(sloc+'prior_blu5', [_bludir+'blue5_1961C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
 	learn_save_gp_prior_to_file(sloc+'prior_blu6', [_bludir+'blue6_1961C.txt'], T_std, save=doSave, doPlot=doPlot, doPrint=verbose, careful=True)
@@ -252,15 +252,12 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 					"y_vph_red_p0", 
 					"y_vph_red_p1", 
 					"y_vph_red_p2", 
-					"y_vph_red_p3", 
 					"y_vph_gre_p0", 
 					"y_vph_gre_p1", 
 					"y_vph_gre_p2",
-					"y_vph_gre_p3",
 					"y_vph_blu_p0", 
 					"y_vph_blu_p1", 
 					"y_vph_blu_p2", 
-					"y_vph_blu_p3", 
 					"y_sl_t0", 
 					"y_sl_t1", 
 					"y_sl_t2", 
@@ -278,11 +275,11 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 
 	d_defs = [
 					["t_gain", ['uniform', [.1, 600]], "continuous"], #gain
-					["I_gain", ['uniform', [1, 100]], "discrete"],    #gain
-					["n_meas_rn", ['uniform', [1, 50]], "discrete"],  #rn
-					["d_num", ['uniform', [2, 25]], "discrete"],      #dc
+					["I_gain", ['uniform', [0, 100]], "discrete"],    #gain
+					["n_meas_rn", ['uniform', [0, 50]], "discrete"],  #rn
+					["d_num", ['uniform', [0, 25]], "discrete"],      #dc
 					["d_max", ['uniform', [1, 12000]], "continuous"], #dc
-					["d_pow", ['uniform', [0,3]], "continuous"],      #dc
+					["d_pow", ['uniform', [0.01,3]], "continuous"],      #dc
 					
 					["n_qe", ['uniform', [0, 100]], "discrete"],   #qe
 					["t_qe", ['uniform', [.1, 600]], "continuous"],#qe
@@ -290,9 +287,9 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 					["d_vph_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
 					["d_dichroic_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
 					["d_coll_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
-					["d_redcam_n_pts", ['uniform', [0,_bandpass*10]], "discrete"], #i guess??
-					["d_greencam_n_pts", ['uniform', [0,_bandpass*10]], "discrete"], #i guess??
-					["d_bluecam_n_pts", ['uniform', [0,_bandpass*10]], "discrete"], #i guess??
+					["d_redcam_n_pts", ['uniform', [0,(_wave_max-_wave_redgreen)*10]], "discrete"], #i guess??
+					["d_greencam_n_pts", ['uniform', [0,(_wave_redgreen-_wave_greenblue)*10]], "discrete"], #i guess??
+					["d_bluecam_n_pts", ['uniform', [0,(_wave_greenblue-_wave_min)*10]], "discrete"], #i guess??
 					["d_frd_n_meas", ['uniform', [0,2400]], "discrete"],
 				]
 		

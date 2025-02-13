@@ -14,10 +14,12 @@ from problems.llamas_snr_full.snr_problem import *
 #analysis
 from obed.obed_multivar import *
 from obed.obed_gbi import *
-from obed.pdf_estimation import *
+#from obed.pdf_estimation import *
+from inference.bn_modeling import *
 from uq.uncertainty_propagation import *
 from uq.sensitivity_analysis import *
 from uq.saltelli_gsa import *
+from uq.gsa_convergence import *
 from opt.ngsa import *
 
 ################################
@@ -65,6 +67,77 @@ def vv_UP_QoI(problem, req, n=10**4):
 		if Q >= req:
 			count_meetreq += 1
 	prob_meetreq = count_meetreq / len(Qs)
+	print("Probability of meeting requirement given priors:", prob_meetreq)
+	
+def vv_UP_QoI_samples(req, base_name="SA_QoI", doPrint=True, do_subset=0):
+	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
+
+	###Make sure the files exist
+	if not os.path.isfile(base_name+'_A.csv'):
+		print("File",base_name+'_A.csv',"is missing")
+		sys.exit()
+	if not os.path.isfile(base_name+'_B.csv'):
+		print("File",base_name+'_B.csv',"is missing")
+		sys.exit()
+	
+	###Safely read out all of the samples into matrices
+	Ay = []
+	By = []
+	
+	if doPrint:
+		print("Reading the data files...",flush=True)
+	
+	if do_subset == 0:
+		with open(base_name+'_A.csv') as csvfile:
+			csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
+			for l,row in enumerate(csvreader):
+				if len(row) != len(var_names)+1:
+					if doDiagnostic:
+						print("Warning: dropped line",l+1,"(length "+str(len(row))+')',"from",base_name+'_A.csv')
+				else:
+					Ay.append([float(elem) for elem in row])
+		with open(base_name+'_B.csv') as csvfile:
+			csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
+			for l,row in enumerate(csvreader):
+				if len(row) != len(var_names)+1:
+					if doDiagnostic:
+						print("Warning: dropped line",l+1,"(length "+str(len(row))+')',"from",base_name+'_B.csv')
+				else:
+					By.append([float(elem) for elem in row])
+	else:
+		lim = int(do_subset/2)
+		###Optionally, we can analyze less than the full set of provided samples
+		with open(base_name+'_A.csv') as csvfile:
+			csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
+			for l,row in enumerate(islice(csvreader, lim)):
+				if len(row) != len(var_names)+1:
+					if doDiagnostic:
+						print("Warning: dropped line",l+1,"(length "+str(len(row))+')',"from",base_name+'_A.csv')
+				else:
+					Ay.append([float(elem) for elem in row])
+		
+		with open(base_name+'_B.csv') as csvfile:
+			csvreader = csv.reader(csvfile, delimiter=',')
+			for l,row in enumerate(islice(csvreader, lim)):
+				if len(row) != len(var_names)+1:
+					if doDiagnostic:
+						print("Warning: dropped line",l+1,"(length "+str(len(row))+')',"from",base_name+'_B.csv')
+				else:
+					By.append([float(elem) for elem in row])
+	
+	#Pull out all of the y samples
+	Ay.extend(By)
+	Q_samples = [Ay_row[-1] for Ay_row in Ay] #only last element
+	
+	#Do the UQ
+	uncertainty_prop_plot(Q_samples, xlab="QoI: SNR", vline=[req])
+
+	#prob of meeting req along priors:
+	count_meetreq = 0
+	for Q in Q_samples:
+		if Q >= req:
+			count_meetreq += 1
+	prob_meetreq = count_meetreq / len(Q_samples)
 	print("Probability of meeting requirement given priors:", prob_meetreq)
 
 #sensitivity analysis of HLVA
@@ -184,6 +257,11 @@ def vv_SA_QoI_sample(problem, filename, N=10000):
 
 #sensitivity analysis of HLVA
 def vv_SA_QoI_evaluate(problem):
+	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
+
+	total_order_convergence_tests(1200, "SA_QoI", var_names, do_subset=0)
+	sys.exit()
+
 	###Perform the analysis at a few evaluation points
 	list_S = []
 	list_ST = []
@@ -366,6 +444,9 @@ if __name__ == '__main__':
 	if args.run == "UP_QoI":
 		vv_UP_QoI(problem, req, n=args.n)
 		
+	if args.run == "UP_QoI_samples":
+		vv_UP_QoI_samples(req, base_name="SA_QoI", doPrint=True)
+		
 	if args.run == "UP_exp":
 		vv_UP_exp(problem, d_historical, theta_nominal, n=args.n)
 	
@@ -380,6 +461,31 @@ if __name__ == '__main__':
 	#	vv_SA_exp(problem, d_historical)
 
 	###Optimal Bayesian Experimental Design
+	if args.run == "BN_sample":
+		bn_sampling(problem, savefile="BN_samples", N=args.n, doPrint=True)
+	
+	if args.run == "BN_train":
+		#Train the BN off of the saved data
+		q, _ = bn_load_samples(problem, savefile="BN_samples", doPrint=True, doDiagnostic=True)
+		gmm = bn_train_from_file(problem, savefile="BN_samples", doPrint=True)
+		
+		#Run the validation test
+		bn_measure_model_mse(problem, gmm, N=args.n, doPrint=True)
+		
+		#Save the GMM to a file
+		#filename = "BN_" + str(len(q)) + '.csv'
+		filename = "BN_model.csv"
+		bn_save_gmm(gmm, gmm_file=filename)
+	
+	if args.run == "OBED_test":
+		#Load the GMM from file
+		gmm = bn_load_gmm("BN_model.csv")
+	
+		#Calculate U for several different designs
+		U_varH_gbi_joint(d_historical, problem, gmm, n_mc=args.n, ncomp=0, doPrint=True)
+		U_varH_gbi_joint(d_min, problem, gmm, n_mc=args.n, ncomp=0, doPrint=True)
+	
+	"""
 	if args.run == "gbi_test":
 		vv_gbi_test(problem, d_historical, 10**1, y_nominal, ncomp=0)
 	if args.run == "gbi_test_rand":
@@ -395,4 +501,4 @@ if __name__ == '__main__':
 	if args.run == "vv_opt_parallel":
 		costs, utilities, designs = ngsa2_problem_parallel(8, problem, hours=0, minutes=0, popSize=10, nMonteCarlo=10**3, nGMM=10**3)
 		plot_ngsa2(costs, utilities, showPlot=True, savePlot=False, logPlotXY=[False,False])
-	
+	"""
