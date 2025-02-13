@@ -14,9 +14,12 @@ from problems.llamas_snr_full.snr_problem import *
 #analysis
 from obed.obed_multivar import *
 from obed.obed_gbi import *
-from obed.pdf_estimation import *
+#from obed.pdf_estimation import *
+from inference.bn_modeling import *
 from uq.uncertainty_propagation import *
 from uq.sensitivity_analysis import *
+from uq.saltelli_gsa import *
+from uq.gsa_convergence import *
 from opt.ngsa import *
 
 import cProfile
@@ -31,6 +34,12 @@ def profile_func(func, args, filename, numfunc=30):
 	#analyze with pstats
 	p = pstats.Stats(filename+'.prof')
 	p.sort_stats('time').print_stats(numfunc)  # Print top 10 functions by time
+	
+def bootstrap_profile():
+	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
+
+	S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=10000, doPrint=False)
+	total_order_convergence_tests(100, "SA_QoI", var_names, do_subset=10000)
 
 if __name__ == '__main__':  
 	import argparse
@@ -94,6 +103,9 @@ if __name__ == '__main__':
 		
 	elif args.run == "ptheta_profile":
 		profile_func(problem.prior_rvs, [1], 'H_theta_stats')
+		
+	elif args.run == "SA_QoI_bootstrap_profile":
+		profile_func(bootstrap_profile, [], 'SA_QoI_bootstrap_stats')
 		
 	elif args.run == "gain_exp":
 		#Check to make sure the function works as expected over a range of inputs

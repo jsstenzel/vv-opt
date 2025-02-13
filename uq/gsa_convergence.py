@@ -43,18 +43,25 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 			csvreader = csv.reader(csvfile, delimiter=',')
 			for row in csvreader:
 				Ay.append([float(elem) for elem in row])
+		#This change assumes that the data files are well-behaved; use SA_datalist_health_check first
+		M = len(Ay)
+		pp = len(var_names)
+		By = np.zeros((M,pp+1))
+		Cy = []
 		
 		with open(base_name+'_B.csv') as csvfile:
 			csvreader = csv.reader(csvfile, delimiter=',')
-			for row in csvreader:
-				By.append([float(elem) for elem in row])
+			for i,row in enumerate(csvreader):
+				for e,elem in enumerate(row):
+					By[i][e] = float(elem)
 
 		for p,name in enumerate(var_names):
-			Ciy = []
+			Ciy = np.zeros((M,pp+1))
 			with open(base_name+'_C_'+name+'.csv') as csvfile:
 				csvreader = csv.reader(csvfile, delimiter=',')
-				for row in csvreader:
-					Ciy.append([float(elem) for elem in row])
+				for i,row in enumerate(csvreader):
+					for e,elem in enumerate(row):
+						Ciy[i][e] = float(elem)
 			Cy.append(Ciy)
 	else:
 		lim = int(do_subset/2)
@@ -63,18 +70,24 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 			csvreader = csv.reader(csvfile, delimiter=',')
 			for row in islice(csvreader, lim):
 				Ay.append([float(elem) for elem in row])
+		#This change assumes that the data files are well-behaved; use SA_datalist_health_check first
+		M = len(Ay)
+		pp = len(var_names)
+		By = np.zeros((M,pp+1))
+		Cy = []
 		
 		with open(base_name+'_B.csv') as csvfile:
 			csvreader = csv.reader(csvfile, delimiter=',')
-			for row in islice(csvreader, lim):
-				By.append([float(elem) for elem in row])
+			for i,row in enumerate(islice(csvreader, lim)):
+				By[i] = [float(elem) for elem in row]
 
 		for p,name in enumerate(var_names):
-			Ciy = []
+			Ciy = np.zeros((M,pp+1))
 			with open(base_name+'_C_'+name+'.csv') as csvfile:
 				csvreader = csv.reader(csvfile, delimiter=',')
 				for row in islice(csvreader, lim):
-					Ciy.append([float(elem) for elem in row])
+					for e,elem in enumerate(row):
+						Ciy[i][e] = float(elem)
 			Cy.append(Ciy)
 		
 	if doPrint:
@@ -82,7 +95,9 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 		
 	indices = [] #list of length bootstrap_size runs, each of length var_names ST's
 	###Generate bootstrap samples of the sample set
-	for _ in range(bootstrap_size):
+	for ii in range(bootstrap_size):
+		if doPrint:
+			print("Bootstrap sample",ii+1,'/',bootstrap_size,'...',flush=True, end='\r')
 		###Bootstrap to select a new A,B,Ci
 		#bootstrap sample of the original sample, with replacement 
 		i_samples = np.random.randint(0, len(Ay), size=len(Ay))
@@ -107,7 +122,6 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 		###Evaluate saltelli_indices on each bootstrap sample for total order indices
 		f02 = np.dot(np.mean(yA),np.mean(yA))  #inner product of p-length and p-length vectors
 		ST = []
-		M = len(yA)
 		
 		yAyA = np.dot(yA, yA)      #inner product of n-length and n-length vectors
 		for p,name in enumerate(var_names):

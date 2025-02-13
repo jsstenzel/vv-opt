@@ -217,20 +217,25 @@ def saltelli_indices(base_name, var_names, do_subset=0, doPrint=True):
 			csvreader = csv.reader(csvfile, delimiter=',')
 			for row in csvreader:
 				Ay.append([float(elem) for elem in row])
+		#This change assumes that the data files are well-behaved; use SA_datalist_health_check first
+		M = len(Ay)
+		pp = len(var_names)
+		By = np.zeros((M,pp+1))
+		Cy = []
 		
 		with open(base_name+'_B.csv') as csvfile:
 			csvreader = csv.reader(csvfile, delimiter=',')
-			for row in csvreader:
-				By.append([float(elem) for elem in row])
+			for i,row in enumerate(csvreader):
+				for e,elem in enumerate(row):
+					By[i][e] = float(elem)
 
 		for p,name in enumerate(var_names):
-			Ciy = []
+			Ciy = np.zeros((M,pp+1))
 			with open(base_name+'_C_'+name+'.csv') as csvfile:
 				csvreader = csv.reader(csvfile, delimiter=',')
-				for row in csvreader:
-					Ciy.append([float(elem) for elem in row])
-				if not Ciy:
-					print(name, flush=True)
+				for i,row in enumerate(csvreader):
+					for e,elem in enumerate(row):
+						Ciy[i][e] = float(elem)
 			Cy.append(Ciy)
 	else:
 		lim = int(do_subset/2)
@@ -239,18 +244,24 @@ def saltelli_indices(base_name, var_names, do_subset=0, doPrint=True):
 			csvreader = csv.reader(csvfile, delimiter=',')
 			for row in islice(csvreader, lim):
 				Ay.append([float(elem) for elem in row])
+		#This change assumes that the data files are well-behaved; use SA_datalist_health_check first
+		M = len(Ay)
+		pp = len(var_names)
+		By = np.zeros((M,pp+1))
+		Cy = []
 		
 		with open(base_name+'_B.csv') as csvfile:
 			csvreader = csv.reader(csvfile, delimiter=',')
-			for row in islice(csvreader, lim):
-				By.append([float(elem) for elem in row])
+			for i,row in enumerate(islice(csvreader, lim)):
+				By[i] = [float(elem) for elem in row]
 
 		for p,name in enumerate(var_names):
-			Ciy = []
+			Ciy = np.zeros((M,pp+1))
 			with open(base_name+'_C_'+name+'.csv') as csvfile:
 				csvreader = csv.reader(csvfile, delimiter=',')
 				for row in islice(csvreader, lim):
-					Ciy.append([float(elem) for elem in row])
+					for e,elem in enumerate(row):
+						Ciy[i][e] = float(elem)
 			Cy.append(Ciy)
 		
 	###Isolate A,B,Ci and yA,yB,yCi
@@ -277,8 +288,6 @@ def saltelli_indices(base_name, var_names, do_subset=0, doPrint=True):
 	f02 = np.dot(np.mean(yA),np.mean(yA))  #inner product of p-length and p-length vectors
 	S = []
 	ST = []
-	M = len(yA)
-	pp = len(var_names)
 	model_evals = M*(len(var_names)+2)
 	
 	yAyA = np.dot(yA, yA)      #inner product of n-length and n-length vectors
