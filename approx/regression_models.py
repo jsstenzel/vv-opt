@@ -163,7 +163,12 @@ def sigmoid_fit_throughput(lambda_pts, thru_pts, doPlot=False, doErr=False):
 	
 	lbound = [range_min, domain_min, range_min, 1/(10*(domain_max-domain_min))]#lower bound of lval, step_pt, rval, power
 	rbound = [range_max, domain_max, range_max, (domain_max-domain_min)/len(lambda_pts)]#upper bound of lval, step_pt, rval, power
-	popt,pcov=curve_fit(sigmoid_step,X,Y,bounds=(lbound,rbound))
+	#Make a smart initial guess (lval steppt rval power):
+	midpoint = (domain_max + domain_min)/2
+	midpower = (1/(10*(domain_max-domain_min)) + (domain_max-domain_min)/len(lambda_pts))/2
+	init_guess = [thru_pts[0], midpoint, thru_pts[-1], midpower]
+	
+	popt,pcov=curve_fit(sigmoid_step,X,Y,bounds=(lbound,rbound), p0=init_guess)
 	
 	lval = popt[0]
 	step_pt = popt[1]

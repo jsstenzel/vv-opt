@@ -279,7 +279,7 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 					["n_meas_rn", ['uniform', [0, 50]], "discrete"],  #rn
 					["d_num", ['uniform', [0, 25]], "discrete"],      #dc
 					["d_max", ['uniform', [1, 12000]], "continuous"], #dc
-					["d_pow", ['uniform', [0,3]], "continuous"],      #dc
+					["d_pow", ['uniform', [0.01,3]], "continuous"],      #dc
 					
 					["n_qe", ['uniform', [0, 100]], "discrete"],   #qe
 					["t_qe", ['uniform', [.1, 600]], "continuous"],#qe

@@ -72,7 +72,7 @@ def snr_cost(d, x):
 	
 	#dark current experiment time
 	t_list = []
-	if d_num > 0:
+	if d_num > 1:
 		for i in range(d_num):
 			t = dark_current_time_fn(i, tmin=dc_t0, dmax=d_max, dpow=d_pow, dnum=d_num)
 			t_list.append(t)

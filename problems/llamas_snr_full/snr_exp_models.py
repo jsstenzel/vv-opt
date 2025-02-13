@@ -383,7 +383,7 @@ d:
 x parameters: sigma_stray, sigma_dc, nx, ny
 """
 def dark_current_exp(gain, rn, dc, d_num, d_max, d_pow, _x, prior_mean, err=True):
-	if d_num <= 0:
+	if d_num <= 1:
 		#This means we don't run the experiment
 		#Model the imputation that would occur: 
 		# - Ignore the provided theta and assume theta is the mean of the prior
