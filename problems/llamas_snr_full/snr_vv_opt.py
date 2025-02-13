@@ -14,7 +14,8 @@ from problems.llamas_snr_full.snr_problem import *
 #analysis
 from obed.obed_multivar import *
 from obed.obed_gbi import *
-from obed.pdf_estimation import *
+#from obed.pdf_estimation import *
+from inference.bn_modeling import *
 from uq.uncertainty_propagation import *
 from uq.sensitivity_analysis import *
 from uq.saltelli_gsa import *
@@ -459,6 +460,31 @@ if __name__ == '__main__':
 	#	vv_SA_exp(problem, d_historical)
 
 	###Optimal Bayesian Experimental Design
+	if args.run == "BN_sample":
+		bn_sampling(problem, savefile="BN_samples", N=args.n, doPrint=True)
+	
+	if args.run == "BN_train":
+		#Train the BN off of the saved data
+		q, _ = bn_load_samples(problem, savefile="BN_samples", doPrint=True, doDiagnostic=True)
+		gmm = bn_train_from_file(problem, savefile="BN_samples", doPrint=True)
+		
+		#Run the validation test
+		bn_measure_model_mse(problem, gmm, N=args.n, doPrint=True)
+		
+		#Save the GMM to a file
+		#filename = "BN_" + str(len(q)) + '.csv'
+		filename = "BN_model.csv"
+		bn_save_gmm(gmm, gmm_file=filename)
+	
+	if args.run == "OBED_test":
+		#Load the GMM from file
+		gmm = bn_load_gmm("BN_model.csv")
+	
+		#Calculate U for several different designs
+		U_varH_gbi_joint(d_historical, problem, gmm, n_mc=args.n, ncomp=0, doPrint=True)
+		U_varH_gbi_joint(d_min, problem, gmm, n_mc=args.n, ncomp=0, doPrint=True)
+	
+	"""
 	if args.run == "gbi_test":
 		vv_gbi_test(problem, d_historical, 10**1, y_nominal, ncomp=0)
 	if args.run == "gbi_test_rand":
@@ -474,4 +500,4 @@ if __name__ == '__main__':
 	if args.run == "vv_opt_parallel":
 		costs, utilities, designs = ngsa2_problem_parallel(8, problem, hours=0, minutes=0, popSize=10, nMonteCarlo=10**3, nGMM=10**3)
 		plot_ngsa2(costs, utilities, showPlot=True, savePlot=False, logPlotXY=[False,False])
-	
+	"""
