@@ -1,0 +1,26 @@
+#!/bin/bash
+#SBATCH -n 8
+#SBATCH -N 8
+#SBATCH -t 0-12:00 #Request time
+#SBATCH -p newnodes
+#SBATCH -o output_%j.txt #redirect output to output_JOBID.txt
+#SBATCH -e output_%j.txt #redirect errors to output_JOBID.txt
+
+#filenames=("1" "2" "3" "4" "5" "6" "7" "8")
+#filenames=("9" "10" "11" "12" "13" "14" "15" "16")
+#filenames=("17" "18" "19" "20" "21" "22" "23" "24")
+#filenames=("25" "26" "27" "28" "29" "30" "31" "32")
+#filenames=("33" "34" "35" "36" "37" "38" "39" "40")
+#filenames=("41" "42" "43" "44" "45" "46" "47" "48")
+#filenames=("49" "50" "51" "52" "53" "54" "55" "56")
+filenames=("57" "58" "59" "60" "61" "62" "63" "64")
+pref="SA_QoI_bank"
+
+for str in "${filenames[@]}"
+do
+  srun -N1 -n1 SA_QoI_call_file "$pref$str" &
+
+done
+
+wait
+

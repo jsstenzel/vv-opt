@@ -1,0 +1,2 @@
+#!/bin/bash
+python3 snr_vv_opt.py --run SA_QoI_sample -n 1000 --filename $1

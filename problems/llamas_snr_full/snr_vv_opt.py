@@ -68,7 +68,7 @@ def vv_UP_QoI(problem, req, n=10**4):
 	print("Probability of meeting requirement given priors:", prob_meetreq)
 
 #sensitivity analysis of HLVA
-def vv_SA_QoI_sample(problem, N=10000):
+def vv_SA_QoI_sample(problem, filename, N=10000):
 	#Set up the problem. The parameters are mostly theta,
 	#Except replace every Gaussian Process with a prior with a hyperparameter on the precision, p=1/sigma^2
 	#And put a gamma distribution as the prior for that, according to the principle of maximum entropy
@@ -180,7 +180,7 @@ def vv_SA_QoI_sample(problem, N=10000):
 	###Generate some new samples and save
 	#I want to save samples as often as possible. Therefore, iterate through N two at a time, corresponding to 2(p+2) model evals at a time
 	for _ in range(int(N/2)):
-		saltelli_eval_sample("SA_QoI", 2, var_names, var_dists, var_bounds, model, doPrint=True)
+		saltelli_eval_sample(filename, 2, var_names, var_dists, var_bounds, model, doPrint=True)
 
 #sensitivity analysis of HLVA
 def vv_SA_QoI_evaluate(problem):
@@ -291,6 +291,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--run', metavar='string', required=True, help='Function to run for this vvopt analysis')
 	parser.add_argument('-n', type=int, default=0, help='Number of iterations to give to the function')
+	parser.add_argument('--filename', metavar='string', default="SA_QoI", help='Base name to five to SA_QoI_sample')
 	args = parser.parse_args()
 	
 	###Problem Definition
@@ -369,7 +370,7 @@ if __name__ == '__main__':
 		vv_UP_exp(problem, d_historical, theta_nominal, n=args.n)
 	
 	if args.run == "SA_QoI_sample":
-		vv_SA_QoI_sample(problem, N=args.n)
+		vv_SA_QoI_sample(problem, N=args.n, filename=args.filename)
 
 	if args.run == "SA_QoI_evaluate":
 		vv_SA_QoI_evaluate(problem)
