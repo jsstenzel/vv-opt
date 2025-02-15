@@ -24,7 +24,7 @@ def uncertainty_prop_file(datafile, doPlot=False, doPrint=False):
 	return uncertainty_prop(y, doPlot, doPrint)
 
 #y_j: list of all model evaluation results, assumed to be single number
-def uncertainty_prop(y_j, doPlot=True, doPrint=True):
+def uncertainty_prop(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False, vline=[], doPlot=True, doPrint=True):
 	mean = statistics.mean(y_j)
 	stddev = statistics.stdev(y_j, mean) #note! This is sample stddev, not population stddev. Different n-factor in front
 
@@ -37,14 +37,11 @@ def uncertainty_prop(y_j, doPlot=True, doPrint=True):
 		print("Gaussian fit p-value:",pvalue,"(p-value > 0.05 means its normal)")
 	
 	if doPlot:
-		uncertainty_prop_plot(y_j, mean)
+		uncertainty_prop_plot(y_j, xlab, c, saveFig, rescaled, vline)
 	
 	return mean, stddev
 	
-def uncertainty_prop_plot(y_j, mean=0, xlab="Y", c='#21aad3', saveFig='', rescaled=False, vline=[]):
-	if mean==0:
-		mean = statistics.mean(y_j)
-		
+def uncertainty_prop_plot(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False, vline=[]):	
 	if rescaled==False:
 		n, bins, patches = plt.hist(x=y_j, bins='auto', color=c, alpha=1.0, rwidth=0.85)
 	else:

@@ -59,7 +59,7 @@ def vv_UP_QoI(problem, req, n=10**4):
 			print("System model eval fail?", flush=True)
 	print(Qs)
 	#uncertainty_prop_plot([theta[0] for theta in uq_thetas], xlab="How to plot this...")
-	uncertainty_prop_plot(Qs, xlab="QoI: SNR", vline=[req])
+	uncertainty_prop(Qs, xlab="QoI: SNR", vline=[req])
 
 	#prob of meeting req along priors:
 	count_meetreq = 0
@@ -130,7 +130,7 @@ def vv_UP_QoI_samples(req, base_name="SA_QoI", doPrint=True, do_subset=0):
 	Q_samples = [Ay_row[-1] for Ay_row in Ay] #only last element
 	
 	#Do the UQ
-	uncertainty_prop_plot(Q_samples, xlab="QoI: SNR", vline=[req])
+	uncertainty_prop(Q_samples, xlab="QoI: SNR", vline=[req])
 
 	#prob of meeting req along priors:
 	count_meetreq = 0
@@ -259,17 +259,21 @@ def vv_SA_QoI_sample(problem, N=10000):
 def vv_SA_QoI_evaluate(problem):
 	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
 
+	S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=0, doPrint=True)
 	total_order_convergence_tests(1200, "SA_QoI", var_names, do_subset=0)
-	sys.exit()
 
+def vv_SA_QoI_convergence(problem):
+	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
+	
 	###Perform the analysis at a few evaluation points
 	list_S = []
 	list_ST = []
-	list_n = [10,100,1000,10000]
+	list_n = [10,50,100,500,1000,5000,10000,50000]
 	for n in list_n:
-		S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=0, doPrint=True)
-		list_S.append(S)
-		list_ST.append(ST)
+		#S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=0, doPrint=True)
+		#list_S.append(S)
+		#list_ST.append(ST)
+		total_order_convergence_tests(800, "SA_QoI", var_names, do_subset=n**2)
 
 #Uncertainty analysis of the experiment models
 def vv_UP_exp(problem, dd, theta_nominal, n=10**4, savefig=False):
@@ -454,6 +458,9 @@ if __name__ == '__main__':
 
 	if args.run == "SA_QoI_evaluate":
 		vv_SA_QoI_evaluate(problem)
+		
+	if args.run == "SA_QoI_convergence":
+		vv_SA_QoI_convergence(problem)
 	
 	#Still needs massaging...
 	#if args.run == "SA_exp":
