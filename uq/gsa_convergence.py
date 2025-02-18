@@ -36,7 +36,7 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 		print("Reading the data files...",flush=True)
 		
 	#Grabbing this for later
-	_, ST, __ = saltelli_indices(base_name, var_names, do_subset=do_subset, doPrint=False)
+	S_full, ST_full, __ = saltelli_indices(base_name, var_names, do_subset=do_subset, doPrint=False)
 	
 	if do_subset == 0:
 		with open(base_name+'_A.csv') as csvfile:
@@ -212,11 +212,11 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 	data_per_index_low = []
 	screened_vars = []
 	for i,name in enumerate(var_names):
-		if ST[i]<screening_threshold:
+		if ST_full[i]<screening_threshold:
 			data_per_index_low.append(data_per_index[i])
 			screened_vars.append(name)
 	if len(screened_vars) > 0:
-		data_per_index_low = [data_per_index[i] for i,_ in enumerate(var_names) if ST[i]<screening_threshold]
+		data_per_index_low = [data_per_index[i] for i,_ in enumerate(var_names) if ST_full[i]<screening_threshold]
 		#with these, calculate index convergences as above:
 		conf_intervals_low = [conf_interval(index_data,0.95) for i,index_data in enumerate(data_per_index_low)]
 		widths_low = [interval[1] - interval[0] for interval in conf_intervals_low]
@@ -225,12 +225,21 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 		screeningConverged = screening_metric < small_width_threshold
 	else:
 		screeningConverged = True
-	
-	###Report and return
+		
+	##############################################################################	
+	#print("Calculating confidence intervals for each parameter...",flush=True)
 	print("*****************************************************************")
 	print(base_name, "sample set has",len(Ay)*2,"samples across A and B")
-	print("Variables:",var_names)
-	print("Full-set total-order indices:",[f"{s:.4f}" for s in ST])
+	print("Var name          ",'\t',"S",'\t',"ST",'\t'"ST_conf",'\t')
+	for i,name in enumerate(var_names):
+		print(f"{name:<18}",'\t',f"{S_full[i]:.4f}",'\t',f"{ST_full[i]:.4f}",'\t',f"{widths[i]:.4f}")
+	#print("*****************************************************************", flush=True)
+	
+	###Report and return
+	#print("*****************************************************************")
+	#print(base_name, "sample set has",len(Ay)*2,"samples across A and B")
+	#print("Variables:",var_names)
+	#print("Full-set total-order indices:",[f"{s:.4f}" for s in ST])
 	print(str(int(bootstrap_size)),"bootstrap samples made")
 	print("Total order index convergence metric:",f"{indices_metric:.3f}","<",small_width_threshold)
 	print("Indices converged:","TRUE" if indicesConverged else "FALSE")

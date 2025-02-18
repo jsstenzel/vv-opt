@@ -259,7 +259,7 @@ def vv_SA_QoI_sample(problem, N=10000):
 def vv_SA_QoI_evaluate(problem):
 	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
 
-	S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=0, doPrint=True)
+	#S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=0, doPrint=True)
 	total_order_convergence_tests(1200, "SA_QoI", var_names, do_subset=0)
 
 def vv_SA_QoI_convergence(problem):
@@ -288,42 +288,6 @@ def vv_UP_exp(problem, dd, theta_nominal, n=10**4, savefig=False):
 	uq_thetas = problem.prior_rvs(n)
 	uq_ys = [problem.eta(theta, dd) for theta in uq_thetas]
 	uncertainty_prop_plots(uq_ys, c='orchid', xlabs=problem.y_names, saveFig='UP_joint_y0' if savefig else '')
-
-#These cause problems on eofe8
-#sensitivity analysis of the experiment models
-def vv_SA_exp(problem, dd, p=8):
-	#we want to see sensitivity of each yi to their inputs, theta and x
-	#challenge: sobol_saltelli expects a function that takes a single list of parameters
-	#right now, im doing this in a way that just deals with the thetas
-	#i think i can handle including x's intelligently as well some day, using this filter:
-	SA_filter = range(len(problem.theta_names)) #[]
-		
-	for i,yi in enumerate(problem.y_names):
-		def exp_fn_i(param):
-			y = problem.eta(param, dd) #want to figure out a smarter way to do analysis of x in the future
-			yi = y[i]
-			return yi
-
-		expvar_names = problem.theta_names #+ problem.x_names
-		expvar_dists = [prior[0] for prior in problem.priors] #+ [prior[0] for prior in problem.x_dists]
-		expvar_bounds=[prior[1] for prior in problem.priors] #+ [prior[1] for prior in problem.x_dists]
-			
-		#so ugly!!!
-		Si_1 = sobol_saltelli(exp_fn_i, 
-							2**p, #SALib wants powers of 2 for convergence
-							var_names=[x for i,x in enumerate(expvar_names) if i in SA_filter], 
-							var_dists=[x for i,x in enumerate(expvar_dists) if i in SA_filter], 
-							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in SA_filter], 
-							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)	
-							
-def vv_SA_joint(problem, p=5):
-	#it'll be straightforward to see the dependence of QoI on theta
-	Si = sobol_saltelli(problem.H, 
-						2**p, #SALib wants powers of 2 for convergence
-						var_names=problem.theta_names, 
-						var_dists=[prior[0] for prior in problem.priors], 
-						var_bounds=[prior[1] for prior in problem.priors], #need to do something odd here....?
-						conf = 0.95, doSijCalc=False, doPlot=True, doPrint=True)
 
 def vv_gbi_test(problem, d, N, y=[], ncomp=0):		
 	print("Training...")
