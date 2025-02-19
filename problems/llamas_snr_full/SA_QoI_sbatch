@@ -10,11 +10,4 @@
 #SBATCH --mail-type=BEGIN,END #Mail when job starts and ends
 #SBATCH --mail-user=jstenzel@mit.com #email recipient
 
-for i in {1..5}
-do
-  srun -n2 SA_QoI_call
-
-done
-
-wait
-
+srun -n2 SA_QoI_call

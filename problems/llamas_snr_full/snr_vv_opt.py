@@ -436,7 +436,8 @@ if __name__ == '__main__':
 
 	###Optimal Bayesian Experimental Design
 	elif args.run == "BN_sample":
-		bn_sampling(problem, savefile="BN_samples", N=args.n, buffer_rate=5, doPrint=True)
+		rate = 10 if args.filename=="SA_QoI" else int(args.filename)	
+		bn_sampling(problem, savefile="BN_samples", N=args.n, buffer_rate=rate, doPrint=True)
 	
 	elif args.run == "BN_train":
 		#Train the BN off of the saved data

@@ -1,0 +1,19 @@
+#!/bin/bash
+#SBATCH -n 2
+#SBATCH -N 2
+#SBATCH -t 0-12:00 #Request time
+#SBATCH -p mit_normal
+#SBATCH -o output_%j.txt #redirect output to output_JOBID.txt
+#SBATCH -e output_%j.txt #redirect errors to output_JOBID.txt
+
+filenames=("29" "31")
+# "5" "7" "11" "13" "17" "23")
+
+for str in "${filenames[@]}"
+do
+  srun -N1 -n1 BN_sample_call_file "$str" &
+
+done
+
+wait
+
