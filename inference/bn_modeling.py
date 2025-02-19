@@ -16,9 +16,10 @@ from inference.goal_based_inference import *
 
 #Draw N samples and save in a consistent 1-line format to savefile
 #Do it iteratively, to support parallelization and clustering
-def bn_sampling(problem, savefile, N, doPrint=False):
+def bn_sampling(problem, savefile, N, buffer_rate=1, doPrint=False):
 	filename = savefile if savefile.endswith('.csv') else savefile+'.csv'
 	
+	data_buffer = []
 	for i in range(N):
 		if doPrint:
 			print("Drawing Q & y samples",i,"...",flush=True)
@@ -33,9 +34,20 @@ def bn_sampling(problem, savefile, N, doPrint=False):
 		#Append the new BN sample to file
 		save_data = y_train + d_sample + [qoi_train]
 		
-		with open(filename, 'a+', newline='') as csvfile:
-			writer = csv.writer(csvfile)
-			writer.writerow(save_data)
+		if buffer_rate <= 1: #just stream it into the save file
+			with open(filename, 'a+', newline='') as csvfile:
+				writer = csv.writer(csvfile)
+				writer.writerow(save_data)
+		else: #save to buffer, and dump buffer to file at buffer_rate
+			data_buffer.append(save_data)
+			if (i+1) % buffer_rate == 0:
+				print("(dump)",flush=True)
+				with open(filename, 'a+', newline='') as csvfile:
+					writer = csv.writer(csvfile)
+					for data in data_buffer:
+						writer.writerow(data)
+				data_buffer.clear()
+				
 
 #Read and interpret the savefile
 def bn_load_samples(problem, savefile, doPrint=False, doDiagnostic=False):
@@ -54,6 +66,7 @@ def bn_load_samples(problem, savefile, doPrint=False, doDiagnostic=False):
 	if doPrint:
 		print("Reading the data files...",flush=True)
 	
+	#TODO do some checking in here to make sure that each line is valid, and skip if not
 	with open(filename) as csvfile:
 		csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
 		for l,row in enumerate(csvreader):
@@ -67,7 +80,6 @@ def bn_load_samples(problem, savefile, doPrint=False, doDiagnostic=False):
 				y.append(ygrab) #should be length dim_y
 				d.append(dgrab) #should be length dim_d = row - dim_y - 1
 				Q.append(Qgrab)
-				#TODO fix this so its floats, not strings
 	
 	#zip it together at the end, in case i ever need them separate for something later
 	yd = [y_i + d_i for y_i,d_i in zip(y,d)]

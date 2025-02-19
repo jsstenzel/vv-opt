@@ -366,11 +366,11 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 					["sensor_glass_gre", [], "functional", define_functional_from_file(_dir+"llamas_internal.txt", order=2)],
 					["sensor_glass_blu", [], "functional", define_functional_from_file(_dir+"llamas_internal_blue.txt", order=2)],
 					#optical measurements
-					["vph_meas_stddev", [], "continuous", .001], #need actual historical
-					["sl_meas_stddev", [], "continuous", .001], #Measurement Considerations When Specifying Optical Coatings, Pete Kupinski and Angus Macleod. This paper indicates a best case +- 0.1% T for commercial measurements of highly transmissive coatings.
-					["bg_meas_stddev", [], "continuous", .001], #ibid.
-					["coll_meas_stddev", [], "continuous", .001], #ibid.
-					["lens_meas_err", [], "continuous", .001], #ibid.
+					["vph_meas_stddev", [], "continuous", .002], #Measurement Considerations When Specifying Optical Coatings, Pete Kupinski and Angus Macleod. This paper indicates a best case +- 0.1% T for commercial measurements of highly transmissive coatings. Lets add margin by doubling that.
+					["sl_meas_stddev", [], "continuous", .002], #ibid.
+					["bg_meas_stddev", [], "continuous", .002], #ibid.
+					["coll_meas_stddev", [], "continuous", .002], #ibid.
+					["lens_meas_err", [], "continuous", .002], #ibid.
 					#cost
 					["t_gain_setup", [], "continuous", 1200], #rough estimate based on experience
 					["t_gain_buffer", [], "continuous", 5], #rough estimate based on experience
