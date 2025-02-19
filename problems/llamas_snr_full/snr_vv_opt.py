@@ -59,7 +59,7 @@ def vv_UP_QoI(problem, req, n=10**4):
 			print("System model eval fail?", flush=True)
 	print(Qs)
 	#uncertainty_prop_plot([theta[0] for theta in uq_thetas], xlab="How to plot this...")
-	uncertainty_prop_plot(Qs, xlab="QoI: SNR", vline=[req])
+	uncertainty_prop(Qs, xlab="QoI: SNR", vline=[req])
 
 	#prob of meeting req along priors:
 	count_meetreq = 0
@@ -130,7 +130,7 @@ def vv_UP_QoI_samples(req, base_name="SA_QoI", doPrint=True, do_subset=0):
 	Q_samples = [Ay_row[-1] for Ay_row in Ay] #only last element
 	
 	#Do the UQ
-	uncertainty_prop_plot(Q_samples, xlab="QoI: SNR", vline=[req])
+	uncertainty_prop(Q_samples, xlab="QoI: SNR", vline=[req])
 
 	#prob of meeting req along priors:
 	count_meetreq = 0
@@ -259,17 +259,21 @@ def vv_SA_QoI_sample(problem, filename, N=10000):
 def vv_SA_QoI_evaluate(problem):
 	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
 
+	#S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=0, doPrint=True)
 	total_order_convergence_tests(1200, "SA_QoI", var_names, do_subset=0)
-	sys.exit()
 
+def vv_SA_QoI_convergence(problem):
+	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
+	
 	###Perform the analysis at a few evaluation points
 	list_S = []
 	list_ST = []
-	list_n = [10,100,1000,10000]
+	list_n = [10,50,100,500,1000,5000,10000,50000]
 	for n in list_n:
-		S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=0, doPrint=True)
-		list_S.append(S)
-		list_ST.append(ST)
+		#S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=0, doPrint=True)
+		#list_S.append(S)
+		#list_ST.append(ST)
+		total_order_convergence_tests(800, "SA_QoI", var_names, do_subset=n**2)
 
 #Uncertainty analysis of the experiment models
 def vv_UP_exp(problem, dd, theta_nominal, n=10**4, savefig=False):
@@ -284,42 +288,6 @@ def vv_UP_exp(problem, dd, theta_nominal, n=10**4, savefig=False):
 	uq_thetas = problem.prior_rvs(n)
 	uq_ys = [problem.eta(theta, dd) for theta in uq_thetas]
 	uncertainty_prop_plots(uq_ys, c='orchid', xlabs=problem.y_names, saveFig='UP_joint_y0' if savefig else '')
-
-#These cause problems on eofe8
-#sensitivity analysis of the experiment models
-def vv_SA_exp(problem, dd, p=8):
-	#we want to see sensitivity of each yi to their inputs, theta and x
-	#challenge: sobol_saltelli expects a function that takes a single list of parameters
-	#right now, im doing this in a way that just deals with the thetas
-	#i think i can handle including x's intelligently as well some day, using this filter:
-	SA_filter = range(len(problem.theta_names)) #[]
-		
-	for i,yi in enumerate(problem.y_names):
-		def exp_fn_i(param):
-			y = problem.eta(param, dd) #want to figure out a smarter way to do analysis of x in the future
-			yi = y[i]
-			return yi
-
-		expvar_names = problem.theta_names #+ problem.x_names
-		expvar_dists = [prior[0] for prior in problem.priors] #+ [prior[0] for prior in problem.x_dists]
-		expvar_bounds=[prior[1] for prior in problem.priors] #+ [prior[1] for prior in problem.x_dists]
-			
-		#so ugly!!!
-		Si_1 = sobol_saltelli(exp_fn_i, 
-							2**p, #SALib wants powers of 2 for convergence
-							var_names=[x for i,x in enumerate(expvar_names) if i in SA_filter], 
-							var_dists=[x for i,x in enumerate(expvar_dists) if i in SA_filter], 
-							var_bounds=[x for i,x in enumerate(expvar_bounds) if i in SA_filter], 
-							conf = 0.99, doSijCalc=False, doPlot=True, doPrint=True)	
-							
-def vv_SA_joint(problem, p=5):
-	#it'll be straightforward to see the dependence of QoI on theta
-	Si = sobol_saltelli(problem.H, 
-						2**p, #SALib wants powers of 2 for convergence
-						var_names=problem.theta_names, 
-						var_dists=[prior[0] for prior in problem.priors], 
-						var_bounds=[prior[1] for prior in problem.priors], #need to do something odd here....?
-						conf = 0.95, doSijCalc=False, doPlot=True, doPrint=True)
 
 def vv_gbi_test(problem, d, N, y=[], ncomp=0):		
 	print("Training...")
@@ -418,7 +386,7 @@ if __name__ == '__main__':
 	if args.run == "nominal":
 		vv_nominal(problem, req, theta_nominal, y_nominal)
 		
-	if args.run == "system_model":
+	elif args.run == "system_model":
 		if args.n <= 1:
 			theta = problem.prior_rvs(1)
 			problem.print_theta(theta)
@@ -430,7 +398,7 @@ if __name__ == '__main__':
 				QoI = problem.H(t, verbose=True)
 				print("QoI:",QoI,flush=True)
 		
-	if args.run == "cheap_design":
+	elif args.run == "cheap_design":
 		print("Given the nominal theta:", theta_nominal)
 		print("and the cheapest design:", d_min)
 		y_cheap = problem.eta(theta_nominal, d_min, err=True)
@@ -438,33 +406,39 @@ if __name__ == '__main__':
 		print("Cheapest y:", y_cheap)
 		print("Cost of design:", problem.G(d_min))
 	
-	if args.run == "UA_theta":
+	elif args.run == "UA_theta":
 		vv_UA_theta(problem, n=args.n)
 	
-	if args.run == "UP_QoI":
+	elif args.run == "UP_QoI":
 		vv_UP_QoI(problem, req, n=args.n)
 		
-	if args.run == "UP_QoI_samples":
+	elif args.run == "UP_QoI_samples":
 		vv_UP_QoI_samples(req, base_name="SA_QoI", doPrint=True)
 		
-	if args.run == "UP_exp":
+	elif args.run == "UP_exp":
 		vv_UP_exp(problem, d_historical, theta_nominal, n=args.n)
 	
 	if args.run == "SA_QoI_sample":
 		vv_SA_QoI_sample(problem, N=args.n, filename=args.filename)
 
-	if args.run == "SA_QoI_evaluate":
+	elif args.run == "SA_QoI_sample":
+		vv_SA_QoI_sample(problem, N=args.n)
+
+	elif args.run == "SA_QoI_evaluate":
 		vv_SA_QoI_evaluate(problem)
+		
+	elif args.run == "SA_QoI_convergence":
+		vv_SA_QoI_convergence(problem)
 	
 	#Still needs massaging...
 	#if args.run == "SA_exp":
 	#	vv_SA_exp(problem, d_historical)
 
 	###Optimal Bayesian Experimental Design
-	if args.run == "BN_sample":
-		bn_sampling(problem, savefile="BN_samples", N=args.n, doPrint=True)
+	elif args.run == "BN_sample":
+		bn_sampling(problem, savefile="BN_samples", N=args.n, buffer_rate=5, doPrint=True)
 	
-	if args.run == "BN_train":
+	elif args.run == "BN_train":
 		#Train the BN off of the saved data
 		q, _ = bn_load_samples(problem, savefile="BN_samples", doPrint=True, doDiagnostic=True)
 		gmm = bn_train_from_file(problem, savefile="BN_samples", doPrint=True)
@@ -477,7 +451,7 @@ if __name__ == '__main__':
 		filename = "BN_model.csv"
 		bn_save_gmm(gmm, gmm_file=filename)
 	
-	if args.run == "OBED_test":
+	elif args.run == "OBED_test":
 		#Load the GMM from file
 		gmm = bn_load_gmm("BN_model.csv")
 	
@@ -485,20 +459,23 @@ if __name__ == '__main__':
 		U_varH_gbi_joint(d_historical, problem, gmm, n_mc=args.n, ncomp=0, doPrint=True)
 		U_varH_gbi_joint(d_min, problem, gmm, n_mc=args.n, ncomp=0, doPrint=True)
 	
-	"""
-	if args.run == "gbi_test":
+		"""
+	elif args.run == "gbi_test":
 		vv_gbi_test(problem, d_historical, 10**1, y_nominal, ncomp=0)
-	if args.run == "gbi_test_rand":
+	elif args.run == "gbi_test_rand":
 		vv_gbi_test(problem, d_historical, 10**1, ncomp=10)
 	
-	if args.run == "obed_gbi":
+	elif args.run == "obed_gbi":
 		U_hist = vv_obed_gbi(problem, d_historical)
 	
-	if args.run == "uncertainty_mc":
+	elif args.run == "uncertainty_mc":
 		util_samples = uncertainty_mc(problem, d_historical, n_mc=10**2, n_gmm=10**2, n_test=3)
 		print(util_samples)
 		
-	if args.run == "vv_opt_parallel":
+	elif args.run == "vv_opt_parallel":
 		costs, utilities, designs = ngsa2_problem_parallel(8, problem, hours=0, minutes=0, popSize=10, nMonteCarlo=10**3, nGMM=10**3)
 		plot_ngsa2(costs, utilities, showPlot=True, savePlot=False, logPlotXY=[False,False])
-	"""
+		"""
+	
+	else:
+		print("I dont recognize the command",args.run)
