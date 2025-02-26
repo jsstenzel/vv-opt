@@ -94,6 +94,7 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 		print("Drawing bootstrap resamples...",flush=True)
 		
 	indices = [] #list of length bootstrap_size runs, each of length var_names ST's
+	S_indices = [] #(just doing this to get conf intervals)
 	###Generate bootstrap samples of the sample set
 	for ii in range(bootstrap_size):
 		if doPrint:
@@ -122,6 +123,7 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 		###Evaluate saltelli_indices on each bootstrap sample for total order indices
 		f02 = np.dot(np.mean(yA),np.mean(yA))  #inner product of p-length and p-length vectors
 		ST = []
+		S = []
 		
 		yAyA = np.dot(yA, yA)      #inner product of n-length and n-length vectors
 		for p,name in enumerate(var_names):
@@ -133,12 +135,18 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 				continue
 			STi = 1 - numerator/denominator
 			ST.append(STi)
+			
+			yAyCi = np.dot(yA, yC[p])
+			Si = (yAyCi/M - f02)/denominator
+			S.append(Si)
 		
 		###Add those ST (length var_names) to the boostrap sample list
 		indices.append(ST)
+		S_indices.append(S)
 	
 	#indices #list of length bootstrap_size runs, each of length var_names ST's
 	data_per_index = np.array(indices).T #list of length var_names, each the list of bootstrap samples
+	S_data_per_index = np.array(S_indices).T
 	##############################################################################
 	if doPrint:
 		print("Calculating convergence metrics...",flush=True)
@@ -159,6 +167,10 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 	widths = [interval[1] - interval[0] for interval in conf_intervals]
 	indices_metric = max(widths)
 	indicesConverged = indices_metric < small_width_threshold
+	
+	#(do it for S too, so i can get those confidence intervals)
+	S_conf_intervals = [conf_interval(index_data,0.95) for i,index_data in enumerate(S_data_per_index)]
+	S_widths = [interval[1] - interval[0] for interval in S_conf_intervals]
 	
 	###Convergence of input factor ranking
 	#handy method for calculating R
@@ -230,9 +242,9 @@ def total_order_convergence_tests(bootstrap_size, base_name, var_names, do_subse
 	#print("Calculating confidence intervals for each parameter...",flush=True)
 	print("*****************************************************************")
 	print(base_name, "sample set has",len(Ay)*2,"samples across A and B")
-	print("Var name          ",'\t',"S",'\t',"ST",'\t'"ST_conf",'\t')
+	print("Var name          ",'\t',"S",'\t',"S_conf",'\t',"ST",'\t'"ST_conf",'\t')
 	for i,name in enumerate(var_names):
-		print(f"{name:<18}",'\t',f"{S_full[i]:.4f}",'\t',f"{ST_full[i]:.4f}",'\t',f"{widths[i]:.4f}")
+		print(f"{name:<18}",'\t',f"{S_full[i]:.4f}",'\t',f"{S_widths[i]:.4f}"'\t',f"{ST_full[i]:.4f}",'\t',f"{widths[i]:.4f}")
 	#print("*****************************************************************", flush=True)
 	
 	###Report and return

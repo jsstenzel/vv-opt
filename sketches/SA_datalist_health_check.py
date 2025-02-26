@@ -268,17 +268,20 @@ def base_trim(base_name, var_names, do_subset=0):
 if __name__ == '__main__':
 
 	#Check all bases
-	#base_names = ["SA_QoI_stretch"+str(i) for i in range(14,53)]
-	#print(base_names)
+	base_names = ["SA_QoI_bank"+str(i) for i in range(1,129)]
+	print(base_names)
 	#for base in base_names:
 	#	health_check(base, var_names)
 		
 	#check some trimmed bases
-	health_check("SA_QoI", var_names)
-	#base_trim("SA_QoI_extend60", var_names, do_subset=107*2)
+	#health_check("SA_QoI_bank35", var_names, do_subset=246*2)
+	#base_trim("SA_QoI_bank35", var_names, do_subset=246*2)
+	
+	#health_check("SA_QoI_bank91", var_names, do_subset=222*2)
+	#base_trim("SA_QoI_bank91", var_names, do_subset=222*2)
 	
 	#See if they all work ok combined
 	#base_combine("SA_QoI", var_names, base_names, False)
 	
 	#combine and save
-	#base_combine("SA_QoI", var_names, base_names, True)
+	base_combine("SA_QoI", var_names, base_names, True)
