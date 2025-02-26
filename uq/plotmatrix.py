@@ -27,7 +27,7 @@ def plotmatrix(matrix, names=[], xlim=[], ylim=[], title='', c='#21aad3', rescal
 	plt.show()
 	plt.close()
 
-def covmatrix_heatmap(matrix, names, rescale=True):
+def covmatrix_heatmap(matrix, names, rescale=True, doPlot=True):
 	if len(names)==0:
 		names = ["index"+str(i) for i in range(len(matrix))]
 	
@@ -40,5 +40,16 @@ def covmatrix_heatmap(matrix, names, rescale=True):
 	cov_matrix = data_df.cov()
 
 	# Create a heatmap using Seaborn
-	sns.heatmap(cov_matrix, annot=False, xticklabels=True, yticklabels=True, cmap='coolwarm')
-	plt.show()
+	if doPlot:
+		sns.heatmap(cov_matrix, annot=False, xticklabels=True, yticklabels=True, cmap='coolwarm')
+		plt.show()
+	
+	return cov_matrix
+	
+def cov_heatmap(cov_matrix, names, rescale=True, doPlot=True):
+	# Create a heatmap using Seaborn
+	if doPlot:
+		sns.heatmap(cov_matrix, annot=False, xticklabels=names, yticklabels=names, cmap='coolwarm')
+		plt.show()
+	
+	return cov_matrix

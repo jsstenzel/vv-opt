@@ -9,20 +9,46 @@ import matplotlib.pyplot as plt
 from sklearn.mixture import GaussianMixture
 
 sys.path.append('..')
+
+class GaussianMixtureNormalized(GaussianMixture):
+	def __init__(self, n_components=1, *, covariance_type='full', tol=0.001, reg_covar=1e-06, max_iter=100, n_init=1, init_params='kmeans', weights_init=None, means_init=None, precisions_init=None, random_state=None, warm_start=False, verbose=0, verbose_interval=10, standardized_mean, standardized_std):
+		self.standardized_mean = standardized_mean
+		self.standardized_std = standardized_std
+		super().__init__(n_components=n_components, covariance_type=covariance_type, tol=tol, reg_covar=reg_covar, max_iter=max_iter, n_init=n_init, init_params=init_params, weights_init=weights_init, means_init=means_init, precisions_init=precisions_init, random_state=random_state, warm_start=warm_start, verbose=verbose, verbose_interval=verbose_interval)
 	
+	"""	
+	#I dont use this anywhere, but it would be necessary to do this for completeness
+	def sample(n_samples=1):
+		samples = super().sample(n_samples)
+		destandardized_samples = [] #TODO
+		return destandardized_samples
+	"""
+
 #offline, train the model based on provided samples
-def gbi_train_model(qoi_samples, y_samples, verbose=0, ncomp=0):
-	#step 1: train 
-	#Get a a Gaussian mixture model from the push-forward of the prior through yd and yp
+def gbi_train_model(qoi_samples, y_samples, verbose=0, ncomp=0, ncomp_start=1, careful=False):
+	#step 0: normalize
+	#Find y_mean and y_std, use them to standardize data, and keep
 	print("getting data...",flush=True) if verbose else 0
-	yp_sample = qoi_samples
-	yd_sample = y_samples
+	p_mean = np.mean(qoi_samples)
+	p_std = np.std(qoi_samples)
+	yp_sample = [(qoi - p_mean)/p_std for qoi in qoi_samples]
+	d_mean = np.mean(y_samples, axis=0)
+	d_std = np.std(y_samples, axis=0)
+	yd_sample = [list((yd - d_mean)/d_std) for i,yd in enumerate(y_samples)]
+	#print(p_mean)
+	#print(p_std)
+	#print(d_mean)
+	#print(d_std)
+	y_mean = [p_mean]+list(d_mean)
+	y_std = [p_std]+list(d_std) #TODO put these into all of the GaussianMixtures
 
 	p_dimension = 1 #len(yp_sample[0]) #1
 	d_dimension = len(yd_sample[0]) #3
 
-	#actually i think ill use sklearn for this
 	data = np.array([np.hstack([yp_sample[i],yd_sample[i]]) for i,_ in enumerate(qoi_samples)])
+
+	#step 1: train 
+	#Get a a Gaussian mixture model from the push-forward of the prior through yd and yp
 
 	#need to use a "Bayesian information criterion approach [8]"
 	#or, a "number of components to balance the maximization of likelihood of data and the Bayesian information criterion [4]"
@@ -31,10 +57,12 @@ def gbi_train_model(qoi_samples, y_samples, verbose=0, ncomp=0):
 	gmm = None
 	if ncomp == 0:
 		print("calculating ideal ncomp...",flush=True) if verbose else 0
-		curr_gmm = GaussianMixture(n_components=1).fit(data)
+		curr_gmm = GaussianMixtureNormalized(n_components=ncomp_start, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std) if careful else GaussianMixtureNormalized(n_components=ncomp_start, standardized_mean=y_mean, standardized_std=y_std)
+		curr_gmm.fit(data)
 		curr_bic = curr_gmm.bic(data)
 		print(curr_bic, flush=True) if verbose==2 else 0
-		next_gmm = GaussianMixture(n_components=2).fit(data)
+		next_gmm = GaussianMixtureNormalized(n_components=ncomp_start+1, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std) if careful else GaussianMixtureNormalized(n_components=ncomp_start+1, standardized_mean=y_mean, standardized_std=y_std)
+		next_gmm.fit(data)
 		next_bic = next_gmm.bic(data)
 		print(next_bic, flush=True) if verbose==2 else 0
 		ncomp = 1
@@ -42,7 +70,16 @@ def gbi_train_model(qoi_samples, y_samples, verbose=0, ncomp=0):
 			curr_bic = next_bic
 			curr_gmm = next_gmm
 			ncomp += 1
-			next_gmm = GaussianMixture(n_components=ncomp+1).fit(data)
+			if careful:
+				try:
+					next_gmm = GaussianMixtureNormalized(n_components=ncomp+1, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std).fit(data)
+				except:
+					#Exceptions are likely to happen if the number of components is larger than the sample size can support without introducing singularities in the covariance
+					next_bic = curr_bic * 2 #flunk out to end the loop if it fails to converge
+					print("(GMM with",ncomp+1,"components failed to converge)") if verbose else 0
+					continue
+			else:
+				next_gmm = GaussianMixtureNormalized(n_components=ncomp+1, standardized_mean=y_mean, standardized_std=y_std).fit(data)
 			next_bic = next_gmm.bic(data)
 			print(next_bic, flush=True) if verbose else 0
 
@@ -51,21 +88,23 @@ def gbi_train_model(qoi_samples, y_samples, verbose=0, ncomp=0):
 		
 	else:
 		#Allow someone to override this process if they think they know how many components they want
-		gmm = GaussianMixture(n_components=ncomp).fit(data)
+		gmm = GaussianMixtureNormalized(n_components=ncomp, standardized_mean=y_mean, standardized_std=y_std).fit(data)
 		print("Using provided number of components,",ncomp,flush=True) if verbose else 0
 		
 	return gmm
 
 #online, condition the joint gmm on the data to get the posterior predictive
-def gbi_condition_model(gmm, Yd, verbose=0):
+def gbi_condition_model(gmm, Yd_raw, verbose=0):
 	ncomp = gmm.n_components
 	#step 2
 	#Now we have our data, and we find the posterior predictive from that
 	print("calculating posterior predictive...",flush=True) if verbose else 0
 	
-	#with mp.workdps(20):
-	###
-	Yd = mp.matrix(Yd) #column
+	##NOTE that we need to normalize this input data the same way that GaussianMixtureNormalized is:
+	yd_means = gmm.standardized_mean[1:]
+	yd_stds = gmm.standardized_std[1:]
+	Yd_standard = [(y-yd_means[j])/yd_stds[j] for j,y in enumerate(Yd_raw)]
+	Yd = mp.matrix(Yd_standard)
 
 	#get key parameters from the GMM
 	mu = [mp.matrix(mu_k) for mu_k in gmm.means_]
@@ -81,11 +120,16 @@ def gbi_condition_model(gmm, Yd, verbose=0):
 	
 	if verbose==2:
 		print("ymean_p:\n", ymean_p)
-		print("ymean_d:\n", ymean_d)
+		#print("ymean_d:\n", ymean_d)
 		print("Sig_pp:\n", Sig_pp)
-		print("Sig_pd:\n", Sig_pd)
-		print("Sig_dp:\n", Sig_dp)
-		print("Sig_dd:\n", Sig_dd, flush=True)
+		#print("Sig_pd:\n", Sig_pd)
+		#print("Sig_dp:\n", Sig_dp)
+		print("ncomp:",ncomp)
+		#for i in range(ncomp):
+		#	print("Sig_dd:\n", mp.det(Sig_dd[i]), flush=True)
+		#	eigenval, _ = mp.eig(Sig_dd[i])
+		#	print("eigenvalues of the",i,"th covariance matrix:",eigenval)
+		#	sys.exit()
 
 	#parameters for the new GMM:
 	B1 = [alpha[k] * (2*math.pi)**(-ncomp/2.0) * mp.det(Sig_dd[k])**(-0.5) 
@@ -105,6 +149,13 @@ def gbi_condition_model(gmm, Yd, verbose=0):
 	beta = np.array([float(mp.norm(x,p=1)) for x in beta])
 	mu_Yd = np.array([[float(mp.norm(x,p=1))] for x in mu_Yd])
 	Sig_Yd = np.array([[[float(mp.norm(x,p=1))]] for x in Sig_Yd])
+	
+	##LASTLY its very important that we de-normalize this input data according to the normalization of Q in the GaussianMixtureNormalized
+	#should just involve multiplying the mean and std
+	yp_mean = gmm.standardized_mean[0]
+	yp_cov = gmm.standardized_std[0]
+	mu_Y = [yp_cov*mu + yp_mean for mu in mu_Yd]
+	Sig_Yd = [(yp_cov**2)*var for var in Sig_Yd]
 	
 	if verbose==2:
 		print("beta:", beta)
@@ -163,7 +214,8 @@ def plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound, rbound, drawplot=True
 		plt.axvline(mean, c='red')
 	if drawplot:
 		plt.show()
-		
+
+"""
 def find_ncomp(theta_samples, qoi_samples, y_samples):
 	#step 1: train 
 	#Get a a Gaussian mixture model from the push-forward of the prior through yd and yp
@@ -191,41 +243,4 @@ def find_ncomp(theta_samples, qoi_samples, y_samples):
 		next_bic = next_gmm.bic(data)
 		
 	return ncomp
-
-
-#train a model on the data p(theta),d -> y and p(theta) -> Q
-#to develop the joint model Q = J(y,d)
-#for use in the goal-based approach
-#with the same GMM approach I used originally
-def joint_model_gmm(problem, N, doPrint=False, doPlot=False):
-	if doPrint:
-			print("Generating the training data...", flush=True)
-			
-	#model inputs
-	theta_train = problem.prior_rvs(N)
-	d_train = [d for d in problem.sample_d(N)]
-	
-	#model outputs
-	qoi_train = [problem.H(theta) for theta in theta_train]
-	y_train = [problem.eta(theta, d) for theta,d in zip(theta_train,d_train)]
-	
-	#print(theta_train)
-	#print(d_train)
-	#print(qoi_train)
-	#print(y_train)
-	
-	joint_input = [yi+di for yi,di in zip(y_train, d_train)]
-	joint_output = np.array(qoi_train)
-	
-	#print(joint_input)
-	#print(joint_output)
-	
-	if doPrint:
-			print("Training the joint model...", flush=True)
-
-	# Create linear regression object
-	gmm = gbi_train_model(joint_output, joint_output, joint_input, ncomp=0, verbose=doPrint)
-	
-	model = gmm
-	
-	return model
+"""
