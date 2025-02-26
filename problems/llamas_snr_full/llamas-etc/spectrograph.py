@@ -126,7 +126,7 @@ class Spectrograph:
         for i,t in enumerate(composite_throughput):
             if t <= 0.0:
                 composite_throughput[i] = 0.0
-            elif t == 1.0:
+            elif t >= 1.0:
                 composite_throughput[i] = 1.0
         
         return composite_throughput

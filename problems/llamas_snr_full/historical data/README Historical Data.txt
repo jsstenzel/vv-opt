@@ -3,6 +3,40 @@ Experiment models are based off of historically-performed experiments, as descri
 
 Historical valdiation data is located in a plotting script. This is not the latest data; after I performed my testing, a number of the focal planes needed to be refitted and retested, but it will do for validation data.
 
+According to the huaso repository llamasConfig, CCDs are on the following benches:
+1A
+	red - 012
+	green - 014
+	blue - 019
+1B
+	red - 026
+	green - 023
+	blue - 007
+2A
+	red - 009
+	green - 008
+	blue - 010
+2B
+	red - 018
+	green - 011
+	blue - 002
+3A
+	red - 020
+	green - 016
+	blue - 024
+3B
+	red - 024
+	green - 017
+	blue - 022
+4A
+	red - 021
+	green - 005
+	blue - 013
+4B
+	red - 006
+	green - 025
+	blue - 004
+
 QUANTUM EFFICIENCY:
 QE was never historically measured in-house for the focal planes.
 
@@ -12,6 +46,8 @@ All VPH for all 8 spectrographs were tested in-house. The data for the 24 VPH ar
 At one point, I used a parabolic interpolation algorithm to make all 24 coating curves. TODO grab those and put them here, for completeness.
 
 TODO think about how to represent testing of 1 spectrograph vs 8 spectrographs in my experiment model. The most straightforward answer right now, considering the scope of a single spectrograph, is that it doesn't make a difference and any difference is out-of-scope for the verification problem.
+
+TODO the inhouse data shows a standard deviation of about 0.0267 for throughput measurements. I should use that for the experiment model.
 
 SL DICHROIC:
 There were 2 lots of the dichroics provided, A and B. I'm not sure how many of each we received, but a dichroic from each lot was tested, at 801 measurement points. I threw them together in one excel sheet, SL_run_comparison, to see how they differed.
