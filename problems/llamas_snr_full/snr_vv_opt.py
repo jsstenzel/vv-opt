@@ -460,7 +460,8 @@ if __name__ == '__main__':
 		
 	elif args.run == "BN_convergence":
 		#Run the convergence test
-		bn_measure_convergence(problem, "BN_samples", N_val=args.n, doPrint=True)
+		#bn_measure_stability_convergence(problem, , N_val=args.n, doPrint=True)
+		bn_measure_likelihood_convergence(problem, "BN_samples", doPrint=True)
 	
 	elif args.run == "OBED_test":
 		#Load the GMM from file

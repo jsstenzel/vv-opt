@@ -10,6 +10,7 @@ import math
 import csv
 import numpy as np
 from sklearn.mixture import GaussianMixture
+import pickle
 
 sys.path.append('..')
 from inference.goal_based_inference import *
@@ -118,6 +119,8 @@ def bn_train_from_file(problem, savefile, do_subset=0, doPrint=False):
 #Note that of course, conditioning the GMM gets you the posterior predictive of Q
 #So what I actually want to compare here is how well Var[GMM(y,d)] compares to Var[Q]
 #NOTE that this doesn't compare Var[GMM(y,d)] to Var[p(Q|y)], to do that I need to do inference, such as with MCMC
+#This is a little busted; we're comparing Q data prior to Q model posterior which is apples and pears
+#TODO someday implement MCMC in here to compare data MCMC posterior to model GBI posterior
 def bn_measure_model_mse(problem, gmm, N, doPrint=True):
 	N_val = N if N>0 else 1000
 	if doPrint:
@@ -158,78 +161,28 @@ def bn_measure_model_mse(problem, gmm, N, doPrint=True):
 
 #Save the GMM to file for easy grabbing later
 def bn_save_gmm(gmm, gmm_file):
-	ncomp = gmm.n_components
-	weights = gmm.weights_
-	means = gmm.means_
-	covariances = gmm.covariances_
-	norm_means = gmm.standardized_mean
-	norm_stds = gmm.standardized_std
+	filename = gmm_file if gmm_file.endswith('.pkl') else gmm_file+'.pkl'
 	
-	filename = gmm_file if gmm_file.endswith('.csv') else gmm_file+'.csv'
-	with open(filename, 'w+', newline='') as csvfile:
-		writer = csv.writer(csvfile)
-		writer.writerow(norm_means)
-		writer.writerow(norm_stds)
-		for i in range(ncomp):
-			covlist = covariances[i].flatten().tolist()
-			newrow = [weights[i]] + means[i].tolist() + covlist
-			writer.writerow(newrow)
-			
+	with open(filename, 'wb') as file:
+		pickle.dump(gmm, file)
+	
 	print("GMM saved to",filename,flush=True)
 
 #Load GMM from file
 def bn_load_gmm(gmm_file):
-	weight_lists = []
-	mean_lists = []
-	cov_lists = []
-
-	filename = gmm_file if gmm_file.endswith('.csv') else gmm_file+'.csv'
-	with open(filename) as csvfile:
-		csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
-		#each row represents one of the Gaussian components
-		for l,row in enumerate(csvreader):
-			if l==0:
-				norm_means = [float(mu_i) for mu_i in row]
-			elif l==1:
-				norm_stds = [float(s_i) for s_i in row]
-			else:
-				param_len = int(max(np.roots([1,1,1-len(row)]))) #lol line format is 1 + x + x^2, find x=# params
-				weight_lists.append(float(row[0]))
-				mean_lists.append([float(x) for x in row[1:param_len+1]])
-				cov_lists.append([float(e) for e in row[param_len+1:]])
+	filename = gmm_file if gmm_file.endswith('.pkl') else gmm_file+'.pkl'
 	
-	#make the parameter arrays
-	weights = np.array(weight_lists)
-	ncomp = len(weights)
-	
-	means = np.array(mean_lists) #ncomp x d
-	d = len(means[0])
-	try:
-		covariances = [np.array(cov).reshape(d,d) for cov in cov_lists] #ncomp x dxd #reshape each list of floats into a dxd array
-	except:
-		print("Error:",gmm_file,"does not have the right format of weight, mean, and covariance on each row")
-		print("file row lengths:")
-		for i in range(ncomp):
-			print(1 + len(mean_lists[i]) + len(cov_lists[i]))
-		sys.exit()
-	
-	#ugly but i gotta
-	#https://stackoverflow.com/questions/68541971/sklearn-sample-from-gaussianmixture-without-fitting
-	data_gmm = GaussianMixture(n_components=ncomp)
-	data_gmm.weights_ = weights
-	data_gmm.means_ = means
-	data_gmm.covariances_ = covariances
-	data_gmm.standardized_mean = norm_means
-	data_gmm.standardized_std = norm_stds
+	with open(filename, 'rb') as file:
+		data_gmm = pickle.load(file)
 
 	return data_gmm
-	
 
 def bn_measure_stability_convergence(problem, big_savefile, N_val, doPrint=True):
 	N_val = N_val if N_val>0 else 5		
 	N_list = [1000,4000,10000,40000,100000,400000]
 	
 	###Draw N_val totally new validation samples
+	#TODO i probably should not be reusing validation samples.
 	if doPrint:
 		print("Drawing",N_val,"validation samples...",flush=True)
 	theta_samples = problem.prior_rvs(N_val)
@@ -239,7 +192,7 @@ def bn_measure_stability_convergence(problem, big_savefile, N_val, doPrint=True)
 	###Use the savedata to train a series of GMMs, save them if they don't already exist; or, load them if they do
 	list_gmm = []
 	for N in N_list:
-		gmmfile_n = "BN_model_" + str(N) + '.csv'
+		gmmfile_n = "BN_model_" + str(N) + '.pkl'
 		if os.path.exists(gmmfile_n):
 			###Load it
 			if doPrint:
@@ -351,4 +304,42 @@ def bn_evaluate_model_likelihood(problem, gmmfile, datafile="", N_val=0, do_subs
 	return avg_loglikelihood
 
 
-#def bn_measure_likelihood_convergence(problem, datafile="", gmmfile, doPrint=True):
+def bn_measure_likelihood_convergence(problem, big_savefile, doPrint=True):	
+	N_list = [1000,4000,10000,40000,100000,400000,1000000]
+	
+	###Use the savedata to train a series of GMMs, save them if they don't already exist; or, load them if they do
+	list_gmm = []
+	for N in N_list:
+		gmmfile_n = "BN_model_" + str(N) + '.pkl'
+		if os.path.exists(gmmfile_n):
+			###Add its filename to list
+			if doPrint:
+				print("Found",gmmfile_n,"...",flush=True)
+			list_gmm.append(gmmfile_n)
+		else:
+			###Train and save it
+			if doPrint:
+				print("Training and saving",gmmfile_n,"...",flush=True)
+			gmm_n = bn_train_from_file(problem, savefile=big_savefile, do_subset=N, doPrint=True)
+			
+			bn_save_gmm(gmm_n, gmm_file=gmmfile_n)
+			list_gmm.append(gmmfile_n)
+	
+	scores = [None] * len(N_list)
+	###Now, for each GMM, evaluate the average likelihood of *its* training data
+	if doPrint:
+		print("Evaluating training data likelihood...",flush=True)
+	for i,N in enumerate(N_list):
+		#gmmfile: use BN_model_N.pkl
+		#datafile: use the big huge one
+		#N_val: we're not evaluating validation samples
+		#do_subset: N, so that we're evaluating the N gmm with the N values used to train it
+		score = bn_evaluate_model_likelihood(problem, gmmfile=list_gmm[i], datafile=big_savefile, N_val=0, do_subset=N, doPrint=True)
+		scores[i] = score
+	
+	###Plot them all, shifting the largest-N estimate of Q to zero to hopefully see many lines converging
+	plt.xlabel("N for training GMM")
+	plt.ylabel("Average log-likelihood of the model's training data")
+	plt.xscale('log')
+	plt.plot(N_list, scores, c='r')
+	plt.show()
