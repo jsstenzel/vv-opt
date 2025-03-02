@@ -1,0 +1,1887 @@
+Model {
+  Name			  "nexus_block"
+  Version		  6.1
+  MdlSubVersion		  0
+  GraphicalInterface {
+    NumRootInports	    0
+    NumRootOutports	    0
+    ParameterArgumentNames  ""
+    ComputedModelVersion    "1.259"
+    NumModelReferences	    0
+    NumTestPointedSignals   0
+  }
+  SavedCharacterEncoding  "ibm-5348_P100-1997"
+  SaveDefaultBlockParams  on
+  SampleTimeColors	  off
+  LibraryLinkDisplay	  "none"
+  WideLines		  off
+  ShowLineDimensions	  off
+  ShowPortDataTypes	  off
+  ShowLoopsOnError	  on
+  IgnoreBidirectionalLines off
+  ShowStorageClass	  off
+  ShowTestPointIcons	  on
+  ShowViewerIcons	  on
+  SortedOrder		  off
+  ExecutionContextIcon	  off
+  ShowLinearizationAnnotations on
+  RecordCoverage	  off
+  CovPath		  "/"
+  CovSaveName		  "covdata"
+  CovMetricSettings	  "dw"
+  CovNameIncrementing	  off
+  CovHtmlReporting	  on
+  covSaveCumulativeToWorkspaceVar on
+  CovSaveSingleToWorkspaceVar on
+  CovCumulativeVarName	  "covCumulativeData"
+  CovCumulativeReport	  off
+  CovReportOnPause	  on
+  ScopeRefreshTime	  0.035000
+  OverrideScopeRefreshTime on
+  DisableAllScopes	  off
+  DataTypeOverride	  "UseLocalSettings"
+  MinMaxOverflowLogging	  "UseLocalSettings"
+  MinMaxOverflowArchiveMode "Overwrite"
+  BlockNameDataTip	  off
+  BlockParametersDataTip  on
+  BlockDescriptionStringDataTip	off
+  ToolBar		  on
+  StatusBar		  on
+  BrowserShowLibraryLinks off
+  BrowserLookUnderMasks	  off
+  Created		  "Wed Jun 06 23:30:54 2001"
+  UpdateHistory		  "UpdateHistoryNever"
+  ModifiedByFormat	  "%<Auto>"
+  LastModifiedBy	  "deweck"
+  ModifiedDateFormat	  "%<Auto>"
+  LastModifiedDate	  "Wed Jun 01 09:36:07 2005"
+  ModelVersionFormat	  "1.%<AutoIncrement:259>"
+  ConfigurationManager	  "none"
+  LinearizationMsg	  "none"
+  Profile		  off
+  ParamWorkspaceSource	  "MATLABWorkspace"
+  AccelSystemTargetFile	  "accel.tlc"
+  AccelTemplateMakefile	  "accel_default_tmf"
+  AccelMakeCommand	  "make_rtw"
+  TryForcingSFcnDF	  off
+  ExtModeBatchMode	  off
+  ExtModeEnableFloating	  on
+  ExtModeTrigType	  "manual"
+  ExtModeTrigMode	  "oneshot"
+  ExtModeTrigPort	  "1"
+  ExtModeTrigElement	  "any"
+  ExtModeTrigDuration	  1000
+  ExtModeTrigDurationFloating "auto"
+  ExtModeTrigHoldOff	  0
+  ExtModeTrigDelay	  0
+  ExtModeTrigDirection	  "rising"
+  ExtModeTrigLevel	  0
+  ExtModeArchiveMode	  "off"
+  ExtModeAutoIncOneShot	  off
+  ExtModeIncDirWhenArm	  off
+  ExtModeAddSuffixToVar	  off
+  ExtModeWriteAllDataToWs off
+  ExtModeArmWhenConnect	  off
+  ExtModeSkipDownloadWhenConnect off
+  ExtModeLogAll		  on
+  ExtModeAutoUpdateStatusClock on
+  BufferReuse		  on
+  StrictBusMsg		  "None"
+  ProdHWDeviceType	  "32-bit Generic"
+  ShowModelReferenceBlockVersion off
+  ShowModelReferenceBlockIO off
+  Array {
+    Type		    "Handle"
+    Dimension		    1
+    Simulink.ConfigSet {
+      $ObjectID		      1
+      Version		      "1.0.4"
+      Array {
+	Type			"Handle"
+	Dimension		7
+	Simulink.SolverCC {
+	  $ObjectID		  2
+	  Version		  "1.0.4"
+	  StartTime		  "0.0"
+	  StopTime		  "Tmax"
+	  AbsTol		  "1e-6"
+	  FixedStep		  "dt"
+	  InitialStep		  "auto"
+	  MaxNumMinSteps	  "-1"
+	  MaxOrder		  5
+	  ExtrapolationOrder	  4
+	  NumberNewtonIterations  1
+	  MaxStep		  "auto"
+	  MinStep		  "auto"
+	  RelTol		  "1e-3"
+	  SolverMode		  "SingleTasking"
+	  Solver		  "ode4"
+	  SolverName		  "ode4"
+	  ZeroCrossControl	  "UseLocalSettings"
+	  PositivePriorityOrder	  off
+	  AutoInsertRateTranBlk	  off
+	  SampleTimeConstraint	  "Unconstrained"
+	  RateTranMode		  "Deterministic"
+	}
+	Simulink.DataIOCC {
+	  $ObjectID		  3
+	  Version		  "1.0.4"
+	  Decimation		  "1"
+	  ExternalInput		  "[t, u]"
+	  FinalStateName	  "xFinal"
+	  InitialState		  "xInitial"
+	  LimitDataPoints	  off
+	  MaxDataPoints		  "1000"
+	  LoadExternalInput	  off
+	  LoadInitialState	  off
+	  SaveFinalState	  off
+	  SaveFormat		  "Array"
+	  SaveOutput		  on
+	  SaveState		  off
+	  SignalLogging		  on
+	  SaveTime		  on
+	  StateSaveName		  "xout"
+	  TimeSaveName		  "tout"
+	  OutputSaveName	  "yout"
+	  SignalLoggingName	  "logsout"
+	  OutputOption		  "RefineOutputTimes"
+	  OutputTimes		  "[]"
+	  Refine		  "1"
+	}
+	Simulink.OptimizationCC {
+	  $ObjectID		  4
+	  Version		  "1.0.4"
+	  BlockReduction	  off
+	  BooleanDataType	  off
+	  ConditionallyExecuteInputs on
+	  ConditionalExecOptimization "on_for_testing"
+	  InlineParams		  off
+	  InlineInvariantSignals  on
+	  OptimizeBlockIOStorage  on
+	  BufferReuse		  on
+	  EnforceIntegerDowncast  on
+	  ExpressionFolding	  on
+	  FoldNonRolledExpr	  on
+	  LocalBlockOutputs	  on
+	  ParameterPooling	  on
+	  RollThreshold		  5
+	  SystemCodeInlineAuto	  off
+	  StateBitsets		  off
+	  DataBitsets		  off
+	  UseTempVars		  off
+	  ZeroExternalMemoryAtStartup on
+	  ZeroInternalMemoryAtStartup on
+	  InitFltsAndDblsToZero	  on
+	  NoFixptDivByZeroProtection off
+	  OptimizeModelRefInitCode off
+	  LifeSpan		  "inf"
+	}
+	Simulink.DebuggingCC {
+	  $ObjectID		  5
+	  Version		  "1.0.4"
+	  RTPrefix		  "error"
+	  ConsistencyChecking	  "none"
+	  ArrayBoundsChecking	  "none"
+	  AlgebraicLoopMsg	  "warning"
+	  ArtificialAlgebraicLoopMsg "warning"
+	  CheckSSInitialOutputMsg on
+	  CheckExecutionContextPreStartOutputMsg off
+	  CheckExecutionContextRuntimeOutputMsg	off
+	  SignalResolutionControl "TryResolveAllWithWarning"
+	  BlockPriorityViolationMsg "warning"
+	  MinStepSizeMsg	  "warning"
+	  SolverPrmCheckMsg	  "none"
+	  InheritedTsInSrcMsg	  "warning"
+	  DiscreteInheritContinuousMsg "warning"
+	  MultiTaskDSMMsg	  "warning"
+	  MultiTaskRateTransMsg	  "error"
+	  SingleTaskRateTransMsg  "none"
+	  TasksWithSamePriorityMsg "warning"
+	  CheckMatrixSingularityMsg "none"
+	  IntegerOverflowMsg	  "warning"
+	  Int32ToFloatConvMsg	  "warning"
+	  ParameterDowncastMsg	  "error"
+	  ParameterOverflowMsg	  "error"
+	  ParameterPrecisionLossMsg "warning"
+	  UnderSpecifiedDataTypeMsg "none"
+	  UnnecessaryDatatypeConvMsg "none"
+	  VectorMatrixConversionMsg "none"
+	  InvalidFcnCallConnMsg	  "error"
+	  FcnCallInpInsideContextMsg "Use local settings"
+	  SignalLabelMismatchMsg  "none"
+	  UnconnectedInputMsg	  "warning"
+	  UnconnectedOutputMsg	  "warning"
+	  UnconnectedLineMsg	  "warning"
+	  SFcnCompatibilityMsg	  "none"
+	  UniqueDataStoreMsg	  "none"
+	  RootOutportRequireBusObject "warning"
+	  AssertControl		  "UseLocalSettings"
+	  EnableOverflowDetection off
+	  ModelReferenceIOMsg	  "none"
+	  ModelReferenceVersionMismatchMessage "none"
+	  ModelReferenceIOMismatchMessage "none"
+	  ModelReferenceCSMismatchMessage "none"
+	  ModelReferenceSimTargetVerbose off
+	  UnknownTsInhSupMsg	  "warning"
+	  ModelReferenceDataLoggingMessage "warning"
+	  ModelReferenceSymbolNameMessage "warning"
+	}
+	Simulink.HardwareCC {
+	  $ObjectID		  6
+	  Version		  "1.0.4"
+	  ProdBitPerChar	  8
+	  ProdBitPerShort	  16
+	  ProdBitPerInt		  32
+	  ProdBitPerLong	  32
+	  ProdIntDivRoundTo	  "Undefined"
+	  ProdEndianess		  "Unspecified"
+	  ProdWordSize		  32
+	  ProdShiftRightIntArith  on
+	  ProdHWDeviceType	  "32-bit Generic"
+	  TargetBitPerChar	  8
+	  TargetBitPerShort	  16
+	  TargetBitPerInt	  32
+	  TargetBitPerLong	  32
+	  TargetShiftRightIntArith on
+	  TargetIntDivRoundTo	  "Undefined"
+	  TargetEndianess	  "Unspecified"
+	  TargetWordSize	  32
+	  TargetTypeEmulationWarnSuppressLevel 0
+	  TargetPreprocMaxBitsSint 32
+	  TargetPreprocMaxBitsUint 32
+	  TargetHWDeviceType	  "Specified"
+	  TargetUnknown		  on
+	  ProdEqTarget		  on
+	}
+	Simulink.ModelReferenceCC {
+	  $ObjectID		  7
+	  Version		  "1.0.4"
+	  UpdateModelReferenceTargets "IfOutOfDateOrStructuralChange"
+	  CheckModelReferenceTargetMessage "error"
+	  ModelReferenceNumInstancesAllowed "Multi"
+	  ModelReferencePassRootInputsByReference on
+	  ModelReferenceMinAlgLoopOccurrences off
+	}
+	Simulink.RTWCC {
+	  $BackupClass		  "Simulink.RTWCC"
+	  $ObjectID		  8
+	  Version		  "1.0.4"
+	  SystemTargetFile	  "grt.tlc"
+	  GenCodeOnly		  off
+	  MakeCommand		  "make_rtw"
+	  TemplateMakefile	  "grt_default_tmf"
+	  GenerateReport	  off
+	  SaveLog		  off
+	  RTWVerbose		  on
+	  RetainRTWFile		  off
+	  ProfileTLC		  off
+	  TLCDebug		  off
+	  TLCCoverage		  off
+	  TLCAssert		  off
+	  ProcessScriptMode	  "Default"
+	  ConfigurationMode	  "Optimized"
+	  ConfigAtBuild		  off
+	  IncludeHyperlinkInReport off
+	  LaunchReport		  off
+	  Array {
+	    Type		    "Handle"
+	    Dimension		    2
+	    Simulink.CodeAppCC {
+	      $ObjectID		      9
+	      Version		      "1.0.4"
+	      ForceParamTrailComments off
+	      GenerateComments	      on
+	      IgnoreCustomStorageClasses on
+	      IncHierarchyInIds	      off
+	      MaxIdLength	      31
+	      PreserveName	      off
+	      PreserveNameWithParent  off
+	      ShowEliminatedStatement off
+	      IncAutoGenComments      off
+	      SimulinkDataObjDesc     off
+	      SFDataObjDesc	      off
+	      IncDataTypeInIds	      off
+	      PrefixModelToSubsysFcnNames on
+	      CustomSymbolStr	      "$R$N$M"
+	      MangleLength	      1
+	      DefineNamingRule	      "None"
+	      ParamNamingRule	      "None"
+	      SignalNamingRule	      "None"
+	      InsertBlockDesc	      off
+	      SimulinkBlockComments   on
+	      EnableCustomComments    off
+	      InlinedPrmAccess	      "Literals"
+	      ReqsInCode	      off
+	    }
+	    Simulink.GRTTargetCC {
+	      $BackupClass	      "Simulink.TargetCC"
+	      $ObjectID		      10
+	      Version		      "1.0.4"
+	      TargetFcnLib	      "ansi_tfl_tmw.mat"
+	      GenFloatMathFcnCalls    "ANSI_C"
+	      UtilityFuncGeneration   "Auto"
+	      GenerateFullHeader      on
+	      GenerateSampleERTMain   off
+	      IsPILTarget	      off
+	      ModelReferenceCompliant off
+	      IncludeMdlTerminateFcn  on
+	      CombineOutputUpdateFcns off
+	      SuppressErrorStatus     off
+	      IncludeFileDelimiter    "Auto"
+	      ERTCustomFileBanners    off
+	      SupportAbsoluteTime     on
+	      LogVarNameModifier      "rt_"
+	      MatFileLogging	      off
+	      MultiInstanceERTCode    off
+	      SupportNonFinite	      on
+	      SupportComplex	      on
+	      PurelyIntegerCode	      off
+	      SupportContinuousTime   on
+	      SupportNonInlinedSFcns  on
+	      ExtMode		      off
+	      ExtModeStaticAlloc      off
+	      ExtModeTesting	      off
+	      ExtModeStaticAllocSize  1000000
+	      ExtModeTransport	      0
+	      ExtModeMexFile	      "ext_comm"
+	      RTWCAPISignals	      off
+	      RTWCAPIParams	      off
+	      RTWCAPIStates	      off
+	      GenerateASAP2	      off
+	    }
+	    PropName		    "Components"
+	  }
+	}
+	PropName		"Components"
+      }
+      Name		      "Configuration"
+      SimulationMode	      "normal"
+      CurrentDlgPage	      "Solver"
+    }
+    PropName		    "ConfigurationSets"
+  }
+  Simulink.ConfigSet {
+    $PropName		    "ActiveConfigurationSet"
+    $ObjectID		    1
+  }
+  BlockDefaults {
+    Orientation		    "right"
+    ForegroundColor	    "black"
+    BackgroundColor	    "white"
+    DropShadow		    off
+    NamePlacement	    "normal"
+    FontName		    "Helvetica"
+    FontSize		    10
+    FontWeight		    "normal"
+    FontAngle		    "normal"
+    ShowName		    on
+  }
+  BlockParameterDefaults {
+    Block {
+      BlockType		      DataTypeConversion
+      OutDataTypeMode	      "Inherit via back propagation"
+      OutDataType	      "sfix(16)"
+      OutScaling	      "2^0"
+      LockScale		      off
+      ConvertRealWorld	      "Real World Value (RWV)"
+      RndMeth		      "Zero"
+      SaturateOnIntegerOverflow	on
+      SampleTime	      "-1"
+    }
+    Block {
+      BlockType		      Demux
+      Outputs		      "4"
+      DisplayOption	      "none"
+      BusSelectionMode	      off
+    }
+    Block {
+      BlockType		      Fcn
+      Expr		      "sin(u[1])"
+      SampleTime	      "-1"
+    }
+    Block {
+      BlockType		      Gain
+      Gain		      "1"
+      Multiplication	      "Element-wise(K.*u)"
+      ParameterDataTypeMode   "Same as input"
+      ParameterDataType	      "sfix(16)"
+      ParameterScalingMode    "Best Precision: Matrix-wise"
+      ParameterScaling	      "2^0"
+      OutDataTypeMode	      "Same as input"
+      OutDataType	      "sfix(16)"
+      OutScaling	      "2^0"
+      LockScale		      off
+      RndMeth		      "Floor"
+      SaturateOnIntegerOverflow	on
+      SampleTime	      "-1"
+    }
+    Block {
+      BlockType		      Inport
+      BusObject		      "BusObject"
+      BusOutputAsStruct	      off
+      PortDimensions	      "-1"
+      SampleTime	      "-1"
+      DataType		      "auto"
+      OutDataType	      "sfix(16)"
+      OutScaling	      "2^0"
+      SignalType	      "auto"
+      SamplingMode	      "auto"
+      Interpolate	      on
+    }
+    Block {
+      BlockType		      Math
+      Operator		      "exp"
+      OutputSignalType	      "auto"
+      SampleTime	      "-1"
+      OutDataTypeMode	      "Same as first input"
+      OutDataType	      "sfix(16)"
+      OutScaling	      "2^0"
+      LockScale		      off
+      RndMeth		      "Floor"
+      SaturateOnIntegerOverflow	on
+    }
+    Block {
+      BlockType		      MATLABFcn
+      MATLABFcn		      "sin"
+      OutputDimensions	      "-1"
+      OutputSignalType	      "auto"
+      Output1D		      on
+      SampleTime	      "-1"
+    }
+    Block {
+      BlockType		      Mux
+      Inputs		      "4"
+      DisplayOption	      "none"
+      BusObject		      "BusObject"
+      NonVirtualBus	      off
+    }
+    Block {
+      BlockType		      Outport
+      Port		      "1"
+      BusObject		      "BusObject"
+      BusOutputAsStruct	      off
+      PortDimensions	      "-1"
+      SampleTime	      "-1"
+      DataType		      "auto"
+      OutDataType	      "sfix(16)"
+      OutScaling	      "2^0"
+      SignalType	      "auto"
+      SamplingMode	      "auto"
+      OutputWhenDisabled      "held"
+      InitialOutput	      "[]"
+    }
+    Block {
+      BlockType		      Product
+      Inputs		      "2"
+      Multiplication	      "Element-wise(.*)"
+      InputSameDT	      on
+      OutDataTypeMode	      "Same as first input"
+      OutDataType	      "sfix(16)"
+      OutScaling	      "2^0"
+      LockScale		      off
+      RndMeth		      "Zero"
+      SaturateOnIntegerOverflow	on
+      SampleTime	      "-1"
+    }
+    Block {
+      BlockType		      RandomNumber
+      Mean		      "0"
+      Variance		      "1"
+      Seed		      "0"
+      SampleTime	      "-1"
+      VectorParams1D	      on
+    }
+    Block {
+      BlockType		      Scope
+      Floating		      off
+      ModelBased	      off
+      TickLabels	      "OneTimeTick"
+      ZoomMode		      "on"
+      Grid		      "on"
+      TimeRange		      "auto"
+      YMin		      "-5"
+      YMax		      "5"
+      SaveToWorkspace	      off
+      SaveName		      "ScopeData"
+      LimitDataPoints	      on
+      MaxDataPoints	      "5000"
+      Decimation	      "1"
+      SampleInput	      off
+      SampleTime	      "0"
+    }
+    Block {
+      BlockType		      "S-Function"
+      FunctionName	      "system"
+      SFunctionModules	      "''"
+      PortCounts	      "[]"
+    }
+    Block {
+      BlockType		      Signum
+      ZeroCross		      on
+      SampleTime	      "-1"
+    }
+    Block {
+      BlockType		      StateSpace
+      A			      "1"
+      B			      "1"
+      C			      "1"
+      D			      "1"
+      X0		      "0"
+      AbsoluteTolerance	      "auto"
+      Realization	      "auto"
+    }
+    Block {
+      BlockType		      SubSystem
+      ShowPortLabels	      on
+      Permissions	      "ReadWrite"
+      PermitHierarchicalResolution "All"
+      SystemSampleTime	      "-1"
+      RTWFcnNameOpts	      "Auto"
+      RTWFileNameOpts	      "Auto"
+      SimViewingDevice	      off
+      DataTypeOverride	      "UseLocalSettings"
+      MinMaxOverflowLogging   "UseLocalSettings"
+    }
+    Block {
+      BlockType		      Sum
+      IconShape		      "rectangular"
+      Inputs		      "++"
+      InputSameDT	      on
+      OutDataTypeMode	      "Same as first input"
+      OutDataType	      "sfix(16)"
+      OutScaling	      "2^0"
+      LockScale		      off
+      RndMeth		      "Floor"
+      SaturateOnIntegerOverflow	on
+      SampleTime	      "-1"
+    }
+    Block {
+      BlockType		      ToWorkspace
+      VariableName	      "simulink_output"
+      MaxDataPoints	      "1000"
+      Decimation	      "1"
+      SampleTime	      "0"
+      FixptAsFi		      off
+    }
+  }
+  AnnotationDefaults {
+    HorizontalAlignment	    "center"
+    VerticalAlignment	    "middle"
+    ForegroundColor	    "black"
+    BackgroundColor	    "white"
+    DropShadow		    off
+    FontName		    "Helvetica"
+    FontSize		    10
+    FontWeight		    "normal"
+    FontAngle		    "normal"
+  }
+  LineDefaults {
+    FontName		    "Helvetica"
+    FontSize		    9
+    FontWeight		    "normal"
+    FontAngle		    "normal"
+  }
+  System {
+    Name		    "nexus_block"
+    Location		    [343, 106, 1039, 533]
+    Open		    on
+    ModelBrowserVisibility  off
+    ModelBrowserWidth	    200
+    ScreenColor		    "white"
+    PaperOrientation	    "landscape"
+    PaperPositionMode	    "auto"
+    PaperType		    "usletter"
+    PaperUnits		    "inches"
+    ZoomFactor		    "100"
+    ReportName		    "simulink-default.rpt"
+    Block {
+      BlockType		      StateSpace
+      Name		      "ACS Controller"
+      Position		      [80, 262, 140, 298]
+      Orientation	      "left"
+      BackgroundColor	      "magenta"
+      A			      "Aca"
+      B			      "Bca"
+      C			      "Cca"
+      D			      "Dca"
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "ACS Noise"
+      Ports		      [0, 1]
+      Position		      [330, 276, 380, 304]
+      Orientation	      "left"
+      BackgroundColor	      "yellow"
+      TreatAsAtomicUnit	      off
+      MinAlgLoopOccurrences   off
+      RTWSystemCode	      "Auto"
+      System {
+	Name			"ACS Noise"
+	Location		[355, 391, 700, 659]
+	Open			off
+	ModelBrowserVisibility	off
+	ModelBrowserWidth	200
+	ScreenColor		"white"
+	PaperOrientation	"landscape"
+	PaperPositionMode	"auto"
+	PaperType		"usletter"
+	PaperUnits		"inches"
+	ZoomFactor		"100"
+	Block {
+	  BlockType		  Reference
+	  Name			  "Band-Limited\nWhite Noise6"
+	  Ports			  [0, 1]
+	  Position		  [30, 50, 60, 80]
+	  SourceBlock		  "simulink/Sources/Band-Limited\nWhite Noise"
+	  SourceType		  "Band-Limited White Noise."
+	  ShowPortLabels	  on
+	  Cov			  "[1.0]"
+	  Ts			  "dt"
+	  seed			  "Seed(6)"
+	  VectorParams1D	  on
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Band-Limited\nWhite Noise7"
+	  Ports			  [0, 1]
+	  Position		  [25, 120, 55, 150]
+	  SourceBlock		  "simulink/Sources/Band-Limited\nWhite Noise"
+	  SourceType		  "Band-Limited White Noise."
+	  ShowPortLabels	  on
+	  Cov			  "[1.0]"
+	  Ts			  "dt"
+	  seed			  "Seed(7)"
+	  VectorParams1D	  on
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Band-Limited\nWhite Noise8"
+	  Ports			  [0, 1]
+	  Position		  [25, 190, 55, 220]
+	  SourceBlock		  "simulink/Sources/Band-Limited\nWhite Noise"
+	  SourceType		  "Band-Limited White Noise."
+	  ShowPortLabels	  on
+	  Cov			  "[1.0]"
+	  Ts			  "dt"
+	  seed			  "Seed(8)"
+	  VectorParams1D	  on
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "Gain"
+	  Position		  [240, 120, 270, 150]
+	}
+	Block {
+	  BlockType		  Mux
+	  Name			  "Mux5"
+	  Ports			  [3, 1]
+	  Position		  [100, 27, 125, 243]
+	  Inputs		  "3"
+	}
+	Block {
+	  BlockType		  StateSpace
+	  Name			  "ST Noise"
+	  Position		  [145, 115, 205, 155]
+	  NamePlacement		  "alternate"
+	  A			  "Ads"
+	  B			  "Bds"
+	  C			  "Cds"
+	  D			  "Dds"
+	  Port {
+	    PortNumber		    1
+	    Name		    "3x1"
+	    RTWStorageClass	    "Auto"
+	    DataLoggingNameMode	    "SignalName"
+	    ShowSigGenPortName	    on
+	  }
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "Out1"
+	  Position		  [290, 128, 320, 142]
+	  IconDisplay		  "Port number"
+	  BusOutputAsStruct	  off
+	}
+	Line {
+	  SrcBlock		  "Band-Limited\nWhite Noise6"
+	  SrcPort		  1
+	  DstBlock		  "Mux5"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Band-Limited\nWhite Noise7"
+	  SrcPort		  1
+	  DstBlock		  "Mux5"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Band-Limited\nWhite Noise8"
+	  SrcPort		  1
+	  DstBlock		  "Mux5"
+	  DstPort		  3
+	}
+	Line {
+	  SrcBlock		  "Mux5"
+	  SrcPort		  1
+	  DstBlock		  "ST Noise"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Gain"
+	  SrcPort		  1
+	  DstBlock		  "Out1"
+	  DstPort		  1
+	}
+	Line {
+	  Name			  "3x1"
+	  Labels		  [0, 0]
+	  SrcBlock		  "ST Noise"
+	  SrcPort		  1
+	  DstBlock		  "Gain"
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
+      BlockType		      Sum
+      Name		      "Angles"
+      Ports		      [2, 1]
+      Position		      [280, 260, 310, 300]
+      Orientation	      "left"
+    }
+    Block {
+      BlockType		      Mux
+      Name		      "Attitude"
+      Ports		      [3, 1]
+      Position		      [175, 210, 210, 350]
+      Orientation	      "left"
+      NamePlacement	      "alternate"
+      Inputs		      "3"
+    }
+    Block {
+      BlockType		      Sum
+      Name		      "Centroid"
+      Ports		      [2, 1]
+      Position		      [440, 190, 465, 230]
+      Inputs		      "+-"
+    }
+    Block {
+      BlockType		      Gain
+      Name		      "Centroid\nSensitivity"
+      Position		      [395, 100, 425, 130]
+      Orientation	      "down"
+      Gain		      "dcdu"
+      Multiplication	      "Matrix(K*u)"
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Cryo Noise"
+      Ports		      [0, 1]
+      Position		      [20, 84, 80, 126]
+      BackgroundColor	      "yellow"
+      TreatAsAtomicUnit	      off
+      MinAlgLoopOccurrences   off
+      RTWSystemCode	      "Auto"
+      System {
+	Name			"Cryo Noise"
+	Location		[234, 113, 546, 231]
+	Open			off
+	ModelBrowserVisibility	off
+	ModelBrowserWidth	200
+	ScreenColor		"white"
+	PaperOrientation	"landscape"
+	PaperPositionMode	"auto"
+	PaperType		"usletter"
+	PaperUnits		"inches"
+	ZoomFactor		"100"
+	Block {
+	  BlockType		  Reference
+	  Name			  "Band-Limited\nWhite Noise5"
+	  Ports			  [0, 1]
+	  Position		  [45, 45, 75, 75]
+	  SourceBlock		  "simulink/Sources/Band-Limited\nWhite Noise"
+	  SourceType		  "Band-Limited White Noise."
+	  ShowPortLabels	  on
+	  Cov			  "[1.0]"
+	  Ts			  "dt"
+	  seed			  "Seed(5)"
+	  VectorParams1D	  on
+	}
+	Block {
+	  BlockType		  StateSpace
+	  Name			  "Cryo Noise Filters"
+	  Position		  [115, 42, 175, 78]
+	  A			  "Adc"
+	  B			  "Bdc"
+	  C			  "Cdc"
+	  D			  "Ddc"
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "Gain"
+	  Position		  [210, 45, 240, 75]
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "Out1"
+	  Position		  [265, 53, 295, 67]
+	  IconDisplay		  "Port number"
+	  BusOutputAsStruct	  off
+	}
+	Line {
+	  SrcBlock		  "Band-Limited\nWhite Noise5"
+	  SrcPort		  1
+	  DstBlock		  "Cryo Noise Filters"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Cryo Noise Filters"
+	  SrcPort		  1
+	  DstBlock		  "Gain"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Gain"
+	  SrcPort		  1
+	  DstBlock		  "Out1"
+	  DstPort		  1
+	}
+	Annotation {
+	  Name			  "3"
+	  Position		  [195, 47]
+	}
+	Annotation {
+	  Name			  "1"
+	  Position		  [108, 52]
+	}
+      }
+    }
+    Block {
+      BlockType		      Demux
+      Name		      "Demux"
+      Ports		      [1, 2]
+      Position		      [505, 149, 550, 176]
+      ShowName		      off
+      Outputs		      "2"
+    }
+    Block {
+      BlockType		      Demux
+      Name		      "Demux1"
+      Ports		      [1, 3]
+      Position		      [305, 46, 340, 164]
+      ForegroundColor	      "white"
+      NamePlacement	      "alternate"
+      Outputs		      "[30 3 3]"
+      Port {
+	PortNumber		1
+	Name			"dofs"
+	RTWStorageClass		"Auto"
+	DataLoggingNameMode	"SignalName"
+	ShowSigGenPortName	on
+      }
+      Port {
+	PortNumber		3
+	Name			"3"
+	RTWStorageClass		"Auto"
+	DataLoggingNameMode	"SignalName"
+	ShowSigGenPortName	on
+      }
+    }
+    Block {
+      BlockType		      Gain
+      Name		      "FSM\nCoupling"
+      Position		      [400, 260, 430, 290]
+      Orientation	      "up"
+      Gain		      "Kfsm"
+      Multiplication	      "Matrix(K*u)"
+    }
+    Block {
+      BlockType		      StateSpace
+      Name		      "FSM Controller"
+      Position		      [575, 202, 635, 238]
+      BackgroundColor	      "magenta"
+      A			      "Acf"
+      B			      "Bcf"
+      C			      "(-1)*Ccf"
+      D			      "(-1)*Dcf"
+    }
+    Block {
+      BlockType		      Gain
+      Name		      "FSM Plant"
+      Position		      [525, 310, 555, 340]
+      Orientation	      "left"
+      BackgroundColor	      "lightBlue"
+      Gain		      "eye(2,2)"
+      Multiplication	      "Matrix(K*u)"
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "GS Noise"
+      Ports		      [0, 1]
+      Position		      [560, 263, 605, 297]
+      Orientation	      "left"
+      BackgroundColor	      "yellow"
+      TreatAsAtomicUnit	      off
+      MinAlgLoopOccurrences   off
+      RTWSystemCode	      "Auto"
+      System {
+	Name			"GS Noise"
+	Location		[641, 200, 915, 464]
+	Open			off
+	ModelBrowserVisibility	off
+	ModelBrowserWidth	200
+	ScreenColor		"white"
+	PaperOrientation	"landscape"
+	PaperPositionMode	"auto"
+	PaperType		"usletter"
+	PaperUnits		"inches"
+	ZoomFactor		"100"
+	Block {
+	  BlockType		  Reference
+	  Name			  "Band-Limited\nWhite Noise10"
+	  Ports			  [0, 1]
+	  Position		  [185, 170, 215, 200]
+	  Orientation		  "left"
+	  SourceBlock		  "simulink/Sources/Band-Limited\nWhite Noise"
+	  SourceType		  "Band-Limited White Noise."
+	  ShowPortLabels	  on
+	  Cov			  "[1.0]"
+	  Ts			  "dt"
+	  seed			  "Seed(10)"
+	  VectorParams1D	  on
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Band-Limited\nWhite Noise9"
+	  Ports			  [0, 1]
+	  Position		  [185, 130, 215, 160]
+	  Orientation		  "left"
+	  NamePlacement		  "alternate"
+	  SourceBlock		  "simulink/Sources/Band-Limited\nWhite Noise"
+	  SourceType		  "Band-Limited White Noise."
+	  ShowPortLabels	  on
+	  Cov			  "[1.0]"
+	  Ts			  "dt"
+	  seed			  "Seed(9)"
+	  VectorParams1D	  on
+	}
+	Block {
+	  BlockType		  StateSpace
+	  Name			  "GS\n Noise"
+	  Position		  [40, 100, 100, 140]
+	  Orientation		  "up"
+	  NamePlacement		  "alternate"
+	  A			  "Adg"
+	  B			  "Bdg"
+	  C			  "psc*Cdg"
+	  D			  "psc*Ddg"
+	  Port {
+	    PortNumber		    1
+	    Name		    "2"
+	    RTWStorageClass	    "Auto"
+	    DataLoggingNameMode	    "SignalName"
+	    ShowSigGenPortName	    on
+	  }
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "Gain"
+	  Position		  [55, 50, 85, 80]
+	  Orientation		  "up"
+	  NamePlacement		  "alternate"
+	}
+	Block {
+	  BlockType		  Mux
+	  Name			  "Mux4"
+	  Ports			  [2, 1]
+	  Position		  [120, 124, 150, 206]
+	  Orientation		  "left"
+	  NamePlacement		  "alternate"
+	  Inputs		  "2"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "Out1"
+	  Position		  [55, 15, 85, 30]
+	  Orientation		  "up"
+	  IconDisplay		  "Port number"
+	  BusOutputAsStruct	  off
+	}
+	Line {
+	  SrcBlock		  "Mux4"
+	  SrcPort		  1
+	  Points		  [-45, 0]
+	  DstBlock		  "GS\n Noise"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Band-Limited\nWhite Noise9"
+	  SrcPort		  1
+	  DstBlock		  "Mux4"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Band-Limited\nWhite Noise10"
+	  SrcPort		  1
+	  DstBlock		  "Mux4"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Gain"
+	  SrcPort		  1
+	  DstBlock		  "Out1"
+	  DstPort		  1
+	}
+	Line {
+	  Name			  "2"
+	  Labels		  [0, 1]
+	  SrcBlock		  "GS\n Noise"
+	  SrcPort		  1
+	  DstBlock		  "Gain"
+	  DstPort		  1
+	}
+	Annotation {
+	  Name			  "FGS Noise"
+	  Position		  [38, 182]
+	}
+	Annotation {
+	  Name			  "2"
+	  Position		  [43, 147]
+	}
+      }
+    }
+    Block {
+      BlockType		      Mux
+      Name		      "Inputs"
+      Ports		      [3, 1]
+      Position		      [125, 31, 155, 179]
+      NamePlacement	      "alternate"
+      Inputs		      "3"
+    }
+    Block {
+      BlockType		      Sum
+      Name		      "Measured\nCentroid"
+      Ports		      [2, 1]
+      Position		      [505, 200, 535, 240]
+    }
+    Block {
+      BlockType		      StateSpace
+      Name		      "NEXUS Plant Dynamics"
+      Position		      [185, 45, 275, 165]
+      BackgroundColor	      "lightBlue"
+      NamePlacement	      "alternate"
+      A			      "Ap"
+      B			      "Bp"
+      C			      "Cp"
+      D			      "Dp"
+    }
+    Block {
+      BlockType		      ToWorkspace
+      Name		      "Performance 1"
+      Position		      [580, 110, 620, 140]
+      BackgroundColor	      "red"
+      NamePlacement	      "alternate"
+      VariableName	      "WFE"
+      MaxDataPoints	      "inf"
+      SampleTime	      "dt"
+      SaveFormat	      "Array"
+    }
+    Block {
+      BlockType		      ToWorkspace
+      Name		      "Performance 2"
+      Position		      [500, 106, 540, 134]
+      BackgroundColor	      "red"
+      NamePlacement	      "alternate"
+      VariableName	      "LOS"
+      MaxDataPoints	      "inf"
+      SampleTime	      "-1"
+      SaveFormat	      "Array"
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "RMMS"
+      Ports		      [1, 1]
+      Position		      [495, 48, 535, 82]
+      NamePlacement	      "alternate"
+      TreatAsAtomicUnit	      off
+      MinAlgLoopOccurrences   off
+      RTWSystemCode	      "Auto"
+      System {
+	Name			"RMMS"
+	Location		[258, 178, 800, 373]
+	Open			off
+	ModelBrowserVisibility	off
+	ModelBrowserWidth	200
+	ScreenColor		"white"
+	PaperOrientation	"landscape"
+	PaperPositionMode	"auto"
+	PaperType		"usletter"
+	PaperUnits		"inches"
+	ZoomFactor		"100"
+	Block {
+	  BlockType		  Inport
+	  Name			  "In1"
+	  Position		  [30, 98, 60, 112]
+	  Port			  "1"
+	  IconDisplay		  "Port number"
+	  LatchInput		  off
+	}
+	Block {
+	  BlockType		  Fcn
+	  Name			  "Fcn2"
+	  Position		  [220, 90, 255, 120]
+	  Expr			  "u^2"
+	}
+	Block {
+	  BlockType		  Fcn
+	  Name			  "Fcn3"
+	  Position		  [220, 145, 255, 175]
+	  Expr			  "u^2"
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "Gain"
+	  Position		  [430, 85, 460, 115]
+	  Gain			  "m2nm"
+	}
+	Block {
+	  BlockType		  MATLABFcn
+	  Name			  "MATLAB Fcn"
+	  Position		  [125, 90, 185, 120]
+	  MATLABFcn		  "mean"
+	  OutputDimensions	  "1"
+	}
+	Block {
+	  BlockType		  MATLABFcn
+	  Name			  "MATLAB Fcn1"
+	  Position		  [120, 145, 180, 175]
+	  MATLABFcn		  "std"
+	  OutputDimensions	  "1"
+	}
+	Block {
+	  BlockType		  Product
+	  Name			  "Product"
+	  Ports			  [2, 1]
+	  Position		  [380, 82, 410, 113]
+	}
+	Block {
+	  BlockType		  Signum
+	  Name			  "Sign"
+	  Position		  [215, 30, 245, 60]
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum"
+	  Ports			  [2, 1]
+	  Position		  [285, 95, 305, 115]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|++"
+	}
+	Block {
+	  BlockType		  Math
+	  Name			  "sqrt"
+	  Ports			  [1, 1]
+	  Position		  [325, 90, 355, 120]
+	  NamePlacement		  "alternate"
+	  Operator		  "sqrt"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "Out1"
+	  Position		  [475, 93, 505, 107]
+	  IconDisplay		  "Port number"
+	  BusOutputAsStruct	  off
+	}
+	Line {
+	  SrcBlock		  "In1"
+	  SrcPort		  1
+	  Points		  [30, 0]
+	  Branch {
+	    DstBlock		    "MATLAB Fcn"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, 55]
+	    DstBlock		    "MATLAB Fcn1"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "MATLAB Fcn"
+	  SrcPort		  1
+	  Points		  [5, 0]
+	  Branch {
+	    DstBlock		    "Fcn2"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, -60]
+	    DstBlock		    "Sign"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "MATLAB Fcn1"
+	  SrcPort		  1
+	  DstBlock		  "Fcn3"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Fcn2"
+	  SrcPort		  1
+	  DstBlock		  "Sum"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Fcn3"
+	  SrcPort		  1
+	  Points		  [35, 0]
+	  DstBlock		  "Sum"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Sum"
+	  SrcPort		  1
+	  DstBlock		  "sqrt"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "sqrt"
+	  SrcPort		  1
+	  DstBlock		  "Product"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Sign"
+	  SrcPort		  1
+	  Points		  [115, 0]
+	  DstBlock		  "Product"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Product"
+	  SrcPort		  1
+	  DstBlock		  "Gain"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Gain"
+	  SrcPort		  1
+	  DstBlock		  "Out1"
+	  DstPort		  1
+	}
+	Annotation {
+	  Name			  "134"
+	  Position		  [79, 88]
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "RWA Noise"
+      Ports		      [0, 1]
+      Position		      [20, 35, 80, 75]
+      BackgroundColor	      "yellow"
+      NamePlacement	      "alternate"
+      TreatAsAtomicUnit	      off
+      MinAlgLoopOccurrences   off
+      RTWSystemCode	      "Auto"
+      System {
+	Name			"RWA Noise"
+	Location		[99, 124, 493, 472]
+	Open			off
+	ModelBrowserVisibility	off
+	ModelBrowserWidth	200
+	ScreenColor		"white"
+	PaperOrientation	"landscape"
+	PaperPositionMode	"auto"
+	PaperType		"usletter"
+	PaperUnits		"inches"
+	ZoomFactor		"100"
+	Block {
+	  BlockType		  Reference
+	  Name			  "Band-Limited\nWhite Noise1"
+	  Ports			  [0, 1]
+	  Position		  [25, 50, 55, 80]
+	  SourceBlock		  "simulink/Sources/Band-Limited\nWhite Noise"
+	  SourceType		  "Band-Limited White Noise."
+	  ShowPortLabels	  on
+	  Cov			  "[1.0]"
+	  Ts			  "dt"
+	  seed			  "Seed(1)"
+	  VectorParams1D	  on
+	  Port {
+	    PortNumber		    1
+	    Name		    "1"
+	    RTWStorageClass	    "Auto"
+	    DataLoggingNameMode	    "SignalName"
+	    ShowSigGenPortName	    on
+	  }
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Band-Limited\nWhite Noise2"
+	  Ports			  [0, 1]
+	  Position		  [25, 120, 55, 150]
+	  SourceBlock		  "simulink/Sources/Band-Limited\nWhite Noise"
+	  SourceType		  "Band-Limited White Noise."
+	  ShowPortLabels	  on
+	  Cov			  "[1.0]"
+	  Ts			  "dt"
+	  seed			  "Seed(2)"
+	  VectorParams1D	  on
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Band-Limited\nWhite Noise3"
+	  Ports			  [0, 1]
+	  Position		  [25, 190, 55, 220]
+	  SourceBlock		  "simulink/Sources/Band-Limited\nWhite Noise"
+	  SourceType		  "Band-Limited White Noise."
+	  ShowPortLabels	  on
+	  Cov			  "[1.0]"
+	  Ts			  "dt"
+	  seed			  "Seed(3)"
+	  VectorParams1D	  on
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Band-Limited\nWhite Noise4"
+	  Ports			  [0, 1]
+	  Position		  [25, 260, 55, 290]
+	  SourceBlock		  "simulink/Sources/Band-Limited\nWhite Noise"
+	  SourceType		  "Band-Limited White Noise."
+	  ShowPortLabels	  on
+	  Cov			  "[1.0]"
+	  Ts			  "dt"
+	  seed			  "Seed(4)"
+	  VectorParams1D	  on
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "Gain"
+	  Position		  [250, 155, 280, 185]
+	}
+	Block {
+	  BlockType		  Mux
+	  Name			  "Mux2"
+	  Ports			  [4, 1]
+	  Position		  [190, 29, 225, 311]
+	}
+	Block {
+	  BlockType		  StateSpace
+	  Name			  "RW1"
+	  Position		  [95, 47, 155, 83]
+	  A			  "Adw"
+	  B			  "Bdw"
+	  C			  "R1*Cdw"
+	  D			  "R1*Ddw"
+	}
+	Block {
+	  BlockType		  StateSpace
+	  Name			  "RW2"
+	  Position		  [90, 117, 150, 153]
+	  A			  "Adw"
+	  B			  "Bdw"
+	  C			  "R2*Cdw"
+	  D			  "R2*Ddw"
+	}
+	Block {
+	  BlockType		  StateSpace
+	  Name			  "RW3"
+	  Position		  [95, 187, 155, 223]
+	  A			  "Adw"
+	  B			  "Bdw"
+	  C			  "R3*Cdw"
+	  D			  "R3*Ddw"
+	}
+	Block {
+	  BlockType		  StateSpace
+	  Name			  "RW4"
+	  Position		  [90, 257, 150, 293]
+	  A			  "Adw"
+	  B			  "Bdw"
+	  C			  "R4*Cdw"
+	  D			  "R4*Ddw"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "Out1"
+	  Position		  [315, 163, 345, 177]
+	  IconDisplay		  "Port number"
+	  BusOutputAsStruct	  off
+	}
+	Line {
+	  Name			  "1"
+	  Labels		  [0, 0]
+	  SrcBlock		  "Band-Limited\nWhite Noise1"
+	  SrcPort		  1
+	  DstBlock		  "RW1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Band-Limited\nWhite Noise3"
+	  SrcPort		  1
+	  DstBlock		  "RW3"
+	  DstPort		  1
+	}
+	Line {
+	  Labels		  [0, 0]
+	  SrcBlock		  "Band-Limited\nWhite Noise4"
+	  SrcPort		  1
+	  DstBlock		  "RW4"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "RW1"
+	  SrcPort		  1
+	  DstBlock		  "Mux2"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "RW2"
+	  SrcPort		  1
+	  DstBlock		  "Mux2"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "RW3"
+	  SrcPort		  1
+	  DstBlock		  "Mux2"
+	  DstPort		  3
+	}
+	Line {
+	  SrcBlock		  "RW4"
+	  SrcPort		  1
+	  DstBlock		  "Mux2"
+	  DstPort		  4
+	}
+	Line {
+	  SrcBlock		  "Band-Limited\nWhite Noise2"
+	  SrcPort		  1
+	  DstBlock		  "RW2"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Mux2"
+	  SrcPort		  1
+	  DstBlock		  "Gain"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Gain"
+	  SrcPort		  1
+	  DstBlock		  "Out1"
+	  DstPort		  1
+	}
+	Annotation {
+	  Name			  "1"
+	  Position		  [68, 144]
+	}
+	Annotation {
+	  Name			  "1"
+	  Position		  [67, 211]
+	}
+	Annotation {
+	  Name			  "1"
+	  Position		  [65, 280]
+	}
+	Annotation {
+	  Name			  "6"
+	  Position		  [164, 58]
+	}
+	Annotation {
+	  Name			  "6"
+	  Position		  [158, 127]
+	}
+	Annotation {
+	  Name			  "6"
+	  Position		  [164, 196]
+	}
+	Annotation {
+	  Name			  "6"
+	  Position		  [162, 263]
+	}
+      }
+    }
+    Block {
+      BlockType		      Scope
+      Name		      "WFE"
+      Ports		      [1]
+      Position		      [590, 50, 620, 80]
+      Location		      [695, 503, 1019, 742]
+      Open		      off
+      NumInputPorts	      "1"
+      List {
+	ListType		AxesTitles
+	axes1			"%<SignalLabel>"
+      }
+      TimeRange		      "1.4"
+      YMin		      "-17.5"
+      YMax		      "17.5"
+      DataFormat	      "StructureWithTime"
+    }
+    Block {
+      BlockType		      Gain
+      Name		      "WFE\nSensitivity"
+      Position		      [430, 50, 460, 80]
+      NamePlacement	      "alternate"
+      Gain		      "dwdu"
+      Multiplication	      "Matrix(K*u)"
+    }
+    Block {
+      BlockType		      Reference
+      Name		      "XYCentroid"
+      Ports		      [2]
+      Position		      [585, 147, 615, 178]
+      ShowName		      off
+      SourceBlock	      "simulink/Sinks/XY Graph"
+      SourceType	      "XY scope."
+      ShowPortLabels	      on
+      xmin		      "-60"
+      xmax		      "60"
+      ymin		      "-60"
+      ymax		      "60"
+      st		      "dt"
+    }
+    Block {
+      BlockType		      Gain
+      Name		      "m2mic"
+      Position		      [472, 175, 498, 195]
+      Orientation	      "up"
+      Gain		      "m2micron"
+    }
+    Line {
+      SrcBlock		      "Inputs"
+      SrcPort		      1
+      DstBlock		      "NEXUS Plant Dynamics"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "NEXUS Plant Dynamics"
+      SrcPort		      1
+      DstBlock		      "Demux1"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "ACS Controller"
+      SrcPort		      1
+      Points		      [-15, 0; 0, -125]
+      DstBlock		      "Inputs"
+      DstPort		      3
+    }
+    Line {
+      SrcBlock		      "Attitude"
+      SrcPort		      1
+      DstBlock		      "ACS Controller"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Angles"
+      SrcPort		      1
+      DstBlock		      "Attitude"
+      DstPort		      2
+    }
+    Line {
+      SrcBlock		      "Demux1"
+      SrcPort		      2
+      Points		      [35, 0; 0, 165]
+      DstBlock		      "Angles"
+      DstPort		      1
+    }
+    Line {
+      Name		      "dofs"
+      Labels		      [0, 0]
+      SrcBlock		      "Demux1"
+      SrcPort		      1
+      Points		      [65, 0]
+      Branch {
+	DstBlock		"WFE\nSensitivity"
+	DstPort			1
+      }
+      Branch {
+	DstBlock		"Centroid\nSensitivity"
+	DstPort			1
+      }
+    }
+    Line {
+      Labels		      [0, 0]
+      SrcBlock		      "Centroid\nSensitivity"
+      SrcPort		      1
+      Points		      [0, 65]
+      DstBlock		      "Centroid"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "GS Noise"
+      SrcPort		      1
+      Points		      [-70, 0; 0, -50]
+      DstBlock		      "Measured\nCentroid"
+      DstPort		      2
+    }
+    Line {
+      SrcBlock		      "Measured\nCentroid"
+      SrcPort		      1
+      DstBlock		      "FSM Controller"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "ACS Noise"
+      SrcPort		      1
+      DstBlock		      "Angles"
+      DstPort		      2
+    }
+    Line {
+      SrcBlock		      "FSM\nCoupling"
+      SrcPort		      1
+      Points		      [0, -35]
+      DstBlock		      "Centroid"
+      DstPort		      2
+    }
+    Line {
+      SrcBlock		      "RWA Noise"
+      SrcPort		      1
+      DstBlock		      "Inputs"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Cryo Noise"
+      SrcPort		      1
+      DstBlock		      "Inputs"
+      DstPort		      2
+    }
+    Line {
+      Name		      "3"
+      Labels		      [0, 1]
+      SrcBlock		      "Demux1"
+      SrcPort		      3
+      Points		      [20, 0; 0, 90]
+      DstBlock		      "Attitude"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Demux"
+      SrcPort		      1
+      DstBlock		      "XYCentroid"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Demux"
+      SrcPort		      2
+      DstBlock		      "XYCentroid"
+      DstPort		      2
+    }
+    Line {
+      SrcBlock		      "FSM Controller"
+      SrcPort		      1
+      Points		      [15, 0; 0, 105]
+      DstBlock		      "FSM Plant"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "FSM Plant"
+      SrcPort		      1
+      Points		      [-105, 0]
+      Branch {
+	DstBlock		"Attitude"
+	DstPort			3
+      }
+      Branch {
+	DstBlock		"FSM\nCoupling"
+	DstPort			1
+      }
+    }
+    Line {
+      SrcBlock		      "RMMS"
+      SrcPort		      1
+      Points		      [20, 0]
+      Branch {
+	Points			[0, 60]
+	DstBlock		"Performance 1"
+	DstPort			1
+      }
+      Branch {
+	DstBlock		"WFE"
+	DstPort			1
+      }
+    }
+    Line {
+      SrcBlock		      "Centroid"
+      SrcPort		      1
+      Points		      [15, 0; 0, -5]
+      Branch {
+	Points			[0, 5]
+	DstBlock		"Measured\nCentroid"
+	DstPort			1
+      }
+      Branch {
+	DstBlock		"m2mic"
+	DstPort			1
+      }
+    }
+    Line {
+      SrcBlock		      "m2mic"
+      SrcPort		      1
+      Points		      [0, -5]
+      Branch {
+	DstBlock		"Performance 2"
+	DstPort			1
+      }
+      Branch {
+	DstBlock		"Demux"
+	DstPort			1
+      }
+    }
+    Line {
+      SrcBlock		      "WFE\nSensitivity"
+      SrcPort		      1
+      DstBlock		      "RMMS"
+      DstPort		      1
+    }
+    Annotation {
+      Name		      "24"
+      Position		      [103, 47]
+    }
+    Annotation {
+      Name		      "3"
+      Position		      [93, 147]
+    }
+    Annotation {
+      Name		      "30"
+      Position		      [169, 95]
+    }
+    Annotation {
+      Name		      "30"
+      Position		      [359, 58]
+    }
+    Annotation {
+      Name		      "2"
+      Position		      [416, 147]
+    }
+    Annotation {
+      Name		      "2"
+      Position		      [633, 312]
+    }
+    Annotation {
+      Name		      "3"
+      Position		      [101, 95]
+    }
+    Annotation {
+      Name		      "3"
+      Position		      [360, 97]
+    }
+    Annotation {
+      Name		      "2"
+      Position		      [472, 154]
+    }
+    Annotation {
+      Name		      "2"
+      Position		      [516, 273]
+    }
+    Annotation {
+      Name		      "gimbal \nangles"
+      Position		      [478, 342]
+    }
+    Annotation {
+      Name		      "36"
+      Position		      [290, 93]
+    }
+    Annotation {
+      Name		      "Control\nTorques"
+      Position		      [85, 213]
+    }
+    Annotation {
+      Name		      "physical\n dofs"
+      Position		      [381, 39]
+    }
+    Annotation {
+      Name		      "rates"
+      Position		      [320, 227]
+    }
+    Annotation {
+      Name		      "3"
+      Position		      [247, 228]
+    }
+    Annotation {
+      Name		      "3"
+      Position		      [242, 270]
+    }
+    Annotation {
+      Name		      "2"
+      Position		      [242, 318]
+    }
+    Annotation {
+      Name		      "8"
+      Position		      [161, 272]
+    }
+    Annotation {
+      Name		      "desaturation signal"
+      Position		      [322, 337]
+    }
+    Annotation {
+      Name		      "[rad]"
+      Position		      [244, 288]
+    }
+    Annotation {
+      Name		      "[m,rad]"
+      Position		      [382, 73]
+    }
+    Annotation {
+      Name		      "[Nm]"
+      Position		      [93, 163]
+    }
+    Annotation {
+      Name		      "[rad/sec]"
+      Position		      [251, 244]
+    }
+    Annotation {
+      Name		      "[rad]"
+      Position		      [244, 333]
+    }
+    Annotation {
+      Name		      "[rad]"
+      Position		      [636, 333]
+    }
+    Annotation {
+      Name		      "[m]"
+      Position		      [424, 169]
+    }
+    Annotation {
+      Name		      "[m]"
+      Position		      [520, 288]
+    }
+    Annotation {
+      Name		      "[N,Nm]"
+      Position		      [102, 66]
+    }
+    Annotation {
+      Name		      "[N]"
+      Position		      [98, 116]
+    }
+    Annotation {
+      Name		      "[nm]"
+      Position		      [551, 51]
+    }
+    Annotation {
+      Name		      "[m]"
+      Position		      [475, 52]
+    }
+    Annotation {
+      Name		      "[microns]"
+      Position		      [520, 140]
+    }
+    Annotation {
+      Name		      "[m]"
+      Position		      [550, 229]
+    }
+    Annotation {
+      Name		      "2"
+      Position		      [550, 211]
+    }
+    Annotation {
+      Name		      "3"
+      Position		      [327, 262]
+    }
+  }
+}
