@@ -7,9 +7,9 @@
  *
  * Code generation for model "nexus_block".
  *
- * Model version              : 1.259
+ * Model version              : 1.265
  * Simulink Coder version : 24.2 (R2024b) 21-Jun-2024
- * C++ source code generated on : Sun Mar  2 14:58:31 2025
+ * C++ source code generated on : Sun Mar  2 17:48:36 2025
  *
  * Target selection: grt.tlc
  * Note: GRT includes extra infrastructure and instrumentation for prototyping
@@ -206,11 +206,11 @@ void nexus_block::step()
   real_T rtb_CryoNoiseFilters[3];
   real_T rtb_u[2];
   real_T GSNoise_CSTATE;
-  real_T GSNoise_CSTATE_0;
-  real_T GSNoise_CSTATE_1;
   real_T STNoise_CSTATE;
+  real_T rtb_Centroid_0;
+  real_T rtb_FSMPlant_0;
+  real_T rtb_NEXUSPlantDynamics_0;
   real_T rtb_WhiteNoise;
-  real_T u;
   int_T ci;
   int_T iy;
   int_T rtb_RW1_tmp;
@@ -236,25 +236,25 @@ void nexus_block::step()
 
   /* StateSpace: '<Root>/NEXUS Plant Dynamics' */
   for (iy = 0; iy < 36; iy++) {
-    rtb_WhiteNoise = 0.0;
+    rtb_NEXUSPlantDynamics_0 = 0.0;
     for (ci = 0; ci < 158; ci++) {
-      rtb_WhiteNoise += nexus_block_P.Cp[ci * 36 + iy] *
+      rtb_NEXUSPlantDynamics_0 += nexus_block_P.Cp[ci * 36 + iy] *
         nexus_block_X.NEXUSPlantDynamics_CSTATE[ci];
     }
 
-    rtb_NEXUSPlantDynamics[iy] = rtb_WhiteNoise;
+    rtb_NEXUSPlantDynamics[iy] = rtb_NEXUSPlantDynamics_0;
   }
 
   /* End of StateSpace: '<Root>/NEXUS Plant Dynamics' */
   for (iy = 0; iy < 134; iy++) {
     /* Gain: '<Root>/WFE Sensitivity' */
-    rtb_WhiteNoise = 0.0;
+    rtb_NEXUSPlantDynamics_0 = 0.0;
     for (ci = 0; ci < 30; ci++) {
-      rtb_WhiteNoise += nexus_block_P.dwdu[134 * ci + iy] *
+      rtb_NEXUSPlantDynamics_0 += nexus_block_P.dwdu[134 * ci + iy] *
         rtb_NEXUSPlantDynamics[ci];
     }
 
-    nexus_block_B.WFESensitivity[iy] = rtb_WhiteNoise;
+    nexus_block_B.WFESensitivity[iy] = rtb_NEXUSPlantDynamics_0;
 
     /* End of Gain: '<Root>/WFE Sensitivity' */
   }
@@ -284,24 +284,28 @@ void nexus_block::step()
     rtb_WhiteNoise = nexus_block_DW.Mean_AccVal / 134.0;
 
     /* Signum: '<S4>/Sign' */
-    u = rtb_WhiteNoise;
+    rtb_NEXUSPlantDynamics_0 = rtb_WhiteNoise;
+
+    /* Fcn: '<S4>/Fcn2' */
+    rtb_Centroid_0 = rt_powd_snf(rtb_WhiteNoise, 2.0);
+
+    /* S-Function (sdspstatfcns): '<S4>/Variance' */
+    rtb_WhiteNoise = (nexus_block_DW.Variance_SqData -
+                      nexus_block_DW.Variance_AccVal *
+                      nexus_block_DW.Variance_AccVal / 134.0) / 133.0;
 
     /* Sum: '<S4>/Sum' incorporates:
      *  Fcn: '<S4>/Fcn2'
-     *  S-Function (sdspstatfcns): '<S4>/Variance'
      */
-    rtb_WhiteNoise = (nexus_block_DW.Variance_SqData -
-                      nexus_block_DW.Variance_AccVal *
-                      nexus_block_DW.Variance_AccVal / 134.0) / 133.0 +
-      rt_powd_snf(rtb_WhiteNoise, 2.0);
+    rtb_WhiteNoise += rtb_Centroid_0;
 
     /* Signum: '<S4>/Sign' */
-    if (std::isnan(u)) {
-      STNoise_CSTATE = (rtNaN);
-    } else if (u < 0.0) {
-      STNoise_CSTATE = -1.0;
+    if (std::isnan(rtb_NEXUSPlantDynamics_0)) {
+      rtb_Centroid_0 = (rtNaN);
+    } else if (rtb_NEXUSPlantDynamics_0 < 0.0) {
+      rtb_Centroid_0 = -1.0;
     } else {
-      STNoise_CSTATE = (u > 0.0);
+      rtb_Centroid_0 = (rtb_NEXUSPlantDynamics_0 > 0.0);
     }
 
     /* Math: '<S4>/sqrt'
@@ -310,9 +314,9 @@ void nexus_block::step()
      *  Operator: sqrt
      */
     if (rtb_WhiteNoise < 0.0) {
-      rtb_WhiteNoise = -std::sqrt(std::abs(rtb_WhiteNoise));
+      rtb_NEXUSPlantDynamics_0 = -std::sqrt(std::abs(rtb_WhiteNoise));
     } else {
-      rtb_WhiteNoise = std::sqrt(rtb_WhiteNoise);
+      rtb_NEXUSPlantDynamics_0 = std::sqrt(rtb_WhiteNoise);
     }
 
     /* Gain: '<S4>/Gain' incorporates:
@@ -323,7 +327,64 @@ void nexus_block::step()
      * About '<S4>/sqrt':
      *  Operator: sqrt
      */
-    rtb_WhiteNoise = STNoise_CSTATE * rtb_WhiteNoise * nexus_block_P.m2nm;
+    rtb_WhiteNoise = rtb_Centroid_0 * rtb_NEXUSPlantDynamics_0 *
+      nexus_block_P.m2nm;
+
+    /* ToWorkspace: '<Root>/Performance 1' */
+    if (rtmIsMajorTimeStep((&nexus_block_M))) {
+      rt_UpdateLogVar((LogVar *)(LogVar*)
+                      (nexus_block_DW.Performance1_PWORK.LoggedData),
+                      &rtb_WhiteNoise, 0);
+    }
+  }
+
+  /* StateSpace: '<Root>/FSM Controller' */
+  for (iy = 0; iy < 2; iy++) {
+    rtb_NEXUSPlantDynamics_0 = 0.0;
+    for (ci = 0; ci < 6; ci++) {
+      rtb_NEXUSPlantDynamics_0 += -nexus_block_P.Ccf[(ci << 1) + iy] *
+        nexus_block_X.FSMController_CSTATE[ci];
+    }
+
+    rtb_u[iy] = rtb_NEXUSPlantDynamics_0;
+  }
+
+  /* End of StateSpace: '<Root>/FSM Controller' */
+
+  /* Gain: '<Root>/FSM Plant' */
+  rtb_NEXUSPlantDynamics_0 = nexus_block_P.FSMPlant_Gain[0] * rtb_u[0] + rtb_u[1]
+    * nexus_block_P.FSMPlant_Gain[2];
+  rtb_FSMPlant_0 = rtb_u[0] * nexus_block_P.FSMPlant_Gain[1] + rtb_u[1] *
+    nexus_block_P.FSMPlant_Gain[3];
+  for (ci = 0; ci < 2; ci++) {
+    /* Sum: '<Root>/Centroid' incorporates:
+     *  Gain: '<Root>/Centroid Sensitivity'
+     *  Gain: '<Root>/FSM Coupling'
+     *  Gain: '<Root>/FSM Plant'
+     */
+    rtb_Centroid_0 = 0.0;
+    for (iy = 0; iy < 30; iy++) {
+      rtb_Centroid_0 += nexus_block_P.dcdu[(iy << 1) + ci] *
+        rtb_NEXUSPlantDynamics[iy];
+    }
+
+    rtb_Centroid_0 -= nexus_block_P.Kfsm[ci + 2] * rtb_FSMPlant_0 +
+      nexus_block_P.Kfsm[ci] * rtb_NEXUSPlantDynamics_0;
+    rtb_u[ci] = rtb_Centroid_0;
+
+    /* End of Sum: '<Root>/Centroid' */
+
+    /* Gain: '<Root>/m2mic' */
+    nexus_block_B.m2mic[ci] = nexus_block_P.m2micron * rtb_Centroid_0;
+  }
+
+  if (tmp) {
+    /* ToWorkspace: '<Root>/Performance 2' */
+    if (rtmIsMajorTimeStep((&nexus_block_M))) {
+      rt_UpdateLogVar((LogVar *)(LogVar*)
+                      (nexus_block_DW.Performance2_PWORK.LoggedData),
+                      &nexus_block_B.m2mic[0], 0);
+    }
   }
 
   /* StateSpace: '<Root>/ACS Controller' */
@@ -339,33 +400,36 @@ void nexus_block::step()
 
   /* End of StateSpace: '<Root>/ACS Controller' */
   if (tmp) {
-    /* Gain: '<S6>/Output' incorporates:
-     *  RandomNumber: '<S6>/White Noise'
-     */
+    /* RandomNumber: '<S6>/White Noise' */
+    rtb_WhiteNoise = nexus_block_DW.NextOutput;
+
+    /* Gain: '<S6>/Output' */
     nexus_block_B.Output = std::sqrt(nexus_block_P.BandLimitedWhiteNoise6_Cov) /
-      0.031622776601683791 * nexus_block_DW.NextOutput;
+      0.031622776601683791 * rtb_WhiteNoise;
 
-    /* Gain: '<S7>/Output' incorporates:
-     *  RandomNumber: '<S7>/White Noise'
-     */
+    /* RandomNumber: '<S7>/White Noise' */
+    rtb_WhiteNoise = nexus_block_DW.NextOutput_j;
+
+    /* Gain: '<S7>/Output' */
     nexus_block_B.Output_l = std::sqrt(nexus_block_P.BandLimitedWhiteNoise7_Cov)
-      / 0.031622776601683791 * nexus_block_DW.NextOutput_j;
+      / 0.031622776601683791 * rtb_WhiteNoise;
 
-    /* Gain: '<S8>/Output' incorporates:
-     *  RandomNumber: '<S8>/White Noise'
-     */
+    /* RandomNumber: '<S8>/White Noise' */
+    rtb_WhiteNoise = nexus_block_DW.NextOutput_l;
+
+    /* Gain: '<S8>/Output' */
     nexus_block_B.Output_k = std::sqrt(nexus_block_P.BandLimitedWhiteNoise8_Cov)
-      / 0.031622776601683791 * nexus_block_DW.NextOutput_l;
+      / 0.031622776601683791 * rtb_WhiteNoise;
   }
 
   /* StateSpace: '<S1>/ST Noise' */
   rtb_WhiteNoise = nexus_block_X.STNoise_CSTATE[1];
-  u = nexus_block_X.STNoise_CSTATE[0];
+  rtb_Centroid_0 = nexus_block_X.STNoise_CSTATE[0];
   STNoise_CSTATE = nexus_block_X.STNoise_CSTATE[2];
   for (iy = 0; iy < 3; iy++) {
     rtb_Angles[iy] = (nexus_block_P.Cds[iy + 3] * rtb_WhiteNoise +
-                      nexus_block_P.Cds[iy] * u) + nexus_block_P.Cds[iy + 6] *
-      STNoise_CSTATE;
+                      nexus_block_P.Cds[iy] * rtb_Centroid_0) +
+      nexus_block_P.Cds[iy + 6] * STNoise_CSTATE;
   }
 
   /* End of StateSpace: '<S1>/ST Noise' */
@@ -374,75 +438,41 @@ void nexus_block::step()
   nexus_block_B.TmpSignalConversionAtSTNoiseInp[0] = nexus_block_B.Output;
   nexus_block_B.TmpSignalConversionAtSTNoiseInp[1] = nexus_block_B.Output_l;
   nexus_block_B.TmpSignalConversionAtSTNoiseInp[2] = nexus_block_B.Output_k;
-
-  /* StateSpace: '<Root>/FSM Controller' */
-  for (iy = 0; iy < 2; iy++) {
-    rtb_WhiteNoise = 0.0;
-    for (ci = 0; ci < 6; ci++) {
-      rtb_WhiteNoise += -nexus_block_P.Ccf[(ci << 1) + iy] *
-        nexus_block_X.FSMController_CSTATE[ci];
-    }
-
-    rtb_u[iy] = rtb_WhiteNoise;
-  }
-
-  /* End of StateSpace: '<Root>/FSM Controller' */
-
-  /* Gain: '<Root>/FSM Plant' */
-  rtb_WhiteNoise = nexus_block_P.FSMPlant_Gain[0] * rtb_u[0] + rtb_u[1] *
-    nexus_block_P.FSMPlant_Gain[2];
-  u = rtb_u[0] * nexus_block_P.FSMPlant_Gain[1] + rtb_u[1] *
-    nexus_block_P.FSMPlant_Gain[3];
-  for (iy = 0; iy < 2; iy++) {
-    /* Sum: '<Root>/Centroid' incorporates:
-     *  Gain: '<Root>/Centroid Sensitivity'
-     *  Gain: '<Root>/FSM Coupling'
-     *  Gain: '<Root>/FSM Plant'
-     */
-    STNoise_CSTATE = 0.0;
-    for (ci = 0; ci < 30; ci++) {
-      STNoise_CSTATE += nexus_block_P.dcdu[(ci << 1) + iy] *
-        rtb_NEXUSPlantDynamics[ci];
-    }
-
-    rtb_u[iy] = STNoise_CSTATE - (nexus_block_P.Kfsm[iy + 2] * u +
-      nexus_block_P.Kfsm[iy] * rtb_WhiteNoise);
-
-    /* End of Sum: '<Root>/Centroid' */
-  }
-
   if (tmp) {
-    /* Gain: '<S9>/Output' incorporates:
-     *  RandomNumber: '<S9>/White Noise'
-     */
+    /* RandomNumber: '<S9>/White Noise' */
+    rtb_WhiteNoise = nexus_block_DW.NextOutput_m;
+
+    /* Gain: '<S9>/Output' */
     nexus_block_B.Output_g = std::sqrt(nexus_block_P.BandLimitedWhiteNoise5_Cov)
-      / 0.031622776601683791 * nexus_block_DW.NextOutput_m;
+      / 0.031622776601683791 * rtb_WhiteNoise;
   }
 
   /* StateSpace: '<S2>/Cryo Noise Filters' */
   for (iy = 0; iy < 3; iy++) {
-    STNoise_CSTATE = 0.0;
+    rtb_WhiteNoise = 0.0;
     for (ci = 0; ci < 12; ci++) {
-      STNoise_CSTATE += nexus_block_P.Cdc[ci * 3 + iy] *
+      rtb_WhiteNoise += nexus_block_P.Cdc[ci * 3 + iy] *
         nexus_block_X.CryoNoiseFilters_CSTATE[ci];
     }
 
-    rtb_CryoNoiseFilters[iy] = STNoise_CSTATE;
+    rtb_CryoNoiseFilters[iy] = rtb_WhiteNoise;
   }
 
   /* End of StateSpace: '<S2>/Cryo Noise Filters' */
   if (tmp) {
-    /* Gain: '<S10>/Output' incorporates:
-     *  RandomNumber: '<S10>/White Noise'
-     */
-    nexus_block_B.Output_j = std::sqrt(nexus_block_P.BandLimitedWhiteNoise10_Cov)
-      / 0.031622776601683791 * nexus_block_DW.NextOutput_i;
+    /* RandomNumber: '<S10>/White Noise' */
+    rtb_WhiteNoise = nexus_block_DW.NextOutput_i;
 
-    /* Gain: '<S11>/Output' incorporates:
-     *  RandomNumber: '<S11>/White Noise'
-     */
+    /* Gain: '<S10>/Output' */
+    nexus_block_B.Output_j = std::sqrt(nexus_block_P.BandLimitedWhiteNoise10_Cov)
+      / 0.031622776601683791 * rtb_WhiteNoise;
+
+    /* RandomNumber: '<S11>/White Noise' */
+    rtb_WhiteNoise = nexus_block_DW.NextOutput_h;
+
+    /* Gain: '<S11>/Output' */
     nexus_block_B.Output_d = std::sqrt(nexus_block_P.BandLimitedWhiteNoise9_Cov)
-      / 0.031622776601683791 * nexus_block_DW.NextOutput_h;
+      / 0.031622776601683791 * rtb_WhiteNoise;
   }
 
   /* SignalConversion generated from: '<S3>/GS  Noise' */
@@ -450,47 +480,50 @@ void nexus_block::step()
   nexus_block_B.TmpSignalConversionAtGSNoiseInp[1] = nexus_block_B.Output_j;
 
   /* StateSpace: '<S3>/GS  Noise' */
-  STNoise_CSTATE = nexus_block_X.GSNoise_CSTATE[1];
-  GSNoise_CSTATE = nexus_block_X.GSNoise_CSTATE[0];
-  GSNoise_CSTATE_0 = nexus_block_X.GSNoise_CSTATE[2];
-  GSNoise_CSTATE_1 = nexus_block_X.GSNoise_CSTATE[3];
+  rtb_WhiteNoise = nexus_block_X.GSNoise_CSTATE[1];
+  rtb_Centroid_0 = nexus_block_X.GSNoise_CSTATE[0];
+  STNoise_CSTATE = nexus_block_X.GSNoise_CSTATE[2];
+  GSNoise_CSTATE = nexus_block_X.GSNoise_CSTATE[3];
   for (iy = 0; iy < 2; iy++) {
     /* Sum: '<Root>/Measured Centroid' incorporates:
      *  Gain: '<S3>/Gain'
      */
     nexus_block_B.MeasuredCentroid[iy] = (((nexus_block_P.Cdg[iy + 2] *
-      nexus_block_P.psc * STNoise_CSTATE + nexus_block_P.psc *
-      nexus_block_P.Cdg[iy] * GSNoise_CSTATE) + nexus_block_P.Cdg[iy + 4] *
-      nexus_block_P.psc * GSNoise_CSTATE_0) + nexus_block_P.Cdg[iy + 6] *
-      nexus_block_P.psc * GSNoise_CSTATE_1) * nexus_block_P.Gain_Gain_n +
-      rtb_u[iy];
+      nexus_block_P.psc * rtb_WhiteNoise + nexus_block_P.psc *
+      nexus_block_P.Cdg[iy] * rtb_Centroid_0) + nexus_block_P.Cdg[iy + 4] *
+      nexus_block_P.psc * STNoise_CSTATE) + nexus_block_P.Cdg[iy + 6] *
+      nexus_block_P.psc * GSNoise_CSTATE) * nexus_block_P.Gain_Gain_n + rtb_u[iy];
   }
 
   /* End of StateSpace: '<S3>/GS  Noise' */
   if (tmp) {
-    /* Gain: '<S12>/Output' incorporates:
-     *  RandomNumber: '<S12>/White Noise'
-     */
+    /* RandomNumber: '<S12>/White Noise' */
+    rtb_WhiteNoise = nexus_block_DW.NextOutput_k;
+
+    /* Gain: '<S12>/Output' */
     nexus_block_B.Output_f = std::sqrt(nexus_block_P.BandLimitedWhiteNoise1_Cov)
-      / 0.031622776601683791 * nexus_block_DW.NextOutput_k;
+      / 0.031622776601683791 * rtb_WhiteNoise;
 
-    /* Gain: '<S13>/Output' incorporates:
-     *  RandomNumber: '<S13>/White Noise'
-     */
+    /* RandomNumber: '<S13>/White Noise' */
+    rtb_WhiteNoise = nexus_block_DW.NextOutput_g;
+
+    /* Gain: '<S13>/Output' */
     nexus_block_B.Output_d5 = std::sqrt(nexus_block_P.BandLimitedWhiteNoise2_Cov)
-      / 0.031622776601683791 * nexus_block_DW.NextOutput_g;
+      / 0.031622776601683791 * rtb_WhiteNoise;
 
-    /* Gain: '<S14>/Output' incorporates:
-     *  RandomNumber: '<S14>/White Noise'
-     */
+    /* RandomNumber: '<S14>/White Noise' */
+    rtb_WhiteNoise = nexus_block_DW.NextOutput_gq;
+
+    /* Gain: '<S14>/Output' */
     nexus_block_B.Output_g0 = std::sqrt(nexus_block_P.BandLimitedWhiteNoise3_Cov)
-      / 0.031622776601683791 * nexus_block_DW.NextOutput_gq;
+      / 0.031622776601683791 * rtb_WhiteNoise;
 
-    /* Gain: '<S15>/Output' incorporates:
-     *  RandomNumber: '<S15>/White Noise'
-     */
+    /* RandomNumber: '<S15>/White Noise' */
+    rtb_WhiteNoise = nexus_block_DW.NextOutput_ig;
+
+    /* Gain: '<S15>/Output' */
     nexus_block_B.Output_jf = std::sqrt(nexus_block_P.BandLimitedWhiteNoise4_Cov)
-      / 0.031622776601683791 * nexus_block_DW.NextOutput_ig;
+      / 0.031622776601683791 * rtb_WhiteNoise;
   }
 
   /* SignalConversion generated from: '<Root>/ACS Controller' incorporates:
@@ -507,20 +540,20 @@ void nexus_block::step()
   nexus_block_B.TmpSignalConversionAtACSControl[2] = rtb_NEXUSPlantDynamics[35];
   nexus_block_B.TmpSignalConversionAtACSControl[5] = nexus_block_P.Gain_Gain *
     rtb_Angles[2] + rtb_NEXUSPlantDynamics[32];
-  nexus_block_B.TmpSignalConversionAtACSControl[6] = rtb_WhiteNoise;
-  nexus_block_B.TmpSignalConversionAtACSControl[7] = u;
+  nexus_block_B.TmpSignalConversionAtACSControl[6] = rtb_NEXUSPlantDynamics_0;
+  nexus_block_B.TmpSignalConversionAtACSControl[7] = rtb_FSMPlant_0;
   for (iy = 0; iy < 6; iy++) {
     /* StateSpace: '<S5>/RW1' */
-    rtb_WhiteNoise = 0.0;
+    rtb_NEXUSPlantDynamics_0 = 0.0;
 
     /* StateSpace: '<S5>/RW2' */
-    u = 0.0;
+    rtb_FSMPlant_0 = 0.0;
 
     /* StateSpace: '<S5>/RW3' */
-    STNoise_CSTATE = 0.0;
+    rtb_WhiteNoise = 0.0;
 
     /* StateSpace: '<S5>/RW4' */
-    GSNoise_CSTATE = 0.0;
+    rtb_Centroid_0 = 0.0;
     for (ci = 0; ci < 12; ci++) {
       /* StateSpace: '<S5>/RW1' incorporates:
        *  StateSpace: '<S5>/RW2'
@@ -528,18 +561,19 @@ void nexus_block::step()
        *  StateSpace: '<S5>/RW4'
        */
       rtb_RW1_tmp = ci * 6 + iy;
-      rtb_WhiteNoise += nexus_block_P.RW1_C[rtb_RW1_tmp] *
+      rtb_NEXUSPlantDynamics_0 += nexus_block_P.RW1_C[rtb_RW1_tmp] *
         nexus_block_X.RW1_CSTATE[ci];
 
       /* StateSpace: '<S5>/RW2' */
-      u += nexus_block_P.RW2_C[rtb_RW1_tmp] * nexus_block_X.RW2_CSTATE[ci];
+      rtb_FSMPlant_0 += nexus_block_P.RW2_C[rtb_RW1_tmp] *
+        nexus_block_X.RW2_CSTATE[ci];
 
       /* StateSpace: '<S5>/RW3' */
-      STNoise_CSTATE += nexus_block_P.RW3_C[rtb_RW1_tmp] *
+      rtb_WhiteNoise += nexus_block_P.RW3_C[rtb_RW1_tmp] *
         nexus_block_X.RW3_CSTATE[ci];
 
       /* StateSpace: '<S5>/RW4' */
-      GSNoise_CSTATE += nexus_block_P.RW4_C[rtb_RW1_tmp] *
+      rtb_Centroid_0 += nexus_block_P.RW4_C[rtb_RW1_tmp] *
         nexus_block_X.RW4_CSTATE[ci];
     }
 
@@ -551,13 +585,13 @@ void nexus_block::step()
      *  StateSpace: '<S5>/RW4'
      */
     nexus_block_B.TmpSignalConversionAtNEXUSPlant[iy] =
-      nexus_block_P.Gain_Gain_o * rtb_WhiteNoise;
+      nexus_block_P.Gain_Gain_o * rtb_NEXUSPlantDynamics_0;
     nexus_block_B.TmpSignalConversionAtNEXUSPlant[iy + 6] =
-      nexus_block_P.Gain_Gain_o * u;
+      nexus_block_P.Gain_Gain_o * rtb_FSMPlant_0;
     nexus_block_B.TmpSignalConversionAtNEXUSPlant[iy + 12] =
-      nexus_block_P.Gain_Gain_o * STNoise_CSTATE;
+      nexus_block_P.Gain_Gain_o * rtb_WhiteNoise;
     nexus_block_B.TmpSignalConversionAtNEXUSPlant[iy + 18] =
-      nexus_block_P.Gain_Gain_o * GSNoise_CSTATE;
+      nexus_block_P.Gain_Gain_o * rtb_Centroid_0;
   }
 
   /* SignalConversion generated from: '<Root>/NEXUS Plant Dynamics' incorporates:
@@ -572,6 +606,12 @@ void nexus_block::step()
   nexus_block_B.TmpSignalConversionAtNEXUSPlant[26] = nexus_block_P.Gain_Gain_i *
     rtb_CryoNoiseFilters[2];
   nexus_block_B.TmpSignalConversionAtNEXUSPlant[29] = rtb_ACSController[2];
+  if (rtmIsMajorTimeStep((&nexus_block_M))) {
+    /* Matfile logging */
+    rt_UpdateTXYLogVars((&nexus_block_M)->rtwLogInfo, ((&nexus_block_M)
+      ->Timing.t));
+  }                                    /* end MajorTimeStep */
+
   if (rtmIsMajorTimeStep((&nexus_block_M))) {
     if (rtmIsMajorTimeStep((&nexus_block_M))) {
       /* Update for RandomNumber: '<S6>/White Noise' */
@@ -627,6 +667,18 @@ void nexus_block::step()
   }                                    /* end MajorTimeStep */
 
   if (rtmIsMajorTimeStep((&nexus_block_M))) {
+    /* signal main to stop simulation */
+    {                                  /* Sample time: [0.0s, 0.0s] */
+      if ((rtmGetTFinal((&nexus_block_M))!=-1) &&
+          !((rtmGetTFinal((&nexus_block_M))-((((&nexus_block_M)
+               ->Timing.clockTick1+(&nexus_block_M)->Timing.clockTickH1*
+               4294967296.0)) * 0.001)) > ((((&nexus_block_M)->Timing.clockTick1
+              +(&nexus_block_M)->Timing.clockTickH1* 4294967296.0)) * 0.001) *
+            (DBL_EPSILON))) {
+        rtmSetErrorStatus((&nexus_block_M), "Simulation finished");
+      }
+    }
+
     rt_ertODEUpdateContinuousStates(&(&nexus_block_M)->solverInfo);
 
     /* Update absolute time for base rate */
@@ -695,6 +747,21 @@ void nexus_block::nexus_block_derivatives()
 
   /* End of Derivatives for StateSpace: '<Root>/NEXUS Plant Dynamics' */
 
+  /* Derivatives for StateSpace: '<Root>/FSM Controller' */
+  for (is = 0; is < 6; is++) {
+    NEXUSPlantDynamics_CSTATE = 0.0;
+    for (ci = 0; ci < 6; ci++) {
+      NEXUSPlantDynamics_CSTATE += nexus_block_P.Acf[ci * 6 + is] *
+        nexus_block_X.FSMController_CSTATE[ci];
+    }
+
+    _rtXdot->FSMController_CSTATE[is] = (nexus_block_P.Bcf[is] *
+      nexus_block_B.MeasuredCentroid[0] + NEXUSPlantDynamics_CSTATE) +
+      nexus_block_P.Bcf[is + 6] * nexus_block_B.MeasuredCentroid[1];
+  }
+
+  /* End of Derivatives for StateSpace: '<Root>/FSM Controller' */
+
   /* Derivatives for StateSpace: '<Root>/ACS Controller' */
   for (is = 0; is < 9; is++) {
     NEXUSPlantDynamics_CSTATE = 0.0;
@@ -733,21 +800,6 @@ void nexus_block::nexus_block_derivatives()
   }
 
   /* End of Derivatives for StateSpace: '<S1>/ST Noise' */
-
-  /* Derivatives for StateSpace: '<Root>/FSM Controller' */
-  for (is = 0; is < 6; is++) {
-    NEXUSPlantDynamics_CSTATE = 0.0;
-    for (ci = 0; ci < 6; ci++) {
-      NEXUSPlantDynamics_CSTATE += nexus_block_P.Acf[ci * 6 + is] *
-        nexus_block_X.FSMController_CSTATE[ci];
-    }
-
-    _rtXdot->FSMController_CSTATE[is] = (nexus_block_P.Bcf[is] *
-      nexus_block_B.MeasuredCentroid[0] + NEXUSPlantDynamics_CSTATE) +
-      nexus_block_P.Bcf[is + 6] * nexus_block_B.MeasuredCentroid[1];
-  }
-
-  /* End of Derivatives for StateSpace: '<Root>/FSM Controller' */
 
   /* Derivatives for StateSpace: '<S2>/Cryo Noise Filters' */
   for (is = 0; is < 12; is++) {
@@ -877,7 +929,94 @@ void nexus_block::initialize()
                     (&(&nexus_block_M)->intgData));
   rtsiSetSolverName(&(&nexus_block_M)->solverInfo,"ode4");
   rtmSetTPtr((&nexus_block_M), &(&nexus_block_M)->Timing.tArray[0]);
+  rtmSetTFinal((&nexus_block_M), 5.0);
   (&nexus_block_M)->Timing.stepSize0 = 0.001;
+
+  /* Setup for data logging */
+  {
+    static RTWLogInfo rt_DataLoggingInfo;
+    rt_DataLoggingInfo.loggingInterval = (nullptr);
+    (&nexus_block_M)->rtwLogInfo = &rt_DataLoggingInfo;
+  }
+
+  /* Setup for data logging */
+  {
+    rtliSetLogXSignalInfo((&nexus_block_M)->rtwLogInfo, (nullptr));
+    rtliSetLogXSignalPtrs((&nexus_block_M)->rtwLogInfo, (nullptr));
+    rtliSetLogT((&nexus_block_M)->rtwLogInfo, "tout");
+    rtliSetLogX((&nexus_block_M)->rtwLogInfo, "");
+    rtliSetLogXFinal((&nexus_block_M)->rtwLogInfo, "");
+    rtliSetLogVarNameModifier((&nexus_block_M)->rtwLogInfo, "rt_");
+    rtliSetLogFormat((&nexus_block_M)->rtwLogInfo, 0);
+    rtliSetLogMaxRows((&nexus_block_M)->rtwLogInfo, 0);
+    rtliSetLogDecimation((&nexus_block_M)->rtwLogInfo, 1);
+    rtliSetLogY((&nexus_block_M)->rtwLogInfo, "");
+    rtliSetLogYSignalInfo((&nexus_block_M)->rtwLogInfo, (nullptr));
+    rtliSetLogYSignalPtrs((&nexus_block_M)->rtwLogInfo, (nullptr));
+  }
+
+  /* Matfile logging */
+  rt_StartDataLoggingWithStartTime((&nexus_block_M)->rtwLogInfo, 0.0,
+    rtmGetTFinal((&nexus_block_M)), (&nexus_block_M)->Timing.stepSize0,
+    (&rtmGetErrorStatus((&nexus_block_M))));
+
+  /* SetupRuntimeResources for ToWorkspace: '<Root>/Performance 1' */
+  {
+    int_T dimensions[1]{ 1 };
+
+    nexus_block_DW.Performance1_PWORK.LoggedData = rt_CreateLogVar(
+      (&nexus_block_M)->rtwLogInfo,
+      0.0,
+      rtmGetTFinal((&nexus_block_M)),
+      (&nexus_block_M)->Timing.stepSize0,
+      (&rtmGetErrorStatus((&nexus_block_M))),
+      "WFE",
+      SS_DOUBLE,
+      0,
+      0,
+      0,
+      1,
+      1,
+      dimensions,
+      NO_LOGVALDIMS,
+      (nullptr),
+      (nullptr),
+      0,
+      1,
+      0.001,
+      1);
+    if (nexus_block_DW.Performance1_PWORK.LoggedData == (nullptr))
+      return;
+  }
+
+  /* SetupRuntimeResources for ToWorkspace: '<Root>/Performance 2' */
+  {
+    int_T dimensions[1]{ 2 };
+
+    nexus_block_DW.Performance2_PWORK.LoggedData = rt_CreateLogVar(
+      (&nexus_block_M)->rtwLogInfo,
+      0.0,
+      rtmGetTFinal((&nexus_block_M)),
+      (&nexus_block_M)->Timing.stepSize0,
+      (&rtmGetErrorStatus((&nexus_block_M))),
+      "LOS",
+      SS_DOUBLE,
+      0,
+      0,
+      0,
+      2,
+      1,
+      dimensions,
+      NO_LOGVALDIMS,
+      (nullptr),
+      (nullptr),
+      0,
+      1,
+      0.001,
+      1);
+    if (nexus_block_DW.Performance2_PWORK.LoggedData == (nullptr))
+      return;
+  }
 
   {
     real_T tmp;
@@ -892,6 +1031,14 @@ void nexus_block::initialize()
     }
 
     /* End of InitializeConditions for StateSpace: '<Root>/NEXUS Plant Dynamics' */
+
+    /* InitializeConditions for StateSpace: '<Root>/FSM Controller' */
+    for (is = 0; is < 6; is++) {
+      nexus_block_X.FSMController_CSTATE[is] =
+        nexus_block_P.FSMController_InitialCondition;
+    }
+
+    /* End of InitializeConditions for StateSpace: '<Root>/FSM Controller' */
 
     /* InitializeConditions for StateSpace: '<Root>/ACS Controller' */
     for (is = 0; is < 9; is++) {
@@ -989,14 +1136,6 @@ void nexus_block::initialize()
     nexus_block_X.STNoise_CSTATE[0] = nexus_block_P.STNoise_InitialCondition;
     nexus_block_X.STNoise_CSTATE[1] = nexus_block_P.STNoise_InitialCondition;
     nexus_block_X.STNoise_CSTATE[2] = nexus_block_P.STNoise_InitialCondition;
-
-    /* InitializeConditions for StateSpace: '<Root>/FSM Controller' */
-    for (is = 0; is < 6; is++) {
-      nexus_block_X.FSMController_CSTATE[is] =
-        nexus_block_P.FSMController_InitialCondition;
-    }
-
-    /* End of InitializeConditions for StateSpace: '<Root>/FSM Controller' */
 
     /* InitializeConditions for RandomNumber: '<S9>/White Noise' */
     tmp = std::floor(nexus_block_P.Seed[4]);

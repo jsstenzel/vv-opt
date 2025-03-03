@@ -1,4 +1,5 @@
-﻿nexus_block.obj
+﻿rt_logging.obj
+nexus_block.obj
 nexus_block_data.obj
 rtGetInf.obj
 rtGetNaN.obj

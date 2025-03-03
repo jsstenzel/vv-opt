@@ -1,3 +1,25 @@
 1. download additional apps (Simulink, Control System Toolbox)
 2. Click on the "Simulink" button on home to pull up the window
 3. run the code. It runs!
+
+
+
+########################
+Steps to making C code:
+1. Using Simulink Coder
+2. Had to replace instances of MATLAB function objects in RMMS
+3. Configuration parameters for Simulink Coder:
+	- Code Generation > "Generate C++ code"
+	- Code Generation > "Generate code only" (dont run makefile)
+	- Comments > include all
+	- Interface > code interface packaging: "Reusable function"
+	- Solver > make T=5 and dt=0.001 explicit 
+
+
+4. Edit code. General principles:
+	- I think I need to include the code in nexus_perf.m to extract Q from the model results
+	- The WFE and LOS that are printed to nexus_block.mat aren't the exact same variables that are printed as model outputs, but they are inputs to RMMS_WFE_time and RSS_LOS_time ... 
+TODO: Need to check to see if nexus_block.mat has results equivalent to running Simulink natively.
+TODO figure out if time domain or Lyapunov sim results are better, and figure out whether WFE or LOS is my *actual* Q.
+	- "The answer provided by the Lyapunov analysis tends to be more accurate because it is independent of time step. On the downside, the Lyapunov analysis does not provide any insights into the time domain evolution of the signals or frequency content." -- I should use Lyapunov
+	- These result from the "closed loop integrated model." Calculations are made with (Azd, Bzd, Czd, Dzd) - those are defined in nexus_assy.m

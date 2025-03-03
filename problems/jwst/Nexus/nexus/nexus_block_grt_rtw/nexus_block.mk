@@ -2,7 +2,7 @@
 ## Makefile generated for component 'nexus_block'. 
 ## 
 ## Makefile     : nexus_block.mk
-## Generated on : Sun Mar 02 14:58:42 2025
+## Generated on : Sun Mar 02 17:48:44 2025
 ## Final product: $(RELATIVE_PATH_TO_ANCHOR)\nexus_block.exe
 ## Product type : executable
 ## 
@@ -172,7 +172,7 @@ INCLUDES = $(INCLUDES_BUILDINFO)
 ## DEFINES
 ###########################################################################
 
-DEFINES_BUILD_ARGS = -DCLASSIC_INTERFACE=0 -DALLOCATIONFCN=0 -DMAT_FILE=0 -DONESTEPFCN=1 -DTERMFCN=1 -DMULTI_INSTANCE_CODE=1 -DINTEGER_CODE=0 -DMT=0
+DEFINES_BUILD_ARGS = -DCLASSIC_INTERFACE=0 -DALLOCATIONFCN=0 -DMAT_FILE=1 -DONESTEPFCN=1 -DTERMFCN=1 -DMULTI_INSTANCE_CODE=1 -DINTEGER_CODE=0 -DMT=0
 DEFINES_CUSTOM = 
 DEFINES_OPTS = -DTID01EQ=1
 DEFINES_STANDARD = -DMODEL=nexus_block -DNUMST=2 -DNCSTATES=240 -DHAVESTDIO -DRT -DUSE_RTMODEL
@@ -183,7 +183,7 @@ DEFINES = $(DEFINES_BUILD_ARGS) $(DEFINES_CUSTOM) $(DEFINES_OPTS) $(DEFINES_STAN
 ## SOURCE FILES
 ###########################################################################
 
-SRCS = $(START_DIR)\nexus_block_grt_rtw\nexus_block.cpp $(START_DIR)\nexus_block_grt_rtw\nexus_block_data.cpp $(START_DIR)\nexus_block_grt_rtw\rtGetInf.cpp $(START_DIR)\nexus_block_grt_rtw\rtGetNaN.cpp $(START_DIR)\nexus_block_grt_rtw\rt_nonfinite.cpp
+SRCS = $(MATLAB_ROOT)\rtw\c\src\rt_logging.c $(START_DIR)\nexus_block_grt_rtw\nexus_block.cpp $(START_DIR)\nexus_block_grt_rtw\nexus_block_data.cpp $(START_DIR)\nexus_block_grt_rtw\rtGetInf.cpp $(START_DIR)\nexus_block_grt_rtw\rtGetNaN.cpp $(START_DIR)\nexus_block_grt_rtw\rt_nonfinite.cpp
 
 MAIN_SRC = $(MATLAB_ROOT)\rtw\c\src\common\rt_cppclass_main.cpp
 
@@ -193,7 +193,7 @@ ALL_SRCS = $(SRCS) $(MAIN_SRC)
 ## OBJECTS
 ###########################################################################
 
-OBJS = nexus_block.obj nexus_block_data.obj rtGetInf.obj rtGetNaN.obj rt_nonfinite.obj
+OBJS = rt_logging.obj nexus_block.obj nexus_block_data.obj rtGetInf.obj rtGetNaN.obj rt_nonfinite.obj
 
 MAIN_OBJ = rt_cppclass_main.obj
 
@@ -412,6 +412,10 @@ $(PRODUCT) : $(OBJS) $(PREBUILT_OBJS) $(MAIN_OBJ)
 
 {$(MATLAB_ROOT)\toolbox\simulink\blocks\src}.cxx.obj:
 	$(CPP) $(CPPFLAGS) -Fo"$@" "$<"
+
+
+rt_logging.obj : "$(MATLAB_ROOT)\rtw\c\src\rt_logging.c"
+	$(CC) $(CFLAGS) -Fo"$@" "$(MATLAB_ROOT)\rtw\c\src\rt_logging.c"
 
 
 nexus_block.obj : "$(START_DIR)\nexus_block_grt_rtw\nexus_block.cpp"

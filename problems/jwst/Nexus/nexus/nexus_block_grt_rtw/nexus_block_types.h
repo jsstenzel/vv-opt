@@ -7,9 +7,9 @@
  *
  * Code generation for model "nexus_block".
  *
- * Model version              : 1.259
+ * Model version              : 1.265
  * Simulink Coder version : 24.2 (R2024b) 21-Jun-2024
- * C++ source code generated on : Sun Mar  2 14:58:31 2025
+ * C++ source code generated on : Sun Mar  2 17:48:36 2025
  *
  * Target selection: grt.tlc
  * Note: GRT includes extra infrastructure and instrumentation for prototyping
@@ -22,6 +22,13 @@
 
 #ifndef nexus_block_types_h_
 #define nexus_block_types_h_
+#ifndef SS_UINT64
+#define SS_UINT64                      17
+#endif
+
+#ifndef SS_INT64
+#define SS_INT64                       18
+#endif
 
 /* Parameters (default storage) */
 typedef struct P_nexus_block_T_ P_nexus_block_T;

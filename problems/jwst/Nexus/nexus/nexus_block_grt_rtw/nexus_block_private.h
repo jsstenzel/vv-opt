@@ -7,9 +7,9 @@
  *
  * Code generation for model "nexus_block".
  *
- * Model version              : 1.259
+ * Model version              : 1.265
  * Simulink Coder version : 24.2 (R2024b) 21-Jun-2024
- * C++ source code generated on : Sun Mar  2 14:58:31 2025
+ * C++ source code generated on : Sun Mar  2 17:48:36 2025
  *
  * Target selection: grt.tlc
  * Note: GRT includes extra infrastructure and instrumentation for prototyping
@@ -23,6 +23,7 @@
 #ifndef nexus_block_private_h_
 #define nexus_block_private_h_
 #include "rtwtypes.h"
+#include "builtin_typeid_types.h"
 #include "multiword_types.h"
 #include "nexus_block_types.h"
 #include "rtw_continuous.h"
@@ -35,6 +36,10 @@
 
 #ifndef rtmIsMinorTimeStep
 #define rtmIsMinorTimeStep(rtm)        (((rtm)->Timing.simTimeStep) == MINOR_TIME_STEP)
+#endif
+
+#ifndef rtmSetTFinal
+#define rtmSetTFinal(rtm, val)         ((rtm)->Timing.tFinal = (val))
 #endif
 
 #ifndef rtmSetTPtr

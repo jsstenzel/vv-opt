@@ -7,9 +7,9 @@
  *
  * Code generation for model "nexus_block".
  *
- * Model version              : 1.259
+ * Model version              : 1.265
  * Simulink Coder version : 24.2 (R2024b) 21-Jun-2024
- * C++ source code generated on : Sun Mar  2 14:58:31 2025
+ * C++ source code generated on : Sun Mar  2 17:48:36 2025
  *
  * Target selection: grt.tlc
  * Note: GRT includes extra infrastructure and instrumentation for prototyping
@@ -22,10 +22,12 @@
 
 #ifndef nexus_block_h_
 #define nexus_block_h_
+#include <stdlib.h>
 #include <cmath>
 #include "rtwtypes.h"
 #include "rtw_continuous.h"
 #include "rtw_solver.h"
+#include "rt_logging.h"
 #include "rt_nonfinite.h"
 #include "nexus_block_types.h"
 
@@ -43,6 +45,7 @@ extern "C"
 
 }
 
+#include <cfloat>
 #include <cstring>
 
 /* Macros for accessing real-time model data structure */
@@ -76,6 +79,10 @@ extern "C"
 
 #ifndef rtmSetDerivCacheNeedsReset
 #define rtmSetDerivCacheNeedsReset(rtm, val) ((rtm)->derivCacheNeedsReset = (val))
+#endif
+
+#ifndef rtmGetFinalTime
+#define rtmGetFinalTime(rtm)           ((rtm)->Timing.tFinal)
 #endif
 
 #ifndef rtmGetIntgData
@@ -118,6 +125,10 @@ extern "C"
 #define rtmSetPeriodicContStateRanges(rtm, val) ((rtm)->periodicContStateRanges = (val))
 #endif
 
+#ifndef rtmGetRTWLogInfo
+#define rtmGetRTWLogInfo(rtm)          ((rtm)->rtwLogInfo)
+#endif
+
 #ifndef rtmGetZCCacheNeedsReset
 #define rtmGetZCCacheNeedsReset(rtm)   ((rtm)->zCCacheNeedsReset)
 #endif
@@ -158,6 +169,10 @@ extern "C"
 #define rtmGetT(rtm)                   (rtmGetTPtr((rtm))[0])
 #endif
 
+#ifndef rtmGetTFinal
+#define rtmGetTFinal(rtm)              ((rtm)->Timing.tFinal)
+#endif
+
 #ifndef rtmGetTPtr
 #define rtmGetTPtr(rtm)                ((rtm)->Timing.t)
 #endif
@@ -169,6 +184,7 @@ extern "C"
 /* Block signals (default storage) */
 struct B_nexus_block_T {
   real_T WFESensitivity[134];          /* '<Root>/WFE Sensitivity' */
+  real_T m2mic[2];                     /* '<Root>/m2mic' */
   real_T Output;                       /* '<S6>/Output' */
   real_T Output_l;                     /* '<S7>/Output' */
   real_T Output_k;                     /* '<S8>/Output' */
@@ -201,6 +217,14 @@ struct DW_nexus_block_T {
   real_T NextOutput_g;                 /* '<S13>/White Noise' */
   real_T NextOutput_gq;                /* '<S14>/White Noise' */
   real_T NextOutput_ig;                /* '<S15>/White Noise' */
+  struct {
+    void *LoggedData;
+  } Performance1_PWORK;                /* '<Root>/Performance 1' */
+
+  struct {
+    void *LoggedData;
+  } Performance2_PWORK;                /* '<Root>/Performance 2' */
+
   uint32_T RandSeed;                   /* '<S6>/White Noise' */
   uint32_T RandSeed_a;                 /* '<S7>/White Noise' */
   uint32_T RandSeed_e;                 /* '<S8>/White Noise' */
@@ -216,9 +240,9 @@ struct DW_nexus_block_T {
 /* Continuous states (default storage) */
 struct X_nexus_block_T {
   real_T NEXUSPlantDynamics_CSTATE[158];/* '<Root>/NEXUS Plant Dynamics' */
+  real_T FSMController_CSTATE[6];      /* '<Root>/FSM Controller' */
   real_T ACSController_CSTATE[9];      /* '<Root>/ACS Controller' */
   real_T STNoise_CSTATE[3];            /* '<S1>/ST Noise' */
-  real_T FSMController_CSTATE[6];      /* '<Root>/FSM Controller' */
   real_T CryoNoiseFilters_CSTATE[12];  /* '<S2>/Cryo Noise Filters' */
   real_T GSNoise_CSTATE[4];            /* '<S3>/GS  Noise' */
   real_T RW1_CSTATE[12];               /* '<S5>/RW1' */
@@ -230,9 +254,9 @@ struct X_nexus_block_T {
 /* State derivatives (default storage) */
 struct XDot_nexus_block_T {
   real_T NEXUSPlantDynamics_CSTATE[158];/* '<Root>/NEXUS Plant Dynamics' */
+  real_T FSMController_CSTATE[6];      /* '<Root>/FSM Controller' */
   real_T ACSController_CSTATE[9];      /* '<Root>/ACS Controller' */
   real_T STNoise_CSTATE[3];            /* '<S1>/ST Noise' */
-  real_T FSMController_CSTATE[6];      /* '<Root>/FSM Controller' */
   real_T CryoNoiseFilters_CSTATE[12];  /* '<S2>/Cryo Noise Filters' */
   real_T GSNoise_CSTATE[4];            /* '<S3>/GS  Noise' */
   real_T RW1_CSTATE[12];               /* '<S5>/RW1' */
@@ -244,9 +268,9 @@ struct XDot_nexus_block_T {
 /* State disabled  */
 struct XDis_nexus_block_T {
   boolean_T NEXUSPlantDynamics_CSTATE[158];/* '<Root>/NEXUS Plant Dynamics' */
+  boolean_T FSMController_CSTATE[6];   /* '<Root>/FSM Controller' */
   boolean_T ACSController_CSTATE[9];   /* '<Root>/ACS Controller' */
   boolean_T STNoise_CSTATE[3];         /* '<S1>/ST Noise' */
-  boolean_T FSMController_CSTATE[6];   /* '<Root>/FSM Controller' */
   boolean_T CryoNoiseFilters_CSTATE[12];/* '<S2>/Cryo Noise Filters' */
   boolean_T GSNoise_CSTATE[4];         /* '<S3>/GS  Noise' */
   boolean_T RW1_CSTATE[12];            /* '<S5>/RW1' */
@@ -410,6 +434,12 @@ struct P_nexus_block_T_ {
   real_T NEXUSPlantDynamics_InitialCondi;/* Expression: 0
                                           * Referenced by: '<Root>/NEXUS Plant Dynamics'
                                           */
+  real_T FSMController_InitialCondition;/* Expression: 0
+                                         * Referenced by: '<Root>/FSM Controller'
+                                         */
+  real_T FSMPlant_Gain[4];             /* Expression: eye(2,2)
+                                        * Referenced by: '<Root>/FSM Plant'
+                                        */
   real_T ACSController_InitialCondition;/* Expression: 0
                                          * Referenced by: '<Root>/ACS Controller'
                                          */
@@ -436,12 +466,6 @@ struct P_nexus_block_T_ {
                                         */
   real_T Gain_Gain;                    /* Expression: 1
                                         * Referenced by: '<S1>/Gain'
-                                        */
-  real_T FSMController_InitialCondition;/* Expression: 0
-                                         * Referenced by: '<Root>/FSM Controller'
-                                         */
-  real_T FSMPlant_Gain[4];             /* Expression: eye(2,2)
-                                        * Referenced by: '<Root>/FSM Plant'
                                         */
   real_T WhiteNoise_Mean_g;            /* Expression: 0
                                         * Referenced by: '<S9>/White Noise'
@@ -529,6 +553,7 @@ struct P_nexus_block_T_ {
 /* Real-time Model Data Structure */
 struct tag_RTM_nexus_block_T {
   const char_T *errorStatus;
+  RTWLogInfo *rtwLogInfo;
   RTWSolverInfo solverInfo;
   X_nexus_block_T *contStates;
   int_T *periodicContStateIndices;
@@ -566,6 +591,7 @@ struct tag_RTM_nexus_block_T {
     uint32_T clockTick1;
     uint32_T clockTickH1;
     time_T tStart;
+    time_T tFinal;
     SimTimeStep simTimeStep;
     boolean_T stopRequestedFlag;
     time_T *t;

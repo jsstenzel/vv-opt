@@ -7,9 +7,9 @@
  *
  * Code generation for model "nexus_block".
  *
- * Model version              : 1.259
+ * Model version              : 1.265
  * Simulink Coder version : 24.2 (R2024b) 21-Jun-2024
- * C++ source code generated on : Sun Mar  2 14:58:31 2025
+ * C++ source code generated on : Sun Mar  2 17:48:36 2025
  *
  * Target selection: grt.tlc
  * Note: GRT includes extra infrastructure and instrumentation for prototyping
@@ -24,6 +24,9 @@
 
 /* Block parameters (default storage) */
 P_nexus_block_T nexus_block::nexus_block_P{
+  /* Variable: Aca
+   * Referenced by: '<Root>/ACS Controller'
+   */
   { -0.62200361134217141, -0.19344424626135148, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.62200361134217141,
@@ -32,12 +35,18 @@ P_nexus_block_T nexus_block::nexus_block_P{
     0.0, 0.0, -0.62200361134217141, -0.19344424626135148, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 },
 
+  /* Variable: Acf
+   * Referenced by: '<Root>/FSM Controller'
+   */
   { -26.179938779914945, 0.0, 2000.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     -0.027415567780803778, 0.0, 0.0, 0.0, 0.0, 1.0, -0.57595865315812877, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, -26.179938779914945, 0.0, 2000.0, 0.0, 0.0, 0.0,
     0.0, 0.0, -0.027415567780803778, 0.0, 0.0, 0.0, 0.0, 1.0,
     -0.57595865315812877 },
 
+  /* Variable: Adc
+   * Referenced by: '<S2>/Cryo Noise Filters'
+   */
   { 0.0, -35530.575843921681, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     -142122.30337568672, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
@@ -51,12 +60,25 @@ P_nexus_block_T nexus_block::nexus_block_P{
     -319775.18259529513, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
     -1.0000000000000002 },
 
+  /* Variable: Adg
+   * Referenced by: '<S3>/GS  Noise'
+   */
   { 0.0, -24674.011002723397, 0.0, 0.0, 1.0, -222.11060060879836, 0.0, 0.0, 0.0,
     0.0, 0.0, -24674.011002723397, 0.0, 0.0, 1.0, -222.11060060879836 },
 
+  /* Variable: Ads
+   * Referenced by: '<S1>/ST Noise'
+   */
   { -0.62831853071795862, 0.0, 0.0, 0.0, -0.62831853071795862, 0.0, 0.0, 0.0,
     -0.62831853071795862 },
 
+  /* Variable: Adw
+   * Referenced by:
+   *   '<S5>/RW1'
+   *   '<S5>/RW2'
+   *   '<S5>/RW3'
+   *   '<S5>/RW4'
+   */
   { 0.0, -126133.544245922, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     1.0, -2070.3095587156736, 0.0, 2007.4777056438777, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -98696.044010893587, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -71,6 +93,9 @@ P_nexus_block_T nexus_block::nexus_block_P{
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -98696.044010893587, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, -125.66370614359174 },
 
+  /* Variable: Ap
+   * Referenced by: '<Root>/NEXUS Plant Dynamics'
+   */
   { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -1796,6 +1821,9 @@ P_nexus_block_T nexus_block::nexus_block_P{
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     -10.681399440547462 },
 
+  /* Variable: Bca
+   * Referenced by: '<Root>/ACS Controller'
+   */
   { 0.0, 0.62676779893833479, 0.0, 0.0, -29.44939928395527, 0.0, 0.0,
     -2.7379792100023983, 0.0, 0.0, 16.598793843473647, 0.0, 0.0,
     -0.90768780640661662, 0.0, 0.0, 16.723761828338109, 0.0, 0.0,
@@ -1809,17 +1837,39 @@ P_nexus_block_T nexus_block::nexus_block_P{
     0.0078113952156551106, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
 
+  /* Variable: Bcf
+   * Referenced by: '<Root>/FSM Controller'
+   */
   { -24.085543677521748, 0.0, 2000.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     -24.085543677521748, 0.0, 2000.0 },
 
+  /* Variable: Bdc
+   * Referenced by: '<S2>/Cryo Noise Filters'
+   */
   { 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0 },
 
+  /* Variable: Bdg
+   * Referenced by: '<S3>/GS  Noise'
+   */
   { 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 },
 
+  /* Variable: Bds
+   * Referenced by: '<S1>/ST Noise'
+   */
   { 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 },
 
+  /* Variable: Bdw
+   * Referenced by:
+   *   '<S5>/RW1'
+   *   '<S5>/RW2'
+   *   '<S5>/RW3'
+   *   '<S5>/RW4'
+   */
   { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 },
 
+  /* Variable: Bp
+   * Referenced by: '<Root>/NEXUS Plant Dynamics'
+   */
   { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -2756,22 +2806,40 @@ P_nexus_block_T nexus_block::nexus_block_P{
     0.00065579759249495713, -4.6013893632832868E-5, -2.825920025357981E-5,
     -1.46937523854037E-6, 1.8362718734242642E-5, 0.0015146426823976255 },
 
+  /* Variable: Cca
+   * Referenced by: '<Root>/ACS Controller'
+   */
   { -0.030684945758701992, -0.81263442316215206, 0.58196540137339936, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.99497762690151681, 0.030667147091110444,
     0.095284038824550055, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.095278308492607031,
     -0.58196633956029509, -0.80761205015129578, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
 
+  /* Variable: Ccf
+   * Referenced by: '<Root>/FSM Controller'
+   */
   { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 },
 
+  /* Variable: Cdc
+   * Referenced by: '<S2>/Cryo Noise Filters'
+   */
   { 0.0, 0.0, 0.0, 0.0, 0.0, 0.21, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00475, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.020499999999999997, 0.0, 0.0, 0.0, 0.001, 0.001, 0.0, 0.0,
     0.0, 0.0, 0.00045, 0.00045, 0.0, 0.0, 0.0, 0.0, 0.00125, 0.00125, 0.0 },
 
+  /* Variable: Cdg
+   * Referenced by: '<S3>/GS  Noise'
+   */
   { 3.2155757401309638E-5, 0.0, 0.0, 0.0, 0.0, 3.2155757401309638E-5, 0.0, 0.0 },
 
+  /* Variable: Cds
+   * Referenced by: '<S1>/ST Noise'
+   */
   { 4.3761319394606617E-6, 0.0, 0.0, 0.0, 4.3761319394606617E-6, 0.0, 0.0, 0.0,
     4.3761319394606617E-6 },
 
+  /* Variable: Cp
+   * Referenced by: '<Root>/NEXUS Plant Dynamics'
+   */
   { 0.0, 0.052061629679945085, 0.020786049434636304, 0.024105411093080835, 0.0,
     0.0, 0.0, 0.02558641562230347, 0.020786049434636304, 0.024105411093080835,
     0.0, 0.0, 0.0, 0.025586174568192545, 0.020786049434636304,
@@ -3911,12 +3979,31 @@ P_nexus_block_T nexus_block::nexus_block_P{
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.017667054899096063, -0.03640671649435126, -0.019483811219140314 },
 
+  /* Variable: Kfsm
+   * Referenced by: '<Root>/FSM Coupling'
+   */
   { -6.2818737567340577, 2.1723025156461517E-5, -1.6638750821584836E-5,
     -6.6496959604194217 },
 
+  /* Variable: Seed
+   * Referenced by:
+   *   '<S6>/White Noise'
+   *   '<S7>/White Noise'
+   *   '<S8>/White Noise'
+   *   '<S9>/White Noise'
+   *   '<S10>/White Noise'
+   *   '<S11>/White Noise'
+   *   '<S12>/White Noise'
+   *   '<S13>/White Noise'
+   *   '<S14>/White Noise'
+   *   '<S15>/White Noise'
+   */
   { 81472.0, 90579.0, 12699.0, 91338.0, 63236.0, 9754.0, 27850.0, 54688.0,
     95751.0, 96489.0 },
 
+  /* Variable: dcdu
+   * Referenced by: '<Root>/Centroid Sensitivity'
+   */
   { -9.52653061312958, 3.1743439876663615E-5, 4.5474735088646412E-10,
     -2.0891290884605951, 9.0949470177292824E-10, 9.60485129354538,
     1.1368683772161603E-10, 68.659548538562376, -6.9076873444373632,
@@ -3938,6 +4025,9 @@ P_nexus_block_T nexus_block::nexus_block_P{
     0.10837885622549948, 6.9369477439806815, 9.3655967039012449,
     4.0146204582924838E-5 },
 
+  /* Variable: dwdu
+   * Referenced by: '<Root>/WFE Sensitivity'
+   */
   { -0.0044211291872249814, -0.022255339853703593, -0.040156580279702883,
     0.049049272138969417, 0.0044826038454141509, -0.067189511309383068,
     0.022470932027086995, -0.085166645430266488, 0.0045095812772581395,
@@ -5243,51 +5333,225 @@ P_nexus_block_T nexus_block::nexus_block_P{
     -0.00032632361621631349, -0.00011933535501861979, 0.00016895263757055591,
     -0.00027533188626671244, 0.00013364605324773084, -0.00030062857190182467,
     0.00022850998862145443 },
+
+  /* Variable: m2micron
+   * Referenced by: '<Root>/m2mic'
+   */
   1.0E+6,
+
+  /* Variable: m2nm
+   * Referenced by: '<S4>/Gain'
+   */
   1.0E+9,
+
+  /* Variable: psc
+   * Referenced by: '<S3>/GS  Noise'
+   */
   100.95629453915934,
+
+  /* Mask Parameter: BandLimitedWhiteNoise6_Cov
+   * Referenced by: '<S6>/Output'
+   */
   1.0,
+
+  /* Mask Parameter: BandLimitedWhiteNoise7_Cov
+   * Referenced by: '<S7>/Output'
+   */
   1.0,
+
+  /* Mask Parameter: BandLimitedWhiteNoise8_Cov
+   * Referenced by: '<S8>/Output'
+   */
   1.0,
+
+  /* Mask Parameter: BandLimitedWhiteNoise5_Cov
+   * Referenced by: '<S9>/Output'
+   */
   1.0,
+
+  /* Mask Parameter: BandLimitedWhiteNoise10_Cov
+   * Referenced by: '<S10>/Output'
+   */
   1.0,
+
+  /* Mask Parameter: BandLimitedWhiteNoise9_Cov
+   * Referenced by: '<S11>/Output'
+   */
   1.0,
+
+  /* Mask Parameter: BandLimitedWhiteNoise1_Cov
+   * Referenced by: '<S12>/Output'
+   */
   1.0,
+
+  /* Mask Parameter: BandLimitedWhiteNoise2_Cov
+   * Referenced by: '<S13>/Output'
+   */
   1.0,
+
+  /* Mask Parameter: BandLimitedWhiteNoise3_Cov
+   * Referenced by: '<S14>/Output'
+   */
   1.0,
+
+  /* Mask Parameter: BandLimitedWhiteNoise4_Cov
+   * Referenced by: '<S15>/Output'
+   */
   1.0,
-  0.0,
-  0.0,
-  0.0,
-  1.0,
-  0.0,
-  1.0,
-  0.0,
-  1.0,
-  0.0,
-  1.0,
+
+  /* Expression: 0
+   * Referenced by: '<Root>/NEXUS Plant Dynamics'
+   */
   0.0,
 
+  /* Expression: 0
+   * Referenced by: '<Root>/FSM Controller'
+   */
+  0.0,
+
+  /* Expression: eye(2,2)
+   * Referenced by: '<Root>/FSM Plant'
+   */
   { 1.0, 0.0, 0.0, 1.0 },
+
+  /* Expression: 0
+   * Referenced by: '<Root>/ACS Controller'
+   */
   0.0,
-  1.0,
+
+  /* Expression: 0
+   * Referenced by: '<S6>/White Noise'
+   */
   0.0,
-  1.0,
-  0.0,
-  1.0,
-  0.0,
-  1.0,
-  0.0,
-  1.0,
-  0.0,
-  1.0,
-  0.0,
-  1.0,
-  0.0,
-  1.0,
-  0.0,
+
+  /* Computed Parameter: WhiteNoise_StdDev
+   * Referenced by: '<S6>/White Noise'
+   */
   1.0,
 
+  /* Expression: 0
+   * Referenced by: '<S7>/White Noise'
+   */
+  0.0,
+
+  /* Computed Parameter: WhiteNoise_StdDev_k
+   * Referenced by: '<S7>/White Noise'
+   */
+  1.0,
+
+  /* Expression: 0
+   * Referenced by: '<S8>/White Noise'
+   */
+  0.0,
+
+  /* Computed Parameter: WhiteNoise_StdDev_b
+   * Referenced by: '<S8>/White Noise'
+   */
+  1.0,
+
+  /* Expression: 0
+   * Referenced by: '<S1>/ST Noise'
+   */
+  0.0,
+
+  /* Expression: 1
+   * Referenced by: '<S1>/Gain'
+   */
+  1.0,
+
+  /* Expression: 0
+   * Referenced by: '<S9>/White Noise'
+   */
+  0.0,
+
+  /* Computed Parameter: WhiteNoise_StdDev_e
+   * Referenced by: '<S9>/White Noise'
+   */
+  1.0,
+
+  /* Expression: 0
+   * Referenced by: '<S2>/Cryo Noise Filters'
+   */
+  0.0,
+
+  /* Expression: 1
+   * Referenced by: '<S2>/Gain'
+   */
+  1.0,
+
+  /* Expression: 0
+   * Referenced by: '<S10>/White Noise'
+   */
+  0.0,
+
+  /* Computed Parameter: WhiteNoise_StdDev_f
+   * Referenced by: '<S10>/White Noise'
+   */
+  1.0,
+
+  /* Expression: 0
+   * Referenced by: '<S11>/White Noise'
+   */
+  0.0,
+
+  /* Computed Parameter: WhiteNoise_StdDev_n
+   * Referenced by: '<S11>/White Noise'
+   */
+  1.0,
+
+  /* Expression: 0
+   * Referenced by: '<S3>/GS  Noise'
+   */
+  0.0,
+
+  /* Expression: 1
+   * Referenced by: '<S3>/Gain'
+   */
+  1.0,
+
+  /* Expression: 0
+   * Referenced by: '<S12>/White Noise'
+   */
+  0.0,
+
+  /* Computed Parameter: WhiteNoise_StdDev_eg
+   * Referenced by: '<S12>/White Noise'
+   */
+  1.0,
+
+  /* Expression: 0
+   * Referenced by: '<S13>/White Noise'
+   */
+  0.0,
+
+  /* Computed Parameter: WhiteNoise_StdDev_g
+   * Referenced by: '<S13>/White Noise'
+   */
+  1.0,
+
+  /* Expression: 0
+   * Referenced by: '<S14>/White Noise'
+   */
+  0.0,
+
+  /* Computed Parameter: WhiteNoise_StdDev_bq
+   * Referenced by: '<S14>/White Noise'
+   */
+  1.0,
+
+  /* Expression: 0
+   * Referenced by: '<S15>/White Noise'
+   */
+  0.0,
+
+  /* Computed Parameter: WhiteNoise_StdDev_p
+   * Referenced by: '<S15>/White Noise'
+   */
+  1.0,
+
+  /* Expression: R1*Cdw
+   * Referenced by: '<S5>/RW1'
+   */
   { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.44386346659357656, 7.478647013314756, -21.0299068476943,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -5295,8 +5559,15 @@ P_nexus_block_T nexus_block::nexus_block_P{
     0.75621181886004674, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.14795448886452567, 2.4928823377715856, -7.0099689492314354 },
+
+  /* Expression: 0
+   * Referenced by: '<S5>/RW1'
+   */
   0.0,
 
+  /* Expression: R2*Cdw
+   * Referenced by: '<S5>/RW2'
+   */
   { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, -16.539802774709177, 14.952872637166085, -1.1093610863241103,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -5304,8 +5575,15 @@ P_nexus_block_T nexus_block::nexus_block_P{
     -2.0776166515356915, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     -5.5132675915697265, 4.9842908790553624, -0.3697870287747036 },
+
+  /* Expression: 0
+   * Referenced by: '<S5>/RW2'
+   */
   0.0,
 
+  /* Expression: R3*Cdw
+   * Referenced by: '<S5>/RW3'
+   */
   { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, -0.44386346659354103, 7.47864701331475, -21.0299068476943,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -5313,8 +5591,15 @@ P_nexus_block_T nexus_block::nexus_block_P{
     -0.75621181886004474, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     -0.14795448886451368, 2.4928823377715839, -7.0099689492314354 },
+
+  /* Expression: 0
+   * Referenced by: '<S5>/RW3'
+   */
   0.0,
 
+  /* Expression: R4*Cdw
+   * Referenced by: '<S5>/RW4'
+   */
   { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 16.539607413920962, 14.953052132099563, -1.1098542595860295,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -5322,6 +5607,14 @@ P_nexus_block_T nexus_block::nexus_block_P{
     2.0776415913363384, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     5.5132024713069878, 4.9843507106998555, -0.36995141986200974 },
+
+  /* Expression: 0
+   * Referenced by: '<S5>/RW4'
+   */
   0.0,
+
+  /* Expression: 1
+   * Referenced by: '<S5>/Gain'
+   */
   1.0
 };
