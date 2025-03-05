@@ -23,3 +23,4 @@ TODO: Need to check to see if nexus_block.mat has results equivalent to running 
 TODO figure out if time domain or Lyapunov sim results are better, and figure out whether WFE or LOS is my *actual* Q.
 	- "The answer provided by the Lyapunov analysis tends to be more accurate because it is independent of time step. On the downside, the Lyapunov analysis does not provide any insights into the time domain evolution of the signals or frequency content." -- I should use Lyapunov
 	- These result from the "closed loop integrated model." Calculations are made with (Azd, Bzd, Czd, Dzd) - those are defined in nexus_assy.m
+	- LOS error, i.e. jitter, is my Q
