@@ -259,28 +259,20 @@ def bn_compare_model_covariance(problem, datafile, gmmfile, doPrint=True):
 	#Spectral norm: Measures the largest eigenvalue of the difference matrix, important when considering the impact on principal component analysis.
 	#punt it for now
 	
-def bn_evaluate_model_likelihood(problem, gmmfile, datafile="", N_val=0, do_subset=0, doPrint=True):
+def bn_evaluate_model_likelihood(problem, gmmfile, datafile="", samples=[], do_subset=0, doPrint=True):
 	if doPrint:
 		print("Evaluating model likelihood for",gmmfile,"GMM...",flush=True)
 	
 	###Get validation set
-	if datafile=="" and N_val>0:
-		#calculate some validation samples
-		#this is for evaluating accuracy of the model
-		if doPrint:
-			print("Drawing",N_val,"validation samples...",flush=True)
-		theta_val = problem.prior_rvs(N_val)
-		d_val = problem.sample_d(N_val)
-		y_val = [problem.eta(theta, d) for theta,d in zip(theta_val,d_val)]
-		q_val = [problem.H(theta) for theta in theta_val]
-		samples = [[q_val[i]]+y_val[i]+d_val[i] for i in range(N_val)]
-	elif datafile!="":
+	if datafile!="" and not samples:
 		#use the provided training samples for evaluation
 		#this is for determining convergence of the model
 		if doPrint:
 			print("Loading",datafile,"for training samples...",flush=True)
 		qoi_train, y_d_train = bn_load_samples(problem, datafile, doPrint=True, do_subset=do_subset)
 		samples = [[q]+yd for q,yd in zip(qoi_train, y_d_train)]
+	elif samples and do_subset==0:
+		0
 	else:
 		print("Insufficient instructions for bn_evaluate_model_likelihood")
 		sys.exit()
@@ -305,7 +297,7 @@ def bn_evaluate_model_likelihood(problem, gmmfile, datafile="", N_val=0, do_subs
 
 
 def bn_measure_likelihood_convergence(problem, big_savefile, doPrint=True):	
-	N_list = [1000,4000,10000,40000,100000,400000,1000000]
+	N_list = [1000,4000,7000,10000,40000,70000,100000,400000,700000,1000000]
 	
 	###Use the savedata to train a series of GMMs, save them if they don't already exist; or, load them if they do
 	list_gmm = []
@@ -334,7 +326,7 @@ def bn_measure_likelihood_convergence(problem, big_savefile, doPrint=True):
 		#datafile: use the big huge one
 		#N_val: we're not evaluating validation samples
 		#do_subset: N, so that we're evaluating the N gmm with the N values used to train it
-		score = bn_evaluate_model_likelihood(problem, gmmfile=list_gmm[i], datafile=big_savefile, N_val=0, do_subset=N, doPrint=True)
+		score = bn_evaluate_model_likelihood(problem, gmmfile=list_gmm[i], datafile=big_savefile, do_subset=N, doPrint=True)
 		scores[i] = score
 	
 	###Plot them all, shifting the largest-N estimate of Q to zero to hopefully see many lines converging
@@ -343,3 +335,248 @@ def bn_measure_likelihood_convergence(problem, big_savefile, doPrint=True):
 	plt.xscale('log')
 	plt.plot(N_list, scores, c='r')
 	plt.show()
+	
+def bn_measure_validation_convergence(problem, big_savefile, N_val=0, doPrint=True):	
+	N_val = N_val if N_val>0 else 5		
+	N_list = [1000,4000,10000,40000,100000,400000,1000000,1635000]
+	
+	###Get validation set
+	#this is for evaluating accuracy of the model
+	if doPrint:
+		print("Drawing",N_val,"validation samples...",flush=True)
+	theta_val = problem.prior_rvs(N_val)
+	d_val = problem.sample_d(N_val)
+	y_val = [problem.eta(theta, d) for theta,d in zip(theta_val,d_val)]
+	q_val = [problem.H(theta) for theta in theta_val]
+	samples = [[q_val[i]]+y_val[i]+d_val[i] for i in range(N_val)]
+	
+	###Use the savedata to train a series of GMMs, save them if they don't already exist; or, load them if they do
+	list_gmm = []
+	for N in N_list:
+		gmmfile_n = "BN_model_" + str(N) + '.pkl'
+		if os.path.exists(gmmfile_n):
+			###Add its filename to list
+			if doPrint:
+				print("Found",gmmfile_n,"...",flush=True)
+			list_gmm.append(gmmfile_n)
+		else:
+			###Train and save it
+			if doPrint:
+				print("Training and saving",gmmfile_n,"...",flush=True)
+			gmm_n = bn_train_from_file(problem, savefile=big_savefile, do_subset=N, doPrint=True)
+			
+			bn_save_gmm(gmm_n, gmm_file=gmmfile_n)
+			list_gmm.append(gmmfile_n)
+	
+	scores = [None] * len(N_list)
+	###Now, for each GMM, evaluate the average likelihood of *its* training data
+	if doPrint:
+		print("Evaluating training data likelihood...",flush=True)
+	for i,N in enumerate(N_list):
+		#gmmfile: use BN_model_N.pkl
+		#datafile: we're not evaluating training samples
+		#samples: validation set
+		#do_subset: we're not evaluating training samples, so its irrelevant
+		score = bn_evaluate_model_likelihood(problem, gmmfile=list_gmm[i], samples=samples, doPrint=True)
+		scores[i] = score
+	
+	###Plot them all, shifting the largest-N estimate of Q to zero to hopefully see many lines converging
+	plt.xlabel("N for training GMM")
+	plt.ylabel("Average log-likelihood of the validation set (Nv="+str()+')')
+	plt.xscale('log')
+	plt.plot(N_list, scores, c='r')
+	plt.show()
+	
+#Similar to bn_train_from_file
+#Except I want to evaluate BIC and MSE, and MAE for each ncomp
+def bn_train_evaluate_ncomp(problem, trainfile, valfile, doPrint=True, doPlot=True):
+	###Setup
+	do_subset=0
+
+	ncomps = [31,32,33,34,35,36] #[1+ncomp for ncomp in range(19)]
+	print("Evaluating",trainfile,"training data for GMM with number of components:",ncomps,flush=True)
+	BICs = [None]*len(ncomps)
+	scores = [None]*len(ncomps)
+	LRTs = [None]*len(ncomps)
+
+	###Load training data file
+	qoi_train, y_d_train = bn_load_samples(problem, trainfile, doPrint, do_subset)
+	
+	###Load validation data file
+	qoi_val, y_d_val = bn_load_samples(problem, valfile, doPrint, do_subset)
+	val_samples = [[qoi_val[i]]+y_d_val[i] for i in range(len(qoi_val))]
+	
+	###For each ncomp:
+	for i,ncomp in enumerate(ncomps):
+		###Train and save a model with the full data with that ncomp
+		modelsave = "BN_model_"+str(len(qoi_train))+'_ncomp'+str(ncomp) +'.pkl'
+		if os.path.exists(modelsave):
+			###Load it
+			if doPrint:
+				print("Loading",modelsave,"...",flush=True)
+			gmm_ncomp = bn_load_gmm(modelsave)
+		else:
+			###Train and save it
+			if doPrint:
+				print("Training and saving",modelsave,"...",flush=True)
+			gmm_ncomp = gbi_train_model(qoi_train, y_d_train, verbose=2, ncomp=ncomp, careful=True)
+			bn_save_gmm(gmm_ncomp, gmm_file=modelsave)
+		
+		###save the BICs
+		p_mean = np.mean(qoi_train)
+		p_std = np.std(qoi_train)
+		yp_sample = [(qoi - p_mean)/p_std for qoi in qoi_train]
+		d_mean = np.mean(y_d_train, axis=0)
+		d_std = np.std(y_d_train, axis=0)
+		yd_sample = [list((yd - d_mean)/d_std) for i,yd in enumerate(y_d_train)]
+		data = np.array([np.hstack([yp_sample[i],yd_sample[i]]) for i,_ in enumerate(qoi_train)])
+		BIC = gmm_ncomp.bic(data)
+		BICs[i] = BIC
+		print(BIC,flush=True)
+		
+		###Compare to validation set, grab MSE and MAE
+		score = bn_evaluate_model_likelihood(problem, gmmfile=modelsave, samples=val_samples, doPrint=True)
+		scores[i] = score
+
+	###go back and calculate the LRTs
+	#https://geostatisticslessons.com/lessons/gmm
+	for i,score in enumerate(scores):
+		if i+1 < len(scores): #this is intended to exclude the final score
+			minus2loglambda = 2 * (scores[i+1] - scores[i])
+		else: #end of the list
+			#gotta get score for g1 = g0 + 1
+			modelsave = "BN_model_"+str(len(qoi_train))+'_ncomp'+str(ncomps[-1]+1)+'.pkl'
+			if os.path.exists(modelsave):
+				###Load it
+				if doPrint:
+					print("Loading",modelsave,"...",flush=True)
+				gmm_g1 = bn_load_gmm(modelsave)
+			else:
+				###Train and save it
+				if doPrint:
+					print("Training and saving",modelsave,"...",flush=True)
+				gmm_g1 = gbi_train_model(qoi_train, y_d_train, verbose=2, ncomp=ncomps[-1]+1, careful=True)
+				bn_save_gmm(gmm_g1, gmm_file=modelsave)
+			g1_score = bn_evaluate_model_likelihood(problem, gmmfile=modelsave, samples=val_samples, doPrint=True)
+			
+			minus2loglambda = 2 * (g1_score - scores[i])
+		print(minus2loglambda,flush=True)
+		LRTs[i] = minus2loglambda
+
+	#BICs=[]
+	#LRTs=[]
+	###Extend with saved data
+	BICs.extend([-16691833.485239271, 
+	-156198912.82833186, 
+	-163859555.75851455, 
+	-169702599.09363446, 
+	-184588834.47382435, 
+	-191970333.32038167, 
+	-206948107.51750967, 
+	-205552688.5659083, 
+	-213521927.38937464, 
+	-221332299.38899246, 
+	-224094265.49004027, 
+	-224694984.45991743, 
+	-226695631.51102397, 
+	-225555896.76695704, 
+	-228518762.29767773, 
+	-236564864.6959652, 
+	-232971998.46472523,  
+	-233091261.667456, 
+	-235801551.91970456, 
+	-236505686.6745928, #20
+	-238863810.6797619, #21
+	-242574931.72879303,
+	-242241982.31413585,
+	-241716697.1986963,
+	-240675759.35915956,
+	-242880225.4465139, #26
+	-244747205.99100965, #27
+	-244505353.69673616, #28
+	-244825887.993535, #29
+	-246234260.62625143, #30
+	])
+	#scores = scores + []
+	LRTs.extend([84.64506286831141, #1
+	4.527445162701113, #2
+	3.7711393767590664, #3
+	8.268826614978948, #4
+	5.140782007736448, #5
+	10.048416146898873, #6
+	-1.3586799058341654, #7
+	4.764431175551707, #8 
+	4.642626800584196, #9
+	2.267777451483198, #10
+	0.06730020848874574, #11
+	1.4827566950605728, #12
+	-1.057275376166217, #13
+	1.6019359746272244, #14
+	4.970770161204086, #15
+	-2.2348546755937946, #16
+	0.007160972492613382, #17
+	1.639094093962683, #18
+	0.8380878848860789, #19
+	1.2650589385557964, #20
+	1.8695235072624428, #21
+	0.1912567549178732, #22
+	-0.2985982539842098, #23
+	-0.7671528181587348, #24
+	1.1869351485157722, #25
+	1.5097198023039482, #26
+	-0.46685502872105644, #27
+	0.6694529000964167, #28
+	0.663964179556956, #29
+	0.2668767063933899 #30
+	])
+	ncomps = [i+1 for i,_ in enumerate(BICs)]
+	
+	###Print, plot
+	
+	fig, ax1 = plt.subplots()
+
+	# Plot the first data set on the left y-axis
+	ax1.plot(ncomps, BICs, color='blue')
+	ax1.set_xlabel("Number of GMM components")
+	ax1.set_xticks(ncomps)
+	ax1.set_ylabel('BIC', color='blue')
+	ax1.tick_params(axis='y', labelcolor='blue')
+
+	# Create the second axes sharing the x-axis
+	ax2 = ax1.twinx()
+
+	# Plot the second data set on the right y-axis
+	ax2.plot(ncomps, LRTs, color='orange')
+	ax2.set_ylabel('LRT', color='orange')
+	ax2.tick_params(axis='y', labelcolor='orange')
+	plt.show()
+
+#Do bootstrap sampling & evaluation to find 95% confidence intervals
+def bn_evaluate_convergence_confidence(problem, trainfile, valfile, N_bootstrap, doPrint=True):
+	###Load training data file
+	qoi_train, y_d_train = bn_load_samples(problem, trainfile, doPrint, do_subset)
+	
+	###Load validation data file
+	qoi_val, y_d_val = bn_load_samples(problem, valfile, doPrint, do_subset)
+	val_samples = [[qoi_val[i]]+y_d_val[i] for i in range(len(qoi_val))]
+	
+	bootstrapped_scores = [None]*N_bootstrap
+	###Iterate
+		###Make bootstrap sample
+		i_samples = np.random.randint(0, len(qoi_train), size=len(qoi_train))
+		
+		###Calculate score (average likelihood of validation set), save
+	
+	
+	###Do statistics on the scores
+	#Mean
+	
+	#stddev
+	
+	#conf interval
+	def conf_interval(data, conf_level):
+		#returns a tuple of the low and high bounds
+		return scipy.stats.t.interval(confidence=conf_level, df=len(data)-1, loc=np.mean(data), scale=scipy.stats.sem(data))
+		
+	conf_intervals = conf_interval(bootstrapped_scores,0.95)
+	conf_interval_width = conf_intervals[1] - conf_intervals[0]

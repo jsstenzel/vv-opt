@@ -461,7 +461,12 @@ if __name__ == '__main__':
 	elif args.run == "BN_convergence":
 		#Run the convergence test
 		#bn_measure_stability_convergence(problem, , N_val=args.n, doPrint=True)
-		bn_measure_likelihood_convergence(problem, "BN_samples", doPrint=True)
+		#bn_measure_likelihood_convergence(problem, "BN_samples", doPrint=True)
+		#bn_measure_likelihood_convergence(problem, "BN_samples", doPrint=True)
+		bn_measure_validation_convergence(problem, "BN_samples", N_val=args.n, doPrint=True, doPlot=False)
+		
+	elif args.run == "BN_find_ncomp":
+		bn_train_evaluate_ncomp(problem, trainfile="BN_samples", valfile="BN_validation", doPrint=True)
 	
 	elif args.run == "OBED_test":
 		#Load the GMM from file
