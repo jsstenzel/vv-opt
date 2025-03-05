@@ -393,7 +393,7 @@ def bn_train_evaluate_ncomp(problem, trainfile, valfile, doPrint=True, doPlot=Tr
 	###Setup
 	do_subset=0
 
-	ncomps = [31,32,33,34,35,36] #[1+ncomp for ncomp in range(19)]
+	ncomps = [46,47,48,49,50] #[1+ncomp for ncomp in range(19)]
 	print("Evaluating",trainfile,"training data for GMM with number of components:",ncomps,flush=True)
 	BICs = [None]*len(ncomps)
 	scores = [None]*len(ncomps)
@@ -465,6 +465,7 @@ def bn_train_evaluate_ncomp(problem, trainfile, valfile, doPrint=True, doPlot=Tr
 
 	#BICs=[]
 	#LRTs=[]
+	print(BICs,flush=True)
 	###Extend with saved data
 	BICs.extend([-16691833.485239271, 
 	-156198912.82833186, 
@@ -532,25 +533,26 @@ def bn_train_evaluate_ncomp(problem, trainfile, valfile, doPrint=True, doPlot=Tr
 	ncomps = [i+1 for i,_ in enumerate(BICs)]
 	
 	###Print, plot
-	
-	fig, ax1 = plt.subplots()
+	if doPlot:
+		fig, ax1 = plt.subplots()
 
-	# Plot the first data set on the left y-axis
-	ax1.plot(ncomps, BICs, color='blue')
-	ax1.set_xlabel("Number of GMM components")
-	ax1.set_xticks(ncomps)
-	ax1.set_ylabel('BIC', color='blue')
-	ax1.tick_params(axis='y', labelcolor='blue')
+		# Plot the first data set on the left y-axis
+		ax1.plot(ncomps, BICs, color='blue')
+		ax1.set_xlabel("Number of GMM components")
+		ax1.set_xticks(ncomps)
+		ax1.set_ylabel('BIC', color='blue')
+		ax1.tick_params(axis='y', labelcolor='blue')
 
-	# Create the second axes sharing the x-axis
-	ax2 = ax1.twinx()
+		# Create the second axes sharing the x-axis
+		ax2 = ax1.twinx()
 
-	# Plot the second data set on the right y-axis
-	ax2.plot(ncomps, LRTs, color='orange')
-	ax2.set_ylabel('LRT', color='orange')
-	ax2.tick_params(axis='y', labelcolor='orange')
-	plt.show()
+		# Plot the second data set on the right y-axis
+		ax2.plot(ncomps, LRTs, color='orange')
+		ax2.set_ylabel('LRT', color='orange')
+		ax2.tick_params(axis='y', labelcolor='orange')
+		plt.show()
 
+"""
 #Do bootstrap sampling & evaluation to find 95% confidence intervals
 def bn_evaluate_convergence_confidence(problem, trainfile, valfile, N_bootstrap, doPrint=True):
 	###Load training data file
@@ -568,7 +570,7 @@ def bn_evaluate_convergence_confidence(problem, trainfile, valfile, N_bootstrap,
 		###Calculate score (average likelihood of validation set), save
 	
 	
-	###Do statistics on the scores
+	##Do statistics on the scores
 	#Mean
 	
 	#stddev
@@ -580,3 +582,4 @@ def bn_evaluate_convergence_confidence(problem, trainfile, valfile, N_bootstrap,
 		
 	conf_intervals = conf_interval(bootstrapped_scores,0.95)
 	conf_interval_width = conf_intervals[1] - conf_intervals[0]
+"""
