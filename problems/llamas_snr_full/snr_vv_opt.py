@@ -456,17 +456,21 @@ if __name__ == '__main__':
 		
 		#bn_compare_model_covariance(problem, "BN_samples", "BN_model_100000", doPrint=True)
 		
-		bn_evaluate_model_likelihood(problem, gmmfile="BN_model_1000", datafile="BN_samples", N_val=0, do_subset=1000, doPrint=True)
+		#bn_evaluate_model_likelihood(problem, gmmfile="BN_model_1000", datafile="BN_samples", N_val=0, do_subset=1000, doPrint=True)
+		bn_evaluate_convergence_confidence(problem, valfile="BN_validation", N_bootstrap=1000, doPrint=True)
 		
 	elif args.run == "BN_convergence":
 		#Run the convergence test
 		#bn_measure_stability_convergence(problem, , N_val=args.n, doPrint=True)
 		#bn_measure_likelihood_convergence(problem, "BN_samples", doPrint=True)
 		#bn_measure_likelihood_convergence(problem, "BN_samples", doPrint=True)
-		bn_measure_validation_convergence(problem, "BN_samples", N_val=args.n, doPrint=True)
+		#bn_measure_validation_convergence(problem, "BN_samples", N_val=args.n, doPrint=True)
+		bn_train_convergence_confidence(problem, trainfile="BN_samples", N_bootstrap=1000, ncomp=50, startnum=args.n, doPrint=True)
 		
 	elif args.run == "BN_find_ncomp":
-		bn_train_evaluate_ncomp(problem, trainfile="BN_samples", valfile="BN_validation", doPlot=False, doPrint=True)
+		#bn_train_evaluate_ncomp(problem, trainfile="BN_samples", valfile="BN_validation", doPlot=True, doPrint=True)
+		#bn_train_evaluate_ncomp_plot([],[])
+		bn_train_evaluate_ncomp_sanitycheck(problem, trainfile="BN_samples", valfile="BN_validation", doPlot=True, doPrint=True)
 	
 	elif args.run == "OBED_test":
 		#Load the GMM from file

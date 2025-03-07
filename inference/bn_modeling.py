@@ -392,8 +392,7 @@ def bn_measure_validation_convergence(problem, big_savefile, N_val=0, doPrint=Tr
 def bn_train_evaluate_ncomp(problem, trainfile, valfile, doPrint=True, doPlot=True):
 	###Setup
 	do_subset=0
-
-	ncomps = [46,47,48,49,50] #[1+ncomp for ncomp in range(19)]
+	ncomps = [1+ncomp for ncomp in range(49)]
 	print("Evaluating",trainfile,"training data for GMM with number of components:",ncomps,flush=True)
 	BICs = [None]*len(ncomps)
 	scores = [None]*len(ncomps)
@@ -463,41 +462,107 @@ def bn_train_evaluate_ncomp(problem, trainfile, valfile, doPrint=True, doPlot=Tr
 		print(minus2loglambda,flush=True)
 		LRTs[i] = minus2loglambda
 
-	#BICs=[]
-	#LRTs=[]
+	if doPlot:
+		bn_train_evaluate_ncomp_plot(BICs, LRTs)
+		
+def bn_train_evaluate_ncomp_plot(BICs, LRTs):
+	BICs=[]
+	LRTs=[]
 	print(BICs,flush=True)
 	###Extend with saved data
 	BICs.extend([-16691833.485239271, 
-	-156198912.82833186, 
-	-163859555.75851455, 
-	-169702599.09363446, 
-	-184588834.47382435, 
-	-191970333.32038167, 
-	-206948107.51750967, 
-	-205552688.5659083, 
-	-213521927.38937464, 
+	#-156198912.82833186, 
+	#-163859555.75851455, 
+	#-169702599.09363446, 
+	#-184588834.47382435, 
+	#-191970333.32038167, 
+	#-206948107.51750967, 
+	#-205552688.5659083, 
+	#-213521927.38937464, 
 	-221332299.38899246, 
-	-224094265.49004027, 
-	-224694984.45991743, 
-	-226695631.51102397, 
-	-225555896.76695704, 
-	-228518762.29767773, 
-	-236564864.6959652, 
-	-232971998.46472523,  
-	-233091261.667456, 
-	-235801551.91970456, 
+	#-224094265.49004027, 
+	#-224694984.45991743, 
+	#-226695631.51102397, 
+	#-225555896.76695704, 
+	#-228518762.29767773, 
+	#-236564864.6959652, 
+	#-232971998.46472523,  
+	#-233091261.667456, 
+	#-235801551.91970456, 
 	-236505686.6745928, #20
-	-238863810.6797619, #21
-	-242574931.72879303,
-	-242241982.31413585,
-	-241716697.1986963,
-	-240675759.35915956,
-	-242880225.4465139, #26
-	-244747205.99100965, #27
-	-244505353.69673616, #28
-	-244825887.993535, #29
+	#-238863810.6797619, #21
+	#-242574931.72879303,
+	#-242241982.31413585,
+	#-241716697.1986963,
+	#-240675759.35915956,
+	#-242880225.4465139, #26
+	#-244747205.99100965, #27
+	#-244505353.69673616, #28
+	#-244825887.993535, #29
 	-246234260.62625143, #30
+	#-246047357.86784902, #31
+	#-247755979.07848936, #32
+	#-248006778.90827712, #33
+	#-246476728.4933763, #34
+	#-249868794.03001457, #35
+	#-250577132.59812415, #36
+	#-249825741.27800956, #37
+	#-251868694.3114901, #38
+	#-251361870.71319196, #39
+	-251633736.07104686, #40
+	#-251412903.28971827, #41
+	#-254042591.58247107, #42
+	#-254065455.92121324, #43
+	#-252280005.26191378, #44
+	#-251614701.98303768, #45
+	#-252855694.75685948, #46
+	#-254248535.34322706, #47
+	#-254760487.43156114, #48
+	#-254193656.49412128, #49
+	-256328123.80002046, #50
+	
+	#-253652561.19815692, #51
+	#-254322534.7948813, #52
+	#-255520595.29658613, #53
+	#-256331530.64211535, #54
+	#-256197410.4409594, #55
+	
+	#-255081159.36240014, #56
+	#-256527797.1152506, #57
+	#-255586720.07550997, #58
+	#-255756605.6004528, #59
+	-258218702.1485621, #60
+	
+	#-257462209.18714023,#61
+	#-256818544.98253,#62
+	#-257593838.56346256,#63
+	#-259556343.32860583,#64
+	#-256825583.1222684, #65
+	
+	#-257497927.4484349,#66
+	#-259752913.9879013,#67
+	#-260453781.10451147,#68
+	#-258016461.481482,#69
+	-259624881.49156117, #70
+	
+	#-257514066.76771572, #71
+	#-258676703.9606113, #72
+	#-260409247.97088462, #73
+	#-258590901.91337222, #74
+	#-261407436.56752124, #75
+	
+	#-261728883.36422002, #76
+	#-258718760.19900984, #77
+	#-259911816.39266628, #78
+	#-261989661.7223139, #79
+	-260045696.01722667,#80
+	-260782284.5728303 #90
+	#100
+	-262883685.91923916 #110
+	#120
+	#130
 	])
+	"""
 	#scores = scores + []
 	LRTs.extend([84.64506286831141, #1
 	4.527445162701113, #2
@@ -528,11 +593,134 @@ def bn_train_evaluate_ncomp(problem, trainfile, valfile, doPrint=True, doPlot=Tr
 	-0.46685502872105644, #27
 	0.6694529000964167, #28
 	0.663964179556956, #29
-	0.2668767063933899 #30
+	0.2668767063933899, #30
+	1.0816540524838274, #31
+	0.32215632677261397, #32
+	-0.7845671129333596, #33
+	1.9800129158032007, #34
+	0.3921928244507171, #35
+	-0.6801522541597365, #36
+	1.544775283556163, #37
+	-0.36524014123071424, #38
+	0.2538961638286992, #39
+	-0.2160321713670612, #40
+	1.6032223779436947, #41
+	0.20434925449183083, #42
+	-1.2555952760467903, #43
+	-0.29049415539802226, #44
+	0.7927465410666628, #45
+	0.7845062146639634, #46
+	0.41046871316200395, #47
+	-0.40147259034228, #48
+	1.3470651331925012, #49
+	-1.5768404773600366, #50
+	
+	0.3795737589875614, #51
+	0.794574832903777, #52
+	0.5044917697968287, #53
+	-0.08964912761081223, #54
+	-0.667483869227226, #55
+	
+	0.9631603213923086, #56
+	-0.6959907972261306, #57
+	0.05898135158369655, #58
+	1.7312252414515399, #59
+	-0.7203513954753475, #60
+	
+	-0.3306525963469653, #61
+	0.5986245844209748, #62
+	1.4667463496177504, #63
+	-1.9345445342086123, #64
+	0.4969709854927373, #65
+	
+	1.481686993224315, #66
+	0.34846920754165467, #67
+	-1.551469568324677, #68
+	0.930682683580585, #69
+	-1.1720017312781863, #70
+	
+	0.8090601572023957, #71
+	1.073025183411886, #72
+	-1.0998437501094998, #73
+	1.6661429504939917, #74
+	0.05915066189064078, #75
+	
+	#76
+	#77
+	#78
+	#79
+	#80
 	])
-	ncomps = [i+1 for i,_ in enumerate(BICs)]
+	"""
+	ncomps = [1,10,20,30,40,50,60,70,80,90,100,110]
 	
 	###Print, plot
+	fig, ax1 = plt.subplots()
+
+	# Plot the first data set on the left y-axis
+	ax1.plot(ncomps, BICs, color='blue')
+	ax1.set_xlabel("Number of GMM components")
+	ax1.set_xticks(ncomps)
+	ax1.set_ylabel('BIC', color='blue')
+	ax1.tick_params(axis='y', labelcolor='blue')
+
+	# Create the second axes sharing the x-axis
+	#ax2 = ax1.twinx()
+
+	# Plot the second data set on the right y-axis
+	#ax2.plot(ncomps, LRTs, color='orange')
+	#ax2.set_ylabel('LRT', color='orange')
+	#ax2.tick_params(axis='y', labelcolor='orange')
+	plt.show()
+
+def bn_train_evaluate_ncomp_sanitycheck(problem, trainfile, valfile, doPrint=True, doPlot=True):
+	###Setup
+	do_subset=0
+	ncomps = [1,10,20,30,40,50,60,70,80,90]
+	print("Evaluating",trainfile,"training data for GMM with number of components:",ncomps,flush=True)
+	BICs = [None]*len(ncomps)
+	scores = [None]*len(ncomps)
+	penalties = [None]*len(ncomps)
+
+	###Load training data file
+	qoi_train, y_d_train = bn_load_samples(problem, trainfile, doPrint, do_subset)
+	
+	###Load validation data file
+	qoi_val, y_d_val = bn_load_samples(problem, valfile, doPrint, do_subset)
+	val_samples = [[qoi_val[i]]+y_d_val[i] for i in range(len(qoi_val))]
+	
+	###For each ncomp:
+	for i,ncomp in enumerate(ncomps):
+		###Train and save a model with the full data with that ncomp
+		modelsave = "BN_model_"+str(len(qoi_train))+'_ncomp'+str(ncomp) +'.pkl'
+		if os.path.exists(modelsave):
+			###Load it
+			if doPrint:
+				print("Loading",modelsave,"...",flush=True)
+			gmm_ncomp = bn_load_gmm(modelsave)
+		else:
+			###Train and save it
+			print("Model",modelsave,"doesn't exist.",flush=True)
+			sys.exit()
+		
+		###save the BICs - VAL
+		p_mean = np.mean(qoi_val)
+		p_std = np.std(qoi_val)
+		yp_sample = [(qoi - p_mean)/p_std for qoi in qoi_val]
+		d_mean = np.mean(y_d_val, axis=0)
+		d_std = np.std(y_d_val, axis=0)
+		yd_sample = [list((yd - d_mean)/d_std) for i,yd in enumerate(y_d_val)]
+		data = np.array([np.hstack([yp_sample[i],yd_sample[i]]) for i,_ in enumerate(qoi_val)])
+		
+		BIC = gmm_ncomp.bic(data)
+		BICs[i] = BIC
+		score = -2 * gmm_ncomp.score(data) * data.shape[0]
+		scores[i] = score
+		penalty = gmm_ncomp._n_parameters() * np.log(data.shape[0])
+		penalties[i] = penalty
+		print(BIC,gmm_ncomp.score(data),gmm_ncomp._n_parameters(),flush=True)
+		#_n_parameters calculates K*((D*D - D)/2 + 2D + 1)-1, for D=62
+
 	if doPlot:
 		fig, ax1 = plt.subplots()
 
@@ -542,38 +730,72 @@ def bn_train_evaluate_ncomp(problem, trainfile, valfile, doPrint=True, doPlot=Tr
 		ax1.set_xticks(ncomps)
 		ax1.set_ylabel('BIC', color='blue')
 		ax1.tick_params(axis='y', labelcolor='blue')
-
-		# Create the second axes sharing the x-axis
-		ax2 = ax1.twinx()
-
-		# Plot the second data set on the right y-axis
-		ax2.plot(ncomps, LRTs, color='orange')
-		ax2.set_ylabel('LRT', color='orange')
-		ax2.tick_params(axis='y', labelcolor='orange')
+		ax1.plot(ncomps, penalties, color='red')
+		ax1.plot(ncomps, scores, color='green')
 		plt.show()
 
-"""
+
+
+
 #Do bootstrap sampling & evaluation to find 95% confidence intervals
-def bn_evaluate_convergence_confidence(problem, trainfile, valfile, N_bootstrap, doPrint=True):
+def bn_train_convergence_confidence(problem, trainfile, N_bootstrap, ncomp, startnum=0, doPrint=True):
 	###Load training data file
 	qoi_train, y_d_train = bn_load_samples(problem, trainfile, doPrint, do_subset)
 	
-	###Load validation data file
-	qoi_val, y_d_val = bn_load_samples(problem, valfile, doPrint, do_subset)
-	val_samples = [[qoi_val[i]]+y_d_val[i] for i in range(len(qoi_val))]
-	
-	bootstrapped_scores = [None]*N_bootstrap
 	###Iterate
+	i_list = range(startnum, N_bootstrap)
+	for i in i_list:
 		###Make bootstrap sample
 		i_samples = np.random.randint(0, len(qoi_train), size=len(qoi_train))
+		qoi_bootstrap = [qoi_train[j] for j in i_samples]
+		y_d_bootstrap = [y_d_val[j] for j in i_samples]
+		
+		###Train and save GMM on that
+		modelsave = "BN_model_"+str(len(qoi_train))+'_bootstrap'+str(i)+'.pkl'
+		if os.path.exists(modelsave):
+			print("GMM",modelsave,"already exists, terminating.")
+			sys.exit()
+		else:
+			if doPrint:
+				print("Training and saving",modelsave,"...",flush=True)
+			gmm_i = gbi_train_model(qoi_bootstrap, y_d_bootstrap, verbose=2, ncomp=ncomp, careful=True)
+			bn_save_gmm(gmm_i, gmm_file=modelsave)
+		
+def bn_evaluate_convergence_confidence(problem, valfile, N_bootstrap, doPrint=True):
+	###Load validation data file
+	qoi_val, y_d_val = bn_load_samples(problem, valfile, doPrint, do_subset)
+
+	p_mean = np.mean(qoi_bootstrap)
+	p_std = np.std(qoi_bootstrap)
+	yp_sample = [(qoi - p_mean)/p_std for qoi in qoi_bootstrap]
+	d_mean = np.mean(y_d_bootstrap, axis=0)
+	d_std = np.std(y_d_bootstrap, axis=0)
+	yd_sample = [list((yd - d_mean)/d_std) for i,yd in enumerate(y_d_bootstrap)]
+	val_data = np.array([np.hstack([yp_sample[i],yd_sample[i]]) for i,_ in enumerate(qoi_bootstrap)])
+
+	###Iterate
+	bootstrapped_scores = [None]*N_bootstrap
+	for i in range(N_bootstrap):
+		###Load GMM
+		modelsave = "BN_model_"+str(len(qoi_train))+'_bootstrap'+str(i)+'.pkl'
+		if os.path.exists(modelsave):
+			###Load it
+			if doPrint:
+				print("Loading",modelsave,"...",flush=True)
+			gmm_g1 = bn_load_gmm(modelsave)
+		else:
+			print("error")
+			sys.exit()
 		
 		###Calculate score (average likelihood of validation set), save
-	
+		gmm_i.score(val_data)
 	
 	##Do statistics on the scores
 	#Mean
+	score_mean = np.mean(bootstrapped_scores)
 	
 	#stddev
+	score_stddev = np.std(bootstrapped_scores)
 	
 	#conf interval
 	def conf_interval(data, conf_level):
@@ -582,4 +804,6 @@ def bn_evaluate_convergence_confidence(problem, trainfile, valfile, N_bootstrap,
 		
 	conf_intervals = conf_interval(bootstrapped_scores,0.95)
 	conf_interval_width = conf_intervals[1] - conf_intervals[0]
-"""
+	
+	return score_mean, score_stddev, conf_interval_width
+
