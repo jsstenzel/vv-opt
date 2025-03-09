@@ -468,7 +468,7 @@ if __name__ == '__main__':
 		bn_train_convergence_confidence(problem, trainfile="BN_samples", N_bootstrap=1000, ncomp=50, startnum=args.n, doPrint=True)
 		
 	elif args.run == "BN_find_ncomp":
-		#bn_train_evaluate_ncomp(problem, trainfile="BN_samples", valfile="BN_validation", doPlot=True, doPrint=True)
+		#bn_train_evaluate_ncomp(problem, trainfile="BN_samples", valfile="BN_validation", doPlot=False, doPrint=True)
 		#bn_train_evaluate_ncomp_plot([],[])
 		bn_train_evaluate_ncomp_sanitycheck(problem, trainfile="BN_samples", valfile="BN_validation", doPlot=True, doPrint=True)
 	

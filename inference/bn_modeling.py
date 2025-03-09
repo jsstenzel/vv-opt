@@ -392,7 +392,7 @@ def bn_measure_validation_convergence(problem, big_savefile, N_val=0, doPrint=Tr
 def bn_train_evaluate_ncomp(problem, trainfile, valfile, doPrint=True, doPlot=True):
 	###Setup
 	do_subset=0
-	ncomps = [1+ncomp for ncomp in range(49)]
+	ncomps = [200]
 	print("Evaluating",trainfile,"training data for GMM with number of components:",ncomps,flush=True)
 	BICs = [None]*len(ncomps)
 	scores = [None]*len(ncomps)
@@ -436,7 +436,8 @@ def bn_train_evaluate_ncomp(problem, trainfile, valfile, doPrint=True, doPlot=Tr
 		###Compare to validation set, grab MSE and MAE
 		score = bn_evaluate_model_likelihood(problem, gmmfile=modelsave, samples=val_samples, doPrint=True)
 		scores[i] = score
-
+	
+	"""
 	###go back and calculate the LRTs
 	#https://geostatisticslessons.com/lessons/gmm
 	for i,score in enumerate(scores):
@@ -461,6 +462,7 @@ def bn_train_evaluate_ncomp(problem, trainfile, valfile, doPrint=True, doPlot=Tr
 			minus2loglambda = 2 * (g1_score - scores[i])
 		print(minus2loglambda,flush=True)
 		LRTs[i] = minus2loglambda
+	"""
 
 	if doPlot:
 		bn_train_evaluate_ncomp_plot(BICs, LRTs)
@@ -673,21 +675,25 @@ def bn_train_evaluate_ncomp_plot(BICs, LRTs):
 	#ax2.tick_params(axis='y', labelcolor='orange')
 	plt.show()
 
-def bn_train_evaluate_ncomp_sanitycheck(problem, trainfile, valfile, doPrint=True, doPlot=True):
+def bn_train_evaluate_ncomp_sanitycheck(problem, trainfile, valfile, use_val=False, doPrint=True, doPlot=True):
 	###Setup
 	do_subset=0
-	ncomps = [1,10,20,30,40,50,60,70,80,90]
+	ncomps = [1,10,20,30,40,50,60,70,80,90,100,110,130]
 	print("Evaluating",trainfile,"training data for GMM with number of components:",ncomps,flush=True)
 	BICs = [None]*len(ncomps)
 	scores = [None]*len(ncomps)
 	penalties = [None]*len(ncomps)
-
+	
 	###Load training data file
 	qoi_train, y_d_train = bn_load_samples(problem, trainfile, doPrint, do_subset)
 	
-	###Load validation data file
-	qoi_val, y_d_val = bn_load_samples(problem, valfile, doPrint, do_subset)
-	val_samples = [[qoi_val[i]]+y_d_val[i] for i in range(len(qoi_val))]
+	if use_val:
+		###Load validation data file
+		qoi_data, y_d_data = bn_load_samples(problem, valfile, doPrint, do_subset)		
+	else:
+		###use training data
+		qoi_data = qoi_train
+		y_d_data = y_d_train
 	
 	###For each ncomp:
 	for i,ncomp in enumerate(ncomps):
@@ -704,13 +710,13 @@ def bn_train_evaluate_ncomp_sanitycheck(problem, trainfile, valfile, doPrint=Tru
 			sys.exit()
 		
 		###save the BICs - VAL
-		p_mean = np.mean(qoi_val)
-		p_std = np.std(qoi_val)
-		yp_sample = [(qoi - p_mean)/p_std for qoi in qoi_val]
-		d_mean = np.mean(y_d_val, axis=0)
-		d_std = np.std(y_d_val, axis=0)
-		yd_sample = [list((yd - d_mean)/d_std) for i,yd in enumerate(y_d_val)]
-		data = np.array([np.hstack([yp_sample[i],yd_sample[i]]) for i,_ in enumerate(qoi_val)])
+		p_mean = np.mean(qoi_data)
+		p_std = np.std(qoi_data)
+		yp_sample = [(qoi - p_mean)/p_std for qoi in qoi_data]
+		d_mean = np.mean(y_d_data, axis=0)
+		d_std = np.std(y_d_data, axis=0)
+		yd_sample = [list((yd - d_mean)/d_std) for i,yd in enumerate(y_d_data)]
+		data = np.array([np.hstack([yp_sample[i],yd_sample[i]]) for i,_ in enumerate(qoi_data)])
 		
 		BIC = gmm_ncomp.bic(data)
 		BICs[i] = BIC
@@ -739,6 +745,7 @@ def bn_train_evaluate_ncomp_sanitycheck(problem, trainfile, valfile, doPrint=Tru
 
 #Do bootstrap sampling & evaluation to find 95% confidence intervals
 def bn_train_convergence_confidence(problem, trainfile, N_bootstrap, ncomp, startnum=0, doPrint=True):
+	do_subset=0
 	###Load training data file
 	qoi_train, y_d_train = bn_load_samples(problem, trainfile, doPrint, do_subset)
 	
@@ -748,7 +755,7 @@ def bn_train_convergence_confidence(problem, trainfile, N_bootstrap, ncomp, star
 		###Make bootstrap sample
 		i_samples = np.random.randint(0, len(qoi_train), size=len(qoi_train))
 		qoi_bootstrap = [qoi_train[j] for j in i_samples]
-		y_d_bootstrap = [y_d_val[j] for j in i_samples]
+		y_d_bootstrap = [y_d_train[j] for j in i_samples]
 		
 		###Train and save GMM on that
 		modelsave = "BN_model_"+str(len(qoi_train))+'_bootstrap'+str(i)+'.pkl'
