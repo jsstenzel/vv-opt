@@ -474,11 +474,12 @@ if __name__ == '__main__':
 	
 	elif args.run == "OBED_test":
 		#Load the GMM from file
-		gmm = bn_load_gmm("BN_model.csv")
+		print("Loading GMM...",flush=True)
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
 	
 		#Calculate U for several different designs
-		U_varH_gbi_joint(d_historical, problem, gmm, n_mc=args.n, ncomp=0, doPrint=True)
-		U_varH_gbi_joint(d_min, problem, gmm, n_mc=args.n, ncomp=0, doPrint=True)
+		U_varH_gbi_joint(d_historical, problem, gmm, n_mc=args.n, doPrint=True)
+		U_varH_gbi_joint(d_min, problem, gmm, n_mc=args.n, doPrint=True)
 	
 		"""
 	elif args.run == "gbi_test":
