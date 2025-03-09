@@ -16,6 +16,7 @@ from obed.obed_multivar import *
 from obed.obed_gbi import *
 #from obed.pdf_estimation import *
 from inference.bn_modeling import *
+from inference.bn_evaluation import *
 from uq.uncertainty_propagation import *
 from uq.sensitivity_analysis import *
 from uq.saltelli_gsa import *
