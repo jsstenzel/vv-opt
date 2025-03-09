@@ -56,7 +56,7 @@ cf=x.cf;
 nibar=x.nibar;
 propbar=x.propbar;
 nicelas2=x.nicelas2;
-niconm2=x.niconm2;
+niconm2=x.niconm2;		%concentrated masses
 cmcid2=x.cmcid2;
 mass=x.mass;
 FgsNom=x.FgsNom;			      % nominal FSM sample rate (Hz)
@@ -197,6 +197,7 @@ SYSds=ss(Ads,Bds,Cds,Dds);
 [magds,phsds]=bode(SYSds,FreqBase*2*pi); 
 magds=abs(squeeze(magds));
 Snn=magds.^2;
+%TODO what does intrms do
 rmsssrad=intrms(2*Snn,FreqBase);
 rmsssarcsec=rad2arcsec*rmsssrad;
 if diagnostics
@@ -231,12 +232,12 @@ Reff = Ro^Nsurf;
 % area of primary mirror
 Area = pi * D^2 / 4;
 % slope of centroiding transfer function
-k = (16/3/pi) * (D/lambda) / r2a;
+ks = (16/3/pi) * (D/lambda) / r2a;
 alpha=Reff * QE * Area * BP * 10.^(-0.4.*Mgs) * PH;
 % total number of detected photons
 N = alpha * Tgs;
 % raw NEA
-NEA = sqrt(1+R0./N)/k./sqrt(N); % compare this with rms output from SS
+NEA = sqrt(1+R0./N)/ks./sqrt(N); % compare this with rms output from SS
 
 if diagnostics
    disp('Compute ss model of FGS noise')
@@ -264,6 +265,7 @@ clear s si
   
 %  compute cs tranformation matrices and xyz in basic
 xyzi= xyz; % save xyz before coord_in processing as xyzi
+%TODO what does coord_in do
 [ti,tf,xyz]=coord_in(ci,cf,xyz);
   
 %==============================================================
@@ -279,6 +281,7 @@ rho=  0.16643E+04;
 alpha=  0.56300E-07;
 Tref=  0.00000E+00;
 mat=mat1(mid,E,nu,rho,alpha,Tref,mat);
+%TODO what does mat1 do
  
 % WARNING: G-IMOS IS DIFFERENT THAN G-NASTRAN
  
@@ -309,6 +312,7 @@ mat=mat1(mid,E,nu,rho,alpha,Tref,mat);
 bci=ones(273,6);
   
  %  Compute the number of dofs and dof numbers, initialize k and m
+ %TODO how does bcond work
 [bc,ndof]=bcond(bci);
 nset=[1:ndof];
 fset=nset;
@@ -319,22 +323,29 @@ g=k;
 %==============================================================
 % 6. Assembly of m and k
 %==============================================================
-  if diagnostics
-     disp('Assembling m for conm2s')
-     end
-     m=conm2(niconm2,bc,m,xyz,cmcid2,cf);
-     if diagnostics
-        disp('Assembling k and m for beams')
-        end
-        [k,m]=beam_lump(nibar,xyz,propbar,mat,bc,k,m,ti,tf);
-        if diagnostics
-           disp('Transforming k and m to local cs')
-           end
-           [k,m]=km2loc(k,m,ti,tf);
-           if diagnostics
-              disp( 'Assembling k for spring elements')
-              end
-              [k,g]=celas2(nicelas2,xyz,bc,k,g);
+%TODO what does celas2 do
+if diagnostics
+disp('Assembling m for conm2s')
+end
+m=conm2(niconm2,bc,m,xyz,cmcid2,cf);
+
+%TODO what does beam_lump do
+if diagnostics
+disp('Assembling k and m for beams')
+end
+[k,m]=beam_lump(nibar,xyz,propbar,mat,bc,k,m,ti,tf);
+
+%TODO what does km2loc do
+if diagnostics
+disp('Transforming k and m to local cs')
+end
+[k,m]=km2loc(k,m,ti,tf);
+
+%TODO what does conm2 do
+if diagnostics
+disp( 'Assembling k for spring elements')
+end
+[k,g]=celas2(nicelas2,xyz,bc,k,g);
   
 %==============================================================
 % 7. Determine Mass Properties and RBM's
@@ -342,10 +353,13 @@ g=k;
 % compute rigid body modes geometrically,
 % where the rotation point is the c.g. and compute mass properties
 %[xyzcg]=cg_calc(m,xyz,bc,ti,tf);
+%TODO double-check how cg_calc works
 [xyzcg]=cg_calc(m,xyz,bc);
 %mass=wtcg(bc,xyz,m,xyzcg);
 Rpt=xyzcg;
+%TODO what does rbmodes do
 phirb=rbmodes(bc,xyz,m,Rpt);
+%TODO what does normphi do
 phirb=normphi(phirb,m);
 
 %==============================================================
@@ -386,6 +400,7 @@ gm=[ ...
     ];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
     nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
+	%TODO what does rbe2 do, its all over this section!
     [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
 
 % secondary mirror RBE2
@@ -858,14 +873,16 @@ nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
 rg=sparse(rg);
-  if diagnostics
-     disp('Reducing k and m to independent dofs')
-  end
-  [gm,k,m]=mce1(nset,mset,rg,k,m);
-  bc=bcnset(bc,nset,mset);
-  fset=nset;
-  temp=reshape(bc',prod(size(bc)),1);
-  mapdof(:,2)=temp(mapdof(:,2));
+
+%TODO what does mce1 do
+if diagnostics
+ disp('Reducing k and m to independent dofs')
+end
+[gm,k,m]=mce1(nset,mset,rg,k,m);
+bc=bcnset(bc,nset,mset);
+fset=nset;
+temp=reshape(bc',prod(size(bc)),1);
+mapdof(:,2)=temp(mapdof(:,2));
   
 % End of FEM assembly
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -877,6 +894,8 @@ if diagnostics
    tic
 end
 
+%TODO what exactly does eigfem do
+%we are solving for the eigenvalues and eigenvectors of this spring mass problem?
 [phi,omeg]=eigfem(k,m);
    %disp(['Solved Eigenproblem in ' num2str(toc) ' [sec]'])
 
@@ -1286,9 +1305,11 @@ if diagnostics
    tstartnewlyap=cputime;
 end
 syszd=ss(Azd,Bzd,Czd,Dzd); scf=0;
+%TODO what does ss2mod7 do
 [syszdm,T]=ss2mod7(syszd,scf);
 blocksize=20;
 [Azdm,Bzdm,Czdm,Dzdm]=ssdata(syszdm);
+%TODO what does newlyap do
 Sqm = newlyap(Azdm,Bzdm,blocksize);
 Szm=Czdm*Sqm*Czdm';
 z1=sqrt((1/nray)*sum(diag(Szm(1:nray,1:nray)))); %RMMS WFE
