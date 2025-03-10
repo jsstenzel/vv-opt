@@ -15,6 +15,7 @@ sys.path.append('..')
 from inference.bn_modeling import *
 #from inference.goal_based_inference import *
 from uq.plotmatrix import *
+from uq.uncertainty_propagation import *
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 ###MODEL EXAMINATION
@@ -147,6 +148,22 @@ def bn_measure_stability_convergence(problem, big_savefile, N_val, doPrint=True)
 		plt.plot(N_list, trace, c='gray', linestyle='dashed')
 	plt.show()
 	
+def bn_plot_data_density(problem, datafile, gmmfile, doGMMPlot=False, doPrint=True):
+	names = ["Q"] + problem.y_names + problem.d_names
+	
+	###Load data file
+	qoi_train, y_d_train = bn_load_samples(problem, datafile, doPrint)
+	training_data = [[q]+yd for q,yd in zip(qoi_train, y_d_train)]
+	
+	###Load gmm file
+	if doGMMPlot:
+		gmm = bn_load_gmm(gmmfile)
+	
+	###Iterate over the qyd elements, plot all of them 1d:
+	for c,name in enumerate(names):
+		column_data = [qyd[c] for qyd in training_data]
+		uncertainty_prop_plot(column_data, xlab=name, c='#21aad3', saveFig='bn_plot_data_density'+name, rescaled=False, vline=[])
+	
 def bn_compare_model_covariance(problem, datafile, gmmfile, doPrint=True):
 	###Load data file
 	qoi_train, y_d_train = bn_load_samples(problem, datafile, doPrint)
@@ -211,7 +228,6 @@ def bn_evaluate_model_likelihood(problem, gmmfile, datafile="", samples=[], do_s
 		context_str = "validation samples" if datafile=="" else "training set samples"
 		print("BN model",gmmfile,"has an average log-likelihood of",avg_loglikelihood,"for",len(standardized_samples),context_str,flush=True)
 	return avg_loglikelihood
-
 
 def bn_measure_likelihood_convergence(problem, big_savefile, doPrint=True):	
 	N_list = [1000,4000,7000,10000,40000,70000,100000,400000,700000,1000000]

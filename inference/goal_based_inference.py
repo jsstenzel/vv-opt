@@ -153,9 +153,9 @@ def gbi_condition_model(gmm, Yd_raw, verbose=0):
 	##LASTLY its very important that we de-normalize this input data according to the normalization of Q in the GaussianMixtureNormalized
 	#should just involve multiplying the mean and std
 	yp_mean = gmm.standardized_mean[0]
-	yp_cov = gmm.standardized_std[0]
-	mu_Y = [yp_cov*mu + yp_mean for mu in mu_Yd]
-	Sig_Yd = [(yp_cov**2)*var for var in Sig_Yd]
+	yp_std = gmm.standardized_std[0]
+	mu_Y = [yp_std*mu + yp_mean for mu in mu_Yd] #xnorm = (x-xmean)/xstd
+	Sig_Yd = [(yp_std**2)*var for var in Sig_Yd] #rescaling stddev=1 back to yp_std
 	
 	if verbose==2:
 		print("beta:", beta)

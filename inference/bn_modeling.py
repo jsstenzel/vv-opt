@@ -133,3 +133,46 @@ def bn_load_gmm(gmm_file):
 
 	return data_gmm
 
+#Read and interpret the savefile
+#then, return only a randomized sub-sample of y
+def bn_load_y(problem, savefile, doPrint=False, doDiagnostic=False):
+	filename = savefile if savefile.endswith('.csv') else savefile+'.csv'
+
+	###Make sure the files exist
+	if not os.path.isfile(filename):
+		print("File",filename,"is missing")
+		sys.exit()
+		
+	###Safely read out all of the samples into matrices
+	y = []
+	
+	if doPrint:
+		print("Reading the data files...",flush=True)
+	
+	with open(filename) as csvfile:
+		csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
+		for l,row in enumerate(csvreader):
+			if len(row) != problem.dim_y + problem.dim_d + 1:
+				if doDiagnostic:
+					print("Warning: dropped line",l+1,"(length "+str(len(row))+' expected', str(problem.dim_y + problem.dim_d + 1)+')',"from",filename)
+			else:
+				ygrab = [float(e) for e in row[:problem.dim_y]]
+				y.append(ygrab) #should be length dim_y
+	
+	return y
+
+#take in a list of samples
+#return a subset of that list of length N_draw, with randomized selections
+def bn_random_subset(samples, N_draw, allowDuplicates=True, seed=None):
+	###if you don't provide a seed, make it random
+	if seed:
+		np.random.seed(seed)
+	
+	###prepare the subset index list
+	if allowDuplicates:
+		i_subset = np.random.randint(0, len(samples), size=N_draw)
+	else:
+		i_subset = random.sample(range(0, len(samples)), N_draw)
+	
+	subset = [samples[i] for i in i_subset]
+	return subset

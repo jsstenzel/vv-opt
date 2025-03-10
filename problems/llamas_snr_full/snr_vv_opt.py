@@ -450,12 +450,14 @@ if __name__ == '__main__':
 		filename = "BN_model.csv"
 		bn_save_gmm(gmm, gmm_file=filename)
 		
+	elif args.run == "BN_examine":
+		#bn_compare_model_covariance(problem, "BN_samples", "BN_model_100000", doPrint=True)
+		bn_plot_data_density(problem, "BN_samples_1639027", "BN_model_1639027_ncomp200.csv", doGMMPlot=False, doPrint=True)
+		
 	elif args.run == "BN_evaluate":
 		#Run the validation test
 		#gmm = bn_load_gmm("BN_model.csv")
 		#bn_measure_model_mse(problem, gmm, N=args.n, doPrint=True)
-		
-		#bn_compare_model_covariance(problem, "BN_samples", "BN_model_100000", doPrint=True)
 		
 		#bn_evaluate_model_likelihood(problem, gmmfile="BN_model_1000", datafile="BN_samples", N_val=0, do_subset=1000, doPrint=True)
 		bn_evaluate_convergence_confidence(problem, valfile="BN_validation", N_bootstrap=1000, doPrint=True)
@@ -475,12 +477,13 @@ if __name__ == '__main__':
 	
 	elif args.run == "OBED_test":
 		#Load the GMM from file
-		print("Loading GMM...",flush=True)
+		print("Loading GMM and presamples...",flush=True)
 		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
-	
+		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", doPrint=False, doDiagnostic=False)
+		
 		#Calculate U for several different designs
-		U_varH_gbi_joint(d_historical, problem, gmm, n_mc=args.n, doPrint=True)
-		U_varH_gbi_joint(d_min, problem, gmm, n_mc=args.n, doPrint=True)
+		U_varH_gbi_joint_presampled(d_historical, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		#U_varH_gbi_joint_presampled(d_min, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
 	
 		"""
 	elif args.run == "gbi_test":
