@@ -354,9 +354,9 @@ if __name__ == '__main__':
 						3, #d_vph_n_pts
 						801, #d_dichroic_n_pts
 						1501, #d_coll_n_pts #MIT Run 9-2730		
-						11, #d_redcam_n_pts #protoLLAMAS camera testing
+						13, #d_redcam_n_pts #protoLLAMAS camera testing
 						0, #d_greencam_n_pts #protoLLAMAS camera testing
-						11, #d_bluecam_n_pts #protoLLAMAS camera testing
+						13, #d_bluecam_n_pts #protoLLAMAS camera testing
 						10 #d_frd_n_meas #from evaluating_cleaving_through_bigger.xlsx
 					]
 					
@@ -466,7 +466,7 @@ if __name__ == '__main__':
 		#Train the BN off of the saved data
 		ncomp = 200
 		q, _ = bn_load_samples(problem, savefile="BN_samples", doPrint=True, doDiagnostic=True)
-		gmm = bn_train_from_file(problem, savefile="BN_samples", do_subset=0, ncomp=ncomp, doPrint=True)
+		gmm = bn_train_from_file(problem, savefile="BN_samples", do_subset=2000000, ncomp=ncomp, doPrint=True)
 		
 		#Save the GMM to a file
 		filename = "BN_model_" + str(len(q)) + "_ncomp" + str(ncomp) + '.pkl'

@@ -74,9 +74,12 @@ def bn_load_samples(problem, savefile, doPrint=False, do_subset=0, doDiagnostic=
 				if doDiagnostic:
 					print("Warning: dropped line",l+1,"(length "+str(len(row))+' expected', str(problem.dim_y + problem.dim_d + 1)+')',"from",filename)
 			elif not do_subset or len(Q) < do_subset:
-				ygrab = [float(e) for e in row[:problem.dim_y]]
-				dgrab = [float(e) for e in row[problem.dim_y:-1]]
-				Qgrab = float(row[-1])
+				try:
+					ygrab = [float(e) for e in row[:problem.dim_y]]
+					dgrab = [float(e) for e in row[problem.dim_y:-1]]
+					Qgrab = float(row[-1])
+				except ValueError: #recently im seeing some '' values in y? hopefully this avoids that ugliness
+					continue
 				y.append(ygrab) #should be length dim_y
 				d.append(dgrab) #should be length dim_d = row - dim_y - 1
 				Q.append(Qgrab)
@@ -94,15 +97,7 @@ def bn_train_from_file(problem, savefile, do_subset=0, ncomp=0, doPrint=False):
 	qoi_train, y_d_train = bn_load_samples(problem, savefile, doPrint, do_subset)
 	#y_d_train = [[yd[0], yd[1]] for yd in y_d_train] #stupid cut for speed
 	
-	###look at the covariance matrix and eigenvalues of the data, see if we have bad correlation
-	if False:
-		data_together = [[q]+yd for q,yd in zip(qoi_train, y_d_train)]
-		names_together = ["Q"] + problem.y_names + problem.d_names
-		cov = covmatrix_heatmap(data_together, names_together, rescale=False)
-		eigenval, _ = np.linalg.eig(cov)
-		print("eigenvalues of the Qyd covariance matrix:",eigenval)
-	
-	###Train model	
+	###Train model
 	gmm = gbi_train_model(qoi_train, y_d_train, verbose=2, ncomp=ncomp, careful=True)
 	
 	###Print and return

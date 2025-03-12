@@ -89,11 +89,50 @@ def gbi_train_model(qoi_samples, y_samples, verbose=0, ncomp=0, ncomp_start=1, c
 		
 	else:
 		#Allow someone to override this process if they think they know how many components they want
-		gmm = GaussianMixtureNormalized(n_components=ncomp, standardized_mean=y_mean, standardized_std=y_std).fit(data)
+		if careful:
+			gmm = GaussianMixtureNormalized(n_components=ncomp, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std).fit(data)
+		else:
+			gmm = GaussianMixtureNormalized(n_components=ncomp, standardized_mean=y_mean, standardized_std=y_std).fit(data)
 		print("Using provided number of components,",ncomp,flush=True) if verbose else 0
 		
 	return gmm
+
+
+#as above, but take in a warm-started gmm and continue to train it
+def gbi_train_model_warm(qoi_samples, y_samples, gmm, verbose=0, careful=False):
+	ncomp = len(gmm.weights_)
+	gmm.warm_start = True
 	
+	print("getting data...",flush=True) if verbose else 0
+	p_mean = np.mean(qoi_samples)
+	p_std = np.std(qoi_samples)
+	yp_sample = [(qoi - p_mean)/p_std for qoi in qoi_samples]
+	d_mean = np.mean(y_samples, axis=0)
+	d_std = np.std(y_samples, axis=0)
+	yd_sample = [list((yd - d_mean)/d_std) for i,yd in enumerate(y_samples)]
+	#print(p_mean)
+	#print(p_std)
+	#print(d_mean)
+	#print(d_std)
+	y_mean = [p_mean]+list(d_mean)
+	y_std = [p_std]+list(d_std) #TODO put these into all of the GaussianMixtures
+
+	p_dimension = 1 #len(yp_sample[0]) #1
+	d_dimension = len(yd_sample[0]) #3
+
+	data = np.array([np.hstack([yp_sample[i],yd_sample[i]]) for i,_ in enumerate(qoi_samples)])
+
+	#step 1: train 
+	#Get a a Gaussian mixture model from the push-forward of the prior through yd and yp
+	if careful:
+		GaussianMixtureNormalized(n_components=ncomp+1, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std).fit(data)
+	else:
+		gmm = GaussianMixtureNormalized(n_components=ncomp, standardized_mean=y_mean, standardized_std=y_std).fit(data)
+	print("Using provided number of components,",ncomp,flush=True) if verbose else 0
+	
+	return gmm
+
+
 def gbi_precalc_Sigdd(gmm, p_dim=1):
 	ncomp = len(gmm.weights_)
 	#just invert the Sig_dd matrices once, saves a lot of time!
