@@ -63,17 +63,20 @@ def U_varH_gbi_joint(d, problem, gmm_qyd, n_mc, doPrint=False):
 	if doPrint:
 		print(Y1_list, flush=True)
 	
-	#We expact we have already trained a joint gmm model p(y,d,q) offline,
+	#We expect we have already trained a joint gmm model p(y,d,q) offline,
 	#and will condition it for p(q|y,d)
 	if doPrint:
 		print("Conditioning GMM in MC loop...",flush=True)
+		
+	#Pre-calculate an inverse matrix, to speed up the MC loop:
+	inv_Sig_dd, det_Sig_dd = gbi_precalc_Sigdd(gmm_qyd, p_dim=1)
 	
 	U_list = []
 	for i,y in enumerate(Y1_list): #MC loop		
 		vi = np.array(y + d)
 	
 		#Now, use my posterior predictive to calculate the utility
-		H_var = gbi_var_of_conditional_pp(gmm_qyd, vi)
+		H_var = gbi_var_of_conditional_pp(gmm_qyd, vi, inv_Sig_dd_precalc=inv_Sig_dd, det_Sig_dd_precalc=det_Sig_dd)
 		u = H_var
 		U_list.append(u)
 		if doPrint:
@@ -95,17 +98,20 @@ def U_varH_gbi_joint_presampled(d, problem, gmm_qyd, presampled_ylist, n_mc, doP
 		print("Pulling",n_mc,"presampled joint MC samples of theta and y...",flush=True)
 	mc_ylist = bn_random_subset(presampled_ylist, n_mc, allowDuplicates=True)
 	
-	#We expact we have already trained a joint gmm model p(y,d,q) offline,
+	#We expect we have already trained a joint gmm model p(y,d,q) offline,
 	#and will condition it for p(q|y,d)
 	if doPrint:
 		print("Conditioning GMM in MC loop...",flush=True)
+		
+	#Pre-calculate an inverse matrix, to speed up the MC loop:
+	inv_Sig_dd, det_Sig_dd = gbi_precalc_Sigdd(gmm_qyd, p_dim=1)
 	
 	U_list = []
 	for i,y in enumerate(mc_ylist): #MC loop		
 		vi = np.array(y + d)
 	
 		#Now, use my posterior predictive to calculate the utility
-		H_var = gbi_var_of_conditional_pp(gmm_qyd, vi)
+		H_var = gbi_var_of_conditional_pp(gmm_qyd, vi, inv_Sig_dd_precalc=inv_Sig_dd, det_Sig_dd_precalc=det_Sig_dd)
 		u = H_var
 		U_list.append(u)
 		if doPrint:
