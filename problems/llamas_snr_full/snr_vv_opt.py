@@ -361,14 +361,14 @@ if __name__ == '__main__':
 					]
 					
 	d_min = [
-						0, #t_gain 				0-length exposure for gain exp
+						0.1, #t_gain 				0-length exposure for gain exp
 						0, #I_gain 				no measurements for gain exp
 						0, #n_meas_rn 			no measurements for rn exp
 						0, #d_num 				no measurements for dc exp
-						0, #d_max 				dc exp filer
-						0, #d_pow 				dc exp filler
+						1, #d_max 				dc exp filer
+						0.01, #d_pow 				dc exp filler
 						0, #n_qe 				no measurements for qe exp
-						0, #t_qe 				0-length exposure for qe exp
+						0.1, #t_qe 				0-length exposure for qe exp
 						0, #d_vph_n_pts 		no measurements for vph exp
 						0, #d_dichroic_n_pts 	no measurements for dichroic exp
 						0, #d_coll_n_pts		no measurements for collimator exp
@@ -376,6 +376,28 @@ if __name__ == '__main__':
 						0, #d_greencam_n_pts		no measurements for camera exp
 						0, #d_bluecam_n_pts		no measurements for camera exp
 						0  #d_frd_n_meas 		no measurements for FRD exp
+					]
+	_wave_min = 350.0
+	_wave_max = 975.0
+	_wave_redgreen = 690.0
+	_wave_greenblue = 480.0
+	_bandpass = _wave_max - _wave_min
+	d_max = [
+						600, #t_gain
+						100, #I_gain
+						50, #n_meas_rn
+						25, #d_num
+						12000, #d_max
+						3, #d_pow
+						100, #n_qe
+						600, #t_qe
+						_bandpass*10, #d_vph_n_pts
+						_bandpass*10, #d_dichroic_n_pts
+						_bandpass*10, #d_coll_n_pts
+						(_wave_max-_wave_redgreen)*10, #d_redcam_n_pts
+						(_wave_redgreen-_wave_greenblue)*10, #d_greencam_n_pts
+						(_wave_greenblue-_wave_min)*10, #d_bluecam_n_pts
+						2400  #d_frd_n_meas
 					]
 	problem = construct_llamas_snr_problem()
 	
@@ -442,12 +464,13 @@ if __name__ == '__main__':
 	
 	elif args.run == "BN_train":
 		#Train the BN off of the saved data
+		ncomp = 200
 		q, _ = bn_load_samples(problem, savefile="BN_samples", doPrint=True, doDiagnostic=True)
-		gmm = bn_train_from_file(problem, savefile="BN_samples", do_subset=args.n, doPrint=True)
+		gmm = bn_train_from_file(problem, savefile="BN_samples", do_subset=0, ncomp=ncomp, doPrint=True)
 		
 		#Save the GMM to a file
-		#filename = "BN_" + str(len(q)) + '.csv'
-		filename = "BN_model.csv"
+		filename = "BN_model_" + str(len(q)) + "_ncomp" + str(ncomp) + '.pkl'
+		#filename = "BN_model.csv"
 		bn_save_gmm(gmm, gmm_file=filename)
 		
 	elif args.run == "BN_examine":
@@ -482,18 +505,14 @@ if __name__ == '__main__':
 		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", doPrint=False, doDiagnostic=False)
 		
 		#Calculate U for several different designs
-		U_varH_gbi_joint_presampled(d_historical, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
-		#U_varH_gbi_joint_presampled(d_min, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		U_hist,_ = U_varH_gbi_joint_presampled(d_historical, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_hist:",U_hist,flush=True)
+		U_min, _ = U_varH_gbi_joint_presampled(d_min, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_min:",U_min,flush=True)
+		U_max, _ = U_varH_gbi_joint_presampled(d_max, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_max:",U_max,flush=True)
 	
-		"""
-	elif args.run == "gbi_test":
-		vv_gbi_test(problem, d_historical, 10**1, y_nominal, ncomp=0)
-	elif args.run == "gbi_test_rand":
-		vv_gbi_test(problem, d_historical, 10**1, ncomp=10)
-	
-	elif args.run == "obed_gbi":
-		U_hist = vv_obed_gbi(problem, d_historical)
-	
+		"""	
 	elif args.run == "uncertainty_mc":
 		util_samples = uncertainty_mc(problem, d_historical, n_mc=10**2, n_gmm=10**2, n_test=3)
 		print(util_samples)
