@@ -73,20 +73,18 @@ def bn_load_samples(problem, savefile, doPrint=False, do_subset=0, doDiagnostic=
 			if len(row) != problem.dim_y + problem.dim_d + 1:
 				if doDiagnostic:
 					print("Warning: dropped line",l+1,"(length "+str(len(row))+' expected', str(problem.dim_y + problem.dim_d + 1)+')',"from",filename)
-			else:
+			elif not do_subset or len(Q) < do_subset:
 				ygrab = [float(e) for e in row[:problem.dim_y]]
 				dgrab = [float(e) for e in row[problem.dim_y:-1]]
 				Qgrab = float(row[-1])
 				y.append(ygrab) #should be length dim_y
 				d.append(dgrab) #should be length dim_d = row - dim_y - 1
 				Q.append(Qgrab)
+			else:
+				break
 	
 	#zip it together at the end, in case i ever need them separate for something later
 	yd = [y_i + d_i for y_i,d_i in zip(y,d)]
-	
-	if do_subset:
-		Q = Q[:do_subset]
-		yd = yd[:do_subset]
 
 	return Q, yd
 
@@ -135,7 +133,7 @@ def bn_load_gmm(gmm_file):
 
 #Read and interpret the savefile
 #then, return only a randomized sub-sample of y
-def bn_load_y(problem, savefile, doPrint=False, doDiagnostic=False):
+def bn_load_y(problem, savefile, do_subset=0, doPrint=False, doDiagnostic=False):
 	filename = savefile if savefile.endswith('.csv') else savefile+'.csv'
 
 	###Make sure the files exist
@@ -155,9 +153,11 @@ def bn_load_y(problem, savefile, doPrint=False, doDiagnostic=False):
 			if len(row) != problem.dim_y + problem.dim_d + 1:
 				if doDiagnostic:
 					print("Warning: dropped line",l+1,"(length "+str(len(row))+' expected', str(problem.dim_y + problem.dim_d + 1)+')',"from",filename)
-			else:
+			elif not do_subset or len(y) < do_subset:
 				ygrab = [float(e) for e in row[:problem.dim_y]]
 				y.append(ygrab) #should be length dim_y
+			else:
+				break
 	
 	return y
 

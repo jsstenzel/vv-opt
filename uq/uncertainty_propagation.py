@@ -42,10 +42,31 @@ def uncertainty_prop(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False, vli
 	return mean, stddev
 	
 def uncertainty_prop_plot(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False, vline=[]):	
-	if rescaled==False:
-		n, bins, patches = plt.hist(x=y_j, bins='auto', color=c, alpha=1.0, rwidth=0.85)
-	else:
-		n, bins, patches = plt.hist(x=y_j, bins='auto', color=c, alpha=1.0, rwidth=0.85, density=True)
+	"""
+	###remarkably, plt.hist draws a memory error if there are outliers. it tries to list out a trillion bins.
+	#Fix: prune out the worst outliers as standard practice:
+	if not mean:
+		mean = statistics.mean(y_j)
+	if not stddev:
+		stddev = statistics.stdev(y_j, mean) #note! This is sample stddev, not population stddev. Different n-factor in front
+	outlier_min= mean - 5.0*stddev #5 sigma is pretty conservative
+	outlier_max= mean + 5.0*stddev #5 sigma is pretty conservative
+	y=[yj for yj in y_j if (yj>outlier_min and yj<outlier_max)]
+	if len(y) < len(y_j):
+		plt.title("(Pruned "+str(len(y_j)-len(y))+" outliers)")
+	"""
+
+	try:
+		if rescaled==False:
+			n, bins, patches = plt.hist(x=y_j, bins='auto', color=c, alpha=1.0, rwidth=0.85)
+		else:
+			n, bins, patches = plt.hist(x=y_j, bins='auto', color=c, alpha=1.0, rwidth=0.85, density=True)
+	except MemoryError:
+		if rescaled==False:
+			n, bins, patches = plt.hist(x=y_j, bins=1000, color=c, alpha=1.0, rwidth=0.85)
+		else:
+			n, bins, patches = plt.hist(x=y_j, bins=1000, color=c, alpha=1.0, rwidth=0.85, density=True)	
+		
 	plt.grid(axis='y', alpha=0.75)
 	plt.ylim(ymax=np.ceil(n.max() / 10) * 10 + n.max()*0.05)
 	#plt.xticks(rotation=90)

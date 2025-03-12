@@ -148,11 +148,11 @@ def bn_measure_stability_convergence(problem, big_savefile, N_val, doPrint=True)
 		plt.plot(N_list, trace, c='gray', linestyle='dashed')
 	plt.show()
 	
-def bn_plot_data_density(problem, datafile, gmmfile, doGMMPlot=False, doPrint=True):
+def bn_plot_data_density(problem, datafile, gmmfile, do_subset=0, doGMMPlot=False, doPrint=True):
 	names = ["Q"] + problem.y_names + problem.d_names
 	
 	###Load data file
-	qoi_train, y_d_train = bn_load_samples(problem, datafile, doPrint)
+	qoi_train, y_d_train = bn_load_samples(problem, datafile, doPrint, do_subset=do_subset)
 	training_data = [[q]+yd for q,yd in zip(qoi_train, y_d_train)]
 	
 	###Load gmm file
@@ -162,6 +162,7 @@ def bn_plot_data_density(problem, datafile, gmmfile, doGMMPlot=False, doPrint=Tr
 	###Iterate over the qyd elements, plot all of them 1d:
 	for c,name in enumerate(names):
 		column_data = [qyd[c] for qyd in training_data]
+		print(name)
 		uncertainty_prop_plot(column_data, xlab=name, c='#21aad3', saveFig='bn_plot_data_density'+name, rescaled=False, vline=[])
 	
 def bn_compare_model_covariance(problem, datafile, gmmfile, doPrint=True):

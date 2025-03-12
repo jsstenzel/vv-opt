@@ -452,7 +452,7 @@ if __name__ == '__main__':
 		
 	elif args.run == "BN_examine":
 		#bn_compare_model_covariance(problem, "BN_samples", "BN_model_100000", doPrint=True)
-		bn_plot_data_density(problem, "BN_samples_1639027", "BN_model_1639027_ncomp200.csv", doGMMPlot=False, doPrint=True)
+		bn_plot_data_density(problem, "BN_samples_1639027", "BN_model_1639027_ncomp200.csv", do_subset=100, doGMMPlot=False, doPrint=True)
 		
 	elif args.run == "BN_evaluate":
 		#Run the validation test
