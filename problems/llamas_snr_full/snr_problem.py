@@ -377,16 +377,16 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 					["t_rn_buffer", [], "continuous", 5], #rough estimate based on experience
 					["t_dc_buffer", [], "continuous", 5], #rough estimate based on experience
 					["fp_testbed_setup", [], "continuous", 1800], #rough estimate based on experience
-					["t_qe_setup", [], "continuous", 1200], #WAG, best i can do
-					["t_qe_buffer", [], "continuous", 5], #WAG, best i can do
+					["t_qe_setup", [], "continuous", 1200], #WAG just assuming all setups are 1hr
+					["t_qe_buffer", [], "continuous", 60], #WAG - need to adjust photodiode or sensor or something, so say about a minute
 					["t_vph_setup", [], "continuous", 1200], #WAG just assuming all setups are 1hr
-					["t_vph_per_pt", [], "continuous", 5], #WAG assuming all thru exposures + buffers are 5sec
+					["t_vph_per_pt", [], "continuous", 5*60], #WAG - individual measurements -5 min each with buffer
 					["t_dichroic_setup", [], "continuous", 1200], #WAG just assuming all setups are 1hr
-					["t_dichroic_per_pt", [], "continuous", 5], #WAG assuming all thru exposures + buffers are 5sec
+					["t_dichroic_per_pt", [], "continuous", 0.01], #WAG - this captures tradeoff between spectral resolution and integration time
 					["t_coll_setup", [], "continuous", 1200], #WAG just assuming all setups are 1hr
-					["t_coll_per_pt", [], "continuous", 5], #WAG assuming all thru exposures + buffers are 5sec
+					["t_coll_per_pt", [], "continuous", 0.05], #WAG - this captures tradeoff between spectral resolution and integration time
 					["t_camera_test_setup", [], "continuous", 1800], #WAG this setup is probably more complicated
-					["t_camera_per_pt", [], "continuous", 5], #WAG assuming all thru exposures + buffers are 5sec
+					["t_camera_per_pt", [], "continuous", 5*60], #WAG - individual measurements - 5 min each with buffer
 					["t_frd_setup", [], "continuous", 1200], #WAG just assuming all setups are 1hr
 					["t_frd_test", [], "continuous", 600], #WAG i think this test was probably pretty fiddly, since we only tested 10
 					#["C_engineer", [], "continuous", 0.00694444444] #WAG $/s, from $25/hr

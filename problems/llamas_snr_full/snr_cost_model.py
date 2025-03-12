@@ -119,17 +119,20 @@ def snr_cost(d, x):
 	#But actually doing it is probably a fraction of that time. Maybe 1/10th even.
 	#For 24 VPH and 3 measurements each, over lets say 15 hours, thats... hard to extrapolate from
 	
-	#VPH
+	#VPH - n_pts corresponds to individual measurements
 	time_vph = 3 * (vph_setup + d_vph_n_pts * (vph_exposure_per_pt)) if d_vph_n_pts>0 else 0.0
-	#Dichroic
-	time_dichroic = 2 * (dichroic_setup + d_dichroic_n_pts * (dichroic_exposure_per_pt)) if d_dichroic_n_pts>0 else 0.0
-	#Collimator
-	time_coll = coll_setup + d_coll_n_pts * (coll_exposure_per_pt) if d_coll_n_pts>0 else 0.0
-	#Camera
+	#Camera - n_pts corresponds to individual measurements
 	time_lenses = (camera_test_setup + d_redcam_n_pts * (camera_exposure_per_pt)) if d_redcam_n_pts>0 else 0.0
 	time_lenses += (camera_test_setup + d_greencam_n_pts * (camera_exposure_per_pt)) if d_greencam_n_pts>0 else 0.0
 	time_lenses += (camera_test_setup + d_bluecam_n_pts * (camera_exposure_per_pt)) if d_bluecam_n_pts>0 else 0.0
-	#Fiber
+	
+	#Dichroic - n_pts corresponds to spectral resolution, which trades off with integration time
+	#i.e. this all happens in one exposure. that exposure probably has a minimum time of like 1 second
+	time_dichroic = 2 * (dichroic_setup + max(d_dichroic_n_pts * dichroic_exposure_per_pt,1)) if d_dichroic_n_pts>0 else 0.0
+	#Collimator - n_pts corresponds to spectral resolution, which trades off with integration time
+	time_coll = coll_setup + max(d_coll_n_pts * coll_exposure_per_pt,1) if d_coll_n_pts>0 else 0.0
+
+	#Fiber frd - n_pts corresponds to individual measurements
 	time_frd = frd_setup + d_frd_n_meas * frd_test_time if d_frd_n_meas>0 else 0.0
 	
 	cost = C_engineer * (fp_time + time_vph + time_dichroic + time_coll + time_lenses + time_frd) 
