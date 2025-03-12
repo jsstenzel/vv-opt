@@ -95,16 +95,30 @@ def gbi_train_model(qoi_samples, y_samples, verbose=0, ncomp=0, ncomp_start=1, c
 	return gmm
 	
 def gbi_precalc_Sigdd(gmm, p_dim=1):
+	ncomp = len(gmm.weights_)
+	#just invert the Sig_dd matrices once, saves a lot of time!
 	Sig = [np.array(cov_k) for cov_k in gmm.covariances_]
 	Sig_dd = [Sig_k[p_dim:, p_dim:] for Sig_k in Sig]
 	inv_Sig_dd = [np.linalg.inv(Sig_dd_k) for Sig_dd_k in Sig_dd]
 	
-	det_Sig_dd = [np.linalg.det(Sig_dd_k) for Sig_dd_k in Sig_dd]
+	#because the det is so small, I'm calling for the log of the det directly. slogdet requires careful unpacking
+	signs_logdets = [np.linalg.slogdet(Sig_dd_k) for Sig_dd_k in Sig_dd] #returns (sign, logdet)
+	logdet_Sig_dd = [None]*ncomp
+	for k in range(ncomp):
+		sign, logdet = signs_logdets[k]
+		if sign == 1:
+			logdet_Sig_dd[k] = logdet.item()
+		elif sign < 0:
+			print("Error: Sig_dd apparently wasn't positive semi-definite?")
+			sys.exit()
+		else:
+			print("Error: Sig_dd has a 0 determinant, that's unexpected")
+			sys.exit()
 	
-	return inv_Sig_dd, det_Sig_dd
+	return inv_Sig_dd, logdet_Sig_dd
 	
 #using decimal instead of mpmath
-def gbi_condition_model(gmm, Yd_raw, inv_Sig_dd_precalc=None, det_Sig_dd_precalc=None, verbose=0):
+def gbi_condition_model(gmm, Yd_raw, inv_Sig_dd_precalc=None, logdet_Sig_dd_precalc=None, verbose=0):
 	ncomp = gmm.n_components
 	#step 2
 	#Now we have our data, and we find the posterior predictive from that
@@ -128,22 +142,18 @@ def gbi_condition_model(gmm, Yd_raw, inv_Sig_dd_precalc=None, det_Sig_dd_precalc
 	Sig_dp = [Sig_k[p_dimension:, :p_dimension] for Sig_k in Sig]
 	Sig_dd = [Sig_k[p_dimension:, p_dimension:] for Sig_k in Sig]
 	
-	###These things can be precalculated, to save time
-	if inv_Sig_dd_precalc:
+	###These things can be precalculated, to save time. check if they have been
+	if inv_Sig_dd_precalc and logdet_Sig_dd_precalc:
 		inv_Sig_dd = inv_Sig_dd_precalc
-	else:
-		inv_Sig_dd = [np.linalg.inv(Sig_dd_k) for Sig_dd_k in Sig_dd]
-	###
-	if det_Sig_dd_precalc:
-		det_Sig_dd = det_Sig_dd_precalc
-	else:
-		det_Sig_dd = [np.linalg.det(Sig_dd_k) for Sig_dd_k in Sig_dd]
+		logdet_Sig_dd = logdet_Sig_dd_precalc
+	else: #no half-measures!
+		inv_Sig_dd, logdet_Sig_dd = gbi_precalc_Sigdd(gmm_qyd, p_dim=1)
 
 	#parameters for the new GMM:
 	column_diff = [np.array(Yd - ymean_d[k]).reshape(len(Yd), 1) for k in range(ncomp)]
 	exponent = [-0.5 * (column_diff[k].T @ inv_Sig_dd[k] @ column_diff[k]).item() for k in range(ncomp)] #TODO matrix mult isnt workin here
 	logB1 = [(-ncomp/2.0)*np.log(alpha[k]*2*math.pi) 
-			-0.5 * np.log(det_Sig_dd[k])
+			- 0.5 * logdet_Sig_dd[k]
 			+ exponent[k]
 			for k in range(ncomp)]
 	#B1 = [np.exp(logbk) for logbk in logB1] #this is broken; would need to use Decimal to do this without loss of precision
@@ -197,8 +207,8 @@ def gbi_gmm_variance(beta, mu_Yd, Sig_Yd):
 	var = moment2 - moment1**2
 	return var
 	
-def gbi_var_of_conditional_pp(gmm, Yd, verbose=0, inv_Sig_dd_precalc=None, det_Sig_dd_precalc=None):
-	beta, mu_Yd, Sig_Yd = gbi_condition_model(gmm, Yd, inv_Sig_dd_precalc=inv_Sig_dd_precalc, det_Sig_dd_precalc=det_Sig_dd_precalc, verbose=verbose)
+def gbi_var_of_conditional_pp(gmm, Yd, verbose=0, inv_Sig_dd_precalc=None, logdet_Sig_dd_precalc=None):
+	beta, mu_Yd, Sig_Yd = gbi_condition_model(gmm, Yd, inv_Sig_dd_precalc=inv_Sig_dd_precalc, logdet_Sig_dd_precalc=logdet_Sig_dd_precalc, verbose=verbose)
 	return gbi_gmm_variance(beta, mu_Yd, Sig_Yd)
 	
 #Given a GMM and a conditional Yd, what is a sample of Yp?

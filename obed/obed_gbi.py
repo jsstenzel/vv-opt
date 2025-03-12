@@ -69,14 +69,15 @@ def U_varH_gbi_joint(d, problem, gmm_qyd, n_mc, doPrint=False):
 		print("Conditioning GMM in MC loop...",flush=True)
 		
 	#Pre-calculate an inverse matrix, to speed up the MC loop:
-	inv_Sig_dd, det_Sig_dd = gbi_precalc_Sigdd(gmm_qyd, p_dim=1)
+	inv_Sig_dd, logdet_Sig_dd = gbi_precalc_Sigdd(gmm_qyd, p_dim=1)
 	
 	U_list = []
 	for i,y in enumerate(Y1_list): #MC loop		
 		vi = np.array(y + d)
 	
 		#Now, use my posterior predictive to calculate the utility
-		H_var = gbi_var_of_conditional_pp(gmm_qyd, vi, inv_Sig_dd_precalc=inv_Sig_dd, det_Sig_dd_precalc=det_Sig_dd)
+		H_var = gbi_var_of_conditional_pp(gmm_qyd, vi, 
+			inv_Sig_dd_precalc=inv_Sig_dd, logdet_Sig_dd_precalc=logdet_Sig_dd)
 		u = H_var
 		U_list.append(u)
 		if doPrint:
@@ -104,14 +105,15 @@ def U_varH_gbi_joint_presampled(d, problem, gmm_qyd, presampled_ylist, n_mc, doP
 		print("Conditioning GMM in MC loop...",flush=True)
 		
 	#Pre-calculate an inverse matrix, to speed up the MC loop:
-	inv_Sig_dd, det_Sig_dd = gbi_precalc_Sigdd(gmm_qyd, p_dim=1)
+	inv_Sig_dd, logdet_Sig_dd = gbi_precalc_Sigdd(gmm_qyd, p_dim=1)
 	
 	U_list = []
 	for i,y in enumerate(mc_ylist): #MC loop		
 		vi = np.array(y + d)
 	
 		#Now, use my posterior predictive to calculate the utility
-		H_var = gbi_var_of_conditional_pp(gmm_qyd, vi, inv_Sig_dd_precalc=inv_Sig_dd, det_Sig_dd_precalc=det_Sig_dd)
+		H_var = gbi_var_of_conditional_pp(gmm_qyd, vi, inv_Sig_dd_precalc=inv_Sig_dd, 
+			logdet_Sig_dd_precalc=logdet_Sig_dd)
 		u = H_var
 		U_list.append(u)
 		if doPrint:

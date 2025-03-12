@@ -108,10 +108,10 @@ if __name__ == '__main__':
 		profile_func(bootstrap_profile, [], 'SA_QoI_bootstrap_stats')
 		
 	elif args.run == "BN_test":
-		gmm = bn_load_gmm("BN_model_1639027_ncomp100.pkl")
-		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", do_subset=10, doPrint=False, doDiagnostic=False)
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", do_subset=10000, doPrint=False, doDiagnostic=False)
 		
-		profile_func(U_varH_gbi_joint_presampled, [d_historical, problem, gmm, presampled_ylist, 100, True], "BN_test_stats")
+		profile_func(U_varH_gbi_joint_presampled, [d_historical, problem, gmm, presampled_ylist, 10000, True], "BN_test_stats")
 	
 		
 	elif args.run == "gain_exp":
