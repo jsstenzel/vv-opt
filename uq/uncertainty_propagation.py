@@ -101,6 +101,94 @@ def uncertainty_prop_plots(Y, xlabs=None, c='#21aad3', transpose=True, saveFig='
 	for i,y in enumerate(Y):
 		uncertainty_prop_plot(y, xlab=xlabs[i], c=c, saveFig=fignames[i])
 	
+#this function is intended to take in a set of n_mc results from a big Monte Carlo run
+#and show you how the mean and confidence interval of that one run change over n-factor
+#pulling from my past work proj1_p2_16940.py
+def mc_plot_trace(samples, plotConf=True, showPlot=True, c='black', a=1.0, doLog=False, doEvery=1):
+	#generate the trace statistics
+	n_mc = len(samples)
+	n_list = []
+	means = []
+	confs = []
+	for i in range(n_mc):
+		if i % doEvery == 0:
+			print(i,flush=True,end='\r')
+			ni = i+1
+			if i == 0:
+				0 #skip this, no sense in plotting it
+			else:
+				n_list.append(ni)
+				means.append(np.mean(samples[:ni]))
+				confs.append(np.sqrt(statistics.variance(samples[:ni]) / ni) * 1.96)
+	print()
+	
+	#then, the convergence plot
+	plt.title("Trace of MC estimator as n increases")
+	plt.xlabel("n_mc")
+	plt.ylabel("MC mean")
+	if doLog:
+		plt.xscale('log')
+	plt.plot(n_list,means, c=c, alpha=a)
+	#then plot the confidence interval
+	if plotConf:
+		plt.plot(n_list,[mean-confs[i] for i,mean in enumerate(means)], c='r')
+		plt.plot(n_list,[mean+confs[i] for i,mean in enumerate(means)], c='r')
+	if showPlot:
+		plt.show()
+		
+	return means
+
+
+#do the above, with multiple MC results, plotting them all and using them all for confidence interval
+#this was helpful: 
+#https://stats.stackexchange.com/questions/525063/trying-to-calculate-confidence-intervals-for-a-monte-carlo-estimate-of-pi-what
+def mc_plot_trace_ensemble(multi_samples, doLog=False, doEvery=1):
+	n_mc = len(multi_samples[0])
+	n_runs = len(multi_samples)
+	print(n_mc)
+	print(n_runs)
+	
+	#first, plot the traces of all of the sample sets
+	multi_means = [None]*n_runs
+	for j in range(n_runs):
+		print(str(j),"runs...\t", end='\r', flush=True)
+		if j == n_runs-1:
+			#last one gets plotted in black
+			means = mc_plot_trace(multi_samples[j], plotConf=False, showPlot=False, c='black', a=1.0, doLog=doLog, doEvery=doEvery)
+		else:
+			means = mc_plot_trace(multi_samples[j], plotConf=False, showPlot=False, c='gray', a=0.5, doLog=doLog, doEvery=doEvery)
+		multi_means[j] = means #these means are indexed at a rate of doEery
+		print(len(means))
+		
+	n_list = []
+	#argh, get the n_list that matches what mc_plot_trace gives
+	for i in range(n_mc):
+		if i % doEvery == 0 and i != 0:
+			n_list.append(i+1)
+		
+	#then, use all of the sample set means to find the standard error, use to calculate ci
+	overall_ci = []
+	for i,_ in enumerate(n_list):
+		sample_means = [trace[i] for trace in multi_means] #the trace value at n=1 for all experiments in the ensemble
+		overall_ci.append(np.sqrt(statistics.variance(sample_means) / n_runs) * 1.96) #standard error of the means, times z
+	print(len(overall_ci))
+	
+	#lastly, carefully plot those cis around the trace we plotted in black
+	plt.plot(n_list,[mean-overall_ci[i] for i,mean in enumerate(multi_means[-1])], c='r')
+	plt.plot(n_list,[mean+overall_ci[i] for i,mean in enumerate(multi_means[-1])], c='r')
+	plt.show()#F, Y1, Y2, Y3, Y4)
+
+#performs bootstrapping on one MC run, and then does mc_plot_trace_ensemble
+def mc_plot_trace_bootstrap(samples, n_bootstrap, doLog=False, doEvery=1):
+	bootstrap_samples = [None]*n_bootstrap
+	for j in range(n_bootstrap):
+		###Make bootstrap sample
+		i_samples = np.random.randint(0, len(samples), size=len(samples))
+		bootstrap_sample = [samples[i] for i in i_samples]
+		bootstrap_samples[j] = bootstrap_sample
+		
+	mc_plot_trace_ensemble(bootstrap_samples, doLog=doLog, doEvery=doEvery)
+	
 if __name__ == '__main__':  
 	print("uncertainty_propagation.py: Use me to analyze and plot the results of model samples!")
 	uncertainty_prop_file('testdata.csv', True, True)

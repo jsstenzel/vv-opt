@@ -499,7 +499,7 @@ if __name__ == '__main__':
 		bn_train_evaluate_ncomp_sanitycheck(problem, trainfile="BN_samples", valfile="BN_validation", doPlot=True, doPrint=True)
 	
 	elif args.run == "OBED_test":
-		#Load the GMM from file
+		#Load the GMM and presampled y from file
 		print("Loading GMM and presamples...",flush=True)
 		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
 		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", doPrint=False, doDiagnostic=False)
@@ -511,6 +511,34 @@ if __name__ == '__main__':
 		print("U_min:",U_min,flush=True)
 		U_max, _ = U_varH_gbi_joint_presampled(d_max, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
 		print("U_max:",U_max,flush=True)
+		
+		#Canonical values:
+		""" these are posterior variances of Q, averaged over many theta-y joint samples
+		U_hist: 0.004240541527302059
+		U_min: 0.0047856764435419575
+		U_max: 0.0022957744137691916
+		"""
+		
+	elif args.run == "OBED_convergence":
+		#Load the GMM and presampled y from file
+		print("Loading GMM and presamples...",flush=True)
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_samples.csv", doPrint=False, doDiagnostic=False)
+		
+		#Calculate U_hist for large n_mc, and save the individual MC results
+		U_hist,u_1m_list = U_varH_gbi_joint_presampled(d_historical, problem, gmm, presampled_ylist, n_mc=1000000, doPrint=True)
+		import pickle
+		with open("u_1m_list.pkl", 'wb') as file:
+			pickle.dump(u_1m_list, file)
+		
+	elif args.run == "OBED_convergence_eval":
+		import pickle
+		with open("u_1m_list.pkl", 'rb') as file:
+			u_1m_list = pickle.load(file)
+			
+		#Take slices of that data for increasing n
+		mc_plot_trace_bootstrap(u_1m_list, 100, doLog=False, doEvery=10000)
+
 	
 		"""	
 	elif args.run == "uncertainty_mc":
