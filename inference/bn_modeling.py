@@ -149,7 +149,10 @@ def bn_load_y(problem, savefile, do_subset=0, doPrint=False, doDiagnostic=False)
 				if doDiagnostic:
 					print("Warning: dropped line",l+1,"(length "+str(len(row))+' expected', str(problem.dim_y + problem.dim_d + 1)+')',"from",filename)
 			elif not do_subset or len(y) < do_subset:
-				ygrab = [float(e) for e in row[:problem.dim_y]]
+				try:
+					ygrab = [float(e) for e in row[:problem.dim_y]]
+				except ValueError: #recently im seeing some '' values in y? hopefully this avoids that ugliness
+					continue
 				y.append(ygrab) #should be length dim_y
 			else:
 				break
