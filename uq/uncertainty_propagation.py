@@ -142,23 +142,20 @@ def mc_plot_trace(samples, plotConf=True, showPlot=True, c='black', a=1.0, doLog
 #do the above, with multiple MC results, plotting them all and using them all for confidence interval
 #this was helpful: 
 #https://stats.stackexchange.com/questions/525063/trying-to-calculate-confidence-intervals-for-a-monte-carlo-estimate-of-pi-what
-def mc_plot_trace_ensemble(multi_samples, doLog=False, doEvery=1):
+def mc_plot_trace_ensemble(main_sample, multi_samples, doLog=False, doEvery=1):
 	n_mc = len(multi_samples[0])
 	n_runs = len(multi_samples)
-	print(n_mc)
-	print(n_runs)
 	
 	#first, plot the traces of all of the sample sets
 	multi_means = [None]*n_runs
 	for j in range(n_runs):
 		print(str(j),"runs...\t", end='\r', flush=True)
-		if j == n_runs-1:
-			#last one gets plotted in black
-			means = mc_plot_trace(multi_samples[j], plotConf=False, showPlot=False, c='black', a=1.0, doLog=doLog, doEvery=doEvery)
-		else:
-			means = mc_plot_trace(multi_samples[j], plotConf=False, showPlot=False, c='gray', a=0.5, doLog=doLog, doEvery=doEvery)
+		means = mc_plot_trace(multi_samples[j], plotConf=False, showPlot=False, c='gray', a=0.5, doLog=doLog, doEvery=doEvery)
 		multi_means[j] = means #these means are indexed at a rate of doEery
 		print(len(means))
+		
+	#then, plot the main sample we're given (separate from the CI calculation!)
+	mc_plot_trace(main_smaple, plotConf=False, showPlot=False, c='black', a=1.0, doLog=doLog, doEvery=doEvery)
 		
 	n_list = []
 	#argh, get the n_list that matches what mc_plot_trace gives
@@ -171,7 +168,6 @@ def mc_plot_trace_ensemble(multi_samples, doLog=False, doEvery=1):
 	for i,_ in enumerate(n_list):
 		sample_means = [trace[i] for trace in multi_means] #the trace value at n=1 for all experiments in the ensemble
 		overall_ci.append(np.sqrt(statistics.variance(sample_means) / n_runs) * 1.96) #standard error of the means, times z
-	print(len(overall_ci))
 	
 	#lastly, carefully plot those cis around the trace we plotted in black
 	plt.plot(n_list,[mean-overall_ci[i] for i,mean in enumerate(multi_means[-1])], c='r')
@@ -187,7 +183,7 @@ def mc_plot_trace_bootstrap(samples, n_bootstrap, doLog=False, doEvery=1):
 		bootstrap_sample = [samples[i] for i in i_samples]
 		bootstrap_samples[j] = bootstrap_sample
 		
-	mc_plot_trace_ensemble(bootstrap_samples, doLog=doLog, doEvery=doEvery)
+	mc_plot_trace_ensemble(sample, bootstrap_samples, doLog=doLog, doEvery=doEvery)
 	
 if __name__ == '__main__':  
 	print("uncertainty_propagation.py: Use me to analyze and plot the results of model samples!")
