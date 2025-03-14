@@ -151,11 +151,14 @@ def mc_plot_trace_ensemble(main_sample, multi_samples, doLog=False, doEvery=1):
 	for j in range(n_runs):
 		print(str(j),"runs...\t", end='\r', flush=True)
 		means = mc_plot_trace(multi_samples[j], plotConf=False, showPlot=False, c='gray', a=0.5, doLog=doLog, doEvery=doEvery)
-		multi_means[j] = means #these means are indexed at a rate of doEery
-		print(len(means))
+		multi_means[j] = means #these means are indexed at a rate of doEvery
+		#print(len(means))
+		
+	#get the average highest-n prediction of the MC result
+	best_estimate = np.mean([means[-1] for means in multi_means])
 		
 	#then, plot the main sample we're given (separate from the CI calculation!)
-	mc_plot_trace(main_smaple, plotConf=False, showPlot=False, c='black', a=1.0, doLog=doLog, doEvery=doEvery)
+	mc_plot_trace(main_sample, plotConf=False, showPlot=False, c='black', a=1.0, doLog=doLog, doEvery=doEvery)
 		
 	n_list = []
 	#argh, get the n_list that matches what mc_plot_trace gives
@@ -165,14 +168,28 @@ def mc_plot_trace_ensemble(main_sample, multi_samples, doLog=False, doEvery=1):
 		
 	#then, use all of the sample set means to find the standard error, use to calculate ci
 	overall_ci = []
-	for i,_ in enumerate(n_list):
-		sample_means = [trace[i] for trace in multi_means] #the trace value at n=1 for all experiments in the ensemble
-		overall_ci.append(np.sqrt(statistics.variance(sample_means) / n_runs) * 1.96) #standard error of the means, times z
+	for i,n in enumerate(n_list):
+		sample_means_at_i = [trace[i] for trace in multi_means] #the trace value at n=1 for all experiments in the ensemble
+		#print("means at",i,sample_means_at_i)
+		std = np.std(sample_means_at_i, ddof=1)
+		se1 = std/np.sqrt(n_runs)
+		se2 = std/np.sqrt(n)
+		#print("standard error",std,se1,se2)
+		overall_ci.append(std * 1.96) #standard error of the means, times z
+		#weirdly, n_runs is missing from that expreesion... is it already included in the variance calc here??
 	
 	#lastly, carefully plot those cis around the trace we plotted in black
-	plt.plot(n_list,[mean-overall_ci[i] for i,mean in enumerate(multi_means[-1])], c='r')
-	plt.plot(n_list,[mean+overall_ci[i] for i,mean in enumerate(multi_means[-1])], c='r')
+	#TODO change this so that its around the mean of all traces
+	plt.plot(n_list,[best_estimate-ci for ci in overall_ci], c='r')
+	plt.plot(n_list,[best_estimate+ci for ci in overall_ci], c='r')
 	plt.show()#F, Y1, Y2, Y3, Y4)
+	
+	print("n:\t CI:")
+	for n,ci in zip(n_list,overall_ci):
+		print(n, ci)
+	print("Best estimate for MC result (at n="+str(n_list[-1])+"):",best_estimate,flush=True)
+	
+	return best_estimate
 
 #performs bootstrapping on one MC run, and then does mc_plot_trace_ensemble
 def mc_plot_trace_bootstrap(samples, n_bootstrap, doLog=False, doEvery=1):
@@ -183,7 +200,7 @@ def mc_plot_trace_bootstrap(samples, n_bootstrap, doLog=False, doEvery=1):
 		bootstrap_sample = [samples[i] for i in i_samples]
 		bootstrap_samples[j] = bootstrap_sample
 		
-	mc_plot_trace_ensemble(sample, bootstrap_samples, doLog=doLog, doEvery=doEvery)
+	return mc_plot_trace_ensemble(samples, bootstrap_samples, doLog=doLog, doEvery=doEvery)
 	
 if __name__ == '__main__':  
 	print("uncertainty_propagation.py: Use me to analyze and plot the results of model samples!")

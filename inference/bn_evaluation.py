@@ -323,20 +323,27 @@ def bn_measure_validation_convergence(problem, big_savefile, N_val=0, doPrint=Tr
 	
 #Similar to bn_train_from_file
 #Except I want to evaluate BIC and MSE, and MAE for each ncomp
-def bn_train_evaluate_ncomp(problem, trainfile, valfile, doPrint=True, doPlot=True):
+def bn_train_evaluate_ncomp(problem, trainfile, doPrint=True, doPlot=True):
 	###Setup
 	do_subset=0
-	ncomps = [200]
+	ncomps = [10,20,30,40,50,60,70,80,90,100,110,130,200]
 	print("Evaluating",trainfile,"training data for GMM with number of components:",ncomps,flush=True)
 	BICs = [None]*len(ncomps)
 	scores = [None]*len(ncomps)
 
 	###Load training data file
 	qoi_train, y_d_train = bn_load_samples(problem, trainfile, doPrint, do_subset)
+	p_mean = np.mean(qoi_train)
+	p_std = np.std(qoi_train)
+	yp_sample = [(qoi - p_mean)/p_std for qoi in qoi_train]
+	d_mean = np.mean(y_d_train, axis=0)
+	d_std = np.std(y_d_train, axis=0)
+	yd_sample = [list((yd - d_mean)/d_std) for i,yd in enumerate(y_d_train)]
+	data = np.array([np.hstack([yp_sample[i],yd_sample[i]]) for i,_ in enumerate(qoi_train)])
 	
 	###Load validation data file
-	qoi_val, y_d_val = bn_load_samples(problem, valfile, doPrint, do_subset)
-	val_samples = [[qoi_val[i]]+y_d_val[i] for i in range(len(qoi_val))]
+	#qoi_val, y_d_val = bn_load_samples(problem, valfile, doPrint, do_subset)
+	#val_samples = [[qoi_val[i]]+y_d_val[i] for i in range(len(qoi_val))]
 	
 	###For each ncomp:
 	for i,ncomp in enumerate(ncomps):
@@ -355,29 +362,23 @@ def bn_train_evaluate_ncomp(problem, trainfile, valfile, doPrint=True, doPlot=Tr
 			bn_save_gmm(gmm_ncomp, gmm_file=modelsave)
 		
 		###save the BICs
-		p_mean = np.mean(qoi_train)
-		p_std = np.std(qoi_train)
-		yp_sample = [(qoi - p_mean)/p_std for qoi in qoi_train]
-		d_mean = np.mean(y_d_train, axis=0)
-		d_std = np.std(y_d_train, axis=0)
-		yd_sample = [list((yd - d_mean)/d_std) for i,yd in enumerate(y_d_train)]
-		data = np.array([np.hstack([yp_sample[i],yd_sample[i]]) for i,_ in enumerate(qoi_train)])
 		BIC = gmm_ncomp.bic(data)
 		BICs[i] = BIC
 		print(BIC,flush=True)
 
 	if doPlot:
-		bn_train_evaluate_ncomp_plot(BICs)
+		bn_train_evaluate_ncomp_plot(ncomps, BICs)
 		
-def bn_train_evaluate_ncomp_plot(BICs):
-	BICs=[]
+def bn_train_evaluate_ncomp_plot(ncomps, BICs):
+	#BICs=[]
 	#LRTs=[]
 	print(BICs,flush=True)
+	print(BICs,flush=True)
 	###Extend with saved data
-	BICs.extend([])
-	ncomps = [1,10,20,30,40,50,60,70,80,90,100,110]
+	#BICs.extend([])
+	#ncomps = [1,10,20,30,40,50,60,70,80,90,100,110,130,200]
 	
-	###Print, plot
+	###plot
 	fig, ax1 = plt.subplots()
 
 	# Plot the first data set on the left y-axis

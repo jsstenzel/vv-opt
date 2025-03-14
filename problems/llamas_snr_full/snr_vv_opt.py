@@ -494,9 +494,9 @@ if __name__ == '__main__':
 		bn_train_convergence_confidence(problem, trainfile="BN_samples", N_bootstrap=1000, ncomp=50, startnum=args.n, doPrint=True)
 		
 	elif args.run == "BN_find_ncomp":
-		#bn_train_evaluate_ncomp(problem, trainfile="BN_samples", valfile="BN_validation", doPlot=False, doPrint=True)
+		bn_train_evaluate_ncomp(problem, trainfile="BN_samples_1639027", doPlot=True, doPrint=True)
 		#bn_train_evaluate_ncomp_plot([],[])
-		bn_train_evaluate_ncomp_sanitycheck(problem, trainfile="BN_samples", valfile="BN_validation", doPlot=True, doPrint=True)
+		#bn_train_evaluate_ncomp_sanitycheck(problem, trainfile="BN_samples", valfile="BN_validation", doPlot=True, doPrint=True)
 	
 	elif args.run == "OBED_test":
 		#Load the GMM and presampled y from file
@@ -537,7 +537,7 @@ if __name__ == '__main__':
 			u_1m_list = pickle.load(file)
 			
 		#Take slices of that data for increasing n
-		mc_plot_trace_bootstrap(u_1m_list, 100, doLog=False, doEvery=10000)
+		mc_plot_trace_bootstrap(u_1m_list, 60, doLog=False, doEvery=10000)
 
 	
 		"""	
