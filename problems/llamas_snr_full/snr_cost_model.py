@@ -3,6 +3,7 @@ import math
 
 sys.path.append('../..')
 from approx.gaussian_process import *
+from problems.llamas_snr_full.snr_exp_models import dark_current_time_fn
 
 	
 """

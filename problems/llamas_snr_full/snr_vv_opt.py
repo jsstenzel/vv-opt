@@ -21,7 +21,7 @@ from uq.uncertainty_propagation import *
 from uq.sensitivity_analysis import *
 from uq.saltelli_gsa import *
 from uq.gsa_convergence import *
-from opt.ngsa import *
+from opt.nsga import *
 
 ################################
 #Useful definitions
@@ -404,6 +404,12 @@ if __name__ == '__main__':
 	req = 3.0
 	theta_nominal = problem.theta_nominal
 	y_nominal = problem.eta(theta_nominal, d_historical, err=False)
+	
+	design_pts = [
+		[problem.G(d_historical), 0.004240541527302059, "d_hist"],
+		[problem.G(d_min), 0.0047856764435419575, "d_min"],
+		[problem.G(d_max), 0.0022957744137691916, "d_max"]
+	]
 
 	###Uncertainty Quantification
 	if args.run == "nominal":
@@ -441,7 +447,7 @@ if __name__ == '__main__':
 	elif args.run == "UP_exp":
 		vv_UP_exp(problem, d_historical, theta_nominal, n=args.n)
 	
-	if args.run == "SA_QoI_sample":
+	elif args.run == "SA_QoI_sample":
 		vv_SA_QoI_sample(problem, N=args.n, filename=args.filename)
 
 	elif args.run == "SA_QoI_sample":
@@ -538,17 +544,49 @@ if __name__ == '__main__':
 			
 		#Take slices of that data for increasing n
 		mc_plot_trace_bootstrap(u_1m_list, 60, doLog=False, doEvery=10000)
-
 	
-		"""	
-	elif args.run == "uncertainty_mc":
-		util_samples = uncertainty_mc(problem, d_historical, n_mc=10**2, n_gmm=10**2, n_test=3)
-		print(util_samples)
+	elif args.run == "OPT_test":
+		#Load the GMM and presampled y from file
+		print("Loading GMM and presamples...",flush=True)
+		gmm20 = bn_load_gmm("BN_model_1639027_ncomp20.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", doPrint=False, doDiagnostic=False)
 		
-	elif args.run == "vv_opt_parallel":
-		costs, utilities, designs = ngsa2_problem_parallel(8, problem, hours=0, minutes=0, popSize=10, nMonteCarlo=10**3, nGMM=10**3)
-		plot_ngsa2(costs, utilities, showPlot=True, savePlot=False, logPlotXY=[False,False])
-		"""
+		costs, utilities, designs = nsga2_obed_bn(	
+						n_threads=8, 
+						prob=problem, 
+						hours=0, 
+						minutes=0, 
+						popSize=50, 
+						nSkip=10, 
+						tolDelta=0.00006625/5, 
+						nPeriod=5, 
+						nMonteCarlo=10^6, 
+						GMM=gmm20, 
+						Ylist=presampled_ylist
+					)
+		plot_nsga2(costs, utilities, design_pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
+	
+		
+	elif args.run == "OPT":
+		#Load the GMM and presampled y from file
+		print("Loading GMM and presamples...",flush=True)
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", doPrint=False, doDiagnostic=False)
+		
+		costs, utilities, designs = nsga2_obed_bn(	
+						n_threads=8, 
+						prob=problem, 
+						hours=0, 
+						minutes=0, 
+						popSize=30, 
+						nSkip=10, 
+						tolDelta=0.00006625, 
+						nPeriod=5, 
+						nMonteCarlo=10^6, 
+						GMM=gmm, 
+						Ylist=presampled_ylist
+					)
+		plot_nsga2(costs, utilities, design_pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
 	
 	else:
 		print("I dont recognize the command",args.run)
