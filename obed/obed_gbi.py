@@ -73,7 +73,7 @@ def U_varH_gbi_joint(d, problem, gmm_qyd, n_mc, doPrint=False):
 	
 	U_list = []
 	for i,y in enumerate(Y1_list): #MC loop		
-		vi = np.array(y + d)
+		vi = np.concatenate((y,d))
 	
 		#Now, use my posterior predictive to calculate the utility
 		H_var = gbi_var_of_conditional_pp(gmm_qyd, vi, 
@@ -109,7 +109,7 @@ def U_varH_gbi_joint_presampled(d, problem, gmm_qyd, presampled_ylist, n_mc, doP
 	
 	U_list = []
 	for i,y in enumerate(mc_ylist): #MC loop		
-		vi = np.array(y + d)
+		vi = np.concatenate((y,d))
 	
 		#Now, use my posterior predictive to calculate the utility
 		H_var = gbi_var_of_conditional_pp(gmm_qyd, vi, inv_Sig_dd_precalc=inv_Sig_dd, 
