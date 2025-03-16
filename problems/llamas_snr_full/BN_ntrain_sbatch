@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH -n 1
+#SBATCH -N 1
+#SBATCH -t 0-12:00 #Request time
+#SBATCH -p newnodes
+#SBATCH -o output_%j.txt #redirect output to output_JOBID.txt
+#SBATCH -e output_%j.txt #redirect errors to output_JOBID.txt
+#SBATCH --mem=50GB
+
+srun -N1 -n1 BN_ntrain_call_file #20 &
+
+wait
+

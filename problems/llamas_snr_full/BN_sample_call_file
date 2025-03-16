@@ -1,2 +1,2 @@
 #!/bin/bash
-python3 snr_vv_opt.py --run BN_sample -n 10000 --filename $1
+python3 snr_vv_opt.py --run BN_sample -n 100000 --filename $1

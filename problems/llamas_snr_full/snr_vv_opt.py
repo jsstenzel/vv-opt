@@ -573,20 +573,24 @@ if __name__ == '__main__':
 		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
 		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", doPrint=False, doDiagnostic=False)
 		
+		do_hrs = 11 if args.filename == "timed" else 0
+		do_min = 30 if args.filename == "timed" else 0	
+		do_threads = 8 if args.n == 0 else args.n 
 		costs, utilities, designs = nsga2_obed_bn(	
 						n_threads=8, 
 						prob=problem, 
-						hours=0, 
-						minutes=0, 
-						popSize=30, 
+						hours=do_hrs, 
+						minutes=do_min, 
+						popSize=50, 
 						nSkip=10, 
-						tolDelta=0.00006625, 
+						tolDelta=0.00006625/5, 
 						nPeriod=5, 
 						nMonteCarlo=10^6, 
 						GMM=gmm, 
 						Ylist=presampled_ylist
 					)
-		plot_nsga2(costs, utilities, design_pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
+		if args.filename != "timed":
+			plot_nsga2(costs, utilities, design_pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
 	
 	else:
 		print("I dont recognize the command",args.run)

@@ -1,0 +1,2 @@
+#!/bin/bash
+python3 snr_vv_opt.py --run OPT -n $1 --filename "timed"
