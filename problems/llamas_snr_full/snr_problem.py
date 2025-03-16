@@ -275,22 +275,22 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 
 	d_defs = [
 					["t_gain", ['uniform', [.1, 600]], "continuous"], #gain
-					["I_gain", ['uniform', [0, 100]], "discrete"],    #gain
-					["n_meas_rn", ['uniform', [0, 50]], "discrete"],  #rn
-					["d_num", ['uniform', [0, 25]], "discrete"],      #dc
+					["I_gain", ['uniform', [1, 100]], "discrete"],    #gain
+					["n_meas_rn", ['uniform', [1, 50]], "discrete"],  #rn
+					["d_num", ['uniform', [2, 25]], "discrete"],      #dc
 					["d_max", ['uniform', [1, 12000]], "continuous"], #dc
 					["d_pow", ['uniform', [0.01,3]], "continuous"],      #dc
 					
-					["n_qe", ['uniform', [0, 100]], "discrete"],   #qe
+					["n_qe", ['uniform', [1, 100]], "discrete"],   #qe
 					["t_qe", ['uniform', [.1, 600]], "continuous"],#qe
 					
-					["d_vph_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
-					["d_dichroic_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
-					["d_coll_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
-					["d_redcam_n_pts", ['uniform', [0,(_wave_max-_wave_redgreen)*10]], "discrete"], #i guess??
-					["d_greencam_n_pts", ['uniform', [0,(_wave_redgreen-_wave_greenblue)*10]], "discrete"], #i guess??
-					["d_bluecam_n_pts", ['uniform', [0,(_wave_greenblue-_wave_min)*10]], "discrete"], #i guess??
-					["d_frd_n_meas", ['uniform', [0,2400]], "discrete"],
+					["d_vph_n_pts", ['uniform', [1,_bandpass*10]], "discrete"],
+					["d_dichroic_n_pts", ['uniform', [1,_bandpass*10]], "discrete"],
+					["d_coll_n_pts", ['uniform', [1,_bandpass*10]], "discrete"],
+					["d_redcam_n_pts", ['uniform', [1,(_wave_max-_wave_redgreen)*10]], "discrete"], #i guess??
+					["d_greencam_n_pts", ['uniform', [1,(_wave_redgreen-_wave_greenblue)*10]], "discrete"], #i guess??
+					["d_bluecam_n_pts", ['uniform', [1,(_wave_greenblue-_wave_min)*10]], "discrete"], #i guess??
+					["d_frd_n_meas", ['uniform', [1,2400]], "discrete"],
 				]
 		
 	_temp= -90+273.15 #K

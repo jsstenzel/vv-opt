@@ -314,13 +314,6 @@ def vv_gbi_test(problem, d, N, y=[], ncomp=0):
 		plt.show()
 	else:
 		plot_predictive_posterior(a, b, c, 0, 500, drawplot=True)
-
-def vv_obed_gbi(problem, d):
-	U, U_list = U_varH_gbi(d, problem, n_mc=10**4, n_gmm=10**4, doPrint=True)
-	print(U)
-	#print(U_list)
-	uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")#, saveFig='OBEDresult')
-	return U
 	
 def uncertainty_mc(problem, dd, n_mc=10**2, n_gmm=10**2, n_test=10**2):
 	util_samples = []
@@ -332,6 +325,27 @@ def uncertainty_mc(problem, dd, n_mc=10**2, n_gmm=10**2, n_test=10**2):
 	uncertainty_prop_plot(util_samples, c='purple', xlab="utility for d=d_hist")
 	print(statistics.variance(util_samples))
 	return util_samples
+	
+def vv_OPT(problem, gmm_file, ysamples_file, design_pts, utility_conf95, do_hrs, do_min, threads, popSize, nMC):
+	#Load the GMM and presampled y from file
+	print("Loading GMM and presamples...",flush=True)
+	gmm20 = bn_load_gmm(gmm_file)
+	presampled_ylist = bn_load_y(problem, ysamples_file, doPrint=False, doDiagnostic=False)
+	
+	costs, utilities, designs = nsga2_obed_bn(	
+					n_threads=threads, 
+					prob=problem, 
+					hours=do_hrs, 
+					minutes=do_min, 
+					popSize=popSize, 
+					nSkip=10, 
+					tolDelta=utility_conf95/1.96, 
+					nPeriod=5, 
+					nMonteCarlo=nMC, 
+					GMM=gmm20, 
+					Ylist=presampled_ylist
+				)
+	plot_nsga2(costs, utilities, design_pts, util_err=utility_conf95, showPlot=True, savePlot=False, logPlotXY=[False,False])
 
 if __name__ == '__main__':  
 	import argparse
@@ -546,51 +560,60 @@ if __name__ == '__main__':
 		mc_plot_trace_bootstrap(u_1m_list, 60, doLog=False, doEvery=10000)
 	
 	elif args.run == "OPT_test":
-		#Load the GMM and presampled y from file
-		print("Loading GMM and presamples...",flush=True)
-		gmm20 = bn_load_gmm("BN_model_1639027_ncomp20.pkl")
-		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", doPrint=False, doDiagnostic=False)
+		vv_OPT(
+			problem, 
+			gmm_file="BN_model_1639027_ncomp20.pkl", 
+			ysamples_file="BN_samples_1639027.csv", 
+			design_pts=design_pts,
+			utility_conf95=0.00006625, #probably the ncomp20 model is better than this
+			do_hrs = 0,
+			do_min = 1,
+			threads = 1,
+			popSize=50,
+			nMC=10**6
+		)
+
+	elif args.run == "OPT_nmc_p4":
+		vv_OPT(
+			problem, 
+			gmm_file="BN_model_1639027_ncomp200.pkl", 
+			ysamples_file="BN_samples_1639027.csv", 
+			design_pts=design_pts,
+			utility_conf95=0.0006962967583258008, #rough analogue for nMC=10^5
+			do_hrs = 11 if args.filename == "timed" else 0,
+			do_min = 30 if args.filename == "timed" else 0,
+			threads = 8 if args.n == 0 else args.n,
+			popSize=30,
+			nMC=10**4
+		)
+
+	elif args.run == "OPT_nmc_p5":
+		vv_OPT(
+			problem, 
+			gmm_file="BN_model_1639027_ncomp200.pkl", 
+			ysamples_file="BN_samples_1639027.csv", 
+			design_pts=design_pts,
+			utility_conf95=0.00019389166166701476, #rough analogue for nMC=10^5
+			do_hrs = 11 if args.filename == "timed" else 0,
+			do_min = 30 if args.filename == "timed" else 0,
+			threads = 8 if args.n == 0 else args.n,
+			popSize=40,
+			nMC=10**5
+		)
 		
-		costs, utilities, designs = nsga2_obed_bn(	
-						n_threads=8, 
-						prob=problem, 
-						hours=0, 
-						minutes=0, 
-						popSize=50, 
-						nSkip=10, 
-						tolDelta=0.00006625/5, 
-						nPeriod=5, 
-						nMonteCarlo=10^6, 
-						GMM=gmm20, 
-						Ylist=presampled_ylist
-					)
-		plot_nsga2(costs, utilities, design_pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
-	
-		
-	elif args.run == "OPT":
-		#Load the GMM and presampled y from file
-		print("Loading GMM and presamples...",flush=True)
-		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
-		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", doPrint=False, doDiagnostic=False)
-		
-		do_hrs = 11 if args.filename == "timed" else 0
-		do_min = 30 if args.filename == "timed" else 0	
-		do_threads = 8 if args.n == 0 else args.n 
-		costs, utilities, designs = nsga2_obed_bn(	
-						n_threads=8, 
-						prob=problem, 
-						hours=do_hrs, 
-						minutes=do_min, 
-						popSize=50, 
-						nSkip=10, 
-						tolDelta=0.00006625/5, 
-						nPeriod=5, 
-						nMonteCarlo=10^6, 
-						GMM=gmm, 
-						Ylist=presampled_ylist
-					)
-		if args.filename != "timed":
-			plot_nsga2(costs, utilities, design_pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
+	elif args.run == "OPT_nmc_p6":
+		vv_OPT(
+			problem, 
+			gmm_file="BN_model_1639027_ncomp200.pkl", 
+			ysamples_file="BN_samples_1639027.csv", 
+			design_pts=design_pts,
+			utility_conf95=5.384503718405341e-05, #the result for half the 95% confidence interval width for nMC=10^6
+			do_hrs = 11 if args.filename == "timed" else 0,
+			do_min = 30 if args.filename == "timed" else 0,
+			threads = 8 if args.n == 0 else args.n,
+			popSize=60,
+			nMC=10**6
+		)
 	
 	else:
 		print("I dont recognize the command",args.run)
