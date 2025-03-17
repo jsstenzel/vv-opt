@@ -119,8 +119,11 @@ def plot_nsga2(pareto_costs, pareto_utilities, design_pts, util_err=None, showPl
 		plt.yscale('log')
 		
 	for pt in design_pts:
-		plt.scatter(pt[0],pt[1], s=80, facecolors='b', edgecolors='b')
-		plt.annotate("  "+str(pt[2]), (pt[0], pt[1]))
+		plt.annotate("  "+str(pt[2]), (pt[0], pt[1]))		
+		if not len(pt) == 4:
+			plt.scatter(pt[0],pt[1], s=80, facecolors='b', edgecolors='b')
+		else:
+			plt.errorbar(pt[0], pt[1], yerr=pt[3], fmt='.', c='r', capsize=5)
 		
 	if savePlot:
 		#name = "nsga_" + str(nGenerations) + '_' + str(popSize) + '_' + str(nMonteCarlo) + '_' + str(nGMM) +'.png'

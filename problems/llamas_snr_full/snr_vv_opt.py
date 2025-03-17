@@ -356,6 +356,12 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 	
 	###Problem Definition
+	_wave_min = 350.0
+	_wave_max = 975.0
+	_wave_redgreen = 690.0
+	_wave_greenblue = 480.0
+	_bandpass = _wave_max - _wave_min
+
 	d_historical = [
 						20,   #t_gain
 						30,   #I_gain
@@ -373,8 +379,7 @@ if __name__ == '__main__':
 						13, #d_bluecam_n_pts #protoLLAMAS camera testing
 						10 #d_frd_n_meas #from evaluating_cleaving_through_bigger.xlsx
 					]
-					
-	d_min = [
+	d_0 = [
 						0.1, #t_gain 				0-length exposure for gain exp
 						0, #I_gain 				no measurements for gain exp
 						0, #n_meas_rn 			no measurements for rn exp
@@ -391,11 +396,24 @@ if __name__ == '__main__':
 						0, #d_bluecam_n_pts		no measurements for camera exp
 						0  #d_frd_n_meas 		no measurements for FRD exp
 					]
-	_wave_min = 350.0
-	_wave_max = 975.0
-	_wave_redgreen = 690.0
-	_wave_greenblue = 480.0
-	_bandpass = _wave_max - _wave_min
+	d_min = [
+						0.1, #t_gain 				0-length exposure for gain exp
+						1, #I_gain 				no measurements for gain exp
+						1, #n_meas_rn 			no measurements for rn exp
+						1, #d_num 				no measurements for dc exp
+						1, #d_max 				dc exp filer
+						0.01, #d_pow 				more short experiments
+						1, #n_qe 				no measurements for qe exp
+						0.1, #t_qe 				0-length exposure for qe exp
+						1, #d_vph_n_pts 		no measurements for vph exp
+						1, #d_dichroic_n_pts 	no measurements for dichroic exp
+						1, #d_coll_n_pts		no measurements for collimator exp
+						1, #d_redcam_n_pts		no measurements for camera exp
+						1, #d_greencam_n_pts		no measurements for camera exp
+						1, #d_bluecam_n_pts		no measurements for camera exp
+						1  #d_frd_n_meas 		no measurements for FRD exp
+					]
+
 	d_max = [
 						600, #t_gain
 						100, #I_gain
@@ -413,6 +431,8 @@ if __name__ == '__main__':
 						(_wave_greenblue-_wave_min)*10, #d_bluecam_n_pts
 						2400  #d_frd_n_meas
 					]
+	d_med = [dd/2 for dd in d_max]
+	d_med[5] = 1 #d_pow
 	problem = construct_llamas_snr_problem()
 	
 	req = 3.0
@@ -420,9 +440,9 @@ if __name__ == '__main__':
 	y_nominal = problem.eta(theta_nominal, d_historical, err=False)
 	
 	design_pts = [
-		[problem.G(d_historical), 0.004240541527302059, "d_hist"],
-		[problem.G(d_min), 0.0047856764435419575, "d_min"],
-		[problem.G(d_max), 0.0022957744137691916, "d_max"]
+		[problem.G(d_historical), 0.004240541527302059, "d_hist", 5.384503718405341e-05],
+		[problem.G(d_0), 0.0047856764435419575, "d_0", 5.384503718405341e-05],
+		[problem.G(d_max), 0.0022957744137691916, "d_max", 5.384503718405341e-05]
 	]
 
 	###Uncertainty Quantification
@@ -443,11 +463,11 @@ if __name__ == '__main__':
 		
 	elif args.run == "cheap_design":
 		print("Given the nominal theta:", theta_nominal)
-		print("and the cheapest design:", d_min)
-		y_cheap = problem.eta(theta_nominal, d_min, err=True)
+		print("and the cheapest design:", d_0)
+		y_cheap = problem.eta(theta_nominal, d_0, err=True)
 		
 		print("Cheapest y:", y_cheap)
-		print("Cost of design:", problem.G(d_min))
+		print("Cost of design:", problem.G(d_0))
 	
 	elif args.run == "UA_theta":
 		vv_UA_theta(problem, n=args.n)
@@ -525,18 +545,24 @@ if __name__ == '__main__':
 		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", doPrint=False, doDiagnostic=False)
 		
 		#Calculate U for several different designs
-		U_hist,_ = U_varH_gbi_joint_presampled(d_historical, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
-		print("U_hist:",U_hist,flush=True)
-		U_min, _ = U_varH_gbi_joint_presampled(d_min, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
-		print("U_min:",U_min,flush=True)
-		U_max, _ = U_varH_gbi_joint_presampled(d_max, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
-		print("U_max:",U_max,flush=True)
+		"""
+		U_dhist,_ = U_varH_gbi_joint_presampled(d_historical, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_dhist:",U_dhist,flush=True)
+		U_d0, _ = U_varH_gbi_joint_presampled(d_0, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_d0:",U_d0,flush=True)
+		U_dmax, _ = U_varH_gbi_joint_presampled(d_max, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_dmax:",U_dmax,flush=True)
+		"""
+		U_dmin, _ = U_varH_gbi_joint_presampled(d_min, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_dmin:",U_dmin,flush=True)
+		U_dmed, _ = U_varH_gbi_joint_presampled(d_med, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_dmed:",U_dmed,flush=True)
 		
 		#Canonical values:
 		""" these are posterior variances of Q, averaged over many theta-y joint samples
-		U_hist: 0.004240541527302059
-		U_min: 0.0047856764435419575
-		U_max: 0.0022957744137691916
+		U_dhist: 0.004240541527302059
+		U_d0: 0.0047856764435419575
+		U_dmax: 0.0022957744137691916
 		"""
 		
 	elif args.run == "OBED_convergence":
