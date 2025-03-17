@@ -176,6 +176,8 @@ for ind =1:4
 %nexus_cryo: Cryo cooler noise
 wc=2*pi*fc; % drive frequency
 Q=Qc*ones(1,n);  
+%h just goes 1 to 6, not sure what it represents
+%C has two rows of values in [N], apparently from Cassini -- these are magnitudes of the disturbance?
 
  for ind1=1:2
    for ind2=1:n

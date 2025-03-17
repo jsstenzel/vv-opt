@@ -1,6 +1,93 @@
 clear all
 close all
 
+%%%These are the inputs that are likely part of theta
+%i.e. they are uncertain inputs to both system model and experiment model
+%{ 
+RWA micro-vibe:
+input.Us=1.8;       % Us:  static wheel imbalance         [gcm]    (%0.7160 test)
+input.Ud=60;        % Ud:  dynamic wheel imbalance        [gcm^2]  (%29.536 test)
+
+Cryocooler micro-vibe:
+input.C -- this represents the force in [N] associated with cryocooler disturbance somehow?
+input.Qc=0.005;     % Qc:  cryocooler attenuation factor  [-] 
+
+Transmissibility testing:
+input.zeta=0.005;         % zeta: Global modal damping ratio    [-]
+	IEC harness zeta TODO
+	spacecraft bus zeta TODO
+	sunshield zeta TODO
+	OTE zeta TODO
+	MTMD zeta TODO
+	RWIA zeta TODO
+	CCA zeta TODO
+	CJAA zeta TODO
+	IA zeta TODO
+
+Stiffness testing:
+IEC stuffness?? TODO
+sunshield stiffness?? TODO
+
+Flow noise verification:
+Turbulent flow effect?? TODO I need to make that
+%} 
+
+%Secondary paramters implicated by testing that might be part of theta:
+%{ 
+RWA micro-vibe:
+input.m_RW; % RW mass (ITHACO E-wheel)
+input.I_RWt; % Transverse Inertia of ITHACO E reaction wheel
+input.I_RWa; % Axial Inertia of ITHACO E reaction wheel
+
+Cryocooler micro-vibe:
+
+IEC harness damping test:
+
+spacecraft bus damping test:
+
+sunshield damping test:
+	
+OTE damping test:
+
+MTMD damping test:
+
+RWIA damping test:
+I_xRWA=x.I_xRWA;  % Ix moment of inertia of RWA chassis
+I_yRWA=x.I_yRWA;  % Iy moment of inertia of RWA chassis
+I_zRWA=x.I_zRWA; % Iz moment of inertia of RWA chassis
+m_ISO=x.m_ISO;  % mass of RWA isolator strut actuator
+I_ISOa=x.I_ISOa;  % RWA isolator strut axial inertia
+I_ISOt=x.I_ISOt;  % RWA isolator strut transverse inertia
+
+CCA damping test:
+
+CJAA damping test:
+
+IA damping test:
+
+IEC stiffness testing:
+
+sunshield stiffness testing:
+
+Flow noise verification:
+Turbulent flow effect?? TODO I need to make that
+%} 
+
+%%%These are the inputs that are likely internally-optimized control parameters
+%{ 
+input.fc=30;        % fc:  cryocooler drive frequency     [Hz]
+The other drive frequency?? %TODO are the two compressors optional? as in, is one one in operation at a time?
+FGC sample rate?? TODO is that in this model
+input.Kcf=2000;    % Kcf: FSM controller gain             [-]
+%}
+%TODO what about input.Kc FSM-to-ACS cross coupling gain ? I haven't seen that in literature
+
+
+%These are other model inputs that should have modeled uncertainty
+%but which are not inputs to any modeled experiments
+%{
+%}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DEFINE THE INPUTS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -63,7 +150,7 @@ input.a=0.2;         % HPF corner fraction of top wheel speed
 % -------------------------   cryo stuff  ----------------------
 % --------------------------------------------------------------
 input.n=3;       % number of harmonics to include (including fundamental)
-input.h=[1.0 2.0 3.0 4.0 5.0 6.0];
+input.h=[1.0 2.0 3.0 4.0 5.0 6.0]; %TODO what is this?
 input.C=[42 0.95 4.1 2.75 0.9 1.2;
    0.2 0.09 0.25 1.0 5.0 0.4];  %[N]
  % values from Cassini
