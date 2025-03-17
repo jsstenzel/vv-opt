@@ -139,34 +139,48 @@ K_zpet=0.9000E+08;  % Deployable petal hinge stiffness [N/m] (nom:0.90000E+08)
 % 1. Create grid location matrix
 % ======================================
 %assigns numbers to points on an xyz grid
+%TODO categorize everything at high level: Optical Telescope element (OTE), Integrated Science Instrument Model (ISIM), Spacecraft Element (SCE)
+%TODO identify or modify to specifically include: 
+	%IEC (contains electronics in ISIM)
+	%IEC harness??
+	%sunshield
+	%spacecraft bus
+	%magnetic tuned mass dampener (isolator for secondary mirror support structure, the little mirrors)
+	%Cryocooler CJAA (on OTE/ISIM payload, purpose unclear to me)
+	%Cryocooler CCA (isolates compressors from rest of SCE)
+	%isolator assembly (connects SCE to DTA)
+	%PT cryocooler compressor
+	%JT cryocooler compressor
+	%deployable tower assembly (connects SCE to OTE)
+	%Reaction Wheel Isolator Assembly (RWIA)
 input.xyz=[ ...
 1  0.00000E+00  3.41300E+00  2.72000E-01
 2  0.00000E+00  2.87800E+00  7.20000E-01
 3 -2.35560E-01  3.41300E+00 -1.36000E-01
-4 -6.23540E-01  2.87800E+00 -3.60000E-01
-5  2.35560E-01  3.41300E+00 -1.36000E-01
-6  6.23540E-01  2.87800E+00 -3.60000E-01
-7 -6.50000E-01  0.00000E+00  1.10000E+00
-8  6.50000E-01  0.00000E+00  1.10000E+00
-9 -1.13800E+00  0.00000E+00 -6.30000E-02
-  10 -6.50000E-01  0.00000E+00 -9.07000E-01
-11  6.50000E-01  0.00000E+00 -9.07000E-01
-12  1.13800E+00  0.00000E+00 -6.30000E-02
-13  0.00000E+00  3.41300E+00  0.00000E+00
-14 -1.89470E-01  3.45930E+00 -1.23830E-01
-15 -2.01970E-01  3.45930E+00 -1.02170E-01
-16  1.89470E-01  3.45930E+00 -1.23830E-01
-17  2.01970E-01  3.45930E+00 -1.02170E-01
-18 -1.25000E-02  3.45930E+00  2.26000E-01
-19  1.25000E-02  3.45930E+00  2.26000E-01
-20 -9.88200E-02  3.32485E+00  4.23890E-02
-21 -8.61200E-02  3.32485E+00  6.43860E-02
-22  0.00000E+00  3.29369E+00  0.00000E+00
-23 -1.27000E-02  3.32485E+00 -1.06780E-01
-24  1.27000E-02  3.32485E+00 -1.06780E-01
-25  8.61200E-02  3.32485E+00  6.43860E-02
-26  9.88200E-02  3.32485E+00  4.23890E-02
-27  6.15960E-01 -3.08310E-01  1.72528E+00
+4 -6.23540E-01  2.87800E+00 -3.60000E-01 %sunshield?
+5  2.35560E-01  3.41300E+00 -1.36000E-01 %sunshield?
+6  6.23540E-01  2.87800E+00 -3.60000E-01 %sunshield?
+7 -6.50000E-01  0.00000E+00  1.10000E+00 %sunshield?
+8  6.50000E-01  0.00000E+00  1.10000E+00 %sunshield?
+9 -1.13800E+00  0.00000E+00 -6.30000E-02 %isolator?
+10 -6.50000E-01  0.00000E+00 -9.07000E-01 %isolator?
+11  6.50000E-01  0.00000E+00 -9.07000E-01 %isolator?
+12  1.13800E+00  0.00000E+00 -6.30000E-02 %solar panel?
+13  0.00000E+00  3.41300E+00  0.00000E+00 %solar panel?
+14 -1.89470E-01  3.45930E+00 -1.23830E-01 %isolator?
+15 -2.01970E-01  3.45930E+00 -1.02170E-01 %isolator?
+16  1.89470E-01  3.45930E+00 -1.23830E-01 %sunshield?
+17  2.01970E-01  3.45930E+00 -1.02170E-01 %sunshield?
+18 -1.25000E-02  3.45930E+00  2.26000E-01 %sunshield?
+19  1.25000E-02  3.45930E+00  2.26000E-01 %isolator?
+20 -9.88200E-02  3.32485E+00  4.23890E-02 %isolator?
+21 -8.61200E-02  3.32485E+00  6.43860E-02 %isolator?
+22  0.00000E+00  3.29369E+00  0.00000E+00 %isolator?
+23 -1.27000E-02  3.32485E+00 -1.06780E-01 %isolator?
+24  1.27000E-02  3.32485E+00 -1.06780E-01 %isolator?
+25  8.61200E-02  3.32485E+00  6.43860E-02 %isolator?
+26  9.88200E-02  3.32485E+00  4.23890E-02 %solar panel?
+27  6.15960E-01 -3.08310E-01  1.72528E+00 %solar panel?
 28 -6.15960E-01 -3.08310E-01  1.72528E+00
 29  0.00000E+00  1.24610E-01 -2.37940E-01
 30 -6.15960E-01 -1.46593E+00  1.30394E+00
@@ -217,12 +231,12 @@ input.xyz=[ ...
 76 -4.04380E-01 -1.43192E+00  2.28047E+00
 77 -6.54380E-01 -1.51874E+00  1.78807E+00
 78 -4.04380E-01 -1.13572E+00  1.46668E+00
-79 -4.74130E-01 -8.13750E-01  2.04467E+00 %RWA and isolator
-80 -4.74130E-01 -9.63310E-01  1.72393E+00 %RWA and isolator
-81 -4.74130E-01 -1.28405E+00  1.87349E+00 %RWA and isolator
-82 -4.74130E-01 -1.13448E+00  2.19423E+00 %RWA and isolator
-83 -5.67280E-01 -1.04890E+00  1.95908E+00 %RWA and isolator
-84  0.00000E+00 -1.05061E+00  1.96378E+00 %spacecraft bus
+79 -4.74130E-01 -8.13750E-01  2.04467E+00 %RWA location
+80 -4.74130E-01 -9.63310E-01  1.72393E+00 %RWA location
+81 -4.74130E-01 -1.28405E+00  1.87349E+00 %RWA location
+82 -4.74130E-01 -1.13448E+00  2.19423E+00 %RWA location
+83 -5.67280E-01 -1.04890E+00  1.95908E+00 %center of RWA assembly (for torques)
+84  0.00000E+00 -1.05061E+00  1.96378E+00 %spacecraft bus, star tracker?
 85 -6.54380E-01 -6.65870E-01  1.63769E+00
 86 -4.04380E-01 -5.79050E-01  2.13009E+00
 87 -6.54380E-01 -9.62070E-01  2.45148E+00
@@ -267,7 +281,7 @@ input.xyz=[ ...
 126  0.00000E+00  1.51070E-01 -6.23780E-01
 127  1.00030E-01  1.70140E-01 -7.95980E-01
 128 -1.00030E-01  1.70140E-01 -7.95980E-01
-129  0.00000E+00  2.24540E-01 -7.32210E-01
+129  0.00000E+00  2.24540E-01 -7.32210E-01 %deployable PM petal vertex
 130  0.00000E+00  2.06200E-01 -7.28870E-01
 131 -4.34740E-01  2.07420E-01 -9.86380E-01
 132  0.00000E+00  2.32800E-01 -1.23610E+00
@@ -287,7 +301,7 @@ input.xyz=[ ...
 146  5.40210E-01  1.51070E-01  3.11890E-01
 147  6.39330E-01  1.70140E-01  4.84610E-01
 148  7.39350E-01  1.70140E-01  3.11360E-01
-149  6.34110E-01  2.24540E-01  3.66100E-01 %fixed PM petals
+149  6.34110E-01  2.24540E-01  3.66100E-01 %fixed PM petals vertex
 150  6.31220E-01  2.06200E-01  3.64430E-01
 151  1.07160E+00  2.07420E-01  1.16690E-01
 152  1.07049E+00  2.32800E-01  6.18050E-01
@@ -307,7 +321,7 @@ input.xyz=[ ...
 166 -5.40210E-01  1.51070E-01  3.11890E-01
 167 -7.39350E-01  1.70140E-01  3.11360E-01
 168 -6.39330E-01  1.70140E-01  4.84610E-01
-169 -6.34110E-01  2.24540E-01  3.66110E-01 %fixed PM petals
+169 -6.34110E-01  2.24540E-01  3.66110E-01 %fixed PM petals vertex
 170 -6.31220E-01  2.06200E-01  3.64440E-01
 171 -6.36860E-01  2.07420E-01  8.69690E-01
 172 -1.07049E+00  2.32800E-01  6.18050E-01
@@ -336,12 +350,12 @@ input.xyz=[ ...
 199  8.53670E-01  2.20110E-01  7.43870E-01
 200  8.55460E-01  1.80750E-01 -8.10000E-03
 201  2.05320E-01  1.39340E-01  3.69540E-01
-202  0.00000E+00  3.25485E+00  0.00000E+00
+202  0.00000E+00  3.25485E+00  0.00000E+00 %SM secondary mirror
 203  3.81596E+00  0.00000E+00 -6.25000E-01
 204  3.81596E+00  0.00000E+00  6.25000E-01
 205 -3.81596E+00  0.00000E+00  6.25000E-01
 206 -3.81596E+00  0.00000E+00 -6.25000E-01
-207  0.00000E+00 -5.25000E-01 -3.50000E-01
+207  0.00000E+00 -5.25000E-01 -3.50000E-01 %instrument (where back end optics and detector are) (where cryocooler is)
 208  1.14929E+00 -1.21409E+00  2.41295E+00
 209  1.68262E+00 -1.21409E+00  2.41295E+00
 210  2.21596E+00 -1.21409E+00  2.41295E+00
@@ -417,9 +431,12 @@ input.xyz=[ ...
 %====================================================
 % 2. Local to Basic coordinate system transformations
 %====================================================
-% Create coord system index matrix: grid id, input csid , output csid
-%TODO figure out what exactly ci is
-%  (0= basic)
+% ci and cf are for coord_in
+
+% Create coord system index matrix: 
+% grid id, these correspond to the nodes in xyz
+% We're identifying a set of coordinate system transformations, which are defined by cf
+% each transformation goes from the input csid to the output csid
 input.ci=[ ...
 14       0      79
 15       0      78
@@ -538,6 +555,16 @@ input.ci=[ ...
 	 
 % Create coordinate system definition matrix
 %TODO figure out what exactly cf is
+%   cf(:,1) is the coordinate system id.
+%   cf(:,2) is the coordinate system type.
+%		1= rectangular (x,y,z) 2= cylindrical (r,theta,z) 3= spherical (r,theta,phi) (theta from z-axis and phi from x-axis in xy plane)
+%   cf(:,3) is the reference coordinate system id used for a,b,c point locations (0=basic, meaning the one that xyz is defined in).
+%          a= the origin of the new coordinate system.
+%          b= a point on the z-axis of the new coordinate system.
+%          c= a point in the +zx quadrant.
+%   cf(:,4) cf(:,5) cf(:,6) is the 3 coordinates of point a in reference coord system.
+%   cf(:,7) cf(:,8) cf(:,9) is the 3 coordinates of point b in reference coord system.
+%   cf(:,10) cf(:,11) cf(:,12) is the 3 coordinates of point c in reference coord system.
 input.cf=[ ...
 1       2       0  0.00000E+00  0.00000E+00  0.00000E+00  0.00000E+00  0.00000E+00  0.10000E+01  0.10000E+01  0.00000E+00  0.10000E+01
 2       3       0  0.00000E+00  0.00000E+00  0.00000E+00  0.00000E+00  0.00000E+00  0.10000E+01  0.10000E+01  0.00000E+00  0.10000E+01

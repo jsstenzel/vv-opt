@@ -55,7 +55,7 @@ ci=x.ci;
 cf=x.cf;
 nibar=x.nibar;
 propbar=x.propbar;
-nicelas2=x.nicelas2;
+nicelas2=x.nicelas2;		%spring mass modeling?
 niconm2=x.niconm2;		%concentrated masses
 cmcid2=x.cmcid2;
 mass=x.mass;
@@ -192,14 +192,16 @@ Ads=[-wn];
 Bds=[1]';
 Cds=Kn*[wn];
 Dds=[0]; 
-SYSds=ss(Ads,Bds,Cds,Dds);
+SYSds=ss(Ads,Bds,Cds,Dds); %send to Bode plot, see magnitude
 
-[magds,phsds]=bode(SYSds,FreqBase*2*pi); 
+[magds,phsds]=bode(SYSds,FreqBase*2*pi); %magnitude plot & phase plot
 magds=abs(squeeze(magds));
-Snn=magds.^2;
+Snn=magds.^2; %this gets us rms
 %TODO what does intrms do
+%rms is a number under a frequency range; intrms integrates that in frequency bands
+%bode plots how rms error changes over frequency space
 rmsssrad=intrms(2*Snn,FreqBase);
-rmsssarcsec=rad2arcsec*rmsssrad;
+rmsssarcsec=rad2arcsec*rmsssrad; %this is likely the control error
 if diagnostics
   disp(['RMS Approximation (arcsec) = ',num2str(rmsssarcsec)]);
   end
@@ -1045,14 +1047,21 @@ str_in= str2mat('1 RW1-Fx','2 RW1-Fy','3 RW1-Fz','4 RW1-Mx','5 RW1-My',...
    '32 SC-ry','33 SC-rz','34 SC-rrx','35 SC-rry','36 SC-rrz');
 
 %za=0.005; % Enter global modal damping coefficient (refine later)
-% assume baseline zeta=0.001 for elastic structural modes
+% assume baseline zeta=0.005 for elastic structural modes
 damping=ones(1,length(omeg)-3);
-%TODO turn this into parameters, not magic numbers
+%TODO oh these are more node identifications! need to split these up into different damping ratios
+%damping([])=ones() %IEC damping
+%damping([])=ones() %bus damping
+%damping([])=ones() %MTMD damping
+%damping([])=ones() %cryocooler CJAA damping
+%damping([])=ones() %Cryocooler CCA damping
+%damping([])=ones() %Isolator assembly damping
+%damping([])=ones() %RWA damping
 damping([4:8 16:18])=5*ones(1,8); % sunshield damping 5%
-damping([9:11 14:15 19:25])=20*ones(1,12); % isolator damping 10%
+damping([9:11 14:15 19:25])=20*ones(1,12); % isolator damping 10% %TODO which isolator?
 damping([12:13 26:27])=20*ones(1,4); % solar panel damping 5%
 Damping=diag(damping);
-za=zeta*damping;
+za=zeta*damping; %I don't see how the above damping percents are happening, given that they're getting multiplied by 0.005?
 % remove translational rigid body modes since unobservable/uncontrollable
 phi=phi(:,4:nm+3);
 omeg=omeg(4:nm+3);
