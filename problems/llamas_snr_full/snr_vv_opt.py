@@ -628,6 +628,8 @@ if __name__ == '__main__':
 		)
 		
 	elif args.run == "OPT_nmc_p6":
+		#prepare initializaiton samples based on previous run + prepared designs
+	
 		vv_OPT(
 			problem, 
 			gmm_file="BN_model_1639027_ncomp200.pkl", 
@@ -638,7 +640,8 @@ if __name__ == '__main__':
 			do_min = 30 if args.filename == "timed" else 0,
 			threads = 8 if args.n == 0 else args.n,
 			popSize=60,
-			nMC=10**6
+			nMC=10**6,
+			samples=[]
 		)
 	
 	else:

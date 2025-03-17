@@ -137,7 +137,7 @@ def plot_nsga2(pareto_costs, pareto_utilities, design_pts, util_err=None, showPl
 	
 #This function works for FP problem
 #TODO rename this nsga2_obed_gbi
-def nsga2_problem_parallel(n_threads, prob, hours, minutes, popSize, nMonteCarlo, nGMM):
+def nsga2_problem_parallel(n_threads, prob, hours, minutes, popSize, nMonteCarlo, nGMM, initial_pop=[]):
 	###1. Define the utility fn as an nsga-II problem
 	###Define the pymoo Problem class
 	class VerificationProblemSingle(ElementwiseProblem):
@@ -175,11 +175,34 @@ def nsga2_problem_parallel(n_threads, prob, hours, minutes, popSize, nMonteCarlo
 	nsga_problem = VerificationProblemSingle(elementwise_runner=runner)
 
 	###2. Run nsga-II
-	algorithm = NSGA2(pop_size=popSize,
-					  #sampling=BinaryRandomSampling(), #what
-					  #crossover=TwoPointCrossover(), #what
-					  #mutation=BitflipMutation(), #what
-					  eliminate_duplicates=True)
+	if len(initial_pop) == 0:
+		algorithm = NSGA2(pop_size=popSize,
+						  #sampling=FloatRandomSampling(),
+						  #selection=TournamentSelection(func_comp=binary_tournament),
+						  #crossover=SBX(eta=15, prob=0.9),
+						  #mutation=PM(eta=20),
+						  #survival=RankAndCrowding(),
+						  #output=MultiObjectiveOutput(),
+						  eliminate_duplicates=True)
+	#Allow initialization with a pre-sampled population
+	#https://pymoo.org/customization/initialization.html
+	#it can be a different size from nmc, but not smaller if we're eliminating duplicates
+	elif len(initial_pop) > nGMM:
+		#draw more random samples so that we're up to pop = nmc
+		diff = len(initial_pop) - nGMM
+		random_sample = list(prob.sample_d(diff)) if diff>1 else [prob.sample_d(diff)]
+		greater_pop = initial_pop + random_sample
+		algorithm = NSGA2(pop_size=popSize,
+						  sampling=greater_pop,
+						  eliminate_duplicates=True)
+	elif len(initial_pop) = nGMM:
+		algorithm = NSGA2(pop_size=popSize,
+						  sampling=initial_pop,
+						  eliminate_duplicates=True)
+	else: #len(initial_pop) < nGMM
+		algorithm = NSGA2(pop_size=popSize,
+						  sampling=initial_pop,
+						  eliminate_duplicates=False)
 
 	if hours==0 and minutes==0:
 		#termination = DefaultMultiObjectiveTermination(
