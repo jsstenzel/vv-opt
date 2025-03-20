@@ -20,7 +20,7 @@ from uq.uncertainty_propagation import *
 from uq.sensitivity_analysis import *
 from uq.saltelli_gsa import *
 from uq.gsa_convergence import *
-from opt.ngsa import *
+from opt.nsga import *
 
 ################################
 #Useful definitions

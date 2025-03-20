@@ -195,7 +195,7 @@ def nsga2_problem_parallel(n_threads, prob, hours, minutes, popSize, nMonteCarlo
 		algorithm = NSGA2(pop_size=popSize,
 						  sampling=greater_pop,
 						  eliminate_duplicates=True)
-	elif len(initial_pop) = nGMM:
+	elif len(initial_pop) == nGMM:
 		algorithm = NSGA2(pop_size=popSize,
 						  sampling=initial_pop,
 						  eliminate_duplicates=True)
