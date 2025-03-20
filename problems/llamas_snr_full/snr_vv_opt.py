@@ -442,7 +442,9 @@ if __name__ == '__main__':
 	design_pts = [
 		[problem.G(d_historical), 0.004240541527302059, "d_hist", 5.384503718405341e-05],
 		[problem.G(d_0), 0.0047856764435419575, "d_0", 5.384503718405341e-05],
-		[problem.G(d_max), 0.0022957744137691916, "d_max", 5.384503718405341e-05]
+		[problem.G(d_max), 0.0022957744137691916, "d_max", 5.384503718405341e-05],
+		[problem.G(d_med), 0.004294863943612242, "d_med", 5.384503718405341e-05],
+		[problem.G(d_min), 0.004772754162991483, "d_min", 5.384503718405341e-05]
 	]
 
 	###Uncertainty Quantification
@@ -496,7 +498,7 @@ if __name__ == '__main__':
 	#Still needs massaging...
 	#if args.run == "SA_exp":
 	#	vv_SA_exp(problem, d_historical)
-
+	
 	###Optimal Bayesian Experimental Design
 	elif args.run == "BN_sample":
 		rate = 10 if args.filename=="SA_QoI" else int(args.filename)	

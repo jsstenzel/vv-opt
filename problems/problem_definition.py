@@ -55,7 +55,7 @@ class ProblemDefinition:
 				raise ValueError("Incorrect prior probability function definition: "+str(dtype)+" not recognized.")
 			if len(params) != self._allowable_prior_types[dtype]:
 				raise ValueError('Wrong number of arguments for prior type '+str(dtype)+'; got '+str(len(params))+' and expected '+str(self._allowable_prior_types[dtype]))
-			if not (mask in ['continuous','discrete','functional','object']):
+			if not (mask in ['continuous','discrete','functional','object','discretized100']):
 				raise ValueError('Variable mask not an expected value: '+str(mask))
 
 		#if you pass all of that,
@@ -90,8 +90,8 @@ class ProblemDefinition:
 		if len(x_dict) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition eta: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
 		#apply discrete mask to theta and d and x
-		theta_masked = [(math.floor(tt) if self.theta_masks[i]=='discrete' else tt) for i,tt in enumerate(theta)]
-		d_masked = [(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
+		theta_masked = self._mask(theta, self.theta_masks, self.priors)
+		d_masked = self._mask(d, self.d_masks, self.d_dists)
 		#make dicts for inputs w/ defs, to ensure consistency
 		theta_dict = dict(zip(self.theta_names, theta_masked))
 		d_dict = dict(zip(self.d_names, d_masked))
@@ -106,7 +106,7 @@ class ProblemDefinition:
 		if len(x_dict) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition G: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
 		#apply discrete mask to d and x
-		d_masked = [(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(d)]
+		d_masked = self._mask(d, self.d_masks, self.d_dists)
 		#make dicts for inputs w/ defs, to ensure consistency
 		d_dict = dict(zip(self.d_names, d_masked))
 		return self._internal_G(d_dict, x_dict)
@@ -119,11 +119,23 @@ class ProblemDefinition:
 		if len(x_dict) != self.dim_x:
 			raise ValueError("Input to ProblemDefinition H: x size "+str(self.dim_x)+" expected, "+str(len(x))+" provided.")
 		#apply discrete mask to theta and x
-		theta_masked = [(math.floor(tt) if self.theta_masks[i]=='discrete' else tt) for i,tt in enumerate(theta)]
+		theta_masked = self._mask(theta, self.theta_masks, self.priors)
 		#make dicts for inputs w/ defs, to ensure consistency
 		theta_dict = dict(zip(self.theta_names, theta_masked))
 		return self._internal_H(theta_dict, x_dict, verbose)
-	
+		
+	def _mask(self, vec, masks, defs):
+		masked_vec = [None]*len(vec)
+		for i,dd in enumerate(vec):
+			if masks[i]=='discrete':
+				masked_vec[i] = math.floor(dd)
+			elif masks[i]=='discretized100':
+				#discretizes the min-max space to 100 equal points, then rounds dd to nearest point
+				ddomain = np.linspace(float(defs[i][1][0]), float(defs[i][1][1]), 101)
+				masked_vec[i] = min(ddomain, key=lambda y: abs(dd - y))
+			else:
+				masked_vec[i] = dd
+		return masked_vec
 	
 	_allowable_prior_types = {
 		'gaussian': 2, #mu, sigma
@@ -145,7 +157,7 @@ class ProblemDefinition:
 		d = self._dist_rvs(num_vals, self.d_dists)
 		if num_vals == 1: #stupid, inefficient
 			d = [d]
-		d_masked = [[(math.floor(dd) if self.d_masks[i]=='discrete' else dd) for i,dd in enumerate(dj)] for j,dj in enumerate(d)]
+		d_masked = [self._mask(dj, self.d_masks, self.d_dists) for dj in d]
 		
 		if num_vals == 1: #also somewhat stupid
 			return d_masked[0] #this is a list (dim_d)
@@ -373,7 +385,8 @@ if __name__ == "__main__":
 	
 	toy_d_defs = 	[
 						["d1", ["uniform", [1, 10]], "discrete" ],
-						["d2", ["uniform", [0.01, 1]], "continuous" ]
+						["d2", ["uniform", [0.01, 1]], "continuous" ],
+						["d3", ["uniform", [10, 20]], "discretized100" ]
 					]
 	
 	toy_x_defs = [
