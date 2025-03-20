@@ -36,6 +36,10 @@ def u_to_t(u):
 #This class defines a Gaussian Process, such as a prior, and provides
 #a method to sample from that prior to get functionals int he form of GaussianProcessSample1D
 class GaussianProcessDist1D:
+	#TODO i think this method is flawed... it would be better to dispense with the mean function,
+	#just pass in the gpr that actually gets trained inlearn_gp,
+	#and re-fit with additional points, as shown in test_gaussian_process_updates. (would require additional carefulness with alphas, normalization)
+	#... but this works... I think. Not sure if important information gets lost when throwing out the trained gpr.
 	def __init__(self, variance, ls, prior_pts, mean_fn=_zero_mean):
 		#Variance: scaling parameter of the kernel
 		self.variance = variance
@@ -43,6 +47,9 @@ class GaussianProcessDist1D:
 		self.ls = ls
 		#Mean funciton: A function defined over the whole domain, but scaled over the u-range
 		self.mean_fn = mean_fn
+		
+		#I'm saving this just to reuse for if we want to get a posterior, which incolves re-training
+		self.prior_pts = prior_pts
 		
 		#A suitably fine grid over the relevant domain -- fine enough that you don't care about smaller details, but not so fine that it takes forever to sample
 		#Solution: otherwise leave it up to the user, but don't let it be finer than 1 wavelength resolution
@@ -95,15 +102,53 @@ class GaussianProcessDist1D:
 				for p,m in zip(self.prior_pts, mean_fn_pts_u):
 					writer.writerow([p, m])
 					
-	def calculate_posterior(self, meas_x, meas_y, meas_err):
-		0
-		#If I cared to, I could use sklearn's GaussianProcessRegression to:
-		#1. Take in measurement points, values, and errors
+	def calculate_posterior(self, meas_x, meas_y, meas_err, careful=True):
+		#see https://scikit-learn.org/stable/auto_examples/gaussian_process/plot_gpr_prior_posterior.html
+		#code is also similar to learn_gp_prior(...)
+		#1. Take in measurement points, values, and errors		
+		X = np.array(meas_x)
+		#convert t to u-domain
+		#also need to subtract the mean, because we're fitting these points with the expectation that the prior is adjusted by the mean; meas_y needs to match the y-domain
+		Y = np.array([t_to_u(y)-self.mean_fn(x) for x,y in zip(X,Y)]) 
+		
+		#1.5 Make a new GPR
+		kernel = _gpr.kernel_
+		n_runs = 3 if careful else 0
+		
+		#convert standard deviation to u-range
+		#I need to do some cleverness here. I need to convert the standard deviation from the t domain to the u domain, but that conversion has to take into account where in u-space we are.
+		#So, for each std_i, make it t_to_u(t_i + std_i) - (u_i)
+		stddevs_over = [t_to_u(t+s) - t_to_u(t) for t,s in zip(meas_y,meas_err)]
+		stddevs_under = [t_to_u(t) - t_to_u(t-s) for t,s in zip(meas_y,meas_err)]
+		variances = np.array([ov*un for ov,un in zip(stddevs_over,stddevs_under)])
+		new_gpr = GaussianProcessRegressor(kernel=kernel, alpha=variances, normalize_y=True, n_restarts_optimizer=n_runs)
+		
 		#2. Use fit(...) to find the new ls and var
+		#https://stackoverflow.com/questions/74151442/how-to-incorporate-individual-measurement-uncertainties-into-gaussian-process
+		new_gpr.fit([[x] for x in X], Y) #fitting in u-range
+		
 		#3. Use predict(...) to calculate the mean function
-		#4. Put these together to form a posterior GP (passing forward the prior_pts and meas_pts together as the new prior_pts)
+		#this is unfortunately necessary, because I make a new gpr object whenever I make a new GaussianProcessDist1D
+		mu_u, std_u = gpr.predict([[x] for x in self.fine_domain], return_std=True)
+		
+		#Define the mean fn, in u-domain
+		def mean_fn_from_inference(t):
+			try:
+				val = np.interp(t, xplot, mu_u)
+			except ValueError:
+				return 0.0
+			return val
+		
+		#4. Put these together to form a posterior GP
+		params = gpr.kernel_.get_params()
+		expquad_variance = params['k1'].constant_value
+		expquad_ls = params['k2'].length_scale
+		#passing forward the prior_pts and meas_pts together as the new prior_pts
+		posterior_pts = sorted(list(set(list(self.prior_pts) + list(meas_x))))
+		
 		#5. Make a new GaussianProcessDist1D representing that posterior
-		#However, I don't care to do this right now, because it isn't needed for any of llamas_snr_full's experiments
+		return GaussianProcessDist1D(expquad_variance, expquad_ls, posterior_pts, mean_fn=mean_fn_from_inference)
+
 
 #This class describes a functional sampled from a GP prior described by GaussianProcessDist1D
 #This is not something we can calculate a posterior from; it's just a prior
