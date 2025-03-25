@@ -9,3 +9,5 @@ To get this working in my preferred environment, Windows bash, follow these step
 4. py -m pip install -r requirements.txt
 
 Installing numpy==1.25.2 is unfortunately necessary to get pytensor working outside of an Anaconda environment, but thats the source of all of those pytensor.configdefults warning messages.
+
+Users may also need to do "git lfs init" to make sure all large files are getting pulled in.
