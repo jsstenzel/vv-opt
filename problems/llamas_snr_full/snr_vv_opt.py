@@ -326,7 +326,7 @@ def uncertainty_mc(problem, dd, n_mc=10**2, n_gmm=10**2, n_test=10**2):
 	print(statistics.variance(util_samples))
 	return util_samples
 	
-def vv_OPT(problem, gmm_file, ysamples_file, design_pts, utility_conf95, do_hrs, do_min, threads, popSize, nMC, displayFreq=10):
+def vv_OPT(problem, gmm_file, ysamples_file, design_pts, epsilon, util_err, do_hrs, do_min, threads, popSize, nMC, displayFreq=10):
 	#Load the GMM and presampled y from file
 	print("Loading GMM and presamples...",flush=True)
 	gmm20 = bn_load_gmm(gmm_file)
@@ -338,15 +338,15 @@ def vv_OPT(problem, gmm_file, ysamples_file, design_pts, utility_conf95, do_hrs,
 					hours=do_hrs, 
 					minutes=do_min, 
 					popSize=popSize, 
-					nSkip=10, 
-					tolDelta=utility_conf95/1.96, 
+					nSkip=2, 
+					tolDelta=epsilon,#utility_conf95/1.96, 
 					nPeriod=5, 
 					nMonteCarlo=nMC, 
 					GMM=gmm20, 
 					Ylist=presampled_ylist,
 					displayFreq=displayFreq
 				)
-	plot_nsga2(costs, utilities, design_pts, util_err=utility_conf95, showPlot=True, savePlot=False, logPlotXY=[False,False])
+	plot_nsga2(costs, utilities, design_pts, util_err=util_err, showPlot=True, savePlot=False, logPlotXY=[False,False])
 
 if __name__ == '__main__':  
 	import argparse
@@ -594,37 +594,44 @@ if __name__ == '__main__':
 			gmm_file="ncomp_testing/BN_model_1639027_ncomp20.pkl", 
 			ysamples_file="BN_samples_1639027.csv", 
 			design_pts=design_pts,
-			utility_conf95=0.00006625, #probably the ncomp20 model is better than this
+			epsilon=0.01, #probably the ncomp20 model is better than this
+            util_err=0.001,
 			do_hrs = 0,
-			do_min = 5,
-			threads = 1,
+			do_min = 0,
+			threads = 1 if args.n==0 else args.n,
 			popSize=20,
-			nMC=10,
-			displayFreq=1
+			nMC=10 if args.n==0 else args.n,
+            displayFreq=10
 		)
 
 	elif args.run == "OPT_nmc_p4":
+		conf95 = 0.0006962967583258008
+		conf_frac = conf95 = conf95 / (0.0047856764435419575 - 0.0022957744137691916)
 		vv_OPT(
 			problem, 
-			gmm_file="BN_model_1639027_ncomp200.pkl", 
+			gmm_file="ncomp_testing/BN_model_1639027_ncomp200.pkl", 
 			ysamples_file="BN_samples_1639027.csv", 
 			design_pts=design_pts,
-			utility_conf95=0.0006962967583258008, #rough analogue for nMC=10^5
+			epsilon=conf_frac,
+            util_err=conf95,
 			do_hrs = 11 if args.filename == "timed" else 0,
 			do_min = 30 if args.filename == "timed" else 0,
-			threads = 8 if args.n == 0 else args.n,
-			popSize=30,
+			threads = 1 if args.n == 0 else args.n,
+			popSize=30 if args.n==0 else args.n,
 			nMC=10**4
 		)
 
 	elif args.run == "OPT_nmc_p5":
+		conf95 = 0.00019389166166701476
+		conf_frac = conf95 = conf95 / (0.0047856764435419575 - 0.0022957744137691916)
 		vv_OPT(
 			problem, 
 			gmm_file="BN_model_1639027_ncomp200.pkl", 
-			ysamples_file="BN_samples_1639027.csv", 
+			ysamples_file="ncomp_testing/BN_samples_1639027.csv", 
 			design_pts=design_pts,
-			utility_conf95=0.00019389166166701476, #rough analogue for nMC=10^5
-			do_hrs = 11 if args.filename == "timed" else 0,
+			epsilon=conf_frac, #rough analogue for nMC=10^5
+			util_err=conf95,
+            do_hrs = 11 if args.filename == "timed" else 0,
 			do_min = 30 if args.filename == "timed" else 0,
 			threads = 8 if args.n == 0 else args.n,
 			popSize=40,
@@ -633,14 +640,17 @@ if __name__ == '__main__':
 		
 	elif args.run == "OPT_nmc_p6":
 		#prepare initializaiton samples based on previous run + prepared designs
-	
+	    
+		conf95 = 5.384503718405341e-05
+		conf_frac = conf95 / (0.0047856764435419575 - 0.0022957744137691916)
 		vv_OPT(
 			problem, 
 			gmm_file="BN_model_1639027_ncomp200.pkl", 
-			ysamples_file="BN_samples_1639027.csv", 
+			ysamples_file="ncomp_testing/BN_samples_1639027.csv", 
 			design_pts=design_pts,
-			utility_conf95=5.384503718405341e-05, #the result for half the 95% confidence interval width for nMC=10^6
-			do_hrs = 11 if args.filename == "timed" else 0,
+			epsilon=conf_frac, #the result for half the 95% confidence interval width for nMC=10^6
+			util_err=conf95,
+            do_hrs = 11 if args.filename == "timed" else 0,
 			do_min = 30 if args.filename == "timed" else 0,
 			threads = 8 if args.n == 0 else args.n,
 			popSize=60,

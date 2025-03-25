@@ -17,6 +17,7 @@ from pymoo.optimize import minimize
 #from pymoo.operators.mutation.bitflip import BitflipMutation
 #from pymoo.operators.sampling.rnd import BinaryRandomSampling
 from pymoo.util.display.display import Display
+from pymoo.util.display.multi import MultiObjectiveOutput
 
 #parallel:
 from pymoo.core.problem import ElementwiseProblem
@@ -278,7 +279,7 @@ def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPe
 			
 	# Define a custom display class to print the population at each generation
 	class PeriodicPopulationDisplay(Display):
-		def __init__(self, output=None, progress=False, verbose=False):
+		def __init__(self, output=MultiObjectiveOutput(), progress=False, verbose=True):
 			super().__init__(output=output, progress=progress, verbose=verbose)
 
 		def update(self, algorithm, **kwargs):
