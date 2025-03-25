@@ -326,7 +326,7 @@ def uncertainty_mc(problem, dd, n_mc=10**2, n_gmm=10**2, n_test=10**2):
 	print(statistics.variance(util_samples))
 	return util_samples
 	
-def vv_OPT(problem, gmm_file, ysamples_file, design_pts, utility_conf95, do_hrs, do_min, threads, popSize, nMC):
+def vv_OPT(problem, gmm_file, ysamples_file, design_pts, utility_conf95, do_hrs, do_min, threads, popSize, nMC, displayFreq=10):
 	#Load the GMM and presampled y from file
 	print("Loading GMM and presamples...",flush=True)
 	gmm20 = bn_load_gmm(gmm_file)
@@ -343,7 +343,8 @@ def vv_OPT(problem, gmm_file, ysamples_file, design_pts, utility_conf95, do_hrs,
 					nPeriod=5, 
 					nMonteCarlo=nMC, 
 					GMM=gmm20, 
-					Ylist=presampled_ylist
+					Ylist=presampled_ylist,
+					displayFreq=displayFreq
 				)
 	plot_nsga2(costs, utilities, design_pts, util_err=utility_conf95, showPlot=True, savePlot=False, logPlotXY=[False,False])
 
@@ -444,7 +445,7 @@ if __name__ == '__main__':
 		[problem.G(d_0), 0.0047856764435419575, "d_0", 5.384503718405341e-05],
 		[problem.G(d_max), 0.0022957744137691916, "d_max", 5.384503718405341e-05],
 		[problem.G(d_med), 0.004294863943612242, "d_med", 5.384503718405341e-05],
-		[problem.G(d_min), 0.004772754162991483, "d_min", 5.384503718405341e-05]
+		#[problem.G(d_min), 0.004772754162991483, "d_min", 5.384503718405341e-05]
 	]
 
 	###Uncertainty Quantification
@@ -590,15 +591,16 @@ if __name__ == '__main__':
 	elif args.run == "OPT_test":
 		vv_OPT(
 			problem, 
-			gmm_file="BN_model_1639027_ncomp20.pkl", 
+			gmm_file="ncomp_testing/BN_model_1639027_ncomp20.pkl", 
 			ysamples_file="BN_samples_1639027.csv", 
 			design_pts=design_pts,
 			utility_conf95=0.00006625, #probably the ncomp20 model is better than this
 			do_hrs = 0,
-			do_min = 1,
+			do_min = 5,
 			threads = 1,
-			popSize=50,
-			nMC=10**6
+			popSize=20,
+			nMC=10,
+			displayFreq=1
 		)
 
 	elif args.run == "OPT_nmc_p4":

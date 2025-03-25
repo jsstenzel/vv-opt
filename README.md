@@ -1,4 +1,5 @@
 # vv-opt
+Unfortunately requires Python 3.8.8 specifically -- some of the libraries start to fight each other in later Python versions, last time I checked
 
 To get this working in my preferred environment, Windows bash, follow these steps:
 

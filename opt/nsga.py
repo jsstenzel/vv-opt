@@ -16,6 +16,7 @@ from pymoo.optimize import minimize
 #from pymoo.operators.crossover.pntx import TwoPointCrossover
 #from pymoo.operators.mutation.bitflip import BitflipMutation
 #from pymoo.operators.sampling.rnd import BinaryRandomSampling
+from pymoo.util.display.display import Display
 
 #parallel:
 from pymoo.core.problem import ElementwiseProblem
@@ -137,7 +138,7 @@ def plot_nsga2(pareto_costs, pareto_utilities, design_pts, util_err=None, showPl
 	
 #This function works for FP problem
 #TODO rename this nsga2_obed_gbi
-def nsga2_problem_parallel(n_threads, prob, hours, minutes, popSize, nMonteCarlo, nGMM, initial_pop=[]):
+def nsga2_problem_parallel(n_threads, prob, hours, minutes, popSize, nMonteCarlo, nGMM):
 	###1. Define the utility fn as an nsga-II problem
 	###Define the pymoo Problem class
 	class VerificationProblemSingle(ElementwiseProblem):
@@ -175,34 +176,14 @@ def nsga2_problem_parallel(n_threads, prob, hours, minutes, popSize, nMonteCarlo
 	nsga_problem = VerificationProblemSingle(elementwise_runner=runner)
 
 	###2. Run nsga-II
-	if len(initial_pop) == 0:
-		algorithm = NSGA2(pop_size=popSize,
-						  #sampling=FloatRandomSampling(),
-						  #selection=TournamentSelection(func_comp=binary_tournament),
-						  #crossover=SBX(eta=15, prob=0.9),
-						  #mutation=PM(eta=20),
-						  #survival=RankAndCrowding(),
-						  #output=MultiObjectiveOutput(),
-						  eliminate_duplicates=True)
-	#Allow initialization with a pre-sampled population
-	#https://pymoo.org/customization/initialization.html
-	#it can be a different size from nmc, but not smaller if we're eliminating duplicates
-	elif len(initial_pop) > nGMM:
-		#draw more random samples so that we're up to pop = nmc
-		diff = len(initial_pop) - nGMM
-		random_sample = list(prob.sample_d(diff)) if diff>1 else [prob.sample_d(diff)]
-		greater_pop = initial_pop + random_sample
-		algorithm = NSGA2(pop_size=popSize,
-						  sampling=greater_pop,
-						  eliminate_duplicates=True)
-	elif len(initial_pop) == nGMM:
-		algorithm = NSGA2(pop_size=popSize,
-						  sampling=initial_pop,
-						  eliminate_duplicates=True)
-	else: #len(initial_pop) < nGMM
-		algorithm = NSGA2(pop_size=popSize,
-						  sampling=initial_pop,
-						  eliminate_duplicates=False)
+	algorithm = NSGA2(pop_size=popSize,
+					  #sampling=FloatRandomSampling(),
+					  #selection=TournamentSelection(func_comp=binary_tournament),
+					  #crossover=SBX(eta=15, prob=0.9),
+					  #mutation=PM(eta=20),
+					  #survival=RankAndCrowding(),
+					  #output=MultiObjectiveOutput(),
+					  eliminate_duplicates=True)
 
 	if hours==0 and minutes==0:
 		#termination = DefaultMultiObjectiveTermination(
@@ -235,6 +216,16 @@ def nsga2_problem_parallel(n_threads, prob, hours, minutes, popSize, nMonteCarlo
 	#print(res.history) #idk, returns None
 		
 	return pareto_costs, pareto_utilities, res.X
+	
+def design_print(costs, utils, designs, prob):
+	headers = ["Cost", "Utility"]+list(prob.d_names)
+	#print(res.history) #idk, returns None
+	table = []
+	for cost, util, design in zip(costs, utils, designs):
+		design_exact = prob._mask(design, prob.d_masks, prob.d_dists)
+		row = [cost] + [util] + design_exact
+		table.append(row)
+	print(tabulate(table,headers),flush=True)
 
 #This function works for LLAMAS problem
 """
@@ -255,7 +246,7 @@ nMonteCarlo - number of Monte Carlo iterations per U(d) evaluation
 GMM - the Bayesian network model which is conditioned on y and d for Q
 Ylist - a list of presampled y data to pull from in Monte Carlo simulation
 """
-def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPeriod, nMonteCarlo, GMM, Ylist):
+def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPeriod, nMonteCarlo, GMM, Ylist, displayFreq=10, initial_pop=[]):
 	###1. Define the utility fn as an nsga-II problem
 	###Define the pymoo Problem class
 	class VerificationProblemSingle(ElementwiseProblem):
@@ -285,6 +276,22 @@ def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPe
 			out["F"] = np.column_stack([cost, U])
 			#out["G"] = np.column_stack([...,...,...])
 			
+	# Define a custom display class to print the population at each generation
+	class PeriodicPopulationDisplay(Display):
+		def __init__(self, output=None, progress=False, verbose=False):
+			super().__init__(output=output, progress=progress, verbose=verbose)
+
+		def update(self, algorithm, **kwargs):
+			super().update(algorithm, **kwargs)
+			if displayFreq != 0:
+				if algorithm.n_gen % displayFreq == 0:  # Print every generation (change to desired frequency)
+					F = algorithm.pop.get('F')
+					costs = [f[0] for f in F]
+					utilities = [f[1] for f in F]
+					print(f"Generation {algorithm.n_gen}:")
+					design_print(costs, utilities, algorithm.pop.get('X'), prob)
+					print("-" * 20)
+			
 	# initialize the thread pool and create the runner
 	pool = ThreadPool(n_threads)
 	runner = StarmapParallelization(pool.starmap)
@@ -293,11 +300,31 @@ def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPe
 	nsga_problem = VerificationProblemSingle(elementwise_runner=runner)
 
 	###2. Run nsga-II
-	algorithm = NSGA2(pop_size=popSize,
-					  #sampling=BinaryRandomSampling(), #what
-					  #crossover=TwoPointCrossover(), #what
-					  #mutation=BitflipMutation(), #https://pymoo.org/operators/mutation.html?
-					  eliminate_duplicates=True)
+	#Allow initialization with a pre-sampled population
+	#https://pymoo.org/customization/initialization.html
+	#it can be a different size from nmc, but not smaller if we're eliminating duplicates
+	if len(initial_pop) == 0:
+		algorithm = NSGA2(pop_size=popSize,
+						  #sampling=BinaryRandomSampling(), #what
+						  #crossover=TwoPointCrossover(), #what
+						  #mutation=BitflipMutation(), #https://pymoo.org/operators/mutation.html?
+						  eliminate_duplicates=True)
+	elif len(initial_pop) > nGMM:
+		#draw more random samples so that we're up to pop = nmc
+		diff = len(initial_pop) - nGMM
+		random_sample = list(prob.sample_d(diff)) if diff>1 else [prob.sample_d(diff)]
+		greater_pop = initial_pop + random_sample
+		algorithm = NSGA2(pop_size=popSize,
+						  sampling=greater_pop,
+						  eliminate_duplicates=True)
+	elif len(initial_pop) == nGMM:
+		algorithm = NSGA2(pop_size=popSize,
+						  sampling=initial_pop,
+						  eliminate_duplicates=True)
+	else: #len(initial_pop) < nGMM
+		algorithm = NSGA2(pop_size=popSize,
+						  sampling=initial_pop,
+						  eliminate_duplicates=False)
 
 	if hours==0 and minutes==0:
 		#termination = DefaultMultiObjectiveTermination(
@@ -315,6 +342,7 @@ def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPe
 				   algorithm,
 				   termination,
 				   #seed=1,
+				   display=PeriodicPopulationDisplay(),
 				   verbose=True)
 				   
 	pool.close()
@@ -324,13 +352,7 @@ def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPe
 	pareto_designs = res.X
 	pareto_costs, pareto_utilities, pareto_designs = zip(*sorted(zip(pareto_costs, pareto_utilities, pareto_designs)))
 	
-	headers = ["Cost", "Utility"]+list(prob.d_names)
-	#print(res.history) #idk, returns None
-	table = []
-	for cost, util, design in zip(pareto_costs, pareto_utilities, pareto_designs):
-		design_exact = [math.floor(dd) if prob.d_masks[i]=="discrete" else dd for i,dd in enumerate(design)]
-		row = [cost] + [util] + design_exact
-		table.append(row)
-	print(tabulate(table,headers),flush=True)
+	#do a final print of the optimal designs
+	design_print(pareto_costs, pareto_utilities, pareto_designs, prob)
 		
 	return pareto_costs, pareto_utilities, pareto_designs

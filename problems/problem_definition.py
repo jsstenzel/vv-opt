@@ -221,6 +221,7 @@ class ProblemDefinition:
 				ls = params[1]
 				prior_pts = params[2]
 				mean_fn = params[3]
+				#TODO to make theta-sampling faster, I should save these in the problem
 				gp_prior = GaussianProcessDist1D(variance, ls, prior_pts, mean_fn)
 				thetas_i = [gp_prior.sample() for _ in range(num_vals)]
 				vals.append(thetas_i)
