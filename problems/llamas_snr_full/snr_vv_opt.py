@@ -595,13 +595,13 @@ if __name__ == '__main__':
 			ysamples_file="BN_samples_1639027.csv", 
 			design_pts=design_pts,
 			epsilon=0.01, #probably the ncomp20 model is better than this
-            util_err=0.001,
+			util_err=0.001,
 			do_hrs = 0,
 			do_min = 0,
 			threads = 1 if args.n==0 else args.n,
-			popSize=20,
-			nMC=10 if args.n==0 else args.n,
-            displayFreq=10
+			popSize=40,# if args.n==0 else args.n,
+			nMC=10,
+			displayFreq=10
 		)
 
 	elif args.run == "OPT_nmc_p4":
@@ -613,12 +613,13 @@ if __name__ == '__main__':
 			ysamples_file="BN_samples_1639027.csv", 
 			design_pts=design_pts,
 			epsilon=conf_frac,
-            util_err=conf95,
+			util_err=conf95,
 			do_hrs = 11 if args.filename == "timed" else 0,
 			do_min = 30 if args.filename == "timed" else 0,
-			threads = 1 if args.n == 0 else args.n,
-			popSize=30 if args.n==0 else args.n,
-			nMC=10**4
+			threads = 5,#1 if args.n == 0 else args.n,
+			popSize=50,#30 if args.n==0 else args.n,
+			nMC=10**4,
+			displayFreq=10
 		)
 
 	elif args.run == "OPT_nmc_p5":
@@ -631,7 +632,7 @@ if __name__ == '__main__':
 			design_pts=design_pts,
 			epsilon=conf_frac, #rough analogue for nMC=10^5
 			util_err=conf95,
-            do_hrs = 11 if args.filename == "timed" else 0,
+			do_hrs = 11 if args.filename == "timed" else 0,
 			do_min = 30 if args.filename == "timed" else 0,
 			threads = 8 if args.n == 0 else args.n,
 			popSize=40,
@@ -650,7 +651,7 @@ if __name__ == '__main__':
 			design_pts=design_pts,
 			epsilon=conf_frac, #the result for half the 95% confidence interval width for nMC=10^6
 			util_err=conf95,
-            do_hrs = 11 if args.filename == "timed" else 0,
+			do_hrs = 11 if args.filename == "timed" else 0,
 			do_min = 30 if args.filename == "timed" else 0,
 			threads = 8 if args.n == 0 else args.n,
 			popSize=60,

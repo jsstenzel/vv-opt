@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import scipy.stats
 import matplotlib.pyplot as plt
-import multiprocessing as mp
+#import multiprocessing as mp
 from functools import partial
 from tabulate import tabulate
 
@@ -21,7 +21,7 @@ from pymoo.util.display.multi import MultiObjectiveOutput
 
 #parallel:
 from pymoo.core.problem import ElementwiseProblem
-from multiprocessing.pool import ThreadPool
+from multiprocessing import Pool
 from pymoo.core.problem import *
 from pymoo.factory import get_termination
 from pymoo.termination.default import DefaultMultiObjectiveTermination
@@ -248,9 +248,12 @@ GMM - the Bayesian network model which is conditioned on y and d for Q
 Ylist - a list of presampled y data to pull from in Monte Carlo simulation
 """
 def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPeriod, nMonteCarlo, GMM, Ylist, displayFreq=10, initial_pop=[]):
+	# initialize the thread pool and create the runner
+	pool = Pool(processes=n_threads)
+
 	###1. Define the utility fn as an nsga-II problem
 	###Define the pymoo Problem class
-	class VerificationProblemSingle(ElementwiseProblem):
+	class VerificationProblem(Problem):
 		param = {}
 	
 		def __init__(self, **kwargs):
@@ -263,18 +266,17 @@ def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPe
 			#For now, we won't consider that cost or utility or anything else are constrained
 			super().__init__(n_var=prob.dim_d, n_obj=2, n_constr=0, xl=d_lowers, xu=d_uppers, vtype=param_types, **kwargs)
 			
-		def _evaluate(self, design, out, *args, **kwargs):
+		def _evaluate(self, designs, out, *args, **kwargs):
 			print(flush=True, end="")
 			utility_list = []
 			cost_list = []
-
-			#print(design, flush=True)
-			#Construct dictionaries
+	
+			params = [[d, prob, GMM, Ylist, nMonteCarlo, False] for d in designs]
+			utility_results = pool.starmap(U_varH_gbi_joint_presampled, params, chunksize=10)
+			Us = [uu[0] for uu in utility_results]
+			costs = [prob.G(design) for design in designs]
 			
-			U, _ = U_varH_gbi_joint_presampled(design, prob, gmm_qyd=GMM, presampled_ylist=Ylist, n_mc=nMonteCarlo, doPrint=False)
-			cost = prob.G(design)
-			
-			out["F"] = np.column_stack([cost, U])
+			out["F"] = np.column_stack([costs, Us])
 			#out["G"] = np.column_stack([...,...,...])
 			
 	# Define a custom display class to print the population at each generation
@@ -292,13 +294,9 @@ def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPe
 					print(f"Generation {algorithm.n_gen}:")
 					design_print(costs, utilities, algorithm.pop.get('X'), prob)
 					print("-" * 20)
-			
-	# initialize the thread pool and create the runner
-	pool = ThreadPool(n_threads)
-	runner = StarmapParallelization(pool.starmap)
 
 	# define the problem by passing the starmap interface of the thread pool
-	nsga_problem = VerificationProblemSingle(elementwise_runner=runner)
+	nsga_problem = VerificationProblem()
 
 	###2. Run nsga-II
 	#Allow initialization with a pre-sampled population
