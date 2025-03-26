@@ -5,7 +5,6 @@ import sys
 import numpy as np
 import scipy.stats
 import matplotlib.pyplot as plt
-#import multiprocessing as mp
 from functools import partial
 from tabulate import tabulate
 
@@ -137,87 +136,6 @@ def plot_nsga2(pareto_costs, pareto_utilities, design_pts, util_err=None, showPl
 	#plt.clf()
 	#plt.close()	
 	
-#This function works for FP problem
-#TODO rename this nsga2_obed_gbi
-def nsga2_problem_parallel(n_threads, prob, hours, minutes, popSize, nMonteCarlo, nGMM):
-	###1. Define the utility fn as an nsga-II problem
-	###Define the pymoo Problem class
-	class VerificationProblemSingle(ElementwiseProblem):
-		param = {}
-	
-		def __init__(self, **kwargs):
-			d_lowers = [d_dist[1][0] for d_dist in prob.d_dists]
-			d_uppers = [d_dist[1][1] for d_dist in prob.d_dists]
-			param_types = [float if (dmask=="continuous") else int for dmask in prob.d_masks]
-
-			#translate the key problem parameters here
-			#2 objectives, utility and cost
-			#For now, we won't consider that cost or utility or anything else are constrained
-			super().__init__(n_var=prob.dim_d, n_obj=2, n_constr=0, xl=d_lowers, xu=d_uppers, vtype=param_types, **kwargs)
-			
-		def _evaluate(self, design, out, *args, **kwargs):
-			print(flush=True, end="")
-			utility_list = []
-			cost_list = []
-
-			#print(design, flush=True)
-			#Construct dictionaries
-			
-			U, _ = U_varH_gbi(design, prob, n_mc=nMonteCarlo, n_gmm=nGMM, ncomp=5, doPrint=False)
-			cost = np.log(prob.G(design))
-			
-			out["F"] = np.column_stack([cost, U])
-			#out["G"] = np.column_stack([...,...,...])
-			
-	# initialize the thread pool and create the runner
-	pool = ThreadPool(n_threads)
-	runner = StarmapParallelization(pool.starmap)
-
-	# define the problem by passing the starmap interface of the thread pool
-	nsga_problem = VerificationProblemSingle(elementwise_runner=runner)
-
-	###2. Run nsga-II
-	algorithm = NSGA2(pop_size=popSize,
-					  #sampling=FloatRandomSampling(),
-					  #selection=TournamentSelection(func_comp=binary_tournament),
-					  #crossover=SBX(eta=15, prob=0.9),
-					  #mutation=PM(eta=20),
-					  #survival=RankAndCrowding(),
-					  #output=MultiObjectiveOutput(),
-					  eliminate_duplicates=True)
-
-	if hours==0 and minutes==0:
-		#termination = DefaultMultiObjectiveTermination(
-		#	f_tol=0.0025,
-		#	period=30,
-		#	n_max_gen=500
-		#)	
-		termination = RobustTermination(MultiObjectiveSpaceTermination(tol=0.05, n_skip=5), period=10)
-	else:
-		time_string = f"{hours:02}"+":"+f"{minutes:02}"+":00"
-		print(time_string)
-		termination=get_termination("time", time_string)
-		
-	res = minimize(nsga_problem,
-				   algorithm,
-				   termination,
-				   #seed=1,
-				   verbose=True)
-				   
-	pool.close()
-	
-	pareto_costs = [f[0] for f in res.F]
-	pareto_utilities = [f[1] for f in res.F]
-	pareto_designs = res.X
-	pareto_costs, pareto_utilities, pareto_designs = zip(*sorted(zip(pareto_costs, pareto_utilities, pareto_designs)))
-	
-	print(pareto_costs)
-	print(pareto_utilities)
-	print(res.X) #all of the pareto front points
-	#print(res.history) #idk, returns None
-		
-	return pareto_costs, pareto_utilities, res.X
-	
 def design_print(costs, utils, designs, prob):
 	headers = ["Cost", "Utility"]+list(prob.d_names)
 	#print(res.history) #idk, returns None
@@ -247,56 +165,63 @@ nMonteCarlo - number of Monte Carlo iterations per U(d) evaluation
 GMM - the Bayesian network model which is conditioned on y and d for Q
 Ylist - a list of presampled y data to pull from in Monte Carlo simulation
 """
-def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPeriod, nMonteCarlo, GMM, Ylist, displayFreq=10, initial_pop=[]):
+# Define a custom display class to print the population at each generation
+class PeriodicPopulationDisplay(Display):
+	def __init__(self, displayFreq, prob, output=MultiObjectiveOutput(), progress=False, verbose=True):
+		self.displayFreq = displayFreq
+		self.prob = prob
+		super().__init__(output=output, progress=progress, verbose=verbose)
+
+	def update(self, algorithm, **kwargs):
+		super().update(algorithm, **kwargs)
+		if self.displayFreq != 0:
+			if algorithm.n_gen % self.displayFreq == 0:  # Print every generation (change to desired frequency)
+				F = algorithm.pop.get('F')
+				costs = [f[0] for f in F]
+				utilities = [f[1] for f in F]
+				print(f"Generation {algorithm.n_gen}:")
+				design_print(costs, utilities, algorithm.pop.get('X'), prob)
+				print("-" * 20)
+					
+class VerificationProblemSingle(ElementwiseProblem):
+	param = {}
+
+	def __init__(self, prob, GMM, Ylist, nMonteCarlo, **kwargs):
+		self.prob = prob
+		self.GMM = GMM
+		self.Ylist = Ylist
+		self.nMonteCarlo = nMonteCarlo
+	
+		d_lowers = [d_dist[1][0] for d_dist in prob.d_dists]
+		d_uppers = [d_dist[1][1] for d_dist in prob.d_dists]
+		param_types = [float if (dmask=="continuous") else int for dmask in prob.d_masks]
+
+		#translate the key problem parameters here
+		#2 objectives, utility and cost
+		#For now, we won't consider that cost or utility or anything else are constrained
+		super().__init__(n_var=prob.dim_d, n_obj=2, n_constr=0, xl=d_lowers, xu=d_uppers, vtype=param_types, **kwargs)
+		
+	def _evaluate(self, design, out, *args, **kwargs):
+		print(flush=True, end="")
+		utility_list = []
+		cost_list = []
+
+		#print(design, flush=True)
+		#Construct dictionaries
+		
+		U, _ = U_varH_gbi_joint_presampled(design, None, gmm_qyd=self.GMM, presampled_ylist=self.Ylist, n_mc=self.nMonteCarlo, doPrint=False)
+		cost = self.prob.G(design)
+		
+		out["F"] = np.column_stack([cost, U])
+		#out["G"] = np.column_stack([...,...,...])
+			
+def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPeriod, nMonteCarlo, GMM, Ylist, displayFreq=10, initial_pop=[]):	
 	# initialize the thread pool and create the runner
-	pool = Pool(processes=n_threads)
-
-	###1. Define the utility fn as an nsga-II problem
-	###Define the pymoo Problem class
-	class VerificationProblem(Problem):
-		param = {}
-	
-		def __init__(self, **kwargs):
-			d_lowers = [d_dist[1][0] for d_dist in prob.d_dists]
-			d_uppers = [d_dist[1][1] for d_dist in prob.d_dists]
-			param_types = [float if (dmask=="continuous") else int for dmask in prob.d_masks]
-
-			#translate the key problem parameters here
-			#2 objectives, utility and cost
-			#For now, we won't consider that cost or utility or anything else are constrained
-			super().__init__(n_var=prob.dim_d, n_obj=2, n_constr=0, xl=d_lowers, xu=d_uppers, vtype=param_types, **kwargs)
-			
-		def _evaluate(self, designs, out, *args, **kwargs):
-			print(flush=True, end="")
-			utility_list = []
-			cost_list = []
-	
-			params = [[d, prob, GMM, Ylist, nMonteCarlo, False] for d in designs]
-			utility_results = pool.starmap(U_varH_gbi_joint_presampled, params, chunksize=10)
-			Us = [uu[0] for uu in utility_results]
-			costs = [prob.G(design) for design in designs]
-			
-			out["F"] = np.column_stack([costs, Us])
-			#out["G"] = np.column_stack([...,...,...])
-			
-	# Define a custom display class to print the population at each generation
-	class PeriodicPopulationDisplay(Display):
-		def __init__(self, output=MultiObjectiveOutput(), progress=False, verbose=True):
-			super().__init__(output=output, progress=progress, verbose=verbose)
-
-		def update(self, algorithm, **kwargs):
-			super().update(algorithm, **kwargs)
-			if displayFreq != 0:
-				if algorithm.n_gen % displayFreq == 0:  # Print every generation (change to desired frequency)
-					F = algorithm.pop.get('F')
-					costs = [f[0] for f in F]
-					utilities = [f[1] for f in F]
-					print(f"Generation {algorithm.n_gen}:")
-					design_print(costs, utilities, algorithm.pop.get('X'), prob)
-					print("-" * 20)
+	pool = Pool(n_threads)
+	runner = StarmapParallelization(pool.starmap)
 
 	# define the problem by passing the starmap interface of the thread pool
-	nsga_problem = VerificationProblem()
+	nsga_problem = VerificationProblemSingle(prob=prob, GMM=GMM, Ylist=Ylist, nMonteCarlo=nMonteCarlo, elementwise_runner=runner)
 
 	###2. Run nsga-II
 	#Allow initialization with a pre-sampled population
@@ -341,7 +266,7 @@ def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPe
 				   algorithm,
 				   termination,
 				   #seed=1,
-				   display=PeriodicPopulationDisplay(),
+				   display=PeriodicPopulationDisplay(displayFreq, prob),
 				   verbose=True)
 				   
 	pool.close()

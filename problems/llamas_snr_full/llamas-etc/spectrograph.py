@@ -3,7 +3,7 @@ import os
 import math
 import matplotlib.pyplot as plt
 import surfaces
-import importlib
+#import importlib
 
 class Spectrograph:
     def __init__(self,name):
@@ -60,7 +60,7 @@ class Spectrograph:
                         (arr[1],float(arr[2]),float(arr[3]),float(arr[4]),arr[5],arr[6],arr[7])
                 elif (arr[0] == 'ELEMENT'):
                     self.nelements += 1
-                    importlib.reload(surfaces)
+                    #importlib.reload(surfaces)
                     tmp = surfaces.OpticalElement(arr[1],int(arr[2]),arr[3],
                                                   arr[4],arr[5],arr[6])
                     self.elements.append(tmp)
@@ -74,7 +74,7 @@ class Spectrograph:
                     self.fiber.frd_loss = float(arr[1])
                 elif(arr[0] == 'FIBER_ELEM'):
                     self.fiber.nelements += 1
-                    importlib.reload(surfaces)
+                    #importlib.reload(surfaces)
                     tmp = surfaces.OpticalElement(arr[1],int(arr[2]),arr[3],
                                                   arr[4],arr[5],arr[6])
                     self.fiber.elements.append(tmp)
