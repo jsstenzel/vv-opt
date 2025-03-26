@@ -17,8 +17,6 @@ Based on the concept exhibited in this gist:
 https://gist.github.com/neubig/e859ef0cc1a63d1c2ea4
 """	
 
-def _zero_mean(x):
-	return 0
 	
 def t_to_u(t):
 	#Maps [0,1] to [-inf,inf]
@@ -27,6 +25,14 @@ def t_to_u(t):
 def u_to_t(u):
 	#Maps [-inf,inf] to [0,1]
 	return scipy.stats.logistic.cdf(u, scale=2)
+	
+#Define the mean fn, in u-domain
+def make_mean_fn(t,xplot,mu_u):
+	try:
+		val = np.interp(t, xplot, mu_u)
+	except ValueError:
+		return 0.0
+	return val
 
 
 #######################################
@@ -40,12 +46,12 @@ class GaussianProcessDist1D:
 	#just pass in the gpr that actually gets trained inlearn_gp,
 	#and re-fit with additional points, as shown in test_gaussian_process_updates. (would require additional carefulness with alphas, normalization)
 	#... but this works... I think. Not sure if important information gets lost when throwing out the trained gpr.
-	def __init__(self, variance, ls, prior_pts, mean_fn=_zero_mean):
+	def __init__(self, variance, ls, prior_pts, mean_fn):
 		#Variance: scaling parameter of the kernel
 		self.variance = variance
 		#Length scale: parameter of the kernel
 		self.ls = ls
-		#Mean funciton: A function defined over the whole domain, but scaled over the u-range
+		#Mean funciton: Thru values defined over prior pts, but scaled over the u-range. used for mean_fn_call
 		self.mean_fn = mean_fn
 		
 		#I'm saving this just to reuse for if we want to get a posterior, which incolves re-training
@@ -64,6 +70,13 @@ class GaussianProcessDist1D:
 		#Make the scipy GP that you can sample from
 		kernel = ConstantKernel(constant_value=variance) * RBF(length_scale=ls)
 		self._gpr = GaussianProcessRegressor(kernel=kernel)
+		
+	def mean_fn_call(self, t):
+		try:
+			val = np.interp(t, self.prior_pts, self.mean_fn)
+		except ValueError:
+			return 0.0
+		return val
 	
 	#Defines the radial basis function / squared exponential function that serves as the kernel
 	def _rbf_kernel(self, x1, x2, ls, var):
@@ -77,7 +90,7 @@ class GaussianProcessDist1D:
 	#Sample the prior in order to get a GaussianProcessSample1D
 	def sample(self):
 		#Sample from the Gaussian Process:
-		GP_mean = [self.mean_fn(pt) for pt in self.fine_domain]
+		GP_mean = [self.mean_fn_call(pt) for pt in self.fine_domain]
 		#GP_cov = self._gram_matrix(self.fine_domain)
 		#sample_u = np.random.multivariate_normal(GP_mean, GP_cov)
 		sample_u = self._gpr.sample_y(np.array(self.fine_domain).reshape(-1,1), n_samples=1).flatten()
@@ -91,7 +104,7 @@ class GaussianProcessDist1D:
 		
 	def save_to_file(self, save_file, filenames, meas_std):
 		#grab the mean fn points straight from the fn, so still in the u-domain
-		mean_fn_pts_u = [self.mean_fn(pt) for pt in self.prior_pts]
+		mean_fn_pts_u = [self.mean_fn_call(pt) for pt in self.prior_pts]
 		
 		save_file_name = save_file if save_file.endswith('.csv') else save_file+'.csv'
 		if save:
@@ -109,7 +122,7 @@ class GaussianProcessDist1D:
 		X = np.array(meas_x)
 		#convert t to u-domain
 		#also need to subtract the mean, because we're fitting these points with the expectation that the prior is adjusted by the mean; meas_y needs to match the y-domain
-		Y = np.array([t_to_u(y)-self.mean_fn(x) for x,y in zip(X,Y)]) 
+		Y = np.array([t_to_u(y)-self.mean_fn_call(x) for x,y in zip(X,Y)]) 
 		
 		#1.5 Make a new GPR
 		kernel = _gpr.kernel_
@@ -131,20 +144,15 @@ class GaussianProcessDist1D:
 		#this is unfortunately necessary, because I make a new gpr object whenever I make a new GaussianProcessDist1D
 		mu_u, std_u = gpr.predict([[x] for x in self.fine_domain], return_std=True)
 		
-		#Define the mean fn, in u-domain
-		def mean_fn_from_inference(t):
-			try:
-				val = np.interp(t, xplot, mu_u)
-			except ValueError:
-				return 0.0
-			return val
-		
 		#4. Put these together to form a posterior GP
 		params = gpr.kernel_.get_params()
 		expquad_variance = params['k1'].constant_value
 		expquad_ls = params['k2'].length_scale
 		#passing forward the prior_pts and meas_pts together as the new prior_pts
 		posterior_pts = sorted(list(set(list(self.prior_pts) + list(meas_x))))
+		
+		#Define the mean fn, in u-domain
+		mean_fn_from_inference = [make_mean_fn(t, self.fine_domain, mu_u) for t in posterior_pts]
 		
 		#5. Make a new GaussianProcessDist1D representing that posterior
 		return GaussianProcessDist1D(expquad_variance, expquad_ls, posterior_pts, mean_fn=mean_fn_from_inference)
@@ -218,21 +226,12 @@ def get_ppts_meanfn_file(filename, order=3, doPlot=False):
 
 	#Convert to define mean function in u
 	mean_pts_u = t_to_u(mean_pts)
-
-	def mean_fn_from_file(t):
-		try:
-			#scipy
-			#f = scipy.interpolate.interp1d(np.array(prior_pts), np.array(mean_pts), kind=order)
-			#val = f(t)
-			#numpy
-			val = np.interp(t, prior_pts, mean_pts_u)
-		except ValueError:
-			return 0.0
-		return val
+	
+	mean_fn_from_file = mean_pts_u
 
 	if doPlot:
 		plot_pts = np.array(np.linspace(min(prior_pts), max(prior_pts), len(prior_pts)*10))
-		Yfit = [mean_fn_from_file(x) for x in plot_pts]
+		Yfit = [make_mean_fn(x, prior_pts, mean_pts_u) for x in plot_pts]
 	
 		plt.plot(prior_pts, mean_pts, c='k')
 		plt.plot(plot_pts, Yfit, c='orange')
@@ -281,13 +280,7 @@ def load_gp_prior_from_file(load_file, returnObj=False, order="linear"):
 				prior_pts.append(float(row[0]))
 				mean_fn_pts_u.append(float(row[1]))
 			
-	#if interp == "linear":		#could implement other versions later
-	def mean_fn_load_gp(t):
-		try:
-			val = np.interp(t, prior_pts, mean_fn_pts_u)
-		except ValueError:
-			return 0.0
-		return val
+	mean_fn_load_gp = mean_fn_pts_u
 	
 	if returnObj:
 		return GaussianProcessPrior1D(variance, ls, prior_pts, mean_fn_load_gp)
@@ -318,7 +311,7 @@ def define_functional_from_meanfn(prior_pts, mean_fn):
 	fine_grid = np.arange(min(prior_pts), max(prior_pts), 0.5)
 		
 	#evaluate, interpolating with spline of appropriate order
-	eval_pts_fine = u_to_t([mean_fn(w) for w in fine_grid])
+	eval_pts_fine = u_to_t([make_mean_fn(w,prior_pts,mean_fn) for w in fine_grid])
 
 	functional = GaussianProcessSample1D(fine_grid, eval_pts_fine)
 	#functional.plot_prior()
@@ -353,7 +346,7 @@ if __name__ == "__main__":
 	variance=1.0 #defined on u range
 	ls=.0001
 	prior_pts=np.linspace(0,7,1000)
-	mean_fn=sinabs
+	mean_fn=[sinabs(xi) for xi in prior_pts]
 	
 	#print([sinabs(xi) for xi in prior_pts])
 
