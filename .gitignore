@@ -18,7 +18,7 @@
 ########################
 uq/ishigami_*.csv
 problems/llamas_snr_full/SA_QoI_*.csv
-
+problems/llamas_snr_full/BN_samples_1639027.csv
 
 # Profile files
 ########################
