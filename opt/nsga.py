@@ -11,6 +11,7 @@ from tabulate import tabulate
 from pymoo.core.problem import Problem
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
+from pymoo.core.population import Population
 #from pymoo.visualization.scatter import Scatter
 #from pymoo.operators.crossover.pntx import TwoPointCrossover
 #from pymoo.operators.mutation.bitflip import BitflipMutation
@@ -175,12 +176,12 @@ class PeriodicPopulationDisplay(Display):
 	def update(self, algorithm, **kwargs):
 		super().update(algorithm, **kwargs)
 		if self.displayFreq != 0:
-			if algorithm.n_gen % self.displayFreq == 0:  # Print every generation (change to desired frequency)
+			if algorithm.n_gen % self.displayFreq == 0 or algorithm.n_gen == 1:  # Print every generation (change to desired frequency)
 				F = algorithm.pop.get('F')
 				costs = [f[0] for f in F]
 				utilities = [f[1] for f in F]
 				print(f"Generation {algorithm.n_gen}:")
-				design_print(costs, utilities, algorithm.pop.get('X'), prob)
+				design_print(costs, utilities, algorithm.pop.get('X'), self.prob)
 				print("-" * 20)
 					
 class VerificationProblemSingle(ElementwiseProblem):
@@ -233,21 +234,24 @@ def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPe
 						  #crossover=TwoPointCrossover(), #what
 						  #mutation=BitflipMutation(), #https://pymoo.org/operators/mutation.html?
 						  eliminate_duplicates=True)
-	elif len(initial_pop) > nGMM:
+	elif len(initial_pop) < popSize:
 		#draw more random samples so that we're up to pop = nmc
-		diff = len(initial_pop) - nGMM
+		diff = popSize - len(initial_pop)
 		random_sample = list(prob.sample_d(diff)) if diff>1 else [prob.sample_d(diff)]
 		greater_pop = initial_pop + random_sample
+		pop_obj = Population.new("X", greater_pop)
 		algorithm = NSGA2(pop_size=popSize,
-						  sampling=greater_pop,
+						  sampling=pop_obj,
 						  eliminate_duplicates=True)
-	elif len(initial_pop) == nGMM:
+	elif len(initial_pop) == popSize:
+		pop_obj = Population.new("X", initial_pop)
 		algorithm = NSGA2(pop_size=popSize,
-						  sampling=initial_pop,
+						  sampling=pop_obj,
 						  eliminate_duplicates=True)
-	else: #len(initial_pop) < nGMM
+	else: #len(initial_pop) > popSize
+		pop_obj = Population.new("X", initial_pop)
 		algorithm = NSGA2(pop_size=popSize,
-						  sampling=initial_pop,
+						  sampling=pop_obj,
 						  eliminate_duplicates=False)
 
 	if hours==0 and minutes==0:

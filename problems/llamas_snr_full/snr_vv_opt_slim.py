@@ -178,7 +178,34 @@ def vv_OPT(problem, gmm_file, ysamples_file, design_pts, epsilon, util_err, do_h
 	print("Loading GMM and presamples...",flush=True)
 	gmm20 = bn_load_gmm(gmm_file)
 	presampled_ylist = bn_load_y(problem, ysamples_file, doPrint=False, doDiagnostic=False)
-	
+
+	nmcp4_1results = [
+		[10,0,0,7,240.098,0.8173,6,73,0,5579,1451,0, 0,17,3],
+		[10,0,0,7,360.097,2.6412,6,37,0,5110,1529,1, 0,19,3],
+		[10,0,0,7,360.097,2.6412,6,65,0,5110,1529,1, 0,19,3],
+		[11,0,1,6,1080.09,2.7608,6,14,4,5105,1499,0,13,15,7],
+		[10,39,0,7,360.097,2.6412,6,65,2,5139,1529,1, 0,19,11],
+		[10,2,0,3,240.098,0.6379,6,60,0,5015,1446,0, 0,127,3],
+		[10,1,0,2,360.097,1.9236,6,35,11,4941,1906,0, 0,141,3],
+		[10,0,0,7,240.098,1.9236,6,66,12,5325,1440,0, 0,124,16],
+		[10,2,0,3,480.096,0.6379,6,69,1,5015,1936,2, 0,194,3],
+		[13,38,0,12,840.093,2.8206,11,86,8,5041,1459,1,34,140,3],
+		[10,41,0,12,1680.09,2.8206,12,86,8,4971,1459,16,60,140,0],
+		[10,0,2,12,240.098,2.9402,14,90,12,5325,1440,2,117,124,16],
+		[11,39,3,12,2040.08,2.7309,14,189,74,5042,2956,109,135,258,5],
+		[46,33,2,12,1560.09,1.9236,14,104,225,4986,2586,34,91,228,4],
+		[46,39,2,12,1920.08,2.8206,14,190,225,5039,2417,34,133,253,5],
+		[25,39,2,12,1080.09,2.9701,14,170,224,4965,1741,4,643,228,11],
+		[25,39,0,12,1080.09,2.7309,14,155,350,4965,1396,4,643,228,11],
+		[13,2,2,12,1680.09,2.8505,14,190,550,4940,2408,77,747,251,7],
+		[16,35,2,12,1080.09,2.9402,14,170,469,4934,1743,691,870,270,3],
+		[26,28,2,14,1560.09,2.8804,14,192,178,4967,2599,1653,805,321,72],
+		[27,34,0,12,1560.09,2.7608,14,188,558,4994,2417,1726,753,253,6],
+		[26,28,2,14,1560.09,2.8804,14,192,500,4967,2599,1792,805,321,6],
+		[13,28,0,12,1560.09,2.9103,14,190,543,4964,2599,1792,753,322,6],
+		[10,40,0,12,1920.08,2.0432,14,190,543,5023,2337,1690,843,257,2201],
+	]
+
 	costs, utilities, designs = nsga2_obed_bn(	
 					n_threads=threads, 
 					prob=problem, 
@@ -191,7 +218,8 @@ def vv_OPT(problem, gmm_file, ysamples_file, design_pts, epsilon, util_err, do_h
 					nMonteCarlo=nMC, 
 					GMM=gmm20, 
 					Ylist=presampled_ylist,
-					displayFreq=displayFreq
+					displayFreq=displayFreq,
+					initial_pop=nmcp4_1results
 				)
 	plot_nsga2(costs, utilities, design_pts, util_err=util_err, showPlot=True, savePlot=False, logPlotXY=[False,False])
 
@@ -311,17 +339,17 @@ if __name__ == '__main__':
 
 	elif args.run == "OPT_nmc_p4":
 		conf95 = 0.0006962967583258008
-		conf_frac = conf95 = conf95 / (0.0047856764435419575 - 0.0022957744137691916)
+		std_frac = conf95 / (1.96*(0.0047856764435419575 - 0.0022957744137691916))
 		vv_OPT(
 			problem,
 			gmm_file="ncomp_testing/BN_model_1639027_ncomp200.pkl", 
 			ysamples_file="BN_samples_1639027.csv", 
 			design_pts=design_pts,
-			epsilon=conf_frac,
+			epsilon=std_frac,
 			util_err=conf95,
 			do_hrs = 11 if args.filename == "timed" else 0,
 			do_min = 30 if args.filename == "timed" else 0,
-			threads = 5,#1 if args.n == 0 else args.n,
+			threads = 25,#1 if args.n == 0 else args.n,
 			popSize=50,#30 if args.n==0 else args.n,
 			nMC=10**4,
 			displayFreq=10
@@ -329,13 +357,13 @@ if __name__ == '__main__':
 
 	elif args.run == "OPT_nmc_p5":
 		conf95 = 0.00019389166166701476
-		conf_frac = conf95 = conf95 / (0.0047856764435419575 - 0.0022957744137691916)
+		std_frac = conf95 / (1.96*(0.0047856764435419575 - 0.0022957744137691916))
 		vv_OPT(
 			problem,
 			gmm_file="BN_model_1639027_ncomp200.pkl", 
 			ysamples_file="ncomp_testing/BN_samples_1639027.csv", 
 			design_pts=design_pts,
-			epsilon=conf_frac, #rough analogue for nMC=10^5
+			epsilon=std_frac, #rough analogue for nMC=10^5
 			util_err=conf95,
 			do_hrs = 11 if args.filename == "timed" else 0,
 			do_min = 30 if args.filename == "timed" else 0,
@@ -348,13 +376,13 @@ if __name__ == '__main__':
 		#prepare initializaiton samples based on previous run + prepared designs
 	    
 		conf95 = 5.384503718405341e-05
-		conf_frac = conf95 / (0.0047856764435419575 - 0.0022957744137691916)
+		std_frac = conf95 / (1.96*(0.0047856764435419575 - 0.0022957744137691916))
 		vv_OPT(
 			problem,
 			gmm_file="BN_model_1639027_ncomp200.pkl", 
 			ysamples_file="ncomp_testing/BN_samples_1639027.csv", 
 			design_pts=design_pts,
-			epsilon=conf_frac, #the result for half the 95% confidence interval width for nMC=10^6
+			epsilon=std_frac, #the result for half the 95% confidence interval width for nMC=10^6
 			util_err=conf95,
 			do_hrs = 11 if args.filename == "timed" else 0,
 			do_min = 30 if args.filename == "timed" else 0,
