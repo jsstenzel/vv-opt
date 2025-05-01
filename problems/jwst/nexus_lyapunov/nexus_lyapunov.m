@@ -28,8 +28,8 @@ I_RWa=x.I_RWa; % Axial Inertia of ITHACO E reaction wheel
 m_ISO=x.m_ISO;  % mass of RWA isolator strut actuator
 I_ISOa=x.I_ISOa;  % RWA isolator strut axial inertia
 I_ISOt=x.I_ISOt;  % RWA isolator strut transverse inertia
-K_yISO=x.K_yISO;  % Hexapod isolator strut axial stiffness
-K_xISO=x.K_xISO;  % Hexapod isolator strut transverse stiffness
+K_yISO=x.K_yISO;  % Hexapod (i.e. secondary mirror support structure) isolator strut axial stiffness
+K_xISO=x.K_xISO;  % Hexapod (i.e. secondary mirror support structure) isolator strut transverse stiffness
 m_RWAchx=x.m_RWAchx; % mass RWA pyramid chassis
 I_bus=x.I_bus;    % NEXUS spacecraft bus principal inertia
 m_bus=x.m_bus;    % m_bus:  NEXUS spacecraft bus mass   [kg]
@@ -309,6 +309,8 @@ end
 	%JT cryocooler compressor
 	%deployable tower assembly (connects SCE to OTE)
 	%Reaction Wheel Isolator Assembly (RWIA)
+%TODO note that many of these points are actually repeated - namely all the ones used for nicelas2!
+%not sure what it means... but, correlate them in the notation here
 xyz=[ ...
 1  0.00000E+00  3.41300E+00  2.72000E-01
 2  0.00000E+00  2.87800E+00  7.20000E-01
@@ -322,7 +324,7 @@ xyz=[ ...
 10 -6.50000E-01  0.00000E+00 -9.07000E-01 %isolator?
 11  6.50000E-01  0.00000E+00 -9.07000E-01 %isolator?
 12  1.13800E+00  0.00000E+00 -6.30000E-02 %solar panel?
-13  0.00000E+00  3.41300E+00  0.00000E+00 %solar panel?
+13  0.00000E+00  3.41300E+00  0.00000E+00 %% secondary mirror hub? %solar panel?
 14 -1.89470E-01  3.45930E+00 -1.23830E-01 %isolator?
 15 -2.01970E-01  3.45930E+00 -1.02170E-01 %isolator?
 16  1.89470E-01  3.45930E+00 -1.23830E-01 %sunshield?
@@ -331,15 +333,15 @@ xyz=[ ...
 19  1.25000E-02  3.45930E+00  2.26000E-01 %isolator?
 20 -9.88200E-02  3.32485E+00  4.23890E-02 %isolator?
 21 -8.61200E-02  3.32485E+00  6.43860E-02 %isolator?
-22  0.00000E+00  3.29369E+00  0.00000E+00 %isolator?
+22  0.00000E+00  3.29369E+00  0.00000E+00 %secondary mirror RBE2 %isolator?
 23 -1.27000E-02  3.32485E+00 -1.06780E-01 %isolator?
 24  1.27000E-02  3.32485E+00 -1.06780E-01 %isolator?
 25  8.61200E-02  3.32485E+00  6.43860E-02 %isolator?
 26  9.88200E-02  3.32485E+00  4.23890E-02 %solar panel?
-27  6.15960E-01 -3.08310E-01  1.72528E+00 %solar panel?
-28 -6.15960E-01 -3.08310E-01  1.72528E+00
+27  6.15960E-01 -3.08310E-01  1.72528E+00 %S/C top corner (4pts) %solar panel?
+28 -6.15960E-01 -3.08310E-01  1.72528E+00 %S/C top corner (4pts)
 29  0.00000E+00  1.24610E-01 -2.37940E-01
-30 -6.15960E-01 -1.46593E+00  1.30394E+00
+30 -6.15960E-01 -1.46593E+00  1.30394E+00 %S/C top corner (4pts)
 31 -9.88200E-02  3.32485E+00  4.23890E-02
 32 -8.61200E-02  3.32485E+00  6.43860E-02
 33  8.61200E-02  3.32485E+00  6.43860E-02
@@ -352,35 +354,35 @@ xyz=[ ...
 40  1.25000E-02  3.45930E+00  2.26000E-01
 41  2.01970E-01  3.45930E+00 -1.02170E-01
 42  1.89470E-01  3.45930E+00 -1.23830E-01
-43  6.15960E-01 -8.87120E-01  1.51461E+00
-44  0.00000E+00 -3.08310E-01  1.72528E+00
-45 -6.15960E-01 -8.87120E-01  1.51461E+00
-46  0.00000E+00 -1.46593E+00  1.30394E+00
-47  0.00000E+00 -1.79290E+00  2.20228E+00
-48  6.15960E-01 -1.21409E+00  2.41295E+00
-49  0.00000E+00 -6.35280E-01  2.62362E+00
-50 -6.15960E-01 -1.21409E+00  2.41295E+00
+43  6.15960E-01 -8.87120E-01  1.51461E+00 %sunshield
+44  0.00000E+00 -3.08310E-01  1.72528E+00 %sunshield
+45 -6.15960E-01 -8.87120E-01  1.51461E+00 %sunshield
+46  0.00000E+00 -1.46593E+00  1.30394E+00 %sunshield
+47  0.00000E+00 -1.79290E+00  2.20228E+00 %mid point, S/C bottom edge (pitch)
+48  6.15960E-01 -1.21409E+00  2.41295E+00 %solar array attach
+49  0.00000E+00 -6.35280E-01  2.62362E+00 %mid point, S/C bottom edge (pitch)
+50 -6.15960E-01 -1.21409E+00  2.41295E+00 %solar array attach
 51  3.61596E+00  9.56000E-01  0.00000E+00
 52  0.00000E+00  9.56000E-01 -3.61596E+00
 53 -3.61596E+00  9.56000E-01  0.00000E+00
 55  0.00000E+00  9.56000E-01  6.21596E+00
 56 -3.81596E+00  0.00000E+00  0.00000E+00
 57  3.81596E+00  0.00000E+00  0.00000E+00
-58  0.00000E+00  0.00000E+00  0.00000E+00
+58  0.00000E+00  0.00000E+00  0.00000E+00 %origin - not CM
 59  0.00000E+00 -2.17070E+00  1.04742E+00
 60  0.00000E+00 -2.87547E+00  7.90910E-01
 61  0.00000E+00 -3.58024E+00  5.34390E-01
 62  1.36596E+00 -8.87120E-01  1.51461E+00
 63  2.11596E+00 -8.87120E-01  1.51461E+00
-64  6.15960E-01 -1.46593E+00  1.30394E+00
+64  6.15960E-01 -1.46593E+00  1.30394E+00 %S/C top corner (4pts)
 65  2.86596E+00 -8.87120E-01  1.51461E+00
 66 -1.36596E+00 -8.87120E-01  1.51461E+00
 67 -6.90000E-01  0.00000E+00 -1.50000E-01
 68  6.90000E-01  0.00000E+00 -1.50000E-01
-69  6.15960E-01 -6.35280E-01  2.62362E+00
-70 -6.15960E-01 -6.35280E-01  2.62362E+00
-71 -6.15960E-01 -1.79290E+00  2.20228E+00
-72  6.15960E-01 -1.79290E+00  2.20228E+00
+69  6.15960E-01 -6.35280E-01  2.62362E+00 %bottom 4 attach pts to launch vehicle
+70 -6.15960E-01 -6.35280E-01  2.62362E+00 %bottom 4 attach pts to launch vehicle
+71 -6.15960E-01 -1.79290E+00  2.20228E+00 %bottom 4 attach pts to launch vehicle
+72  6.15960E-01 -1.79290E+00  2.20228E+00 %bottom 4 attach pts to launch vehicle
 73 -6.54380E-01 -6.65870E-01  1.63769E+00
 74 -4.04380E-01 -5.79050E-01  2.13009E+00
 75 -6.54380E-01 -9.62070E-01  2.45148E+00
@@ -392,13 +394,13 @@ xyz=[ ...
 81 -4.74130E-01 -1.28405E+00  1.87349E+00 %RWA location
 82 -4.74130E-01 -1.13448E+00  2.19423E+00 %RWA location
 83 -5.67280E-01 -1.04890E+00  1.95908E+00 %center of RWA assembly (for torques)
-84  0.00000E+00 -1.05061E+00  1.96378E+00 %spacecraft bus, star tracker?
+84  0.00000E+00 -1.05061E+00  1.96378E+00 %spacecraft bus CM, star tracker?
 85 -6.54380E-01 -6.65870E-01  1.63769E+00
-86 -4.04380E-01 -5.79050E-01  2.13009E+00
+86 -4.04380E-01 -5.79050E-01  2.13009E+00 %86 = 112 RWA attach point
 87 -6.54380E-01 -9.62070E-01  2.45148E+00
-88 -4.04380E-01 -1.43192E+00  2.28047E+00
+88 -4.04380E-01 -1.43192E+00  2.28047E+00 %88 = 113 RWA attach point
 89 -6.54380E-01 -1.51874E+00  1.78807E+00
-90 -4.04380E-01 -1.13572E+00  1.46668E+00
+90 -4.04380E-01 -1.13572E+00  1.46668E+00 %90 = 114 RWA attach point
 91  0.00000E+00  0.00000E+00  0.00000E+00
 92 -2.11596E+00 -8.87120E-01  1.51461E+00
 93 -2.86596E+00 -8.87120E-01  1.51461E+00
@@ -420,9 +422,9 @@ xyz=[ ...
 109 -4.04380E-01 -5.79050E-01  2.13009E+00
 110 -4.04380E-01 -1.43192E+00  2.28047E+00
 111 -4.04380E-01 -1.13572E+00  1.46668E+00
-112 -4.04380E-01 -5.79050E-01  2.13009E+00
-113 -4.04380E-01 -1.43192E+00  2.28047E+00
-114 -4.04380E-01 -1.13572E+00  1.46668E+00
+112 -4.04380E-01 -5.79050E-01  2.13009E+00 %86 = 112 RWA attach point
+113 -4.04380E-01 -1.43192E+00  2.28047E+00 %88 = 113 RWA attach point
+114 -4.04380E-01 -1.13572E+00  1.46668E+00 %90 = 114 RWA attach point
 115  4.34740E-01  1.54070E-01 -4.87220E-01
 116  1.01090E-01  3.39207E+00 -1.15300E-01
 117 -1.01090E-01  3.39207E+00 -1.15300E-01
@@ -765,7 +767,17 @@ cf=[ ...
 % 3. Create FEM Element connectivity (nodal incidence matrices)
 %==============================================================
 % Create bar element connectivity matrix
-%TODO figure out what these terms are??
+%nibar is the (:,5), (:,7), or (:,10) nodal connectivity array, each row describes an element:
+%   ni(:,1) is the element number
+%   ni(:,2) is the node number of one end of the element
+%   ni(:,3) is the node number of the other end of the element
+%   ni(:,4) is the node number of a third node defining the plane for in-plane and out-of-plane bending
+%   ni(:,5) is the property number, or row index into prop
+%   ni(:,6) is the optional pin flag for the first end, ni(:,2).
+%   ni(:,7) is the optional pin flag for the second end, ni(:,3).
+%   ni(:,8) is the optional first component of the orient vector
+%   ni(:,9) is the optional second component of the orient vector 
+%   ni(:,10) is the optional third component of the orient vector 
 nibar=[ ...
 1      46     218       0      25       0       0  0.00000E+00  3.42020E-01 -9.39690E-01
 2      43     219       0      25       0       0  0.00000E+00  3.42020E-01 -9.39690E-01
@@ -896,18 +908,25 @@ propbar=[ ...
 ];
 
 %stiffness matrix?? something to do with springs?
-%TODO figure out what the columns are
+%ni(:,1) is the element number
+%ni(:,2) is the node number of the first end of the element
+%ni(:,3) is the component number for the first node (1-6)
+%ni(:,4) is the node number of the second end of the element
+%ni(:,5) is the component number for the second node (1-6)
+%ni(:,6) is the value for the spring stiffness 
+%ni(:,7) is the value for the structural damping factor (gfac, 0 is ok) (element structural damping is Ge= gfac*Ke)
 nicelas2= [ ...
-21      15       1      38       1  K_act1  0.00000E+00
-22      15       2      38       2  K_act2  0.00000E+00
-23      15       3      38       3  K_act2  0.00000E+00
-24      15       4      38       4  K_rad1  0.00000E+00
-25      15       5      38       5  K_rad2  0.00000E+00
-27      15       6      38       6  K_rad2  0.00000E+00
-28      14       1      37       1  K_act1  0.00000E+00
-29      16       1      42       1  K_act1  0.00000E+00
-30      17       1      41       1  K_act1  0.00000E+00
-31      19       1      40       1  K_act1  0.00000E+00
+%e     node1   comp1  node2   comp2   K      damping(!)
+21      15       1      38       1  K_act1  0.00000E+00 %15-38
+22      15       2      38       2  K_act2  0.00000E+00 %15-38
+23      15       3      38       3  K_act2  0.00000E+00 %15-38
+24      15       4      38       4  K_rad1  0.00000E+00 %15-38
+25      15       5      38       5  K_rad2  0.00000E+00 %15-38
+27      15       6      38       6  K_rad2  0.00000E+00 %15-38
+28      14       1      37       1  K_act1  0.00000E+00 %15-38
+29      16       1      42       1  K_act1  0.00000E+00 %16-42
+30      17       1      41       1  K_act1  0.00000E+00 %17-41
+31      19       1      40       1  K_act1  0.00000E+00 %19-40
 32      18       1      39       1  K_act1  0.00000E+00
 33      20       1      31       1  K_act1  0.00000E+00
 34      21       1      32       1  K_act1  0.00000E+00
@@ -1398,6 +1417,8 @@ end
 if diagnostics
 disp( 'Assembling k for spring elements')
 end
+%calculates spring element matrices (stiffness matrix, structural damping matrix) 
+%from connection list, node list, boundary conditions for each dof
 [k,g]=celas2(nicelas2,xyz,bc,k,g);
   
 %==============================================================
@@ -1947,10 +1968,11 @@ if diagnostics
    tic
 end
 
-%TODO what exactly does eigfem do
-%we are solving for the eigenvalues and eigenvectors of this spring mass problem?
+%eigfem is for solving for the eigenvalues and eigenvectors of this man-body spring mass problem
 [phi,omeg]=eigfem(k,m);
    %disp(['Solved Eigenproblem in ' num2str(toc) ' [sec]'])
+%phi are the mass normalized modeshapes.
+%omeg are the modal frequencies (rad/s).
 
 omeg=abs(omeg);
 phi=real(phi);
@@ -2100,7 +2122,6 @@ str_in= str2mat('1 RW1-Fx','2 RW1-Fy','3 RW1-Fz','4 RW1-Mx','5 RW1-My',...
 %za=0.005; % Enter global modal damping coefficient (refine later)
 % assume baseline zeta=0.005 for elastic structural modes
 damping=ones(1,length(omeg)-3);
-%TODO oh these are more node identifications! need to split these up into different damping ratios
 %damping([])=ones() %IEC damping
 %damping([])=ones() %bus damping
 %damping([])=ones() %MTMD damping
