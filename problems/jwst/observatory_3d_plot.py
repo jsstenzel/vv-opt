@@ -317,10 +317,10 @@ xyz=[
 	[183,-8.55460E-01,1.80750E-01,-8.10000E-03,'black'], #primary mirror
 	[184,-2.05320E-01,1.39340E-01,3.69540E-01,'black'], #primary mirror
 	[185,-8.53670E-01,2.20110E-01,7.43870E-01,'black'], #primary mirror
-	[190,-4.34740E-01,5.10000E-02,-1.62940E-01,'black'], #primary mirror
-	[191,-4.34740E-01,-5.10000E-02,-1.62940E-01,'black'], #primary mirror
-	[192,4.34740E-01,5.10000E-02,-1.62940E-01,'black'], #primary mirror
-	[193,4.34740E-01,-5.10000E-02,-1.62940E-01,'black'], #primary mirror
+	[190,-4.34740E-01,5.10000E-02,-1.62940E-01,'black'], #primary mirror petal hinge?
+	[191,-4.34740E-01,-5.10000E-02,-1.62940E-01,'black'], #primary mirror petal hinge?
+	[192,4.34740E-01,5.10000E-02,-1.62940E-01,'black'], #primary mirror petal hinge?
+	[193,4.34740E-01,-5.10000E-02,-1.62940E-01,'black'], #primary mirror petal hinge?
 	[194,-1.31000E-02,3.24000E-02,-6.41000E-01,'gray'],
 	#[195,-4.34740E-01,-5.10000E-02,-1.62940E-01,'gray'], #=191
 	#[196,-4.34740E-01,5.10000E-02,-1.62940E-01,'gray'], #=190

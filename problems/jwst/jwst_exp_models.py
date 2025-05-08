@@ -40,7 +40,10 @@ def jwst_eta(theta, d, x, prior_mean, err=True):
 	#RWA Isolator
 	"""related to nicelas2 rows 141 to 218
 	K_xISO, K_yISO, K_aISO, K_rISO
-	TODO Need to add 1 damping coefficient c_RWA"""
+	TODO Need to add 1 damping coefficient c_RWA
+	There are these other points as well - not RWA attach points, but with the same stiffness properties. 
+	I think ill assume those are isolator assembly points, with c_RWAI
+	"""
 	
 	#CCA Isolator
 	"""Node 207 is defined to be where the vibration enters in. This is in the definition of ig near line 2027
@@ -74,7 +77,9 @@ def jwst_eta(theta, d, x, prior_mean, err=True):
 		0.49000E+02 -> TODO K_act_pm5
 		0.12012E+03 -> TODO K_act_pm6
 	The primary mirror support structure doesnt have spring-stiffness defined - theyre assumed to be perfectly rigid
-	TODO Need to implement c_PM damping coefficient for the actuators 228-401
+	TODO Need to implement c_PM_act damping coefficient for the actuators 228-401
+	TODO need to implement c_PM
+	TODO need to implement K_xpet = 0.18000E+10, c_petal
 	"""
 	
 	#Secondary Mirrors & Structure
@@ -88,7 +93,7 @@ def jwst_eta(theta, d, x, prior_mean, err=True):
 		K_rad2
 		K_rad2
 	The secondary mirror support structure doesnt have stiffness defined - theyre assumed to be perfectly rigid
-	TODO Need to implement c_SM damping coefficient for the actuators (21-93)
+	TODO Need to implement c_SM_act damping coefficient for the actuators (21-93)
 	"""
 	
 	#Telescope

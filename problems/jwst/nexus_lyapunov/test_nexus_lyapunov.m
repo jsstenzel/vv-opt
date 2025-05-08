@@ -215,6 +215,28 @@ input.K_zpet=0.9000E+08;  % Deployable petal hinge stiffness [N/m] (nom:0.90000E
 %Note: Inertias in units of kgm^2
 %Note: Stiffnesses in units of N/m  or Nm/rad
 %Note: Masses in units of kg
+% STUFF I ADDED
+input.K_pm1 = 0.10000E+07;
+input.K_pm3 = 0.58400E+06;
+input.K_pm4 = 0.59820E+02;
+input.K_pm5 = 0.49000E+02;
+input.K_pm6 = 0.33250E+02;
+input.K_act_pm2 = 0.29100E+07;
+input.K_act_pm3 = 0.10000E+07;
+input.K_act_pm4 = 0.33250E+02;
+input.K_act_pm5 = 0.49000E+02;
+input.K_act_pm6 = 0.12012E+03;
+input.K_xpet = 1e16;
+input.K_cryo = 1e16;
+input.K_IA = 1e16;
+input.c_cryo = 0.0;
+input.c_IA = 0.0;
+input.c_RWA = 0.0;
+input.c_RWAI = 0.0;
+input.c_SM_act = 0.0;
+input.c_PM = 0.0;
+input.c_PM_act = 0.0;
+input.c_petal = 0.0;
 
 % --------------------------------------------------------------
 % ------------------------   optics stuff  ---------------------

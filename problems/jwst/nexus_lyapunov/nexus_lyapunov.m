@@ -86,6 +86,28 @@ PH=x.PH;		      		% photons/m^2/micron/sec
 R0=x.R0;						   % detector readout noise, 60 electrons per pixel, 4 pixels
 mass=x.mass;
 FgsNom=x.FgsNom;			      % nominal FSM sample rate (Hz)
+% STUFF I ADDED
+K_pm1=x.K_pm1;
+K_pm3=x.K_pm3;
+K_pm4=x.K_pm4;
+K_pm5=x.K_pm5;
+K_pm6=x.K_pm6;
+K_act_pm2=x.K_act_pm2;
+K_act_pm3=x.K_act_pm3;
+K_act_pm4=x.K_act_pm4;
+K_act_pm5=x.K_act_pm5;
+K_act_pm6=x.K_act_pm6;
+K_xpet=x.K_xpet;
+K_cryo=x.K_cryo;
+K_IA=x.K_IA;
+c_cryo=x.c_cryo;
+c_IA=x.c_IA;
+c_RWA=x.c_RWA;
+c_RWAI=x.c_RWAI;
+c_SM_act=x.c_SM_act;
+c_PM=x.c_PM;
+c_PM_act=x.c_PM_act;
+c_petal=x.c_petal;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -312,48 +334,48 @@ end
 %TODO note that many of these points are actually repeated - namely all the ones used for nicelas2!
 %not sure what it means... but, correlate them in the notation here
 xyz=[ ...
-1  0.00000E+00  3.41300E+00  2.72000E-01
+1  0.00000E+00  3.41300E+00  2.72000E-01 %spider
 2  0.00000E+00  2.87800E+00  7.20000E-01
 3 -2.35560E-01  3.41300E+00 -1.36000E-01
-4 -6.23540E-01  2.87800E+00 -3.60000E-01 %sunshield?
-5  2.35560E-01  3.41300E+00 -1.36000E-01 %sunshield?
-6  6.23540E-01  2.87800E+00 -3.60000E-01 %sunshield?
-7 -6.50000E-01  0.00000E+00  1.10000E+00 %sunshield?
-8  6.50000E-01  0.00000E+00  1.10000E+00 %sunshield?
+4 -6.23540E-01  2.87800E+00 -3.60000E-01 %spider
+5  2.35560E-01  3.41300E+00 -1.36000E-01 %spider
+6  6.23540E-01  2.87800E+00 -3.60000E-01 %spider
+7 -6.50000E-01  0.00000E+00  1.10000E+00 %isolator?
+8  6.50000E-01  0.00000E+00  1.10000E+00 %isolator?
 9 -1.13800E+00  0.00000E+00 -6.30000E-02 %isolator?
 10 -6.50000E-01  0.00000E+00 -9.07000E-01 %isolator?
 11  6.50000E-01  0.00000E+00 -9.07000E-01 %isolator?
-12  1.13800E+00  0.00000E+00 -6.30000E-02 %solar panel?
-13  0.00000E+00  3.41300E+00  0.00000E+00 %% secondary mirror hub? %solar panel?
-14 -1.89470E-01  3.45930E+00 -1.23830E-01 %isolator?
-15 -2.01970E-01  3.45930E+00 -1.02170E-01 %isolator?
-16  1.89470E-01  3.45930E+00 -1.23830E-01 %sunshield?
-17  2.01970E-01  3.45930E+00 -1.02170E-01 %sunshield?
-18 -1.25000E-02  3.45930E+00  2.26000E-01 %sunshield?
-19  1.25000E-02  3.45930E+00  2.26000E-01 %isolator?
-20 -9.88200E-02  3.32485E+00  4.23890E-02 %isolator?
-21 -8.61200E-02  3.32485E+00  6.43860E-02 %isolator?
+12  1.13800E+00  0.00000E+00 -6.30000E-02 %isolator?
+13  0.00000E+00  3.41300E+00  0.00000E+00 %secondary mirror hub?
+14 -1.89470E-01  3.45930E+00 -1.23830E-01 %secondary mirror actuator
+15 -2.01970E-01  3.45930E+00 -1.02170E-01 %secondary mirror actuator
+16  1.89470E-01  3.45930E+00 -1.23830E-01 %secondary mirror actuator
+17  2.01970E-01  3.45930E+00 -1.02170E-01 %secondary mirror actuator
+18 -1.25000E-02  3.45930E+00  2.26000E-01 %secondary mirror actuator
+19  1.25000E-02  3.45930E+00  2.26000E-01 %secondary mirror actuator
+20 -9.88200E-02  3.32485E+00  4.23890E-02 %secondary mirror actuator
+21 -8.61200E-02  3.32485E+00  6.43860E-02 %secondary mirror actuator
 22  0.00000E+00  3.29369E+00  0.00000E+00 %secondary mirror RBE2 %isolator?
-23 -1.27000E-02  3.32485E+00 -1.06780E-01 %isolator?
-24  1.27000E-02  3.32485E+00 -1.06780E-01 %isolator?
-25  8.61200E-02  3.32485E+00  6.43860E-02 %isolator?
-26  9.88200E-02  3.32485E+00  4.23890E-02 %solar panel?
+23 -1.27000E-02  3.32485E+00 -1.06780E-01 %secondary mirror actuator
+24  1.27000E-02  3.32485E+00 -1.06780E-01 %secondary mirror actuator
+25  8.61200E-02  3.32485E+00  6.43860E-02 %secondary mirror actuator
+26  9.88200E-02  3.32485E+00  4.23890E-02 %secondary mirror actuator
 27  6.15960E-01 -3.08310E-01  1.72528E+00 %S/C top corner (4pts) %solar panel?
 28 -6.15960E-01 -3.08310E-01  1.72528E+00 %S/C top corner (4pts)
-29  0.00000E+00  1.24610E-01 -2.37940E-01
+29  0.00000E+00  1.24610E-01 -2.37940E-01 %primary mirror
 30 -6.15960E-01 -1.46593E+00  1.30394E+00 %S/C top corner (4pts)
-31 -9.88200E-02  3.32485E+00  4.23890E-02
-32 -8.61200E-02  3.32485E+00  6.43860E-02
-33  8.61200E-02  3.32485E+00  6.43860E-02
-34  9.88200E-02  3.32485E+00  4.23890E-02
-35  1.27000E-02  3.32485E+00 -1.06780E-01
-36 -1.27000E-02  3.32485E+00 -1.06780E-01
-37 -1.89470E-01  3.45930E+00 -1.23830E-01
-38 -2.01970E-01  3.45930E+00 -1.02170E-01
-39 -1.25000E-02  3.45930E+00  2.26000E-01
-40  1.25000E-02  3.45930E+00  2.26000E-01
-41  2.01970E-01  3.45930E+00 -1.02170E-01
-42  1.89470E-01  3.45930E+00 -1.23830E-01
+31 -9.88200E-02  3.32485E+00  4.23890E-02 %=20
+32 -8.61200E-02  3.32485E+00  6.43860E-02 %=21
+33  8.61200E-02  3.32485E+00  6.43860E-02 %=25
+34  9.88200E-02  3.32485E+00  4.23890E-02 %=26
+35  1.27000E-02  3.32485E+00 -1.06780E-01 %=24
+36 -1.27000E-02  3.32485E+00 -1.06780E-01 %=23
+37 -1.89470E-01  3.45930E+00 -1.23830E-01 %=14
+38 -2.01970E-01  3.45930E+00 -1.02170E-01 %=15
+39 -1.25000E-02  3.45930E+00  2.26000E-01 %=18
+40  1.25000E-02  3.45930E+00  2.26000E-01 %=19
+41  2.01970E-01  3.45930E+00 -1.02170E-01 %=17
+42  1.89470E-01  3.45930E+00 -1.23830E-01 %=16
 43  6.15960E-01 -8.87120E-01  1.51461E+00 %sunshield
 44  0.00000E+00 -3.08310E-01  1.72528E+00 %sunshield
 45 -6.15960E-01 -8.87120E-01  1.51461E+00 %sunshield
@@ -584,7 +606,13 @@ xyz=[ ...
 275 -6.41490E-01 -3.66480E-01  1.15098E+00
 276  6.24470E-01 -1.09945E+00  1.25295E+00
 277  6.32980E-01 -7.32970E-01  1.20197E+00
-278  6.41490E-01 -3.66480E-01  1.15098E+00 ];
+278  6.41490E-01 -3.66480E-01  1.15098E+00 
+301  0.00000E+00 -5.25000E-01 -3.50000E-01 %new pt - instrument nicelas
+302  6.15960E-01 -1.46593E+00  1.30394E+00 %new pt - 64 S/C top corner (4pts)
+303  6.15960E-01 -3.08310E-01  1.72528E+00 %new pt - 27 S/C top corner (4pts)
+304 -6.15960E-01 -3.08310E-01  1.72528E+00 %new pt - 28 S/C top corner (4pts)
+305 -6.15960E-01 -1.46593E+00  1.30394E+00 %new pt - 30 S/C top corner (4pts)
+];
 	 
 %====================================================
 % 2. Local to Basic coordinate system transformations
@@ -715,7 +743,7 @@ ci=[ ...
 %TODO figure out what exactly cf is
 %   cf(:,1) is the coordinate system id.
 %   cf(:,2) is the coordinate system type.
-%		1= rectangular (x,y,z) 2= cylindrical (r,theta,z) 3= spherical (r,theta,phi) (theta from z-axis and phi from x-axis in xy plane)
+%1= rectangular (x,y,z) 2= cylindrical (r,theta,z) 3= spherical (r,theta,phi) (theta from z-axis and phi from x-axis in xy plane)
 %   cf(:,3) is the reference coordinate system id used for a,b,c point locations (0=basic, meaning the one that xyz is defined in).
 %          a= the origin of the new coordinate system.
 %          b= a point on the z-axis of the new coordinate system.
@@ -916,320 +944,350 @@ propbar=[ ...
 %ni(:,6) is the value for the spring stiffness 
 %ni(:,7) is the value for the structural damping factor (gfac, 0 is ok) (element structural damping is Ge= gfac*Ke)
 nicelas2= [ ...
-%e     node1   comp1  node2   comp2   K      damping(!)
-21      15       1      38       1  K_act1  0.00000E+00 %15-38
-22      15       2      38       2  K_act2  0.00000E+00 %15-38
-23      15       3      38       3  K_act2  0.00000E+00 %15-38
-24      15       4      38       4  K_rad1  0.00000E+00 %15-38
-25      15       5      38       5  K_rad2  0.00000E+00 %15-38
-27      15       6      38       6  K_rad2  0.00000E+00 %15-38
-28      14       1      37       1  K_act1  0.00000E+00 %15-38
-29      16       1      42       1  K_act1  0.00000E+00 %16-42
-30      17       1      41       1  K_act1  0.00000E+00 %17-41
-31      19       1      40       1  K_act1  0.00000E+00 %19-40
-32      18       1      39       1  K_act1  0.00000E+00
-33      20       1      31       1  K_act1  0.00000E+00
-34      21       1      32       1  K_act1  0.00000E+00
-35      25       1      33       1  K_act1  0.00000E+00
-36      26       1      34       1  K_act1  0.00000E+00
-37      24       1      35       1  K_act1  0.00000E+00
-38      23       1      36       1  K_act1  0.00000E+00
-39      14       2      37       2  K_act2  0.00000E+00
-40      16       2      42       2  K_act2  0.00000E+00
-41      17       2      41       2  K_act2  0.00000E+00
-42      19       2      40       2  K_act2  0.00000E+00
-43      18       2      39       2  K_act2  0.00000E+00
-44      20       2      31       2  K_act2  0.00000E+00
-45      21       2      32       2  K_act2  0.00000E+00
-46      25       2      33       2  K_act2  0.00000E+00
-47      26       2      34       2  K_act2  0.00000E+00
-48      24       2      35       2  K_act2  0.00000E+00
-49      23       2      36       2  K_act2  0.00000E+00
-50      14       3      37       3  K_act2  0.00000E+00
-51      16       3      42       3  K_act2  0.00000E+00
-52      17       3      41       3  K_act2  0.00000E+00
-53      19       3      40       3  K_act2  0.00000E+00
-54      18       3      39       3  K_act2  0.00000E+00
-55      20       3      31       3  K_act2  0.00000E+00
-56      21       3      32       3  K_act2  0.00000E+00
-57      25       3      33       3  K_act2  0.00000E+00
-58      26       3      34       3  K_act2  0.00000E+00
-59      24       3      35       3  K_act2  0.00000E+00
-60      23       3      36       3  K_act2  0.00000E+00
-61      14       4      37       4  K_rad1  0.00000E+00
-62      16       4      42       4  K_rad1  0.00000E+00
-63      17       4      41       4  K_rad1  0.00000E+00
-64      19       4      40       4  K_rad1  0.00000E+00
-65      18       4      39       4  K_rad1  0.00000E+00
-66      20       4      31       4  K_rad1  0.00000E+00
-67      21       4      32       4  K_rad1  0.00000E+00
-68      25       4      33       4  K_rad1  0.00000E+00
-69      26       4      34       4  K_rad1  0.00000E+00
-70      24       4      35       4  K_rad1  0.00000E+00
-71      23       4      36       4  K_rad1  0.00000E+00
-72      14       5      37       5  K_rad2  0.00000E+00
-73      16       5      42       5  K_rad2  0.00000E+00
-74      17       5      41       5  K_rad2  0.00000E+00
-75      19       5      40       5  K_rad2  0.00000E+00
-76      18       5      39       5  K_rad2  0.00000E+00
-77      20       5      31       5  K_rad2  0.00000E+00
-78      21       5      32       5  K_rad2  0.00000E+00
-79      25       5      33       5  K_rad2  0.00000E+00
-80      26       5      34       5  K_rad2  0.00000E+00
-81      24       5      35       5  K_rad2  0.00000E+00
-82      23       5      36       5  K_rad2  0.00000E+00
-83      14       6      37       6  K_rad2  0.00000E+00
-84      16       6      42       6  K_rad2  0.00000E+00
-85      17       6      41       6  K_rad2  0.00000E+00
-86      19       6      40       6  K_rad2  0.00000E+00
-87      18       6      39       6  K_rad2  0.00000E+00
-88      20       6      31       6  K_rad2  0.00000E+00
-89      21       6      32       6  K_rad2  0.00000E+00
-90      25       6      33       6  K_rad2  0.00000E+00
-91      26       6      34       6  K_rad2  0.00000E+00
-92      24       6      35       6  K_rad2  0.00000E+00
-93      23       6      36       6  K_rad2  0.00000E+00
-141      78       2      90       2  K_yISO  0.00000E+00
-142      74       2      86       2  K_yISO  0.00000E+00
-143      76       2      88       2  K_yISO  0.00000E+00
-144     111       2     114       2  K_yISO  0.00000E+00
-145     109       2     112       2  K_yISO  0.00000E+00
-146     110       2     113       2  K_yISO  0.00000E+00
-147      73       2      85       2  K_yISO  0.00000E+00
-148      77       2      89       2  K_yISO  0.00000E+00
-149      75       2      87       2  K_yISO  0.00000E+00
-150     103       2     104       2  K_yISO  0.00000E+00
-151     107       2     108       2  K_yISO  0.00000E+00
-152     105       2     106       2  K_yISO  0.00000E+00
-153      78       1      90       1  K_xISO  0.00000E+00
-154      74       1      86       1  K_xISO  0.00000E+00
-155      76       1      88       1  K_xISO  0.00000E+00
-156     111       1     114       1  K_xISO  0.00000E+00
-157     109       1     112       1  K_xISO  0.00000E+00
-164     110       1     113       1  K_xISO  0.00000E+00
-165      73       1      85       1  K_xISO  0.00000E+00
-166      77       1      89       1  K_xISO  0.00000E+00
-167      75       1      87       1  K_xISO  0.00000E+00
-168     103       1     104       1  K_xISO  0.00000E+00
-169     107       1     108       1  K_xISO  0.00000E+00
-170     105       1     106       1  K_xISO  0.00000E+00
-171      78       3      90       3  K_xISO  0.00000E+00
-172      74       3      86       3  K_xISO  0.00000E+00
-173      76       3      88       3  K_xISO  0.00000E+00
-174     111       3     114       3  K_xISO  0.00000E+00
-175     109       3     112       3  K_xISO  0.00000E+00
-176     110       3     113       3  K_xISO  0.00000E+00
-177      73       3      85       3  K_xISO  0.00000E+00
-178      77       3      89       3  K_xISO  0.00000E+00
-179      75       3      87       3  K_xISO  0.00000E+00
-180     103       3     104       3  K_xISO  0.00000E+00
-181     107       3     108       3  K_xISO  0.00000E+00
-182     105       3     106       3  K_xISO  0.00000E+00
-183      78       4      90       4  K_rISO  0.00000E+00
-184      74       4      86       4  K_rISO  0.00000E+00
-185      76       4      88       4  K_rISO  0.00000E+00
-186     111       4     114       4  K_rISO  0.00000E+00
-187     109       4     112       4  K_rISO  0.00000E+00
-188     110       4     113       4  K_rISO  0.00000E+00
-189      73       4      85       4  K_rISO  0.00000E+00
-190      77       4      89       4  K_rISO  0.00000E+00
-191      75       4      87       4  K_rISO  0.00000E+00
-192     103       4     104       4  K_rISO  0.00000E+00
-193     107       4     108       4  K_rISO  0.00000E+00
-194     105       4     106       4  K_rISO  0.00000E+00
-195      78       5      90       5  K_aISO  0.00000E+00
-196      74       5      86       5  K_aISO  0.00000E+00
-197      76       5      88       5  K_aISO  0.00000E+00
-198     111       5     114       5  K_aISO  0.00000E+00
-199     109       5     112       5  K_aISO  0.00000E+00
-200     110       5     113       5  K_aISO  0.00000E+00
-201      73       5      85       5  K_aISO  0.00000E+00
-202      77       5      89       5  K_aISO  0.00000E+00
-203      75       5      87       5  K_aISO  0.00000E+00
-204     103       5     104       5  K_aISO  0.00000E+00
-205     107       5     108       5  K_aISO  0.00000E+00
-206     105       5     106       5  K_aISO  0.00000E+00
-207      78       6      90       6  K_rISO  0.00000E+00
-208      74       6      86       6  K_rISO  0.00000E+00
-209      76       6      88       6  K_rISO  0.00000E+00
-210     111       6     114       6  K_rISO  0.00000E+00
-211     109       6     112       6  K_rISO  0.00000E+00
-212     110       6     113       6  K_rISO  0.00000E+00
-213      73       6      85       6  K_rISO  0.00000E+00
-214      77       6      89       6  K_rISO  0.00000E+00
-215      75       6      87       6  K_rISO  0.00000E+00
-216     103       6     104       6  K_rISO  0.00000E+00
-217     107       6     108       6  K_rISO  0.00000E+00
-218     105       6     106       6  K_rISO  0.00000E+00
-228     131       1     124       1  0.10000E+07  0.00000E+00
-229     132       1     123       1  0.10000E+07  0.00000E+00
-230     133       1     122       1  0.10000E+07  0.00000E+00
-231     134       1     115       1  0.10000E+07  0.00000E+00
-232     135       1      29       1  0.10000E+07  0.00000E+00
-233     136       1     125       1  0.10000E+07  0.00000E+00
-234     131       2     124       2  K_yPM  0.00000E+00
-235     132       2     123       2  K_yPM  0.00000E+00
-236     133       2     122       2  K_yPM  0.00000E+00
-237     134       2     115       2  K_yPM  0.00000E+00
-238     135       2      29       2  K_yPM  0.00000E+00
-239     136       2     125       2  K_yPM  0.00000E+00
-240     131       3     124       3  0.58400E+06  0.00000E+00
-241     132       3     123       3  0.58400E+06  0.00000E+00
-242     133       3     122       3  0.58400E+06  0.00000E+00
-243     134       3     115       3  0.58400E+06  0.00000E+00
-244     135       3      29       3  0.58400E+06  0.00000E+00
-245     136       3     125       3  0.58400E+06  0.00000E+00
-246     131       4     124       4  0.59820E+02  0.00000E+00
-247     132       4     123       4  0.59820E+02  0.00000E+00
-248     133       4     122       4  0.59820E+02  0.00000E+00
-249     134       4     115       4  0.59820E+02  0.00000E+00
-250     135       4      29       4  0.59820E+02  0.00000E+00
-251     136       4     125       4  0.59820E+02  0.00000E+00
-252     131       5     124       5  0.49000E+02  0.00000E+00
-253     132       5     123       5  0.49000E+02  0.00000E+00
-254     133       5     122       5  0.49000E+02  0.00000E+00
-255     134       5     115       5  0.49000E+02  0.00000E+00
-256     135       5      29       5  0.49000E+02  0.00000E+00
-257     136       5     125       5  0.49000E+02  0.00000E+00
-258     131       6     124       6  0.33250E+02  0.00000E+00
-259     132       6     123       6  0.33250E+02  0.00000E+00
-260     133       6     122       6  0.33250E+02  0.00000E+00
-261     134       6     115       6  0.33250E+02  0.00000E+00
-262     135       6      29       6  0.33250E+02  0.00000E+00
-263     136       6     125       6  0.33250E+02  0.00000E+00
-264     137       1     126       1  K_act2  0.00000E+00
-265     138       1     128       1  K_act2  0.00000E+00
-266     139       1     127       1  K_act2  0.00000E+00
-267     137       2     126       2  0.29100E+07  0.00000E+00
-268     138       2     128       2  0.29100E+07  0.00000E+00
-269     139       2     127       2  0.29100E+07  0.00000E+00
-270     137       3     126       3  0.10000E+07  0.00000E+00
-271     138       3     128       3  0.10000E+07  0.00000E+00
-272     139       3     127       3  0.10000E+07  0.00000E+00
-273     137       4     126       4  0.33250E+02  0.00000E+00
-274     138       4     128       4  0.33250E+02  0.00000E+00
-275     139       4     127       4  0.33250E+02  0.00000E+00
-276     137       5     126       5  0.49000E+02  0.00000E+00
-277     138       5     128       5  0.49000E+02  0.00000E+00
-278     139       5     127       5  0.49000E+02  0.00000E+00
-279     137       6     126       6  0.12012E+03  0.00000E+00
-280     138       6     128       6  0.12012E+03  0.00000E+00
-281     139       6     127       6  0.12012E+03  0.00000E+00
-284     151       1     144       1  0.10000E+07  0.00000E+00
-285     152       1     143       1  0.10000E+07  0.00000E+00
-286     153       1     142       1  0.10000E+07  0.00000E+00
-287     154       1     141       1  0.10000E+07  0.00000E+00
-288     155       1     140       1  0.10000E+07  0.00000E+00
-289     156       1     145       1  0.10000E+07  0.00000E+00
-290     151       2     144       2  K_yPM  0.00000E+00
-291     152       2     143       2  K_yPM  0.00000E+00
-292     153       2     142       2  K_yPM  0.00000E+00
-293     154       2     141       2  K_yPM  0.00000E+00
-294     155       2     140       2  K_yPM  0.00000E+00
-295     156       2     145       2  K_yPM  0.00000E+00
-296     151       3     144       3  0.58400E+06  0.00000E+00
-297     152       3     143       3  0.58400E+06  0.00000E+00
-298     153       3     142       3  0.58400E+06  0.00000E+00
-299     154       3     141       3  0.58400E+06  0.00000E+00
-300     155       3     140       3  0.58400E+06  0.00000E+00
-301     156       3     145       3  0.58400E+06  0.00000E+00
-302     151       4     144       4  0.59820E+02  0.00000E+00
-303     152       4     143       4  0.59820E+02  0.00000E+00
-304     153       4     142       4  0.59820E+02  0.00000E+00
-305     154       4     141       4  0.59820E+02  0.00000E+00
-306     155       4     140       4  0.59820E+02  0.00000E+00
-307     156       4     145       4  0.59820E+02  0.00000E+00
-308     151       5     144       5  0.49000E+02  0.00000E+00
-309     152       5     143       5  0.49000E+02  0.00000E+00
-310     153       5     142       5  0.49000E+02  0.00000E+00
-311     154       5     141       5  0.49000E+02  0.00000E+00
-312     155       5     140       5  0.49000E+02  0.00000E+00
-313     156       5     145       5  0.49000E+02  0.00000E+00
-314     151       6     144       6  0.33250E+02  0.00000E+00
-315     152       6     143       6  0.33250E+02  0.00000E+00
-316     153       6     142       6  0.33250E+02  0.00000E+00
-317     154       6     141       6  0.33250E+02  0.00000E+00
-318     155       6     140       6  0.33250E+02  0.00000E+00
-319     156       6     145       6  0.33250E+02  0.00000E+00
-320     157       1     146       1  K_act2  0.00000E+00
-321     158       1     148       1  K_act2  0.00000E+00
-322     159       1     147       1  K_act2  0.00000E+00
-323     157       2     146       2  0.29100E+07  0.00000E+00
-324     158       2     148       2  0.29100E+07  0.00000E+00
-325     159       2     147       2  0.29100E+07  0.00000E+00
-326     157       3     146       3  0.10000E+07  0.00000E+00
-327     158       3     148       3  0.10000E+07  0.00000E+00
-328     159       3     147       3  0.10000E+07  0.00000E+00
-329     157       4     146       4  0.33250E+02  0.00000E+00
-330     158       4     148       4  0.33250E+02  0.00000E+00
-331     159       4     147       4  0.33250E+02  0.00000E+00
-332     157       5     146       5  0.49000E+02  0.00000E+00
-333     158       5     148       5  0.49000E+02  0.00000E+00
-334     159       5     147       5  0.49000E+02  0.00000E+00
-335     157       6     146       6  0.12012E+03  0.00000E+00
-336     158       6     148       6  0.12012E+03  0.00000E+00
-337     159       6     147       6  0.12012E+03  0.00000E+00
-340     171       1     164       1  0.10000E+07  0.00000E+00
-341     172       1     163       1  0.10000E+07  0.00000E+00
-342     173       1     162       1  0.10000E+07  0.00000E+00
-343     174       1     161       1  0.10000E+07  0.00000E+00
-344     175       1     160       1  0.10000E+07  0.00000E+00
-345     176       1     165       1  0.10000E+07  0.00000E+00
-346     171       2     164       2  K_yPM  0.00000E+00
-347     172       2     163       2  K_yPM  0.00000E+00
-348     173       2     162       2  K_yPM  0.00000E+00
-349     174       2     161       2  K_yPM  0.00000E+00
-350     175       2     160       2  K_yPM  0.00000E+00
-351     176       2     165       2  K_yPM  0.00000E+00
-352     171       3     164       3  0.58400E+06  0.00000E+00
-353     172       3     163       3  0.58400E+06  0.00000E+00
-354     173       3     162       3  0.58400E+06  0.00000E+00
-355     174       3     161       3  0.58400E+06  0.00000E+00
-356     175       3     160       3  0.58400E+06  0.00000E+00
-357     176       3     165       3  0.58400E+06  0.00000E+00
-358     171       4     164       4  0.59820E+02  0.00000E+00
-359     172       4     163       4  0.59820E+02  0.00000E+00
-360     173       4     162       4  0.59820E+02  0.00000E+00
-361     174       4     161       4  0.59820E+02  0.00000E+00
-362     175       4     160       4  0.59820E+02  0.00000E+00
-363     176       4     165       4  0.59820E+02  0.00000E+00
-364     171       5     164       5  0.49000E+02  0.00000E+00
-365     172       5     163       5  0.49000E+02  0.00000E+00
-366     173       5     162       5  0.49000E+02  0.00000E+00
-367     174       5     161       5  0.49000E+02  0.00000E+00
-368     175       5     160       5  0.49000E+02  0.00000E+00
-369     176       5     165       5  0.49000E+02  0.00000E+00
-370     171       6     164       6  0.33250E+02  0.00000E+00
-371     172       6     163       6  0.33250E+02  0.00000E+00
-372     173       6     162       6  0.33250E+02  0.00000E+00
-373     174       6     161       6  0.33250E+02  0.00000E+00
-374     175       6     160       6  0.33250E+02  0.00000E+00
-375     176       6     165       6  0.33250E+02  0.00000E+00
-376     177       1     166       1  K_act2  0.00000E+00
-377     178       1     168       1  K_act2  0.00000E+00
-378     179       1     167       1  K_act2  0.00000E+00
-379     177       2     166       2  0.29100E+07  0.00000E+00
-380     178       2     168       2  0.29100E+07  0.00000E+00
-381     179       2     167       2  0.29100E+07  0.00000E+00
-382     177       3     166       3  0.10000E+07  0.00000E+00
-383     178       3     168       3  0.10000E+07  0.00000E+00
-384     179       3     167       3  0.10000E+07  0.00000E+00
-385     177       4     166       4  0.33250E+02  0.00000E+00
-386     178       4     168       4  0.33250E+02  0.00000E+00
-387     179       4     167       4  0.33250E+02  0.00000E+00
-388     177       5     166       5  0.49000E+02  0.00000E+00
-389     178       5     168       5  0.49000E+02  0.00000E+00
-390     179       5     167       5  0.49000E+02  0.00000E+00
-391     177       6     166       6  0.12012E+03  0.00000E+00
-392     178       6     168       6  0.12012E+03  0.00000E+00
-393     179       6     167       6  0.12012E+03  0.00000E+00
-395     197       3     192       3  K_zpet  0.00000E+00
-396     196       3     190       3  K_zpet  0.00000E+00
-397     198       3     193       3  K_zpet  0.00000E+00
-398     195       3     191       3  K_zpet  0.00000E+00
-399     198       1     193       1  0.18000E+10  0.00000E+00
-400     198       2     193       2  0.18000E+10  0.00000E+00
-401     195       2     191       2  0.18000E+10  0.00000E+00
+%e     node1  comp1 node2  comp2   K        damping(!)
+21		15		1		38		1		K_act1		c_SM_act %15-38 secondary mirror actuator
+22		15		2		38		2		K_act2		c_SM_act %15-38 secondary mirror actuator
+23		15		3		38		3		K_act2		c_SM_act %15-38 secondary mirror actuator
+24		15		4		38		4		K_rad1		c_SM_act %15-38 secondary mirror actuator
+25		15		5		38		5		K_rad2		c_SM_act %15-38 secondary mirror actuator
+27		15		6		38		6		K_rad2		c_SM_act %15-38 secondary mirror actuator
+28		14		1		37		1		K_act1		c_SM_act %14-37 inner secondary mirror actuator
+29		16		1		42		1		K_act1		c_SM_act %16-42 secondary mirror actuator
+30		17		1		41		1		K_act1		c_SM_act %17-41 secondary mirror actuator
+31		19		1		40		1		K_act1		c_SM_act %19-40 secondary mirror actuator
+32		18		1		39		1		K_act1		c_SM_act %18-39 secondary mirror actuator
+33		20		1		31		1		K_act1		c_SM_act %20-31 inner secondary mirror actuator
+34		21		1		32		1		K_act1		c_SM_act %21-32 inner secondary mirror actuator
+35		25		1		33		1		K_act1		c_SM_act %25-33 inner secondary mirror actuator
+36		26		1		34		1		K_act1		c_SM_act %26-34 inner secondary mirror actuator
+37		24		1		35		1		K_act1		c_SM_act %24-35 inner secondary mirror actuator
+38		23		1		36		1		K_act1		c_SM_act %23-36 inner secondary mirror actuator
+39		14		2		37		2		K_act2		c_SM_act %14-37 inner secondary mirror actuator
+40		16		2		42		2		K_act2		c_SM_act %16-42 secondary mirror actuator
+41		17		2		41		2		K_act2		c_SM_act %17-41 secondary mirror actuator
+42		19		2		40		2		K_act2		c_SM_act %19-40 secondary mirror actuator
+43		18		2		39		2		K_act2		c_SM_act %18-39 secondary mirror actuator
+44		20		2		31		2		K_act2		c_SM_act %20-31 inner secondary mirror actuator
+45		21		2		32		2		K_act2		c_SM_act %21-32 inner secondary mirror actuator
+46		25		2		33		2		K_act2		c_SM_act %25-33 inner secondary mirror actuator
+47		26		2		34		2		K_act2		c_SM_act %26-34 inner secondary mirror actuator
+48		24		2		35		2		K_act2		c_SM_act %24-35 inner secondary mirror actuator
+49		23		2		36		2		K_act2		c_SM_act %23-36 inner secondary mirror actuator
+50		14		3		37		3		K_act2		c_SM_act %14-37 inner secondary mirror actuator
+51		16		3		42		3		K_act2		c_SM_act %16-42 secondary mirror actuator
+52		17		3		41		3		K_act2		c_SM_act %17-41 secondary mirror actuator
+53		19		3		40		3		K_act2		c_SM_act %19-40 secondary mirror actuator
+54		18		3		39		3		K_act2		c_SM_act %18-39 secondary mirror actuator
+55		20		3		31		3		K_act2		c_SM_act %20-31 inner secondary mirror actuator
+56		21		3		32		3		K_act2		c_SM_act %21-32 inner secondary mirror actuator
+57		25		3		33		3		K_act2		c_SM_act %25-33 inner secondary mirror actuator
+58		26		3		34		3		K_act2		c_SM_act %26-34 inner secondary mirror actuator
+59		24		3		35		3		K_act2		c_SM_act %24-35 inner secondary mirror actuator
+60		23		3		36		3		K_act2		c_SM_act %23-36 inner secondary mirror actuator
+61		14		4		37		4		K_rad1		c_SM_act %14-37 inner secondary mirror actuator
+62		16		4		42		4		K_rad1		c_SM_act %16-42 secondary mirror actuator
+63		17		4		41		4		K_rad1		c_SM_act %17-41 secondary mirror actuator
+64		19		4		40		4		K_rad1		c_SM_act %19-40 secondary mirror actuator
+65		18		4		39		4		K_rad1		c_SM_act %18-39 secondary mirror actuator
+66		20		4		31		4		K_rad1		c_SM_act %20-31 inner secondary mirror actuator
+67		21		4		32		4		K_rad1		c_SM_act %21-32 inner secondary mirror actuator
+68		25		4		33		4		K_rad1		c_SM_act %25-33 inner secondary mirror actuator
+69		26		4		34		4		K_rad1		c_SM_act %26-34 inner secondary mirror actuator
+70		24		4		35		4		K_rad1		c_SM_act %24-35 inner secondary mirror actuator
+71		23		4		36		4		K_rad1		c_SM_act %23-36 inner secondary mirror actuator
+72		14		5		37		5		K_rad2		c_SM_act %14-37 inner secondary mirror actuator
+73		16		5		42		5		K_rad2		c_SM_act %16-42 secondary mirror actuator
+74		17		5		41		5		K_rad2		c_SM_act %17-41 secondary mirror actuator
+75		19		5		40		5		K_rad2		c_SM_act %19-40 secondary mirror actuator
+76		18		5		39		5		K_rad2		c_SM_act %18-39 secondary mirror actuator
+77		20		5		31		5		K_rad2		c_SM_act %20-31 inner secondary mirror actuator
+78		21		5		32		5		K_rad2		c_SM_act %21-32 inner secondary mirror actuator
+79		25		5		33		5		K_rad2		c_SM_act %25-33 inner secondary mirror actuator
+80		26		5		34		5		K_rad2		c_SM_act %26-34 inner secondary mirror actuator
+81		24		5		35		5		K_rad2		c_SM_act %24-35 inner secondary mirror actuator
+82		23		5		36		5		K_rad2		c_SM_act %23-36 inner secondary mirror actuator
+83		14		6		37		6		K_rad2		c_SM_act %14-37 inner secondary mirror actuator
+84		16		6		42		6		K_rad2		c_SM_act %16-42 secondary mirror actuator
+85		17		6		41		6		K_rad2		c_SM_act %17-41 secondary mirror actuator
+86		19		6		40		6		K_rad2		c_SM_act %19-40 secondary mirror actuator
+87		18		6		39		6		K_rad2		c_SM_act %18-39 secondary mirror actuator
+88		20		6		31		6		K_rad2		c_SM_act %20-31 inner secondary mirror actuator
+89		21		6		32		6		K_rad2		c_SM_act %21-32 inner secondary mirror actuator
+90		25		6		33		6		K_rad2		c_SM_act %25-33 inner secondary mirror actuator
+91		26		6		34		6		K_rad2		c_SM_act %26-34 inner secondary mirror actuator
+92		24		6		35		6		K_rad2		c_SM_act %24-35 inner secondary mirror actuator
+93		23		6		36		6		K_rad2		c_SM_act %23-36 inner secondary mirror actuator
+141		78		2		90		2		K_yISO		c_RWA %78-90 RWA attach point
+142		74		2		86		2		K_yISO		c_RWA %74-86 RWA attach point
+143		76		2		88		2		K_yISO		c_RWA %76-88 RWA attach point
+144		111		2		114		2		K_yISO		c_RWA %111-114 (78-90) RWA attach point
+145		109		2		112		2		K_yISO		c_RWA %109-112 (74-86) RWA attach point
+146		110		2		113		2		K_yISO		c_RWA %110-113 (76-88) RWA attach point
+147		73		2		85		2		K_yISO		c_RWAI %73-85 bus point?
+148		77		2		89		2		K_yISO		c_RWAI %77-89 bus point?
+149		75		2		87		2		K_yISO		c_RWAI %75-87 bus point?
+150		103		2		104		2		K_yISO		c_RWAI %103-104 (73-85) bus point?
+151		107		2		108		2		K_yISO		c_RWAI %107-108 (77-89) bus point?
+152		105		2		106		2		K_yISO		c_RWAI %105-106 (75-87) bus point?
+153		78		1		90		1		K_xISO		c_RWA %78-90 RWA attach point
+154		74		1		86		1		K_xISO		c_RWA %74-86 RWA attach point
+155		76		1		88		1		K_xISO		c_RWA %76-88 RWA attach point
+156		111		1		114		1		K_xISO		c_RWA %111-114 (78-90) RWA attach point
+157		109		1		112		1		K_xISO		c_RWA %109-112 (74-86) RWA attach point
+164		110		1		113		1		K_xISO		c_RWA %110-113 (76-88) RWA attach point
+165		73		1		85		1		K_xISO		c_RWAI %73-85 bus point?
+166		77		1		89		1		K_xISO		c_RWAI %77-89 bus point?
+167		75		1		87		1		K_xISO		c_RWAI %75-87 bus point?
+168		103		1		104		1		K_xISO		c_RWAI %103-104 (73-85) bus point?
+169		107		1		108		1		K_xISO		c_RWAI %107-108 (77-89) bus point?
+170		105		1		106		1		K_xISO		c_RWAI %105-106 (75-87) bus point?
+171		78		3		90		3		K_xISO		c_RWA %78-90 RWA attach point
+172		74		3		86		3		K_xISO		c_RWA %74-86 RWA attach point
+173		76		3		88		3		K_xISO		c_RWA %76-88 RWA attach point
+174		111		3		114		3		K_xISO		c_RWA %111-114 (78-90) RWA attach point
+175		109		3		112		3		K_xISO		c_RWA %109-112 (74-86) RWA attach point
+176		110		3		113		3		K_xISO		c_RWA %110-113 (76-88) RWA attach point
+177		73		3		85		3		K_xISO		c_RWAI %73-85 bus point?
+178		77		3		89		3		K_xISO		c_RWAI %77-89 bus point?
+179		75		3		87		3		K_xISO		c_RWAI %75-87 bus point?
+180		103		3		104		3		K_xISO		c_RWAI %103-104 (73-85) bus point?
+181		107		3		108		3		K_xISO		c_RWAI %107-108 (77-89) bus point?
+182		105		3		106		3		K_xISO		c_RWAI %105-106 (75-87) bus point?
+183		78		4		90		4		K_rISO		c_RWA %78-90 RWA attach point
+184		74		4		86		4		K_rISO		c_RWA %74-86 RWA attach point
+185		76		4		88		4		K_rISO		c_RWA %76-88 RWA attach point
+186		111		4		114		4		K_rISO		c_RWA %111-114 (78-90) RWA attach point
+187		109		4		112		4		K_rISO		c_RWA %109-112 (74-86) RWA attach point
+188		110		4		113		4		K_rISO		c_RWA %110-113 (76-88) RWA attach point
+189		73		4		85		4		K_rISO		c_RWAI %73-85 bus point?
+190		77		4		89		4		K_rISO		c_RWAI %77-89 bus point?
+191		75		4		87		4		K_rISO		c_RWAI %75-87 bus point?
+192		103		4		104		4		K_rISO		c_RWAI %103-104 (73-85) bus point?
+193		107		4		108		4		K_rISO		c_RWAI %107-108 (77-89) bus point?
+194		105		4		106		4		K_rISO		c_RWAI %105-106 (75-87) bus point?
+195		78		5		90		5		K_aISO		c_RWA %78-90 RWA attach point
+196		74		5		86		5		K_aISO		c_RWA %74-86 RWA attach point
+197		76		5		88		5		K_aISO		c_RWA %76-88 RWA attach point
+198		111		5		114		5		K_aISO		c_RWA %111-114 (78-90) RWA attach point
+199		109		5		112		5		K_aISO		c_RWA %109-112 (74-86) RWA attach point
+200		110		5		113		5		K_aISO		c_RWA %110-113 (76-88) RWA attach point
+201		73		5		85		5		K_aISO		c_RWAI %73-85 bus point?
+202		77		5		89		5		K_aISO		c_RWAI %77-89 bus point?
+203		75		5		87		5		K_aISO		c_RWAI %75-87 bus point?
+204		103		5		104		5		K_aISO		c_RWAI %103-104 (73-85) bus point?
+205		107		5		108		5		K_aISO		c_RWAI %107-108 (77-89) bus point?
+206		105		5		106		5		K_aISO		c_RWAI %105-106 (75-87) bus point?
+207		78		6		90		6		K_rISO		c_RWA %78-90 RWA attach point
+208		74		6		86		6		K_rISO		c_RWA %74-86 RWA attach point
+209		76		6		88		6		K_rISO		c_RWA %76-88 RWA attach point
+210		111		6		114		6		K_rISO		c_RWA %111-114 (78-90) RWA attach point
+211		109		6		112		6		K_rISO		c_RWA %109-112 (74-86) RWA attach point
+212		110		6		113		6		K_rISO		c_RWA %110-113 (76-88) RWA attach point
+213		73		6		85		6		K_rISO		c_RWAI %73-85 bus point?
+214		77		6		89		6		K_rISO		c_RWAI %77-89 bus point?
+215		75		6		87		6		K_rISO		c_RWAI %75-87 bus point?
+216		103		6		104		6		K_rISO		c_RWAI %103-104 (73-85) bus point?
+217		107		6		108		6		K_rISO		c_RWAI %107-108 (77-89) bus point?
+218		105		6		106		6		K_rISO		c_RWAI %105-106 (75-87) bus point?
+228		131		1		124		1		K_pm1		c_PM %124-131 primary mirror
+229		132		1		123		1		K_pm1		c_PM %123-132 primary mirror
+230		133		1		122		1		K_pm1		c_PM %122-133 primary mirror
+231		134		1		115		1		K_pm1		c_PM %115-134 primary mirror
+232		135		1		29		1		K_pm1		c_PM %29-135 primary mirror
+233		136		1		125		1		K_pm1		c_PM %125-136 primary mirror
+234		131		2		124		2		K_yPM		c_PM %124-131 primary mirror
+235		132		2		123		2		K_yPM		c_PM %123-132 primary mirror
+236		133		2		122		2		K_yPM		c_PM %122-133 primary mirror
+237		134		2		115		2		K_yPM		c_PM %115-134 primary mirror	
+238		135		2		29		2		K_yPM		c_PM %29-135 primary mirror
+239		136		2		125		2		K_yPM		c_PM %125-136 primary mirror
+240		131		3		124		3		K_pm3		c_PM %124-131 primary mirror
+241		132		3		123		3		K_pm3		c_PM %123-132 primary mirror
+242		133		3		122		3		K_pm3		c_PM %122-133 primary mirror
+243		134		3		115		3		K_pm3		c_PM %115-134 primary mirror
+244		135		3		29		3		K_pm3		c_PM %29-135 primary mirror
+245		136		3		125		3		K_pm3		c_PM %125-136 primary mirror
+246		131		4		124		4		K_pm4		c_PM %124-131 primary mirror
+247		132		4		123		4		K_pm4		c_PM %123-132 primary mirror
+248		133		4		122		4		K_pm4		c_PM %122-133 primary mirror
+249		134		4		115		4		K_pm4		c_PM %115-134 primary mirror
+250		135		4		29		4		K_pm4		c_PM %29-135 primary mirror
+251		136		4		125		4		K_pm4		c_PM %125-136 primary mirror
+252		131		5		124		5		K_pm5		c_PM %124-131 primary mirror
+253		132		5		123		5		K_pm5		c_PM %123-132 primary mirror
+254		133		5		122		5		K_pm5		c_PM %122-133 primary mirror
+255		134		5		115		5		K_pm5		c_PM %115-134 primary mirror
+256		135		5		29		5		K_pm5		c_PM %29-135 primary mirror
+257		136		5		125		5		K_pm5		c_PM %125-136 primary mirror
+258		131		6		124		6		K_pm6		c_PM %124-131 primary mirror
+259		132		6		123		6		K_pm6		c_PM %123-132 primary mirror
+260		133		6		122		6		K_pm6		c_PM %122-133 primary mirror
+261		134		6		115		6		K_pm6		c_PM %115-134 primary mirror
+262		135		6		29		6		K_pm6		c_PM %29-135 primary mirror
+263		136		6		125		6		K_pm6		c_PM %125-136 primary mirror
+264		137		1		126		1		K_act2		c_PM %126-137 primary mirror actuator
+265		138		1		128		1		K_act2		c_PM %128-138 primary mirror actuator
+266		139		1		127		1		K_act2		c_PM %127-139 primary mirror actuator
+267		137		2		126		2		K_act_pm2		c_SM_act %126-137 primary mirror actuator
+268		138		2		128		2		K_act_pm2		c_SM_act %128-138 primary mirror actuator
+269		139		2		127		2		K_act_pm2		c_SM_act %127-139 primary mirror actuator
+270		137		3		126		3		K_act_pm3		c_SM_act %126-137 primary mirror actuator
+271		138		3		128		3		K_act_pm3		c_SM_act %128-138 primary mirror actuator
+272		139		3		127		3		K_act_pm3		c_SM_act %127-139 primary mirror actuator
+273		137		4		126		4		K_act_pm4		c_SM_act %126-137 primary mirror actuator
+274		138		4		128		4		K_act_pm4		c_SM_act %128-138 primary mirror actuator
+275		139		4		127		4		K_act_pm4		c_SM_act %127-139 primary mirror actuator
+276		137		5		126		5		K_act_pm5		c_SM_act %126-137 primary mirror actuator
+277		138		5		128		5		K_act_pm5		c_SM_act %128-138 primary mirror actuator
+278		139		5		127		5		K_act_pm5		c_SM_act %127-139 primary mirror actuator
+279		137		6		126		6		K_act_pm6		c_SM_act %126-137 primary mirror actuator
+280		138		6		128		6		K_act_pm6		c_SM_act %128-138 primary mirror actuator
+281		139		6		127		6		K_act_pm6		c_SM_act %127-139 primary mirror actuator
+284		151		1		144		1		K_pm1		c_PM %144-151 primary mirror
+285		152		1		143		1		K_pm1		c_PM %143-152 primary mirror
+286		153		1		142		1		K_pm1		c_PM %142-153 primary mirror
+287		154		1		141		1		K_pm1		c_PM %141-154 primary mirror
+288		155		1		140		1		K_pm1		c_PM %140-155 primary mirror
+289		156		1		145		1		K_pm1		c_PM %145-156 primary mirror
+290		151		2		144		2		K_yPM		c_PM %144-151 primary mirror
+291		152		2		143		2		K_yPM		c_PM %143-152 primary mirror
+292		153		2		142		2		K_yPM		c_PM %142-153 primary mirror
+293		154		2		141		2		K_yPM		c_PM %141-154 primary mirror
+294		155		2		140		2		K_yPM		c_PM %140-155 primary mirror
+295		156		2		145		2		K_yPM		c_PM %145-156 primary mirror
+296		151		3		144		3		K_pm3		c_PM %144-151 primary mirror
+297		152		3		143		3		K_pm3		c_PM %143-152 primary mirror
+298		153		3		142		3		K_pm3		c_PM %142-153 primary mirror
+299		154		3		141		3		K_pm3		c_PM %141-154 primary mirror
+300		155		3		140		3		K_pm3		c_PM %140-155 primary mirror
+301		156		3		145		3		K_pm3		c_PM %145-156 primary mirror
+302		151		4		144		4		K_pm4		c_PM %144-151 primary mirror
+303		152		4		143		4		K_pm4		c_PM %143-152 primary mirror
+304		153		4		142		4		K_pm4		c_PM %142-153 primary mirror
+305		154		4		141		4		K_pm4		c_PM %141-154 primary mirror
+306		155		4		140		4		K_pm4		c_PM %140-155 primary mirror
+307		156		4		145		4		K_pm4		c_PM %145-156 primary mirror
+308		151		5		144		5		K_pm5		c_PM %144-151 primary mirror
+309		152		5		143		5		K_pm5		c_PM %143-152 primary mirror
+310		153		5		142		5		K_pm5		c_PM %142-153 primary mirror
+311		154		5		141		5		K_pm5		c_PM %141-154 primary mirror
+312		155		5		140		5		K_pm5		c_PM %140-155 primary mirror
+313		156		5		145		5		K_pm5		c_PM %145-156 primary mirror
+314		151		6		144		6		K_pm6		c_PM %144-151 primary mirror
+315		152		6		143		6		K_pm6		c_PM %143-152 primary mirror
+316		153		6		142		6		K_pm6		c_PM %142-153 primary mirror
+317		154		6		141		6		K_pm6		c_PM %141-154 primary mirror
+318		155		6		140		6		K_pm6		c_PM %140-155 primary mirror
+319		156		6		145		6		K_pm6		c_PM %145-156 primary mirror
+320		157		1		146		1		K_act2		c_SM_act %146-157 primary mirror actuator
+321		158		1		148		1		K_act2		c_SM_act %148-158 primary mirror actuator
+322		159		1		147		1		K_act2		c_SM_act %147-159 primary mirror actuator
+323		157		2		146		2		K_act_pm2		c_SM_act %146-157 primary mirror actuator
+324		158		2		148		2		K_act_pm2		c_SM_act %148-158 primary mirror actuator
+325		159		2		147		2		K_act_pm2		c_SM_act %147-159 primary mirror actuator
+326		157		3		146		3		K_act_pm3		c_SM_act %146-157 primary mirror actuator
+327		158		3		148		3		K_act_pm3		c_SM_act %148-158 primary mirror actuator
+328		159		3		147		3		K_act_pm3		c_SM_act %147-159 primary mirror actuator
+329		157		4		146		4		K_act_pm4		c_SM_act %146-157 primary mirror actuator
+330		158		4		148		4		K_act_pm4		c_SM_act %148-158 primary mirror actuator
+331		159		4		147		4		K_act_pm4		c_SM_act %147-159 primary mirror actuator
+332		157		5		146		5		K_act_pm5		c_SM_act %146-157 primary mirror actuator
+333		158		5		148		5		K_act_pm5		c_SM_act %148-158 primary mirror actuator
+334		159		5		147		5		K_act_pm5		c_SM_act %147-159 primary mirror actuator
+335		157		6		146		6		K_act_pm6		c_SM_act %146-157 primary mirror actuator
+336		158		6		148		6		K_act_pm6		c_SM_act %148-158 primary mirror actuator
+337		159		6		147		6		K_act_pm6		c_SM_act %147-159 primary mirror actuator
+340		171		1		164		1		K_pm1		c_PM %171-164 primary mirror
+341		172		1		163		1		K_pm1		c_PM %163-172 primary mirror
+342		173		1		162		1		K_pm1		c_PM %162-173 primary mirror
+343		174		1		161		1		K_pm1		c_PM %161-174 primary mirror
+344		175		1		160		1		K_pm1		c_PM %160-175 primary mirror
+345		176		1		165		1		K_pm1		c_PM %165-176 primary mirror
+346		171		2		164		2		K_yPM		c_PM %164-171 primary mirror
+347		172		2		163		2		K_yPM		c_PM %163-172 primary mirror
+348		173		2		162		2		K_yPM		c_PM %162-173 primary mirror
+349		174		2		161		2		K_yPM		c_PM %161-174 primary mirror
+350		175		2		160		2		K_yPM		c_PM %160-175 primary mirror
+351		176		2		165		2		K_yPM		c_PM %165-176 primary mirror
+352		171		3		164		3		K_pm3		c_PM %164-171 primary mirror
+353		172		3		163		3		K_pm3		c_PM %163-172 primary mirror
+354		173		3		162		3		K_pm3		c_PM %162-173 primary mirror
+355		174		3		161		3		K_pm3		c_PM %161-174 primary mirror
+356		175		3		160		3		K_pm3		c_PM %160-175 primary mirror
+357		176		3		165		3		K_pm3		c_PM %165-176 primary mirror
+358		171		4		164		4		K_pm4		c_PM %164-171 primary mirror
+359		172		4		163		4		K_pm4		c_PM %163-172 primary mirror
+360		173		4		162		4		K_pm4		c_PM %162-173 primary mirror
+361		174		4		161		4		K_pm4		c_PM %161-174 primary mirror
+362		175		4		160		4		K_pm4		c_PM %160-175 primary mirror
+363		176		4		165		4		K_pm4		c_PM %165-176 primary mirror
+364		171		5		164		5		K_pm5		c_PM %164-171 primary mirror
+365		172		5		163		5		K_pm5		c_PM %163-172 primary mirror
+366		173		5		162		5		K_pm5		c_PM %162-173 primary mirror
+367		174		5		161		5		K_pm5		c_PM %161-174 primary mirror
+368		175		5		160		5		K_pm5		c_PM %160-175 primary mirror
+369		176		5		165		5		K_pm5		c_PM %165-176 primary mirror
+370		171		6		164		6		K_pm6		c_PM %164-171 primary mirror
+371		172		6		163		6		K_pm6		c_PM %163-172 primary mirror
+372		173		6		162		6		K_pm6		c_PM %162-173 primary mirror
+373		174		6		161		6		K_pm6		c_PM %161-174 primary mirror
+374		175		6		160		6		K_pm6		c_PM %160-175 primary mirror
+375		176		6		165		6		K_pm6		c_PM %165-176 primary mirror
+376		177		1		166		1		K_act2		c_SM_act %166-177 primary mirror actuator
+377		178		1		168		1		K_act2		c_SM_act %168-170 primary mirror actuator
+378		179		1		167		1		K_act2		c_SM_act %167-179 primary mirror actuator
+379		177		2		166		2		K_act_pm2		c_SM_act %166-177 primary mirror actuator
+380		178		2		168		2		K_act_pm2		c_SM_act %168-170 primary mirror actuator
+381		179		2		167		2		K_act_pm2		c_SM_act %167-179 primary mirror actuator
+382		177		3		166		3		K_act_pm3		c_SM_act %166-177 primary mirror actuator
+383		178		3		168		3		K_act_pm3		c_SM_act %168-170 primary mirror actuator
+384		179		3		167		3		K_act_pm3		c_SM_act %167-179 primary mirror actuator
+385		177		4		166		4		K_act_pm4		c_SM_act %166-177 primary mirror actuator
+386		178		4		168		4		K_act_pm4		c_SM_act %168-170 primary mirror actuator
+387		179		4		167		4		K_act_pm4		c_SM_act %167-179 primary mirror actuator
+388		177		5		166		5		K_act_pm5		c_SM_act %166-177 primary mirror actuator
+389		178		5		168		5		K_act_pm5		c_SM_act %168-170 primary mirror actuator
+390		179		5		167		5		K_act_pm5		c_SM_act %167-179 primary mirror actuator
+391		177		6		166		6		K_act_pm6		c_SM_act %166-177 primary mirror actuator
+392		178		6		168		6		K_act_pm6		c_SM_act %168-170 primary mirror actuator
+393		179		6		167		6		K_act_pm6		c_SM_act %167-179 primary mirror actuator
+395		197		3		192		3		K_zpet		c_petal %192-197 petal hinge?
+396		196		3		190		3		K_zpet		c_petal %190-196 petal hinge?
+397		198		3		193		3		K_zpet		c_petal %193-198 petal hinge?
+398		195		3		191		3		K_zpet		c_petal %191-195 petal hinge?
+399		198		1		193		1		K_xpet		c_petal %193-198 petal hinge?
+400		198		2		193		2		K_xpet		c_petal %193-198 petal hinge?
+401		195		2		191		2		K_xpet		c_petal %191-195 petal hinge?
+402		301		1		207		1		K_cryo 		c_cryo %207-301 new pt - instrument nicelas
+403		301		2		207		2		K_cryo 		c_cryo %207-301 new pt - instrument nicelas
+404		301		3		207		3		K_cryo 		c_cryo %207-301 new pt - instrument nicelas
+405		301		4		207		4		K_cryo 		c_cryo %207-301 new pt - instrument nicelas
+406		301		5		207		5		K_cryo 		c_cryo %207-301 new pt - instrument nicelas
+407		301		6		207		6		K_cryo 		c_cryo %207-301 new pt - instrument nicelas
+408		302		1		64		1		K_IA		c_IA %64-302 S/C top corner (4pts)
+409		302		2		64		2		K_IA		c_IA %64-302 S/C top corner (4pts)
+410		302		3		64		3		K_IA		c_IA %64-302 S/C top corner (4pts)
+411		302		4		64		4		K_IA		c_IA %64-302 S/C top corner (4pts)
+412		302		5		64		5		K_IA		c_IA %64-302 S/C top corner (4pts)
+413		302		6		64		6		K_IA		c_IA %64-302 S/C top corner (4pts)
+414		303		1		27		1		K_IA		c_IA %27-303 S/C top corner (4pts)
+415		303		2		27		2		K_IA		c_IA %27-303 S/C top corner (4pts)
+416		303		3		27		3		K_IA		c_IA %27-303 S/C top corner (4pts)
+417		303		4		27		4		K_IA		c_IA %27-303 S/C top corner (4pts)
+418		303		5		27		5		K_IA		c_IA %27-303 S/C top corner (4pts)
+419		303		6		27		6		K_IA		c_IA %27-303 S/C top corner (4pts)
+420		304		1		28		1		K_IA		c_IA %28-304 S/C top corner (4pts)
+421		304		2		28		2		K_IA		c_IA %28-304 S/C top corner (4pts)
+422		304		3		28		3		K_IA		c_IA %28-304 S/C top corner (4pts)
+423		304		4		28		4		K_IA		c_IA %28-304 S/C top corner (4pts)
+424		304		5		28		5		K_IA		c_IA %28-304 S/C top corner (4pts)
+425		304		6		28		6		K_IA		c_IA %28-304 S/C top corner (4pts)
+426		305		1		30		1		K_IA		c_IA %30-305 S/C top corner (4pts)
+427		305		2		30		2		K_IA		c_IA %30-305 S/C top corner (4pts)
+428		305		3		30		3		K_IA		c_IA %30-305 S/C top corner (4pts)
+429		305		4		30		4		K_IA		c_IA %30-305 S/C top corner (4pts)
+430		305		5		30		5		K_IA		c_IA %30-305 S/C top corner (4pts)
+431		305		6		30		6		K_IA		c_IA %30-305 S/C top corner (4pts)
 ];
   
 %==============================================================
@@ -1421,7 +1479,6 @@ disp('Assembling k and m for beams')
 end
 [k,m]=beam_lump(nibar,xyz,propbar,mat,bc,k,m,ti,tf);
 
-%TODO what does km2loc do
 if diagnostics
 disp('Transforming k and m to local cs')
 end
