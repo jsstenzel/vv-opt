@@ -607,11 +607,11 @@ xyz=[ ...
 276  6.24470E-01 -1.09945E+00  1.25295E+00
 277  6.32980E-01 -7.32970E-01  1.20197E+00
 278  6.41490E-01 -3.66480E-01  1.15098E+00 
-301  0.00000E+00 -5.25000E-01 -3.50000E-01 %new pt - instrument nicelas
-302  6.15960E-01 -1.46593E+00  1.30394E+00 %new pt - 64 S/C top corner (4pts)
-303  6.15960E-01 -3.08310E-01  1.72528E+00 %new pt - 27 S/C top corner (4pts)
-304 -6.15960E-01 -3.08310E-01  1.72528E+00 %new pt - 28 S/C top corner (4pts)
-305 -6.15960E-01 -1.46593E+00  1.30394E+00 %new pt - 30 S/C top corner (4pts)
+279  0.00000E+00 -5.25000E-01 -3.50000E-01 %new pt - instrument nicelas
+280  6.15960E-01 -1.46593E+00  1.30394E+00 %new pt - 64 S/C top corner (4pts)
+281  6.15960E-01 -3.08310E-01  1.72528E+00 %new pt - 27 S/C top corner (4pts)
+282 -6.15960E-01 -3.08310E-01  1.72528E+00 %new pt - 28 S/C top corner (4pts)
+283 -6.15960E-01 -1.46593E+00  1.30394E+00 %new pt - 30 S/C top corner (4pts)
 ];
 	 
 %====================================================
@@ -1258,12 +1258,12 @@ nicelas2= [ ...
 399		198		1		193		1		K_xpet		c_petal %193-198 petal hinge?
 400		198		2		193		2		K_xpet		c_petal %193-198 petal hinge?
 401		195		2		191		2		K_xpet		c_petal %191-195 petal hinge?
-402		301		1		207		1		K_cryo 		c_cryo %207-301 new pt - instrument nicelas
-403		301		2		207		2		K_cryo 		c_cryo %207-301 new pt - instrument nicelas
-404		301		3		207		3		K_cryo 		c_cryo %207-301 new pt - instrument nicelas
-405		301		4		207		4		K_cryo 		c_cryo %207-301 new pt - instrument nicelas
-406		301		5		207		5		K_cryo 		c_cryo %207-301 new pt - instrument nicelas
-407		301		6		207		6		K_cryo 		c_cryo %207-301 new pt - instrument nicelas
+402		301		1		207		1		K_cryo		c_cryo %207-301 new pt - instrument nicelas
+403		301		2		207		2		K_cryo		c_cryo%207-301 new pt - instrument nicelas
+404		301		3		207		3		K_cryo		c_cryo %207-301 new pt - instrument nicelas
+405		301		4		207		4		K_cryo		c_cryo %207-301 new pt - instrument nicelas
+406		301		5		207		5		K_cryo		c_cryo %207-301 new pt - instrument nicelas
+407		301		6		207		6		K_cryo		c_cryo %207-301 new pt - instrument nicelas
 408		302		1		64		1		K_IA		c_IA %64-302 S/C top corner (4pts)
 409		302		2		64		2		K_IA		c_IA %64-302 S/C top corner (4pts)
 410		302		3		64		3		K_IA		c_IA %64-302 S/C top corner (4pts)
@@ -1453,7 +1453,7 @@ mat=mat1(mid,E,nu,rho,alpha,Tref,mat);
 
 % Create initial boundary condition matrix
 %  (0= constrain, 1= free)
-bci=ones(273,6);
+bci=ones(length(xyz),6);
   
  %  Compute the number of dofs and dof numbers, initialize k and m
  %TODO how does bcond work
@@ -1467,7 +1467,7 @@ g=k;
 %==============================================================
 % 6. Assembly of m and k
 %==============================================================
-%TODO what does celas2 do
+%TODO what does conm2 do
 if diagnostics
 disp('Assembling m for conm2s')
 end
@@ -1484,7 +1484,7 @@ disp('Transforming k and m to local cs')
 end
 [k,m]=km2loc(k,m,ti,tf);
 
-%TODO what does conm2 do
+%TODO what does celas2 do
 if diagnostics
 disp( 'Assembling k for spring elements')
 end
