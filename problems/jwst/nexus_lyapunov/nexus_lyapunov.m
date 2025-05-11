@@ -620,124 +620,137 @@ xyz=[ ...
 % ci and cf are for coord_in
 
 % Create coord system index matrix: 
-% grid id, these correspond to the nodes in xyz
+% column1: grid id, these correspond to the nodes in xyz
 % We're identifying a set of coordinate system transformations, which are defined by cf
-% each transformation goes from the input csid to the output csid
+% each transformation goes from the input csid (column2) to the output csid (column3)
 ci=[ ...
-14       0      79
-15       0      78
-16       0      80
-17       0      75
-18       0      77
-19       0      76
-20       0      78
-21       0      77
-23       0      79
-24       0      80
-25       0      76
-26       0      75
-29       0      16
-31       0      78
-32       0      77
-33       0      76
-34       0      75
-35       0      80
-36       0      79
-37       0      79
-38       0      78
-39       0      77
-40       0      76
-41       0      75
-42       0      80
-51       3       0
-52       3       0
-53       3       0
-55       3       0
-56       3       0
-57       3       0
-58       3       0
-73       0      10
-74       0      10
-75       0      12
-76       0      12
-77       0       8
-78       0       8
-85       0      10
-86       0      10
-87       0      12
-88       0      12
-89       0       8
-90       0       8
-103       0       9
-104       0       9
-105       0      11
-106       0      11
-107       0      13
-108       0      13
-109       0      11
-110       0      13
-111       0       9
-112       0      11
-113       0      13
-114       0       9
-115       0      15
-122       0      15
-123       0      14
-124       0      14
-125       0      16
-126       0      17
-127       0      18
-128       0      19
-131       0      14
-132       0      14
-133       0      15
-134       0      15
-135       0      16
-136       0      16
-137       0      17
-138       0      19
-139       0      18
-140       0      22
-141       0      22
-142       0      25
-143       0      25
-144       0      24
-145       0      24
-146       0      29
-147       0      31
-148       0      30
-151       0      24
-152       0      25
-153       0      25
-154       0      22
-155       0      22
-156       0      24
-157       0      29
-158       0      30
-159       0      31
-160       0      26
+14       0      79 %secondary mirror actuator
+15       0      78 %secondary mirror actuator
+16       0      80 %secondary mirror actuator
+17       0      75 %secondary mirror actuator
+18       0      77 %secondary mirror actuator
+19       0      76 %secondary mirror actuator
+20       0      78 %secondary mirror actuator
+21       0      77 %secondary mirror actuator
+23       0      79 %secondary mirror actuator
+24       0      80 %secondary mirror actuator
+25       0      76 %secondary mirror actuator
+26       0      75 %secondary mirror actuator
+27       3       0 %NEW S/C top corner (4pts) %solar panel?
+28       3       0 %NEW S/C top corner (4pts)
+29       0      16 %primary mirror
+30       3       0 %NEW S/C top corner (4pts)
+31       0      78 %=20
+32       0      77 %=21
+33       0      76 %=25
+34       0      75 %=26
+35       0      80 %=24
+36       0      79 %=23
+37       0      79 %=14
+38       0      78 %=15
+39       0      77 %=18
+40       0      76 %=19
+41       0      75 %=17
+42       0      80 %=16
+51       3       0 %sunshield
+52       3       0 %sunshield? really high
+53       3       0 %sunshield
+55       3       0 %sunshield? really low
+56       3       0 %solar panel
+57       3       0 %solar panel
+58       3       0 %origin,- not CM
+64       3       0 %NEW S/C top corner (4pts)
+73       0      10 %something in bus?
+74       0      10 %something in bus? RWA attach point
+75       0      12 %something in bus?
+76       0      12 %something in bus? RWA attach point
+77       0       8 %something in bus?
+78       0       8 %something in bus? RWA attach point
+85       0      10 %=73
+86       0      10 %=74 RWA attach point
+87       0      12 %=75
+88       0      12 %=76 RWA attach point
+89       0       8 %=77
+90       0       8 %=78 RWA attach point
+103       0       9 %redundant to 73
+104       0       9 %=103
+105       0      11 %redundant to 75
+106       0      11 %=105
+107       0      13 %redundant to 77
+108       0      13 %=107
+109       0      11 %redundant to 74
+110       0      13 %redundant to 76
+111       0       9 %redundant to 78
+112       0      11 %=109 RWA attach point
+113       0      13 %=110 RWA attach point
+114       0       9 %=111 RWA attach point
+115       0      15 %primary mirror
+122       0      15 %primary mirror
+123       0      14 %primary mirror
+124       0      14 %primary mirror
+125       0      16 %primary mirror
+126       0      17 %primary mirror actuator
+127       0      18 %primary mirror actuator
+128       0      19 %primary mirror actuator
+131       0      14 %=124
+132       0      14 %=123
+133       0      15 %=122
+134       0      15 %=115
+135       0      16 %=129
+136       0      16 %=125
+137       0      17 %=126
+138       0      19 %=128
+139       0      18 %=127
+140       0      22 %primary mirror
+141       0      22 %primary mirror
+142       0      25 %primary mirror
+143       0      25 %primary mirror
+144       0      24 %primary mirror
+145       0      24 %primary mirror
+146       0      29 %primary mirror actuator
+147       0      31 %primary mirror actuator
+148       0      30 %primary mirror actuator
+151       0      24 %=144
+152       0      25 %=143
+153       0      25 %=142
+154       0      22 %=141
+155       0      22 %=140
+156       0      24 %=145
+157       0      29 %=146
+158       0      30 %=148
+159       0      31 %=147
+160       0      26 %primary mirror
 161       0      28
-162       0      28
-163       0      27
-164       0      27
-165       0      26
-166       0      34
-167       0      33
-168       0      32
-171       0      27
-172       0      27
-173       0      28
-174       0      28
-175       0      26
-176       0      26
-177       0      34
-178       0      32
-179       0      33
-203       3       0
-204       3       0
-205       3       0
-206       3       0 ];
-	 
+162       0      28 %primary mirror
+163       0      27 %primary mirror
+164       0      27 %primary mirror
+165       0      26 %primary mirror
+166       0      34 %primary mirror actuator
+167       0      33 %primary mirror actuator
+168       0      32 %primary mirror actuator
+171       0      27 %=164
+172       0      27 %=163
+173       0      28 %=162
+174       0      28 %=161
+175       0      26 %=160
+176       0      26 %=165
+177       0      34 %=166
+178       0      32 %=168
+179       0      33 %=167
+203       3       0 %detached left point?
+204       3       0 %detached left point?
+205       3       0 %detached left point?
+206       3       0 %detached left point?]
+207       3       0 %instrument (where back end optics and detector are) (where cryocooler is)
+279       3       0 %NEW new pt - instrument nicelas
+%280       3       0 %NEW new pt - 64 S/C top corner (4pts)
+%281       3       0 %NEW new pt - 27 S/C top corner (4pts)
+%282       3       0 %NEW new pt - 28 S/C top corner (4pts)
+%283       3       0 %NEW new pt - 30 S/C top corner (4pts)
+];
+%this seems to be most points from primary mirror, pm actuator, RWA, bus, secondary mirror actuator
+%and, for the doubled points, every one of those points double as well. so every doubled point is in here
+%it seems in fact that every nicelas2 point is represented here. so i should add mine as well? with the 3 - 0 form, like in the other things connected to nibar?
 	 
 % Create coordinate system definition matrix
 %TODO figure out what exactly cf is
@@ -1258,12 +1271,15 @@ nicelas2= [ ...
 399		198		1		193		1		K_xpet		c_petal %193-198 petal hinge?
 400		198		2		193		2		K_xpet		c_petal %193-198 petal hinge?
 401		195		2		191		2		K_xpet		c_petal %191-195 petal hinge?
-402		301		1		207		1		K_cryo		c_cryo %207-301 new pt - instrument nicelas
-403		301		2		207		2		K_cryo		c_cryo%207-301 new pt - instrument nicelas
-404		301		3		207		3		K_cryo		c_cryo %207-301 new pt - instrument nicelas
-405		301		4		207		4		K_cryo		c_cryo %207-301 new pt - instrument nicelas
-406		301		5		207		5		K_cryo		c_cryo %207-301 new pt - instrument nicelas
-407		301		6		207		6		K_cryo		c_cryo %207-301 new pt - instrument nicelas
+402		207		1		301		1		K_cryo		c_cryo %207-301 new pt - instrument nicelas
+403		207		2		301		2		K_cryo		c_cryo %207-301 new pt - instrument nicelas
+404		207		3		301		3		K_cryo		c_cryo %207-301 new pt - instrument nicelas
+405		207		4		301		4		K_cryo		c_cryo %207-301 new pt - instrument nicelas
+406		207		5		301		5		K_cryo		c_cryo %207-301 new pt - instrument nicelas
+407		207		6		301		6		K_cryo		c_cryo %207-301 new pt - instrument nicelas
+];
+
+%{
 408		302		1		64		1		K_IA		c_IA %64-302 S/C top corner (4pts)
 409		302		2		64		2		K_IA		c_IA %64-302 S/C top corner (4pts)
 410		302		3		64		3		K_IA		c_IA %64-302 S/C top corner (4pts)
@@ -1288,7 +1304,7 @@ nicelas2= [ ...
 429		305		4		30		4		K_IA		c_IA %30-305 S/C top corner (4pts)
 430		305		5		30		5		K_IA		c_IA %30-305 S/C top corner (4pts)
 431		305		6		30		6		K_IA		c_IA %30-305 S/C top corner (4pts)
-];
+%}
   
 %==============================================================
 % 4. Define Concentrated Masses
@@ -1519,11 +1535,11 @@ phirb=normphi(phirb,m);
      ids(xyz(ind,1))=ind;
   end
   bci=bc;
-  % secondary mirror hub
+% secondary mirror hub
   if diagnostics
      disp('Processing RBE2 rigid body elements')
      end
-gn=[      13];
+gn=[      13]; % secondary mirror hub?
 cm=[ ...
        1
        2
@@ -1549,7 +1565,7 @@ gm=[ ...
     [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
 
 % secondary mirror RBE2
-gn=[      22];
+gn=[      22]; %secondary mirror RBE2
 cm=[ ...
        1
        2
@@ -1559,18 +1575,18 @@ cm=[ ...
        6
   ];
 gm=[ ...
-      20
-      21
-      25
-      26
-      24
-      23
-     202
+      20 %secondary mirror actuator
+      21 %secondary mirror actuator
+      25 %secondary mirror actuator
+      26 %secondary mirror actuator
+      24 %secondary mirror actuator
+      23 %secondary mirror actuator
+     202 %SM secondary mirror center
   ];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
     nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      38];
+gn=[      38]; %=15, #secondary mirror actuator
 cm=[ ...
        1
        2
@@ -1580,13 +1596,13 @@ cm=[ ...
        6
   ];
 gm=[ ...
-      31
-     118
+      31 %=20 #secondary mirror actuator
+     118 %secondary mirror
   ];
   nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      39];
+gn=[      39]; %=18, #secondary mirror actuator
 cm=[ ...
        1
        2
@@ -1596,13 +1612,13 @@ cm=[ ...
        6
   ];
 gm=[ ...
-      32
-     119
+      32 %=21 #secondary mirror actuator
+     119 %secondary mirror
   ];
   nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      40];
+gn=[      40]; %=19, #secondary mirror actuator
 cm=[ ...
        1
        2
@@ -1612,13 +1628,13 @@ cm=[ ...
        6
   ];
 gm=[ ...
-      33
-     120
+      33 %=25 #secondary mirror actuator
+     120 %secondary mirror
   ];
   nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      41];
+gn=[      41]; %=17, #secondary mirror actuator
 cm=[ ...
        1
        2
@@ -1628,13 +1644,13 @@ cm=[ ...
        6
   ];
 gm=[ ...
-      34
-     121
+      34 %=26 #secondary mirror actuator
+     121 %secondary mirror
   ];
   nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      42];
+gn=[      42]; %=16, #secondary mirror actuator
 cm=[ ...
        1
        2
@@ -1644,13 +1660,13 @@ cm=[ ...
        6
   ];
 gm=[ ...
-      35
-     116
+      35 %=24 #secondary mirror actuator
+     116 %secondary mirror
   ];
   nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      37];
+gn=[      37]; %=14, #secondary mirror actuator
 cm=[ ...
        1
        2
@@ -1660,13 +1676,13 @@ cm=[ ...
        6
   ];
 gm=[ ...
-      36
-     117
+      36 %=23, #secondary mirror actuator
+     117 %secondary mirror
   ];
   nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
   [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-  % Spacecraft Rigid Element
+% Spacecraft Rigid Element
 gn=[      84]; % independent node S/C CM
 cm=[ ...
        1
@@ -1677,29 +1693,29 @@ cm=[ ...
        6
   ];
 gm=[ ...
-      27
-      28
-      30
-      64
-      71
-      72
-      69
-      70
-      86
-      88
-      90
-      48
-      47
-      50
-      49
-      44
-      45
-      46
-      43
-      58
-     112
-     113
-     114
+      27 %S/C top corner
+      28 %S/C top corner
+      30 %S/C top corner
+      64 %S/C top corner
+      71 %bottom 4 attach pts to launch vehicle
+      72 %bottom 4 attach pts to launch vehicle
+      69 %bottom 4 attach pts to launch vehicle
+      70 %bottom 4 attach pts to launch vehicle
+      86 %=74 RWA attach point
+      88 %=76 RWA attach point
+      90 %=78 RWA attach point
+      48 %solar array attach
+      47 %mid point, S/C bottom edge (pitch)
+      50 %solar array attach
+      49 %mid point, S/C bottom edge (pitch)
+      44 %sunshield attach
+      45 %sunshield attach
+      46 %sunshield attach
+      43 %sunshield attach
+      58 %origin,- not CM
+     112 %=109 RWA attach point
+     113 %=110 RWA attach point
+     114 %=111 RWA attach point
   ];
   % 27,28,30,64 S/C top corner
   % 71,72,69,70 bottom 4 attach points to Launch Vehicle
@@ -1711,7 +1727,7 @@ gm=[ ...
      % omitted for clarity nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[     111];
+gn=[     111]; %redundant to 78 #something in bus? RWA attach point
 cm=[ ...
        1
        2
@@ -1727,7 +1743,7 @@ gm=[ ...
    nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      74];
+gn=[      74]; %something in bus? RWA attach point
 cm=[ ...
        1
        2
@@ -1743,7 +1759,7 @@ gm=[ ...
    nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      78];
+gn=[      78]; %something in bus? RWA attach point
 cm=[ ...
        1
        2
@@ -1759,7 +1775,7 @@ gm=[ ...
    nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[     110];
+gn=[     110]; %redundant to 76 %something in bus? RWA attach point
 cm=[ ...
        1
        2
@@ -1775,7 +1791,7 @@ gm=[ ...
   nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      76];
+gn=[      76]; %something in bus? RWA attach point
 cm=[ ...
        1
        2
@@ -1791,7 +1807,7 @@ gm=[ ...
   nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[     109];
+gn=[     109]; %redundant to 74 %something in bus? RWA attach point
 cm=[ ...
        1
        2
@@ -1808,7 +1824,7 @@ gm=[ ...
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
   [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
   % RWA Chassis RBE
-gn=[      83];
+gn=[      83]; %center of RWA assembly 
 cm=[ ...
        1
        2
@@ -1832,7 +1848,7 @@ gm=[ ...
   nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      91];
+gn=[      91]; %origin? but so is 58
 cm=[ ...
        1
        2
@@ -1842,48 +1858,48 @@ cm=[ ...
        6
   ];
 gm=[ ...
-      11
-      12
-       8
-       7
-       9
-      10
-      67
-      68
-     173
-     174
-     175
-     176
-     171
-     172
-     179
-     177
-     178
-     155
-     156
-     151
-     152
-     153
-     154
-     157
-     158
-     159
-     185
-     183
-     184
-     196
-     195
-     197
-     198
-     200
-     199
-     201
-     207
+      11 %isolator?
+      12 %isolator?
+       8 %isolator?
+       7 %isolator?
+       9 %isolator?
+      10 %isolator?
+      67 %primary mirror structure
+      68 %primary mirror structure
+     173 %=162 %primary mirror
+     174 %=161 %primary mirror
+     175 %=160 %primary mirror
+     176 %=165 %primary mirror
+     171 %=164 %primary mirror
+     172 %=163 %primary mirror
+     179 %=167 %primary mirror
+     177 %=166 %primary mirror
+     178 %=168 %primary mirror
+     155 %=140 %primary mirror
+     156 %145 %primary mirror
+     151 %144 %primary mirror
+     152 %=143 %primary mirror
+     153 %=142 %primary mirror
+     154 %=141 %primary mirror
+     157 %=146 %primary mirror
+     158 %=148 %primary mirror
+     159 %=147 %primary mirror
+     185 %=185 %primary mirror
+     183 %primary mirror
+     184 %primary mirror
+     196 %=190 %primary mirror
+     195 %=191 %primary mirror
+     197 %=192 %primary mirror
+     198 %=193 %primary mirror
+     200 %primary mirror
+     199 %primary mirror
+     201 %primary mirror
+     207 %instrument
   ];
   % omitted for clarity nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[     130];
+gn=[     130]; %primary mirror
 cm=[ ...
        1
        2
@@ -1907,7 +1923,7 @@ gm=[ ...
   nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[     150];
+gn=[     150]; %unknown
 cm=[ ...
        1
        2
@@ -1931,7 +1947,7 @@ gm=[ ...
   nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[     170];
+gn=[     170]; %primary mirror
 cm=[ ...
        1
        2
@@ -1955,7 +1971,7 @@ gm=[ ...
   nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[     194];
+gn=[     194]; %unknown
 cm=[ ...
        1
        2
@@ -1985,7 +2001,7 @@ gm=[ ...
   % omit for clarity nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      56];
+gn=[      56]; %solar panel endpoint
 cm=[ ...
        1
        2
@@ -1995,13 +2011,13 @@ cm=[ ...
        6
   ];
 gm=[ ...
-     205
-     206
+     205 %detached right point?
+     206 %detached right point?
   ];
   nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      57];
+gn=[      57]; %solar panel endpoint
 cm=[ ...
        1
        2
@@ -2011,12 +2027,101 @@ cm=[ ...
        6
   ];
 gm=[ ...
-     204
-     203
+     204 %detached left point?
+     203 %detached left point?
   ];
 nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%new
+%{
+gn=[      207]; %instrument
+cm=[ ...
+       1
+       2
+       3
+       4
+       5
+       6
+  ];
+gm=[ ...
+     91 %origin? i guess?
+  ];
+nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
+    mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
+[nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
+gn=[      64]; %S/C top corner (4pts)
+cm=[ ...
+       1
+       2
+       3
+       4
+       5
+       6
+  ];
+gm=[ ...
+     27
+	 28
+	 30
+  ];
+nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
+    mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
+[nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
+gn=[      27]; %S/C top corner (4pts)
+cm=[ ...
+       1
+       2
+       3
+       4
+       5
+       6
+  ];
+gm=[ ...
+     64
+	 28
+	 30
+  ];
+nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
+    mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
+[nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
+gn=[      28]; %S/C top corner (4pts)
+cm=[ ...
+       1
+       2
+       3
+       4
+       5
+       6
+  ];
+gm=[ ...
+     64
+	 27
+	 30
+  ];
+nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
+    mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
+[nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
+gn=[      30]; %S/C top corner (4pts)
+cm=[ ...
+       1
+       2
+       3
+       4
+       5
+       6
+  ];
+gm=[ ...
+     64
+	 27
+	 28
+  ];
+nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
+    mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
+[nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
+%}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%new
+
 rg=sparse(rg);
 
 %TODO what does mce1 do

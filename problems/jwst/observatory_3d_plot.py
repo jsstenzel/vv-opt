@@ -187,8 +187,8 @@ xyz=[
 	[52,0.00000E+00,9.56000E-01,-3.61596E+00,'orange'], #sunshield? really high
 	[53,-3.61596E+00,9.56000E-01,0.00000E+00,'orange'], #sunshield
 	[55,0.00000E+00,9.56000E-01,6.21596E+00,'orange'], #sunshield? really low
-	[56,-3.81596E+00,0.00000E+00,0.00000E+00,'yellow'], #solar panel
-	[57,3.81596E+00,0.00000E+00,0.00000E+00,'yellow'], #solar panel
+	[56,-3.81596E+00,0.00000E+00,0.00000E+00,'yellow'], #solar panel endpoint
+	[57,3.81596E+00,0.00000E+00,0.00000E+00,'yellow'], #solar panel endpoint
 	[58,0.00000E+00,0.00000E+00,0.00000E+00,'white'], #origin,- not CM
 	[59,0.00000E+00,-2.17070E+00,1.04742E+00,'orange'], #sunshield
 	[60,0.00000E+00,-2.87547E+00,7.90910E-01,'orange'], #sunshield
@@ -535,7 +535,7 @@ ci=[
 
 # Create coordinate system definition matrix
 #TODO figure out what exactly cf is
-#   cf(:,1) is the coordinate system id.
+#   cf(:,1) is the coordinate system id (csid).
 #   cf(:,2) is the coordinate system type.
 #	[	[1= rectangular (x,y,z) 2= cylindrical (r,theta,z) 3= spherical (r,theta,phi) (theta from z-axis and phi from x-axis in xy plane)
 #   cf(:,3) is the reference coordinate system id used for a,b,c point locations (0=basic, meaning the one that xyz is defined in).
