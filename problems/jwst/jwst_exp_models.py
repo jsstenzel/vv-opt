@@ -48,14 +48,17 @@ def jwst_eta(theta, d, x, prior_mean, err=True):
 	#CCA Isolator
 	"""Node 207 is defined to be where the vibration enters in. This is in the definition of ig near line 2027
 	(Note that this is the only isolation between the instrument and the cryocooler; for JWST, they are separated by the isolator array, but not here)
-	TODO Need to model the instrument point in nicelas2 with stiffness K_cryo and damping c_cryo
+	(Could model the instrument point in nicelas2 with stiffness K_cryo and damping c_cryo, but don't want to hack the NEXUS model representation)
+	SKIP, there is no CCA isolator in the NEXUS design
 	"""
 	
 	#Isolator Array (IA)
 	"""On JWST, there is a single structure that bridges the bus to the rest of the spacecraft
 	On NEXUS, it is a little less clear. I think 64,27,28,30 are the points that connect telescope structure to bus
 	However, they are not modeled in stiffness matrix
-	TODO model the 4 connection points in nicelas2 with stiffness K_IA and damping c_IA, treat that as IA equivalent structure"""
+	(Could model the 4 connection points in nicelas2 with stiffness K_IA and damping c_IA, treat that as IA equivalent structure, but don't want to hack the NEXUS model representation)
+	SKIP, there is no IA in the NEXUS design
+	"""
 	
 	#Optics
 	"""The optics are not modeled in NEXUS, SKIP"""

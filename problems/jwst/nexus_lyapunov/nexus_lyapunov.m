@@ -98,10 +98,10 @@ K_act_pm4=x.K_act_pm4;
 K_act_pm5=x.K_act_pm5;
 K_act_pm6=x.K_act_pm6;
 K_xpet=x.K_xpet;
-K_cryo=x.K_cryo;
-K_IA=x.K_IA;
-c_cryo=x.c_cryo;
-c_IA=x.c_IA;
+%K_cryo=x.K_cryo; %scoped out
+%K_IA=x.K_IA; %scoped out
+%c_cryo=x.c_cryo; %scoped out
+%c_IA=x.c_IA; %scoped out
 c_RWA=x.c_RWA;
 c_RWAI=x.c_RWAI;
 c_SM_act=x.c_SM_act;
@@ -607,11 +607,6 @@ xyz=[ ...
 276  6.24470E-01 -1.09945E+00  1.25295E+00
 277  6.32980E-01 -7.32970E-01  1.20197E+00
 278  6.41490E-01 -3.66480E-01  1.15098E+00 
-279  0.00000E+00 -5.25000E-01 -3.50000E-01 %new pt - instrument nicelas
-280  6.15960E-01 -1.46593E+00  1.30394E+00 %new pt - 64 S/C top corner (4pts)
-281  6.15960E-01 -3.08310E-01  1.72528E+00 %new pt - 27 S/C top corner (4pts)
-282 -6.15960E-01 -3.08310E-01  1.72528E+00 %new pt - 28 S/C top corner (4pts)
-283 -6.15960E-01 -1.46593E+00  1.30394E+00 %new pt - 30 S/C top corner (4pts)
 ];
 	 
 %====================================================
@@ -636,10 +631,7 @@ ci=[ ...
 24       0      80 %secondary mirror actuator
 25       0      76 %secondary mirror actuator
 26       0      75 %secondary mirror actuator
-27       3       0 %NEW S/C top corner (4pts) %solar panel?
-28       3       0 %NEW S/C top corner (4pts)
 29       0      16 %primary mirror
-30       3       0 %NEW S/C top corner (4pts)
 31       0      78 %=20
 32       0      77 %=21
 33       0      76 %=25
@@ -659,7 +651,6 @@ ci=[ ...
 56       3       0 %solar panel
 57       3       0 %solar panel
 58       3       0 %origin,- not CM
-64       3       0 %NEW S/C top corner (4pts)
 73       0      10 %something in bus?
 74       0      10 %something in bus? RWA attach point
 75       0      12 %something in bus?
@@ -742,15 +733,10 @@ ci=[ ...
 205       3       0 %detached left point?
 206       3       0 %detached left point?]
 207       3       0 %instrument (where back end optics and detector are) (where cryocooler is)
-279       3       0 %NEW new pt - instrument nicelas
-%280       3       0 %NEW new pt - 64 S/C top corner (4pts)
-%281       3       0 %NEW new pt - 27 S/C top corner (4pts)
-%282       3       0 %NEW new pt - 28 S/C top corner (4pts)
-%283       3       0 %NEW new pt - 30 S/C top corner (4pts)
 ];
 %this seems to be most points from primary mirror, pm actuator, RWA, bus, secondary mirror actuator
 %and, for the doubled points, every one of those points double as well. so every doubled point is in here
-%it seems in fact that every nicelas2 point is represented here. so i should add mine as well? with the 3 - 0 form, like in the other things connected to nibar?
+%it seems in fact that every nicelas2 point is represented here.
 	 
 % Create coordinate system definition matrix
 %TODO figure out what exactly cf is
@@ -1271,40 +1257,7 @@ nicelas2= [ ...
 399		198		1		193		1		K_xpet		c_petal %193-198 petal hinge?
 400		198		2		193		2		K_xpet		c_petal %193-198 petal hinge?
 401		195		2		191		2		K_xpet		c_petal %191-195 petal hinge?
-402		207		1		301		1		K_cryo		c_cryo %207-301 new pt - instrument nicelas
-403		207		2		301		2		K_cryo		c_cryo %207-301 new pt - instrument nicelas
-404		207		3		301		3		K_cryo		c_cryo %207-301 new pt - instrument nicelas
-405		207		4		301		4		K_cryo		c_cryo %207-301 new pt - instrument nicelas
-406		207		5		301		5		K_cryo		c_cryo %207-301 new pt - instrument nicelas
-407		207		6		301		6		K_cryo		c_cryo %207-301 new pt - instrument nicelas
 ];
-
-%{
-408		302		1		64		1		K_IA		c_IA %64-302 S/C top corner (4pts)
-409		302		2		64		2		K_IA		c_IA %64-302 S/C top corner (4pts)
-410		302		3		64		3		K_IA		c_IA %64-302 S/C top corner (4pts)
-411		302		4		64		4		K_IA		c_IA %64-302 S/C top corner (4pts)
-412		302		5		64		5		K_IA		c_IA %64-302 S/C top corner (4pts)
-413		302		6		64		6		K_IA		c_IA %64-302 S/C top corner (4pts)
-414		303		1		27		1		K_IA		c_IA %27-303 S/C top corner (4pts)
-415		303		2		27		2		K_IA		c_IA %27-303 S/C top corner (4pts)
-416		303		3		27		3		K_IA		c_IA %27-303 S/C top corner (4pts)
-417		303		4		27		4		K_IA		c_IA %27-303 S/C top corner (4pts)
-418		303		5		27		5		K_IA		c_IA %27-303 S/C top corner (4pts)
-419		303		6		27		6		K_IA		c_IA %27-303 S/C top corner (4pts)
-420		304		1		28		1		K_IA		c_IA %28-304 S/C top corner (4pts)
-421		304		2		28		2		K_IA		c_IA %28-304 S/C top corner (4pts)
-422		304		3		28		3		K_IA		c_IA %28-304 S/C top corner (4pts)
-423		304		4		28		4		K_IA		c_IA %28-304 S/C top corner (4pts)
-424		304		5		28		5		K_IA		c_IA %28-304 S/C top corner (4pts)
-425		304		6		28		6		K_IA		c_IA %28-304 S/C top corner (4pts)
-426		305		1		30		1		K_IA		c_IA %30-305 S/C top corner (4pts)
-427		305		2		30		2		K_IA		c_IA %30-305 S/C top corner (4pts)
-428		305		3		30		3		K_IA		c_IA %30-305 S/C top corner (4pts)
-429		305		4		30		4		K_IA		c_IA %30-305 S/C top corner (4pts)
-430		305		5		30		5		K_IA		c_IA %30-305 S/C top corner (4pts)
-431		305		6		30		6		K_IA		c_IA %30-305 S/C top corner (4pts)
-%}
   
 %==============================================================
 % 4. Define Concentrated Masses
@@ -2033,94 +1986,6 @@ gm=[ ...
 nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
     mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
 [nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%new
-%{
-gn=[      207]; %instrument
-cm=[ ...
-       1
-       2
-       3
-       4
-       5
-       6
-  ];
-gm=[ ...
-     91 %origin? i guess?
-  ];
-nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
-    mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
-[nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      64]; %S/C top corner (4pts)
-cm=[ ...
-       1
-       2
-       3
-       4
-       5
-       6
-  ];
-gm=[ ...
-     27
-	 28
-	 30
-  ];
-nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
-    mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
-[nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      27]; %S/C top corner (4pts)
-cm=[ ...
-       1
-       2
-       3
-       4
-       5
-       6
-  ];
-gm=[ ...
-     64
-	 28
-	 30
-  ];
-nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
-    mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
-[nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      28]; %S/C top corner (4pts)
-cm=[ ...
-       1
-       2
-       3
-       4
-       5
-       6
-  ];
-gm=[ ...
-     64
-	 27
-	 30
-  ];
-nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
-    mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
-[nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-gn=[      30]; %S/C top corner (4pts)
-cm=[ ...
-       1
-       2
-       3
-       4
-       5
-       6
-  ];
-gm=[ ...
-     64
-	 27
-	 28
-  ];
-nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
-    mapdof=[mapdof; [reshape(bci(ids(gm),:)',length(gm)*6,1) repmat(bci(ids(gn),:)',length(gm),1)]];
-[nset,mset,rg]=rbe2(bc,xyz,nset,mset,rg,gn,cm,gm,ti,tf);
-%}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%new
 
 rg=sparse(rg);
 
