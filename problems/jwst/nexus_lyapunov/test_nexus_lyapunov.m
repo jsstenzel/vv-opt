@@ -231,12 +231,12 @@ input.K_xpet = 1e16;
 %input.K_IA = 1e16; %scoped out
 %input.c_cryo = 0.0; %scoped out
 %input.c_IA = 0.0; %scoped out
-input.c_RWA = 0.0;
-input.c_RWAI = 0.0;
-input.c_SM_act = 0.0;
-input.c_PM = 0.0;
-input.c_PM_act = 0.0;
-input.c_petal = 0.0;
+input.c_RWA = 0.01*sqrt(input.m_RWAchx)*sqrt(input.K_yISO);
+input.c_RWAI = 0.01*sqrt(input.m_ISO)*sqrt(input.K_yISO);
+input.c_SM_act = 0.01*sqrt(input.m_SM)*sqrt(input.K_rad2);
+input.c_PM = 0.01*sqrt(0.18860E+02)*sqrt(input.K_yPM);
+input.c_PM_act = 0.01*sqrt(0.18860E+02)*sqrt(input.K_rad2);
+input.c_petal = 0.01*sqrt(0.18860E+02)*sqrt(input.K_zpet);
 
 % --------------------------------------------------------------
 % ------------------------   optics stuff  ---------------------

@@ -1989,11 +1989,11 @@ nirbe=[nirbe; [gn*ones(length(gm),1) gm]];
 
 rg=sparse(rg);
 
-%TODO what does mce1 do
+%mce1 rearranges k and m, applying constraints so that each dof is independent? applying constraints includes enforcing the rigid body elements i believe
 if diagnostics
  disp('Reducing k and m to independent dofs')
 end
-[gm,k,m]=mce1(nset,mset,rg,k,m);
+[gm,k,m,G]=mce1(nset,mset,rg,k,m,g);
 bc=bcnset(bc,nset,mset);
 fset=nset;
 temp=reshape(bc',prod(size(bc)),1);
@@ -2014,6 +2014,13 @@ end
    %disp(['Solved Eigenproblem in ' num2str(toc) ' [sec]'])
 %phi are the mass normalized modeshapes.
 %omeg are the modal frequencies (rad/s).
+%size(k) = 678 x 678
+%size(m) = 678 x 678
+%size(phi) = 678 x 318
+%size(omeg) = 318 x 1
+
+G_modal = phi' * G * phi; %NEW
+%size(G_modal) = 318 x 318
 
 omeg=abs(omeg);
 phi=real(phi);
@@ -2042,6 +2049,7 @@ phi(reshape(bci(ids([14 15 16 17 18 19 20 21 23 24 25 26 39 40 41 42 37 38 33 34
 nm=79; % number of modes in FEM: results in ~500 Hz as highest flexible mode
 omeg=omeg(1:nm+3);
 phi=phi(:,1:nm+3);
+G_modal=G_modal(1:nm+3,1:nm+3); %NEW
 if diagnostics
    tic
    end
@@ -2159,25 +2167,23 @@ str_in= str2mat('1 RW1-Fx','2 RW1-Fy','3 RW1-Fz','4 RW1-Mx','5 RW1-My',...
    '18 PMS3-rz','19 SM-x','20 SM-y','21 SM-z','22 SM-rx','23 SM-ry','24 SM-rz',...
    '25 IM-x','26 IM-y','27 IM-z','28 IM-rx','29 IM-ry','30 IM-rz','31 SC-rx',...
    '32 SC-ry','33 SC-rz','34 SC-rrx','35 SC-rry','36 SC-rrz');
-
-%za=0.005; % Enter global modal damping coefficient (refine later)
-% assume baseline zeta=0.005 for elastic structural modes
-damping=ones(1,length(omeg)-3);
-%damping([])=ones() %IEC damping
-%damping([])=ones() %bus damping
-%damping([])=ones() %MTMD damping
-%damping([])=ones() %cryocooler CJAA damping
-%damping([])=ones() %Cryocooler CCA damping
-%damping([])=ones() %Isolator assembly damping
-%damping([])=ones() %RWA damping
-damping([4:8 16:18])=5*ones(1,8); % sunshield damping 5%
-damping([9:11 14:15 19:25])=20*ones(1,12); % isolator damping 10% %TODO which isolator?
-damping([12:13 26:27])=20*ones(1,4); % solar panel damping 5%
-Damping=diag(damping);
-za=zeta*damping; %I don't see how the above damping percents are happening, given that they're getting multiplied by 0.005?
+ 
 % remove translational rigid body modes since unobservable/uncontrollable
+damping=diag(G_modal);
 phi=phi(:,4:nm+3);
 omeg=omeg(4:nm+3);
+size(damping)
+damping=damping(4:nm+3);
+  
+%za=0.005; % Enter global modal damping coefficient (refine later)
+% assume baseline zeta=0.005 for elastic structural modes
+%damping=ones(1,length(omeg)-3);
+damping([4:8 16:18])=zeta*5*ones(1,8); % sunshield damping 5%
+damping([9:11 14:15 19:25])=zeta*20*ones(1,12); % isolator damping 10% %TODO which isolator?
+damping([12:13 26:27])=zeta*20*ones(1,4); % solar panel damping 5%
+%Damping=diag(damping); %this never did anything
+%za=zeta*damping; %now that im calculating modal damping straight from component damping, not necessary
+za=zeta
 nrbm=3;
 %  compute state space model
 [Ap,Bp,Cp,Dp,lb,lc] = mode2ss2(xyz,bc,nm,ig,dg,vg,nrbm,za,phi,omeg); %TODO this is probably important for me to understand notionally
