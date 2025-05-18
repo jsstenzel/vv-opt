@@ -23,7 +23,7 @@ function [k,m]=km2loc(k,m,ti,tf)
 
 %   HISTORY   APR  1997  akissil   created
 
-disp('Transforming mass and stiffness to local coordinates')
+%disp('Transforming mass and stiffness to local coordinates')
 T=gentloc(ti,tf);
 k=T*k*T';
 m=T*m*T';

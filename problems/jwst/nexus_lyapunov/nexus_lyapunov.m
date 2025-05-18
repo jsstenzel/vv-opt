@@ -1,10 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DEFINE THE FUNCTION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [RMMS_WFE_lyap, RSS_LOS_lyap] = nexus_lyapunov(x)
+function [RSS_LOS_lyap] = nexus_lyapunov(Ru,Us,Ud,fc,Qc,Tst,Srg,Sst,Tgs,m_SM,m_SMhub,I_SMhubt,I_SMhuba,m_RW,K_yPM,I_xRWA,I_yRWA,I_RWt,I_RWa,m_ISO,I_ISOa,I_ISOt,K_yISO,K_xISO,m_RWAchx,I_bus,m_bus,m_prop,I_propt,I_propa,m_instr,I_i1,I_i2,I_i3,A_sptop,D_sp,t_sp,I_ss,K_rad1,K_rad2,K_rISO,K_act1,K_act2,I_iso,K_zpet,lambda,Ro,QE,Mgs,fca,Kc,Kcf,nray,caxi,crad,ctor,haxi,hrad,htor,zeta1,a,wheel_locs,n,h,C,Nsurf,D,BP,PH,R0,mass,FgsNom,K_pm1,K_pm3,K_pm4,K_pm5,K_pm6,K_act_pm2,K_act_pm3,K_act_pm4,K_act_pm5,K_act_pm6,K_xpet,c_RWA,c_RWAI,c_SM_act,c_PM,c_PM_act,c_petal,zeta_sunshield,zeta_isolator,zeta_solarpanel, diagnostics)
 tstart=cputime;
 
 %%%Unwrap the input struct x
+%{
 Ru=x.Ru;      % Ru:  upper operational wheel speed  [RPM]
 Us=x.Us;       % Us:  static wheel imbalance         [gcm]    (%0.7160 test)
 Ud=x.Ud;        % Ud:  dynamic wheel imbalance        [gcm^2]  (%29.536 test)
@@ -111,11 +112,17 @@ c_petal=x.c_petal;
 zeta_sunshield=x.zeta_sunshield;
 zeta_isolator=x.zeta_isolator;
 zeta_solarpanel=x.zeta_solarpanel;
+%}
+A_spbot=(pi/4)*(D_sp^2-(D_sp-2*t_sp)^2); % Cross sectional area of SM spider (bottom)
+J_sp=(pi/32)*(D_sp^4-(D_sp-2*t_sp)^4);   % SM Spider torsional moment of inertia
+I_sp=(pi/64)*(D_sp^4-(D_sp-2*t_sp)^4);   % SM Spider bending moment of inertia
+K_aISO=(5/3)*K_rISO; % axial rot RWA iso struts 
+I_zRWA = I_yRWA;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%Set up flags and conversions
-diagnostics=1;       % print diagnostic messages on command line
+%diagnostics=0;       % print diagnostic messages on command line
 plotflag=0;          % plots generated in subroutines
 r2a = 3600*180/pi;	% radians to arc-sec
 a2r = 1/r2a;			% arc-sec to radians
@@ -2185,7 +2192,7 @@ damping([9:11 14:15 19:25])=zeta_isolator*ones(1,12); % isolator damping 10% %TO
 damping([12:13 26:27])=zeta_solarpanel*20*ones(1,4); % solar panel damping 5%
 %Damping=diag(damping); %this never did anything
 %za=zeta*damping; %now that im calculating modal damping straight from component damping, not necessary
-za=zeta;
+za=damping;
 nrbm=3;
 %  compute state space model
 [Ap,Bp,Cp,Dp,lb,lc] = mode2ss2(xyz,bc,nm,ig,dg,vg,nrbm,za,phi,omeg); %TODO this is probably important for me to understand notionally
@@ -2450,10 +2457,12 @@ if diagnostics
 end
 warning on
 
-disp(['Total Runtime: ' num2str(cputime-tstart) ' [sec]'])
+if diagnostics
+	disp(['Total Runtime: ' num2str(cputime-tstart) ' [sec]'])
+	disp('Lyapunov simulation results')
+end
 
 % Lyapunov simulation results
-disp('Lyapunov simulation results')
 RMMS_WFE_lyap=z1; % RMMS WFE (root-mean-mean-square wavefront error)
 RSS_LOS_lyap=z2; %RSS LOS (root-sum-square line-of-sight)
 return

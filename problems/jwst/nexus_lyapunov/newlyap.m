@@ -101,4 +101,4 @@ end
 res_new = A*S + S*A' + BB ;   %  The resultants SHOULD be zero.
 
 max_res = max(max(abs(res_new))) ;
-disp(['Maximum Lyapunov resultant: ',num2str(max_res)])
+%disp(['Maximum Lyapunov resultant: ',num2str(max_res)])
