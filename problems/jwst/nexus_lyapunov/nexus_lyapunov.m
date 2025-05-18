@@ -108,6 +108,9 @@ c_SM_act=x.c_SM_act;
 c_PM=x.c_PM;
 c_PM_act=x.c_PM_act;
 c_petal=x.c_petal;
+zeta_sunshield=x.zeta_sunshield;
+zeta_isolator=x.zeta_isolator;
+zeta_solarpanel=x.zeta_solarpanel;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2172,18 +2175,17 @@ str_in= str2mat('1 RW1-Fx','2 RW1-Fy','3 RW1-Fz','4 RW1-Mx','5 RW1-My',...
 damping=diag(G_modal);
 phi=phi(:,4:nm+3);
 omeg=omeg(4:nm+3);
-size(damping)
 damping=damping(4:nm+3);
   
 %za=0.005; % Enter global modal damping coefficient (refine later)
 % assume baseline zeta=0.005 for elastic structural modes
 %damping=ones(1,length(omeg)-3);
-damping([4:8 16:18])=zeta*5*ones(1,8); % sunshield damping 5%
-damping([9:11 14:15 19:25])=zeta*20*ones(1,12); % isolator damping 10% %TODO which isolator?
-damping([12:13 26:27])=zeta*20*ones(1,4); % solar panel damping 5%
+damping([4:8 16:18])=zeta_sunshield*ones(1,8); % sunshield damping 5%
+damping([9:11 14:15 19:25])=zeta_isolator*ones(1,12); % isolator damping 10% %TODO which isolator?
+damping([12:13 26:27])=zeta_solarpanel*20*ones(1,4); % solar panel damping 5%
 %Damping=diag(damping); %this never did anything
 %za=zeta*damping; %now that im calculating modal damping straight from component damping, not necessary
-za=zeta
+za=zeta;
 nrbm=3;
 %  compute state space model
 [Ap,Bp,Cp,Dp,lb,lc] = mode2ss2(xyz,bc,nm,ig,dg,vg,nrbm,za,phi,omeg); %TODO this is probably important for me to understand notionally

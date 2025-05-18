@@ -1,0 +1,206 @@
+<deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
+  <configuration file="C:\Repositories\vv-opt\problems\jwst\nexus_lyapunov\NexusLyapunovPkg.prj" location="C:\Repositories\vv-opt\problems\jwst\nexus_lyapunov" name="NexusLyapunovPkg" target="target.ezdeploy.library" target-name="Library Compiler">
+    <param.appname>NexusLyapunovPkg</param.appname>
+    <param.icon />
+    <param.icons />
+    <param.version>1.0</param.version>
+    <param.authnamewatermark />
+    <param.email />
+    <param.company />
+    <param.summary />
+    <param.description />
+    <param.screenshot />
+    <param.guid />
+    <param.installpath.string>\NexusLyapunovPkg\</param.installpath.string>
+    <param.installpath.combo>option.installpath.programfiles</param.installpath.combo>
+    <param.logo />
+    <param.install.notes />
+    <param.target.install.notes>You must have Python 3.9, 3.10, 3.11, and/or 3.12 on your machine to install this package. Go to the directory containing your package and the file setup.py and execute:
+
+        python -m pip install . [options]
+
+For details, see GettingStarted.html, distributed with this package, or the official Python documentation at:
+
+        https://docs.python.org/3/installing/index.html</param.target.install.notes>
+    <param.intermediate>${PROJECT_ROOT}\NexusLyapunovPkg\for_testing</param.intermediate>
+    <param.files.only>${PROJECT_ROOT}\NexusLyapunovPkg\for_redistribution_files_only</param.files.only>
+    <param.output>${PROJECT_ROOT}\NexusLyapunovPkg\for_redistribution</param.output>
+    <param.logdir>${PROJECT_ROOT}\NexusLyapunovPkg</param.logdir>
+    <param.enable.clean.build>false</param.enable.clean.build>
+    <param.user.defined.mcr.options />
+    <param.target.type>subtarget.python.module</param.target.type>
+    <param.support.packages />
+    <param.namespace />
+    <param.classorg />
+    <param.web.mcr>true</param.web.mcr>
+    <param.package.mcr>false</param.package.mcr>
+    <param.no.mcr>false</param.no.mcr>
+    <param.web.mcr.name>MyAppInstaller_web</param.web.mcr.name>
+    <param.package.mcr.name>MyAppInstaller_mcr</param.package.mcr.name>
+    <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
+    <param.windows.command.prompt>true</param.windows.command.prompt>
+    <param.create.log>false</param.create.log>
+    <param.log.file />
+    <param.user.only.registration>false</param.user.only.registration>
+    <param.assembly.net.version>option.net.version.four</param.assembly.net.version>
+    <param.net.enable.remoting>false</param.net.enable.remoting>
+    <param.assembly.type>false</param.assembly.type>
+    <param.encryption.key.file />
+    <param.net.tsa.enable>false</param.net.tsa.enable>
+    <param.net.tsa.assembly />
+    <param.net.tsa.interface />
+    <param.net.tsa.namespace />
+    <param.net.tsa.superclass>Class1</param.net.tsa.superclass>
+    <param.net.tsa.metadata />
+    <param.net.tsa.metadata.assembly>C:\Repositories\vv-opt\problems\jwst\nexus_lyapunov</param.net.tsa.metadata.assembly>
+    <param.net.saved.interface />
+    <param.cpp.api>option.cpp.all</param.cpp.api>
+    <unset>
+      <param.icon />
+      <param.icons />
+      <param.version />
+      <param.authnamewatermark />
+      <param.email />
+      <param.company />
+      <param.summary />
+      <param.description />
+      <param.screenshot />
+      <param.guid />
+      <param.installpath.string />
+      <param.installpath.combo />
+      <param.logo />
+      <param.install.notes />
+      <param.intermediate />
+      <param.files.only />
+      <param.output />
+      <param.logdir />
+      <param.enable.clean.build />
+      <param.user.defined.mcr.options />
+      <param.support.packages />
+      <param.namespace />
+      <param.classorg />
+      <param.web.mcr />
+      <param.package.mcr />
+      <param.no.mcr />
+      <param.web.mcr.name />
+      <param.package.mcr.name />
+      <param.no.mcr.name />
+      <param.windows.command.prompt />
+      <param.create.log />
+      <param.log.file />
+      <param.user.only.registration />
+      <param.assembly.net.version />
+      <param.net.enable.remoting />
+      <param.assembly.type />
+      <param.encryption.key.file />
+      <param.net.tsa.enable />
+      <param.net.tsa.assembly />
+      <param.net.tsa.interface />
+      <param.net.tsa.namespace />
+      <param.net.tsa.superclass />
+      <param.net.tsa.metadata />
+      <param.net.tsa.metadata.assembly />
+      <param.net.saved.interface />
+      <param.cpp.api />
+    </unset>
+    <fileset.exports>
+      <file>${PROJECT_ROOT}\nexus_lyapunov.m</file>
+    </fileset.exports>
+    <fileset.classes>
+      <entity.package name="">
+        <entity.class name="Class1">
+          <file>${PROJECT_ROOT}\nexus_lyapunov.m</file>
+        </entity.class>
+      </entity.package>
+    </fileset.classes>
+    <fileset.resources>
+      <file>${PROJECT_ROOT}\bcnset.m</file>
+      <file>${PROJECT_ROOT}\bcond.m</file>
+      <file>${PROJECT_ROOT}\bcondmex.m</file>
+      <file>${PROJECT_ROOT}\beam_lump.m</file>
+      <file>${PROJECT_ROOT}\beammex_lump.m</file>
+      <file>${PROJECT_ROOT}\celas.m</file>
+      <file>${PROJECT_ROOT}\celas2.m</file>
+      <file>${PROJECT_ROOT}\celasmex.m</file>
+      <file>${PROJECT_ROOT}\cg_calc.m</file>
+      <file>${PROJECT_ROOT}\conm.m</file>
+      <file>${PROJECT_ROOT}\conm2.m</file>
+      <file>${PROJECT_ROOT}\conmmex.m</file>
+      <file>${PROJECT_ROOT}\coord_in.m</file>
+      <file>${PROJECT_ROOT}\dwdu.csv</file>
+      <file>${PROJECT_ROOT}\eigfem.m</file>
+      <file>${PROJECT_ROOT}\findbcmex.m</file>
+      <file>${PROJECT_ROOT}\gentloc.m</file>
+      <file>${PROJECT_ROOT}\getdofs.m</file>
+      <file>${PROJECT_ROOT}\grwabroad_axi.m</file>
+      <file>${PROJECT_ROOT}\grwabroad_rad.m</file>
+      <file>${PROJECT_ROOT}\grwabroad_tor.m</file>
+      <file>${PROJECT_ROOT}\grwadist_axi.m</file>
+      <file>${PROJECT_ROOT}\grwadist_rad.m</file>
+      <file>${PROJECT_ROOT}\grwadist_tor.m</file>
+      <file>${PROJECT_ROOT}\guyan.m</file>
+      <file>${PROJECT_ROOT}\intrms.m</file>
+      <file>${PROJECT_ROOT}\km2loc.m</file>
+      <file>${PROJECT_ROOT}\mass.mat</file>
+      <file>${PROJECT_ROOT}\mat1.m</file>
+      <file>${PROJECT_ROOT}\mat1mex.m</file>
+      <file>${PROJECT_ROOT}\mce1.m</file>
+      <file>${PROJECT_ROOT}\mce_dis.m</file>
+      <file>${PROJECT_ROOT}\mode2ss.m</file>
+      <file>${PROJECT_ROOT}\mode2ss2.m</file>
+      <file>${PROJECT_ROOT}\mode2ssmex.m</file>
+      <file>${PROJECT_ROOT}\mpcs.m</file>
+      <file>${PROJECT_ROOT}\mpcsmex.m</file>
+      <file>${PROJECT_ROOT}\newlyap.m</file>
+      <file>${PROJECT_ROOT}\nexopt.mat</file>
+      <file>${PROJECT_ROOT}\nexus_lyapunov.m</file>
+      <file>${PROJECT_ROOT}\nifix.m</file>
+      <file>${PROJECT_ROOT}\nodesort.m</file>
+      <file>${PROJECT_ROOT}\nodesortmex.m</file>
+      <file>${PROJECT_ROOT}\normphi.m</file>
+      <file>${PROJECT_ROOT}\rbe2.m</file>
+      <file>${PROJECT_ROOT}\rbmodes.m</file>
+      <file>${PROJECT_ROOT}\RW_data_Ewheel.mat</file>
+      <file>${PROJECT_ROOT}\ss2mod7.m</file>
+      <file>${PROJECT_ROOT}\unguyan.m</file>
+      <file>${PROJECT_ROOT}\wtcgmex.m</file>
+    </fileset.resources>
+    <fileset.depfun />
+    <fileset.package />
+    <fileset.examples>
+      <file>${PROJECT_ROOT}\test_nexus_lyapunov.m</file>
+    </fileset.examples>
+    <fileset.documentation />
+    <build-deliverables>
+      <file location="${PROJECT_ROOT}\NexusLyapunovPkg\for_testing" name="NexusLyapunovPkg" optional="false">C:\Repositories\vv-opt\problems\jwst\nexus_lyapunov\NexusLyapunovPkg\for_testing\NexusLyapunovPkg</file>
+      <file location="${PROJECT_ROOT}\NexusLyapunovPkg\for_testing" name="setup.py" optional="false">C:\Repositories\vv-opt\problems\jwst\nexus_lyapunov\NexusLyapunovPkg\for_testing\setup.py</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:\Program Files\MATLAB\R2024b</root>
+      <toolboxes>
+        <toolbox name="matlabcoder" />
+      </toolboxes>
+      <toolbox>
+        <matlabcoder>
+          <enabled>true</enabled>
+        </matlabcoder>
+      </toolbox>
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>10.0</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>

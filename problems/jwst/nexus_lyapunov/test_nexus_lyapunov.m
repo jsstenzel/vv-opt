@@ -237,6 +237,9 @@ input.c_SM_act = 0.01*sqrt(input.m_SM)*sqrt(input.K_rad2);
 input.c_PM = 0.01*sqrt(0.18860E+02)*sqrt(input.K_yPM);
 input.c_PM_act = 0.01*sqrt(0.18860E+02)*sqrt(input.K_rad2);
 input.c_petal = 0.01*sqrt(0.18860E+02)*sqrt(input.K_zpet);
+input.zeta_sunshield = input.zeta*5
+input.zeta_isolator = input.zeta*20
+input.zeta_solarpanel = input.zeta*20
 
 % --------------------------------------------------------------
 % ------------------------   optics stuff  ---------------------

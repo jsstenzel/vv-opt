@@ -154,7 +154,7 @@ xyz=[
 	[19,1.25000E-02,3.45930E+00,2.26000E-01,'purple'], #secondary mirror actuator
 	[20,-9.88200E-02,3.32485E+00,4.23890E-02,'purple'], #secondary mirror actuator
 	[21,-8.61200E-02,3.32485E+00,6.43860E-02,'purple'], #secondary mirror actuator
-	[22,0.00000E+00,3.29369E+00,0.00000E+00,'black'], #secondary mirror RBE2 #isolator?
+	[22,0.00000E+00,3.29369E+00,0.00000E+00,'black'], #secondary mirror RBE2
 	[23,-1.27000E-02,3.32485E+00,-1.06780E-01,'purple'], ##secondary mirror actuator
 	[24,1.27000E-02,3.32485E+00,-1.06780E-01,'purple'], ##secondary mirror actuator
 	[25,8.61200E-02,3.32485E+00,6.43860E-02,'purple'], ##secondary mirror actuator
