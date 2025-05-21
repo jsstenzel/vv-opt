@@ -70,7 +70,7 @@ def vv_UP_QoI(problem, req, n=10**4):
 	print("Probability of meeting requirement given priors:", prob_meetreq)
 
 """
-def vv_UP_QoI_samples(req, base_name="SA_QoI", doPrint=True, do_subset=0):
+def vv_UP_QoI_samples(req, base_name="SA_jitter", doPrint=True, do_subset=0):
 	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
 
 	###Make sure the files exist
@@ -140,93 +140,78 @@ def vv_UP_QoI_samples(req, base_name="SA_QoI", doPrint=True, do_subset=0):
 			count_meetreq += 1
 	prob_meetreq = count_meetreq / len(Q_samples)
 	print("Probability of meeting requirement given priors:", prob_meetreq)
+"""
+
 
 #sensitivity analysis of HLVA
-def vv_SA_QoI_sample(problem, filename, N=10000):
-	#Set up the problem. The parameters are mostly theta,
-	#Except replace every Gaussian Process with a prior with a hyperparameter on the precision, p=1/sigma^2
-	#And put a gamma distribution as the prior for that, according to the principle of maximum entropy
-	#Note that all of these variances are in u-space
-	sloc = './priors/'
-	gp_variance_list = [
-		list(load_gp_prior_from_file(sloc+'prior_gp_qe_red'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_gp_qe_gre'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_gp_qe_blu'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_gp_vph_red'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_gp_vph_gre'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_gp_vph_blu'))[0],
-		1.0, #sl,
-		1.0, #bg
-		1.0, #coll
-		list(load_gp_prior_from_file(sloc+'prior_red1'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_red2'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_red3'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_red4'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_red5'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_red6'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_red7'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_gre1'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_gre2'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_gre3'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_gre4'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_gre5'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_gre6'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_gre7'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_blu1'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_blu2'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_blu3'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_blu4'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_blu5'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_blu6'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_blu7'))[0],
-		list(load_gp_prior_from_file(sloc+'prior_blu8'))[0]
-	]
-	gp_prec_list = [1/v for v in gp_variance_list]
-	hyper_mean, hyper_std = uncertainty_prop(gp_prec_list, False, False)
-	#This is the best info I have about the priors, so I should use it in the development of a prior for the hyperparameters
-	
-	param_defs = [                             
-		["gain_red", [0.999,0.2**2], "gamma_mv"],
-		["gain_gre", [1.008,0.2**2], "gamma_mv"],
-		["gain_blu", [1.008,0.2**2], "gamma_mv"],
-		["rn_red", [2.32,0.25**2], "gamma_mv"],
-		["rn_gre", [2.35,0.25**2], "gamma_mv"],
-		["rn_blu", [2.35,0.25**2], "gamma_mv"],
-		["dc_red", [0.00238,.001**2], "gamma_mv"],
-		["dc_gre", [0.00267,.001**2], "gamma_mv"],
-		["dc_blu", [0.00267,.001**2], "gamma_mv"],
-		["qe_red_prec", [hyper_mean, hyper_std**2], "gamma_mv"], #for each precision, the mean is the nominal value, and the var is 
-		["qe_gre_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["qe_blu_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["vph_red_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["vph_gre_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["vph_blu_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["sl_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["bg_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["coll_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["red_l1_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["red_l2_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["red_l3_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["red_l4_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["red_l5_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["red_l6_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["red_l7_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["gre_l1_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["gre_l2_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["gre_l3_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["gre_l4_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["gre_l5_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["gre_l6_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["gre_l7_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["blu_l1_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["blu_l2_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["blu_l3_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["blu_l4_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["blu_l5_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["blu_l6_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["blu_l7_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["blu_l8_prec", [hyper_mean, hyper_std**2], "gamma_mv"],
-		["fiber_frd", [3.434339623321249, 133.9392453095287], "beta"]
+def vv_SA_jitter_sample(problem, filename, N=10000):
+	#Set up the problem. The parameters are theta and a subset of x
+
+	param_defs = [      
+		["Us", unif_margin(1.8), "uniform"],
+		["Ud", unif_margin(60.0), "uniform"],
+		["Qc", unif_margin(0.005), "uniform"],
+		["I_SMhubt", unif_margin(0.25200E+00), "uniform"],
+		["I_SMhuba", unif_margin(0.45900E+00), "uniform"],
+		["K_yPM", unif_margin(0.77400E+06), "uniform"],
+		["I_xRWA", unif_margin(0.40187E+00), "uniform"],
+		["I_yRWA", unif_margin(0.22445E+00), "uniform"],
+		["I_RWt", unif_margin(0.83595E-01), "uniform"],
+		["I_RWa", unif_margin(0.14339E+00), "uniform"],
+		["I_ISOa", unif_margin(0.11720E-03), "uniform"],
+		["I_ISOt", unif_margin(0.39300E-01), "uniform"],
+		["K_yISO", unif_margin(0.14600E+04), "uniform"],
+		["K_xISO", unif_margin(0.14000E+12), "uniform"],
+		["I_bus", unif_margin(0.85080E+02), "uniform"],
+		["I_propt", unif_margin(0.51100E+01), "uniform"],
+		["I_propa", unif_margin(0.74000E+00), "uniform"],
+		["I_i1", unif_margin(0.49200E+01), "uniform"],
+		["I_i2", unif_margin(0.75420E+01), "uniform"],
+		["I_i3", unif_margin(0.41280E+01), "uniform"],
+		["A_sptop", unif_margin(0.14040E-02), "uniform"],
+		["D_sp", unif_margin(0.060), "uniform"],
+		["t_sp", unif_margin(0.003), "uniform"],
+		["I_ss", unif_margin(0.78350E-08), "uniform"],
+		["K_rad1", unif_margin(0.50000E+6), "uniform"],
+		["K_rad2", unif_margin(0.30000E+6), "uniform"],
+		["K_rISO", unif_margin(3000), "uniform"],
+		["K_act1", unif_margin(0.20000E+11), "uniform"],
+		["K_act2", unif_margin(0.14000E+12), "uniform"],
+		["I_iso", unif_margin(1.00000E-5), "uniform"],
+		["K_zpet", unif_margin(0.9000E+08), "uniform"],
+		["K_pm1", unif_margin(0.10000E+07), "uniform"],
+		["K_pm3", unif_margin(0.58400E+06), "uniform"],
+		["K_pm4", unif_margin(0.59820E+02), "uniform"],
+		["K_pm5", unif_margin(0.49000E+02), "uniform"],
+		["K_pm6", unif_margin(0.33250E+02), "uniform"],
+		["K_act_pm2", unif_margin(0.29100E+07), "uniform"],
+		["K_act_pm3", unif_margin(0.10000E+07), "uniform"],
+		["K_act_pm4", unif_margin(0.33250E+02), "uniform"],
+		["K_act_pm5", unif_margin(0.49000E+02), "uniform"],
+		["K_act_pm6", unif_margin(0.12012E+03), "uniform"],
+		["K_xpet", unif_margin(1e16), "uniform"],
+		["c_RWA", unif_margin(4.23245e-7*0.01*math.sqrt(0.25000E+01)*math.sqrt(0.14600E+04)), "uniform"],
+		["c_RWAI", unif_margin(4.23245e-7*0.01*math.sqrt(0.15E+01)*math.sqrt(0.14600E+04)), "uniform"],
+		["c_SM_act", unif_margin(4.23245e-7*0.01*math.sqrt(2.49)*math.sqrt(0.30000E+6)), "uniform"],
+		["c_PM", unif_margin(4.23245e-7*0.01*math.sqrt(0.18860E+02)*math.sqrt(0.77400E+06)), "uniform"],
+		["c_PM_act", unif_margin(4.23245e-7*0.01*math.sqrt(0.18860E+02)*math.sqrt(0.30000E+6)), "uniform"],
+		["c_petal", unif_margin(4.23245e-7*0.01*math.sqrt(0.18860E+02)*math.sqrt(0.9000E+08)), "uniform"],
+		["zeta_sunshield", unif_margin(0.005*5), "uniform"],
+		["zeta_isolator", unif_margin(0.005*20), "uniform"],
+		["zeta_solarpanel", unif_margin(0.005*20), "uniform"],	
+		["Ru", unif_margin(3000), "uniform"],
+		["fc", unif_margin(30), "uniform"],
+		["Tst", unif_margin(20), "uniform"],
+		["Srg", unif_margin(3e-14), "uniform"],
+		["Sst", unif_margin(2), "uniform"],
+		["Tgs", unif_margin(0.04), "uniform"],
+		["lambda_", unif_margin(1e-6), "uniform"],
+		["Ro", unif_margin(0.98), "uniform"],
+		["QE", unif_margin(0.8), "uniform"],
+		["Mgs", unif_margin(15), "uniform"],
+		["fca", unif_margin(0.01), "uniform"],
+		["Kc", [0,1], "uniform"],
+		["Kcf", unif_margin(2000), "uniform"],
 	]
 	var_names = [pdef[0] for pdef in param_defs]
 	var_bounds = [pdef[1] for pdef in param_defs]
@@ -235,21 +220,17 @@ def vv_SA_QoI_sample(problem, filename, N=10000):
 	def model(params):
 		###First, process theta, sampling using the new precisions:
 		theta = []
+		x = deepcopy(problem.x_default)
+		xrandom = ["Ru","fc","Tst","Srg","Sst","Tgs","lambda_","Ro","QE","Mgs","fca","Kc","Kcf"]
 		for i,name in enumerate(var_names):
-			if name.endswith('_prec'):
-				variance = params[i] #the hyperparameter
-				ls = problem.priors[i][1][1]
-				prior_pts = problem.priors[i][1][2]
-				mean_fn = problem.priors[i][1][3]
-
-				gp_prior = GaussianProcessDist1D(variance, ls, prior_pts, mean_fn)
-				sample = gp_prior.sample()
-				theta.append(sample)
+			if name in xrandom:
+				idx = xrandom.index(name)
+				x[idx] == params[i]
 			else:
 				theta.append(params[i])
 		
 		###Finally, return QoI
-		return problem.H(theta, verbose=False)
+		return problem.H(theta, x, verbose=False)
 		
 	###Generate some new samples and save
 	#I want to save samples as often as possible. Therefore, iterate through N two at a time, corresponding to 2(p+2) model evals at a time
@@ -257,13 +238,13 @@ def vv_SA_QoI_sample(problem, filename, N=10000):
 		saltelli_eval_sample(filename, 2, var_names, var_dists, var_bounds, model, doPrint=True)
 
 #sensitivity analysis of HLVA
-def vv_SA_QoI_evaluate(problem):
+def vv_SA_jitter_evaluate(problem):
 	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
 
-	#S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=0, doPrint=True)
-	total_order_convergence_tests(1200, "SA_QoI", var_names, do_subset=0)
+	#S, ST, n_eval = saltelli_indices("SA_jitter", var_names, do_subset=0, doPrint=True)
+	total_order_convergence_tests(1200, "SA_jitter", var_names, do_subset=0)
 
-def vv_SA_QoI_convergence(problem):
+def vv_SA_jitter_convergence(problem):
 	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
 	
 	###Perform the analysis at a few evaluation points
@@ -271,11 +252,12 @@ def vv_SA_QoI_convergence(problem):
 	list_ST = []
 	list_n = [10,50,100,500,1000,5000,10000,50000]
 	for n in list_n:
-		#S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=0, doPrint=True)
+		#S, ST, n_eval = saltelli_indices("SA_jitter", var_names, do_subset=0, doPrint=True)
 		#list_S.append(S)
 		#list_ST.append(ST)
-		total_order_convergence_tests(800, "SA_QoI", var_names, do_subset=n**2)
+		total_order_convergence_tests(800, "SA_jitter", var_names, do_subset=n**2)
 
+"""
 #Uncertainty analysis of the experiment models
 def vv_UP_exp(problem, dd, theta_nominal, n=10**4, savefig=False):
 	print("Likelihood distribution for nominal historical case:",flush=True)
@@ -339,7 +321,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--run', metavar='string', required=True, help='Function to run for this vvopt analysis')
 	parser.add_argument('-n', type=int, default=0, help='Number of iterations to give to the function')
-	parser.add_argument('--filename', metavar='string', default="SA_QoI", help='Base name to five to SA_QoI_sample')
+	parser.add_argument('--filename', metavar='string', default="SA_jitter", help='Base name to five to SA_jitter_sample')
 	args = parser.parse_args()
 	
 	###Problem Definition
@@ -403,32 +385,32 @@ if __name__ == '__main__':
 	elif args.run == "UP_QoI":
 		vv_UP_QoI(problem, 0, n=args.n)
 		
-		"""
 	elif args.run == "UP_QoI_samples":
-		vv_UP_QoI_samples(req, base_name="SA_QoI", doPrint=True)
+		vv_UP_QoI_samples(req, base_name="SA_jitter", doPrint=True)
 		
 	elif args.run == "UP_exp":
 		vv_UP_exp(problem, d_historical, theta_nominal, n=args.n)
 	
-	if args.run == "SA_QoI_sample":
-		vv_SA_QoI_sample(problem, N=args.n, filename=args.filename)
+	if args.run == "SA_jitter_sample":
+		vv_SA_jitter_sample(problem, N=args.n, filename=args.filename)
 
-	elif args.run == "SA_QoI_sample":
-		vv_SA_QoI_sample(problem, N=args.n)
+	elif args.run == "SA_jitter_sample":
+		vv_SA_jitter_sample(problem, N=args.n)
 
-	elif args.run == "SA_QoI_evaluate":
-		vv_SA_QoI_evaluate(problem)
+	elif args.run == "SA_jitter_evaluate":
+		vv_SA_jitter_evaluate(problem)
 		
-	elif args.run == "SA_QoI_convergence":
-		vv_SA_QoI_convergence(problem)
+	elif args.run == "SA_jitter_convergence":
+		vv_SA_jitter_convergence(problem)
 	
+		"""
 	#Still needs massaging...
 	#if args.run == "SA_exp":
 	#	vv_SA_exp(problem, d_historical)
 
 	###Optimal Bayesian Experimental Design
 	elif args.run == "BN_sample":
-		rate = 10 if args.filename=="SA_QoI" else int(args.filename)	
+		rate = 10 if args.filename=="SA_jitter" else int(args.filename)	
 		bn_sampling(problem, savefile="BN_samples", N=args.n, buffer_rate=rate, doPrint=True)
 	
 	elif args.run == "BN_train":

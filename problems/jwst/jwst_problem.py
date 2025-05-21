@@ -89,6 +89,21 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 	x_defs = [
 				#put eng in here, for accessibility
 				#["eng", [], "discrete", eng],
+				#x dict random
+				["Ru", ["uniform", unif_margin(3000)], "continuous", 3000.0],
+				["fc", ["uniform", unif_margin(30)], "continuous", 30.0],
+				["Tst", ["uniform", unif_margin(20)], "continuous", 20.0],
+				["Srg", ["uniform", unif_margin(3e-14)], "continuous", 3e-14],
+				["Sst", ["uniform", unif_margin(2)], "continuous", 2],
+				["Tgs", ["uniform", unif_margin(0.04)], "continuous", 0.04],
+				["lambda_", ["uniform", unif_margin(1e-6)], "continuous", 1e-6],
+				["Ro", ["uniform", unif_margin(0.98)], "continuous", 0.98],
+				["QE", ["uniform", unif_margin(0.8)], "continuous", 0.8],
+				["Mgs", ["uniform", unif_margin(15)], "continuous", 15],
+				["fca", ["uniform", unif_margin(0.01)], "continuous", 0.01],
+				["Kc", ["uniform", [0,1]], "continuous", 0.0],
+				["Kcf", ["uniform", unif_margin(2000)], "continuous", 2000.0],
+				
 				#x dict fixed
 				["m_SM", [], "discrete", 2.49],
 				["m_SMhub", [], "discrete", 4.4],
@@ -134,21 +149,6 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 					[4.28546087505310e-14,-6.75674793892966e-15,-2.65496910573658e-15,13.3850421894362,228.801871490305,1508.50841532254]
 				]],
 				["FgsNom", [], "discrete", 30.0],
-				
-				#x dict random
-				["Ru", ["uniform", unif_margin(3000)], "continuous", 3000.0],
-				["fc", ["uniform", unif_margin(30)], "continuous", 30.0],
-				["Tst", ["uniform", unif_margin(20)], "continuous", 20.0],
-				["Srg", ["uniform", unif_margin(3e-14)], "continuous", 3e-14],
-				["Sst", ["uniform", unif_margin(2)], "continuous", 2],
-				["Tgs", ["uniform", unif_margin(0.04)], "continuous", 0.04],
-				["lambda_", ["uniform", unif_margin(1e-6)], "continuous", 1e-6],
-				["Ro", ["uniform", unif_margin(0.98)], "continuous", 0.98],
-				["QE", ["uniform", unif_margin(0.8)], "continuous", 0.8],
-				["Mgs", ["uniform", unif_margin(15)], "continuous", 15],
-				["fca", ["uniform", unif_margin(0.01)], "continuous", 0.01],
-				["Kc", ["uniform", [0,1]], "continuous", 0.0],
-				["Kcf", ["uniform", unif_margin(2000)], "continuous", 2000.0],
 			]
 
 	#_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
