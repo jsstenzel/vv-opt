@@ -25,58 +25,58 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 	print("Constructing jwst problem ...",flush=True)
 
 	theta_defs = [
-					["Us", ["uniform", unif_margin(1.8)], "continuous"],
-					["Ud", ["uniform", unif_margin(60.0)], "continuous"],
-					["Qc", ["uniform", unif_margin(0.005)], "continuous"],
-					["I_SMhubt", ["uniform", unif_margin(0.25200E+00)], "continuous"],
-					["I_SMhuba", ["uniform", unif_margin(0.45900E+00)], "continuous"],
-					["K_yPM", ["uniform", unif_margin(0.77400E+06)], "continuous"],
-					["I_xRWA", ["uniform", unif_margin(0.40187E+00)], "continuous"],
-					["I_yRWA", ["uniform", unif_margin(0.22445E+00)], "continuous"],
-					["I_RWt", ["uniform", unif_margin(0.83595E-01)], "continuous"],
-					["I_RWa", ["uniform", unif_margin(0.14339E+00)], "continuous"],
-					["I_ISOa", ["uniform", unif_margin(0.11720E-03)], "continuous"],
-					["I_ISOt", ["uniform", unif_margin(0.39300E-01)], "continuous"],
-					["K_yISO", ["uniform", unif_margin(0.14600E+04)], "continuous"],
-					["K_xISO", ["uniform", unif_margin(0.14000E+12)], "continuous"],
-					["I_bus", ["uniform", unif_margin(0.85080E+02)], "continuous"],
-					["I_propt", ["uniform", unif_margin(0.51100E+01)], "continuous"],
-					["I_propa", ["uniform", unif_margin(0.74000E+00)], "continuous"],
-					["I_i1", ["uniform", unif_margin(0.49200E+01)], "continuous"],
-					["I_i2", ["uniform", unif_margin(0.75420E+01)], "continuous"],
-					["I_i3", ["uniform", unif_margin(0.41280E+01)], "continuous"],
-					["A_sptop", ["uniform", unif_margin(0.14040E-02)], "continuous"],
-					["D_sp", ["uniform", unif_margin(0.060)], "continuous"],
-					["t_sp", ["uniform", unif_margin(0.003)], "continuous"],
-					["I_ss", ["uniform", unif_margin(0.78350E-08)], "continuous"],
-					["K_rad1", ["uniform", unif_margin(0.50000E+6)], "continuous"],
-					["K_rad2", ["uniform", unif_margin(0.30000E+6)], "continuous"],
-					["K_rISO", ["uniform", unif_margin(3000)], "continuous"],
-					["K_act1", ["uniform", unif_margin(0.20000E+11)], "continuous"],
-					["K_act2", ["uniform", unif_margin(0.14000E+12)], "continuous"],
-					["I_iso", ["uniform", unif_margin(1.00000E-5)], "continuous"],
-					["K_zpet", ["uniform", unif_margin(0.9000E+08)], "continuous"],
-					["K_pm1", ["uniform", unif_margin(0.10000E+07)], "continuous"],
-					["K_pm3", ["uniform", unif_margin(0.58400E+06)], "continuous"],
-					["K_pm4", ["uniform", unif_margin(0.59820E+02)], "continuous"],
-					["K_pm5", ["uniform", unif_margin(0.49000E+02)], "continuous"],
-					["K_pm6", ["uniform", unif_margin(0.33250E+02)], "continuous"],
-					["K_act_pm2", ["uniform", unif_margin(0.29100E+07)], "continuous"],
-					["K_act_pm3", ["uniform", unif_margin(0.10000E+07)], "continuous"],
-					["K_act_pm4", ["uniform", unif_margin(0.33250E+02)], "continuous"],
-					["K_act_pm5", ["uniform", unif_margin(0.49000E+02)], "continuous"],
-					["K_act_pm6", ["uniform", unif_margin(0.12012E+03)], "continuous"],
-					["K_xpet", ["uniform", unif_margin(1e16)], "continuous"],
-					["c_RWA", ["uniform", unif_margin(4.23245e-7*0.01*math.sqrt(0.25000E+01)*math.sqrt(0.14600E+04))], "continuous"],
-					["c_RWAI", ["uniform", unif_margin(4.23245e-7*0.01*math.sqrt(0.15E+01)*math.sqrt(0.14600E+04))], "continuous"],
-					["c_SM_act", ["uniform", unif_margin(4.23245e-7*0.01*math.sqrt(2.49)*math.sqrt(0.30000E+6))], "continuous"],
-					["c_PM", ["uniform", unif_margin(4.23245e-7*0.01*math.sqrt(0.18860E+02)*math.sqrt(0.77400E+06))], "continuous"],
-					["c_PM_act", ["uniform", unif_margin(4.23245e-7*0.01*math.sqrt(0.18860E+02)*math.sqrt(0.30000E+6))], "continuous"],
-					["c_petal", ["uniform", unif_margin(4.23245e-7*0.01*math.sqrt(0.18860E+02)*math.sqrt(0.9000E+08))], "continuous"],
-					["zeta_sunshield", ["uniform", unif_margin(0.005*5)], "continuous"],
-					["zeta_isolator", ["uniform", unif_margin(0.005*20)], "continuous"],
-					["zeta_solarpanel", ["uniform", unif_margin(0.005*20)], "continuous"],
-				]
+		["Us", ["uniform", unif_margin(1.8)], "continuous"], #static wheel imbalance         [gcm]
+		["Ud", ["uniform", unif_margin(60.0)], "continuous"], #dynamic wheel imbalance        [gcm^2]
+		["Qc", ["uniform", unif_margin(0.005)], "continuous"], #cryocooler attenuation factor 
+		["I_SMhubt", ["uniform", unif_margin(0.25200E+00)], "continuous"], #SM hub inertia transverse
+		["I_SMhuba", ["uniform", unif_margin(0.45900E+00)], "continuous"], #SM hub inertia axial
+		["K_yPM", ["uniform", unif_margin(0.77400E+06)], "continuous"], #PM outer bipod actuator transverse stiffness
+		["I_xRWA", ["uniform", unif_margin(0.40187E+00)], "continuous"], #Ix moment of inertia of RWA chassis
+		["I_yRWA", ["uniform", unif_margin(0.22445E+00)], "continuous"], #Iy moment of inertia of RWA chassis
+		["I_RWt", ["uniform", unif_margin(0.83595E-01)], "continuous"], #Transverse Inertia of ITHACO E reaction wheel
+		["I_RWa", ["uniform", unif_margin(0.14339E+00)], "continuous"], #Axial Inertia of ITHACO E reaction wheel
+		["I_ISOa", ["uniform", unif_margin(0.11720E-03)], "continuous"], #RWA isolator strut axial inertia
+		["I_ISOt", ["uniform", unif_margin(0.39300E-01)], "continuous"], #RWA isolator strut transverse inertia
+		["K_yISO", ["uniform", unif_margin(0.14600E+04)], "continuous"], #Hexapod (i.e. secondary mirror support structure) isolator strut axial stiffness %actually this is not true, its for RWA isolator as well
+		["K_xISO", ["uniform", unif_margin(0.14000E+12)], "continuous"], #Hexapod (i.e. secondary mirror support structure) isolator strut transverse stiffness %actually this is not true, its for RWA isolator as well
+		["I_bus", ["uniform", unif_margin(0.85080E+02)], "continuous"], #NEXUS spacecraft bus principal inertia
+		["I_propt", ["uniform", unif_margin(0.51100E+01)], "continuous"], #propulsion system transverse inertia 
+		["I_propa", ["uniform", unif_margin(0.74000E+00)], "continuous"], #propulsion system axial inertia
+		["I_i1", ["uniform", unif_margin(0.49200E+01)], "continuous"], #Instrument moment of inertia 1-axis
+		["I_i2", ["uniform", unif_margin(0.75420E+01)], "continuous"], #Instrument moment of inertia 2-axis
+		["I_i3", ["uniform", unif_margin(0.41280E+01)], "continuous"], #Instrument moment of inertia 3-axis
+		["A_sptop", ["uniform", unif_margin(0.14040E-02)], "continuous"], #Cross sectional area of SM spider (top)
+		["D_sp", ["uniform", unif_margin(0.060)], "continuous"], #SM spider (bottom) diameter
+		["t_sp", ["uniform", unif_margin(0.003)], "continuous"], #SM spider (bottom) wall thickness  [m]
+		["I_ss", ["uniform", unif_margin(0.78350E-08)], "continuous"], #Sunshield out-of-plane bending moment of inertia,
+		["K_rad1", ["uniform", unif_margin(0.50000E+6)], "continuous"], #rotational stiffness of SM and PM actuators in 1 direction
+		["K_rad2", ["uniform", unif_margin(0.30000E+6)], "continuous"], #rotational stiffness of SM and PM actuators in 2 direction 
+		["K_rISO", ["uniform", unif_margin(3000)], "continuous"], #rot stiff RWA iso struts [Nm/rad] 
+		["K_act1", ["uniform", unif_margin(0.20000E+11)], "continuous"], #actuator axial stiffness 
+		["K_act2", ["uniform", unif_margin(0.14000E+12)], "continuous"], #actuator radial stiffness +12
+		["I_iso", ["uniform", unif_margin(1.00000E-5)], "continuous"], #RW wheel isolator bending m.o.I. [m^4]
+		["K_zpet", ["uniform", unif_margin(0.9000E+08)], "continuous"], #Deployable petal hinge stiffness [N/m]
+		["K_pm1", ["uniform", unif_margin(0.10000E+07)], "continuous"],
+		["K_pm3", ["uniform", unif_margin(0.58400E+06)], "continuous"],
+		["K_pm4", ["uniform", unif_margin(0.59820E+02)], "continuous"],
+		["K_pm5", ["uniform", unif_margin(0.49000E+02)], "continuous"],
+		["K_pm6", ["uniform", unif_margin(0.33250E+02)], "continuous"],
+		["K_act_pm2", ["uniform", unif_margin(0.29100E+07)], "continuous"],
+		["K_act_pm3", ["uniform", unif_margin(0.10000E+07)], "continuous"],
+		["K_act_pm4", ["uniform", unif_margin(0.33250E+02)], "continuous"],
+		["K_act_pm5", ["uniform", unif_margin(0.49000E+02)], "continuous"],
+		["K_act_pm6", ["uniform", unif_margin(0.12012E+03)], "continuous"],
+		["K_xpet", ["uniform", unif_margin(1e16)], "continuous"],
+		["c_RWA", ["uniform", unif_margin(4.23245e-7*0.01*math.sqrt(0.25000E+01)*math.sqrt(0.14600E+04))], "continuous"],
+		["c_RWAI", ["uniform", unif_margin(4.23245e-7*0.01*math.sqrt(0.15E+01)*math.sqrt(0.14600E+04))], "continuous"],
+		["c_SM_act", ["uniform", unif_margin(4.23245e-7*0.01*math.sqrt(2.49)*math.sqrt(0.30000E+6))], "continuous"],
+		["c_PM", ["uniform", unif_margin(4.23245e-7*0.01*math.sqrt(0.18860E+02)*math.sqrt(0.77400E+06))], "continuous"],
+		["c_PM_act", ["uniform", unif_margin(4.23245e-7*0.01*math.sqrt(0.18860E+02)*math.sqrt(0.30000E+6))], "continuous"],
+		["c_petal", ["uniform", unif_margin(4.23245e-7*0.01*math.sqrt(0.18860E+02)*math.sqrt(0.9000E+08))], "continuous"],
+		["zeta_sunshield", ["uniform", unif_margin(0.005*5)], "continuous"],
+		["zeta_isolator", ["uniform", unif_margin(0.005*20)], "continuous"],
+		["zeta_solarpanel", ["uniform", unif_margin(0.005*20)], "continuous"],
+	]
 
 	y_defs = [	
 					"y_gain_red", 
@@ -90,19 +90,19 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 				#put eng in here, for accessibility
 				#["eng", [], "discrete", eng],
 				#x dict random
-				["Ru", ["uniform", unif_margin(3000)], "continuous", 3000.0],
-				["fc", ["uniform", unif_margin(30)], "continuous", 30.0],
-				["Tst", ["uniform", unif_margin(20)], "continuous", 20.0],
-				["Srg", ["uniform", unif_margin(3e-14)], "continuous", 3e-14],
-				["Sst", ["uniform", unif_margin(2)], "continuous", 2],
-				["Tgs", ["uniform", unif_margin(0.04)], "continuous", 0.04],
-				["lambda_", ["uniform", unif_margin(1e-6)], "continuous", 1e-6],
-				["Ro", ["uniform", unif_margin(0.98)], "continuous", 0.98],
-				["QE", ["uniform", unif_margin(0.8)], "continuous", 0.8],
-				["Mgs", ["uniform", unif_margin(15)], "continuous", 15],
-				["fca", ["uniform", unif_margin(0.01)], "continuous", 0.01],
-				["Kc", ["uniform", [0,1]], "continuous", 0.0],
-				["Kcf", ["uniform", unif_margin(2000)], "continuous", 2000.0],
+				["Ru", ["uniform", unif_margin(3000)], "continuous", 3000.0], #upper operational wheel speed  [RPM]
+				["fc", ["uniform", unif_margin(30)], "continuous", 30.0], #cryocooler drive frequency
+				["Tst", ["uniform", unif_margin(20)], "continuous", 20.0], #Star Tracker update rate
+				["Srg", ["uniform", unif_margin(3e-14)], "continuous", 3e-14], #rate gyro noise intensity
+				["Sst", ["uniform", unif_margin(2)], "continuous", 2], #Star Tracker one sigma
+				["Tgs", ["uniform", unif_margin(0.04)], "continuous", 0.04], #Guider integration time 
+				["lambda_", ["uniform", unif_margin(1e-6)], "continuous", 1e-6], #center optical wavelength
+				["Ro", ["uniform", unif_margin(0.98)], "continuous", 0.98], #optical surface transmissivity
+				["QE", ["uniform", unif_margin(0.8)], "continuous", 0.8], #CCD quantum efficiency
+				["Mgs", ["uniform", unif_margin(15)], "continuous", 15], #magnitude of faint guide star
+				["fca", ["uniform", unif_margin(0.01)], "continuous", 0.01], #Target ACS control bandwidth
+				["Kc", ["uniform", [0,1]], "continuous", 0.0], #FSM-to-ACS cross coupling gain
+				["Kcf", ["uniform", unif_margin(2000)], "continuous", 2000.0], #FSM controller gain
 				
 				#x dict fixed
 				["m_SM", [], "discrete", 2.49],
