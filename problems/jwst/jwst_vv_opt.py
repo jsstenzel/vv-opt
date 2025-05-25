@@ -30,13 +30,22 @@ from opt.ngsa import *
 #Analysis functions
 ################################
 
-def vv_nominal(problem, theta_nominal):
+def vv_system(problem, theta_nominal):
 	print(problem)
 	#print("QoI requirement:", req)
 	QoI_nominal = problem.H(theta_nominal, verbose=True)
 	print("Given the nominal theta:", theta_nominal)
 	#print("Nominal y:", y_nominal)
 	print("Nominal QoI:", QoI_nominal)
+	
+def vv_experiment(problem, theta_nominal, d):
+	print(problem)
+	print("Given the nominal theta:", theta_nominal)
+	print("And this design:", theta_nominal)
+	ynom = problem.eta(theta_nominal, d, err=False)
+	print("Nominal y:", ynom)
+	y = problem.eta(theta_nominal, d, err=True)
+	print("A sampled y:", y)
 
 ###uncertainty analysis
 def vv_UA_theta(problem, n=10**4):
@@ -69,9 +78,9 @@ def vv_UP_QoI(problem, req, n=10**4):
 	prob_meetreq = count_meetreq / len(Qs)
 	print("Probability of meeting requirement given priors:", prob_meetreq)
 
-"""
-def vv_UP_QoI_samples(req, base_name="SA_jitter", doPrint=True, do_subset=0):
-	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
+
+def vv_UP_QoI_samples(base_name="SA_jitter", doPrint=True, do_subset=0):
+	var_names = ["Us","Ud","Qc","I_SMhubt","I_SMhuba","K_yPM","I_xRWA","I_yRWA","I_RWt","I_RWa","I_ISOa","I_ISOt","K_yISO","K_xISO","I_bus","I_propt","I_propa","I_i1","I_i2","I_i3","A_sptop","D_sp","t_sp","I_ss","K_rad1","K_rad2","K_rISO","K_act1","K_act2","I_iso","K_zpet","K_pm1","K_pm3","K_pm4","K_pm5","K_pm6","K_act_pm2","K_act_pm3","K_act_pm4","K_act_pm5","K_act_pm6","K_xpet","c_RWA","c_RWAI","c_SM_act","c_PM","c_PM_act","c_petal","zeta_sunshield","zeta_isolator","zeta_solarpanel","Ru","fc","Tst","Srg","Sst","Tgs","lambda_","Ro","QE","Mgs","fca","Kc","Kcf"]
 
 	###Make sure the files exist
 	if not os.path.isfile(base_name+'_A.csv'):
@@ -131,16 +140,20 @@ def vv_UP_QoI_samples(req, base_name="SA_jitter", doPrint=True, do_subset=0):
 	Q_samples = [Ay_row[-1] for Ay_row in Ay] #only last element
 	
 	#Do the UQ
-	uncertainty_prop(Q_samples, xlab="QoI: SNR", vline=[req])
+	uncertainty_prop(Q_samples, xlab="QoI: Jitter")#, vline=[req])
+	
+	for i,name in enumerate(var_names):
+		t_samples = [Ay_row[i] for Ay_row in Ay]
+		uncertainty_prop(t_samples, xlab="UP "+str(name))
 
 	#prob of meeting req along priors:
-	count_meetreq = 0
-	for Q in Q_samples:
-		if Q >= req:
-			count_meetreq += 1
-	prob_meetreq = count_meetreq / len(Q_samples)
-	print("Probability of meeting requirement given priors:", prob_meetreq)
-"""
+	#count_meetreq = 0
+	#for Q in Q_samples:
+	#	if Q >= req:
+	#		count_meetreq += 1
+	#prob_meetreq = count_meetreq / len(Q_samples)
+	#print("Probability of meeting requirement given priors:", prob_meetreq)
+
 
 
 #sensitivity analysis of HLVA
@@ -245,7 +258,7 @@ def vv_SA_jitter_evaluate(problem, do_subset):
 	total_order_convergence_tests(1200, "SA_jitter", var_names, do_subset=do_subset)
 
 def vv_SA_jitter_convergence(problem):
-	var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
+	var_names = ["Us","Ud","Qc","I_SMhubt","I_SMhuba","K_yPM","I_xRWA","I_yRWA","I_RWt","I_RWa","I_ISOa","I_ISOt","K_yISO","K_xISO","I_bus","I_propt","I_propa","I_i1","I_i2","I_i3","A_sptop","D_sp","t_sp","I_ss","K_rad1","K_rad2","K_rISO","K_act1","K_act2","I_iso","K_zpet","K_pm1","K_pm3","K_pm4","K_pm5","K_pm6","K_act_pm2","K_act_pm3","K_act_pm4","K_act_pm5","K_act_pm6","K_xpet","c_RWA","c_RWAI","c_SM_act","c_PM","c_PM_act","c_petal","zeta_sunshield","zeta_isolator","zeta_solarpanel","Ru","fc","Tst","Srg","Sst","Tgs","lambda_","Ro","QE","Mgs","fca","Kc","Kcf"]
 	
 	###Perform the analysis at a few evaluation points
 	list_S = []
@@ -328,33 +341,17 @@ if __name__ == '__main__':
 	problem = construct_jwst_jitter_problem()
 	theta_nominal = problem.theta_nominal
 	
-	"""		
-	d_min = [
-						0, #t_gain 				0-length exposure for gain exp
-						0, #I_gain 				no measurements for gain exp
-						0, #n_meas_rn 			no measurements for rn exp
-						0, #d_num 				no measurements for dc exp
-						0, #d_max 				dc exp filer
-						0, #d_pow 				dc exp filler
-						0, #n_qe 				no measurements for qe exp
-						0, #t_qe 				0-length exposure for qe exp
-						0, #d_vph_n_pts 		no measurements for vph exp
-						0, #d_dichroic_n_pts 	no measurements for dichroic exp
-						0, #d_coll_n_pts		no measurements for collimator exp
-						0, #d_redcam_n_pts		no measurements for camera exp
-						0, #d_greencam_n_pts		no measurements for camera exp
-						0, #d_bluecam_n_pts		no measurements for camera exp
-						0  #d_frd_n_meas 		no measurements for FRD exp
-					]
-	
-	
-	req = 3.0
-	y_nominal = problem.eta(theta_nominal, d_historical, err=False)
-	"""
+	d0s = [0 for _ in problem.d_names]
+	d1s = [1 for _ in problem.d_names]
+	d2s = [2 for _ in problem.d_names]
+	d3s = [3 for _ in problem.d_names]
 
 	###Uncertainty Quantification
-	if args.run == "nominal":
-		vv_nominal(problem, theta_nominal)
+	if args.run == "system_nominal":
+		vv_system(problem, theta_nominal)
+		
+	elif args.run == "experiment_nominal":	
+		vv_experiment(problem, theta_nominal, d2s)
 	
 		"""
 	elif args.run == "system_model":
@@ -379,19 +376,18 @@ if __name__ == '__main__':
 	"""
 	
 	elif args.run == "UA_theta":
-		vv_UA_theta(problem, n=args.n)
-	
+		vv_UA_theta(problem, n=args.n)	
 
 	elif args.run == "UP_QoI":
 		vv_UP_QoI(problem, 0, n=args.n)
 		
 	elif args.run == "UP_QoI_samples":
-		vv_UP_QoI_samples(req, base_name="SA_jitter", doPrint=True)
+		vv_UP_QoI_samples(base_name="SA_jitter", doPrint=True, do_subset=args.n)
 		
 	elif args.run == "UP_exp":
 		vv_UP_exp(problem, d_historical, theta_nominal, n=args.n)
 	
-	if args.run == "SA_jitter_sample":
+	elif args.run == "SA_jitter_sample":
 		vv_SA_jitter_sample(problem, N=args.n, filename=args.filename)
 
 	elif args.run == "SA_jitter_sample":

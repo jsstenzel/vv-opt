@@ -76,15 +76,80 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 		["zeta_sunshield", ["uniform", unif_margin(0.005*5)], "continuous"],
 		["zeta_isolator", ["uniform", unif_margin(0.005*20)], "continuous"],
 		["zeta_solarpanel", ["uniform", unif_margin(0.005*20)], "continuous"],
+		["stiffness_rt_factor", ["uniform", unif_margin(0.1)], "continuous"], #at higher temperatures, stiffness goes down
+		["damping_rt_factor",  ["uniform", unif_margin(10)], "continuous"] #at higher temperatures, damping goes up
 	]
 
 	y_defs = [	
-					"y_gain_red", 
-				]
+		"y_transmit_rwai",
+		"y_transmit_ccai",
+		"y_transmit_ia",
+		"y_transmit_pmss",
+		"y_transmit_smss",
+		"y_transmit_telescope",
+		"y_stiff_xISO",
+		"y_stiff_yISO",
+		"y_stiff_aISO",
+		"y_stiff_rISO",
+		"y_stiff_pm1",
+		"y_stiff_yPM",
+		"y_stiff_pm3",
+		"y_stiff_pm4",
+		"y_stiff_pm5",
+		"y_stiff_pm6",
+		"y_stiff_act_pm2",
+		"y_stiff_act_pm3",
+		"y_stiff_act_pm4",
+		"y_stiff_act_pm5",
+		"y_stiff_act_pm6",
+		"y_stiff_xpet",
+		"y_stiff_zpet",
+		"y_stiff_act1",
+		"y_stiff_act2",
+		"y_stiff_rad1",
+		"y_stiff_rad2",
+		"y_modal_telescope",
+		"y_modal_pmss",
+		"y_modal_smss",
+		"y_modal_ccai",
+		"y_modal_sunshield",
+		"y_modal_solar",
+		"y_vibe_rwa",
+		"y_vibe_rwai",
+		"y_vibe_cca",
+		"y_vibe_ccai",
+		"y_cryo_stiffness",
+		"y_cryo_damping",
+	]
 
+	#defining the design variables very loosely
+	#0=dont do 1=do cheaply 2=do well 3=commit serious effort
+	#note that uniform-discrete takes the integer floor of the sample
 	d_defs = [
-					["t_gain", ['uniform', [.1, 600]], "continuous"], #gain
-				]
+		["t_gain", ['uniform', [0,4]], "discrete"],
+		["d_transmit_rwai", ['uniform', [0,4]], "discrete"],
+		["d_transmit_ccai", ['uniform', [0,4]], "discrete"],
+		["d_transmit_ia", ['uniform', [0,4]], "discrete"],
+		["d_transmit_pmss", ['uniform', [0,4]], "discrete"],
+		["d_transmit_smss", ['uniform', [0,4]], "discrete"],
+		["d_transmit_telescope", ['uniform', [0,4]], "discrete"],
+		["d_stiff_rwai", ['uniform', [0,4]], "discrete"],
+		["d_stiff_pmss", ['uniform', [0,4]], "discrete"],
+		["d_stiff_pm", ['uniform', [0,4]], "discrete"],
+		["d_stiff_petal", ['uniform', [0,4]], "discrete"],
+		["d_stiff_sm", ['uniform', [0,4]], "discrete"],
+		["d_modal_telescope", ['uniform', [0,4]], "discrete"],
+		["d_modal_pmss", ['uniform', [0,4]], "discrete"],
+		["d_modal_smss", ['uniform', [0,4]], "discrete"],
+		["d_modal_ccai", ['uniform', [0,4]], "discrete"],
+		["d_modal_sunshield", ['uniform', [0,4]], "discrete"],
+		["d_modal_solar", ['uniform', [0,4]], "discrete"],
+		["d_vibe_rwa", ['uniform', [0,4]], "discrete"],
+		["d_vibe_rwai", ['uniform', [0,4]], "discrete"],
+		["d_vibe_cca", ['uniform', [0,4]], "discrete"],
+		["d_vibe_ccai", ['uniform', [0,4]], "discrete"],
+		["d_cryo", ['uniform', [0,4]], "discrete"]
+	]
 
 	x_defs = [
 				#put eng in here, for accessibility
@@ -107,11 +172,11 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 				#x dict fixed
 				["m_SM", [], "discrete", 2.49],
 				["m_SMhub", [], "discrete", 4.4],
-				["m_RW", [], "discrete", 0.10600E+02],
+				["m_RW", [], "discrete", 0.10600E+02], #i think this is for the whole RWAI assembly?
 				["m_bus", [], "discrete", 0.33200E+03],
 				["m_prop", [], "discrete", 0.37000E+02],
 				["m_ISO", [], "discrete", 0.15E+01],
-				["m_RWAchx", [], "discrete", 0.25000E+01],
+				["m_RWAchx", [], "discrete", 0.25000E+01], #i think this is for just a reaction wheel?
 				["m_instr", [], "discrete", 0.50000E+02],
 				["wheel_locs", [], "discrete", [	  
 					[79.00000000000000,-0.47413000000000,-0.81375000000000, 2.04467000000000],
