@@ -270,9 +270,9 @@ def bn_measure_likelihood_convergence(problem, big_savefile, doPrint=True):
 	plt.plot(N_list, scores, c='r')
 	plt.show()
 	
-def bn_measure_validation_convergence(problem, big_savefile, N_val=0, doPrint=True):	
+def bn_measure_validation_convergence(problem, big_savefile, ncomp=0, N_list=[], N_val=0, doPrint=True):	
 	N_val = N_val if N_val>0 else 5		
-	N_list = [1000,4000,10000,40000,100000,400000,1000000,1635000]
+	N_list = [1000,4000,10000,40000,100000,400000,1000000,1635000] if not N_list else N_list
 	
 	###Get validation set
 	#this is for evaluating accuracy of the model
@@ -297,7 +297,7 @@ def bn_measure_validation_convergence(problem, big_savefile, N_val=0, doPrint=Tr
 			###Train and save it
 			if doPrint:
 				print("Training and saving",gmmfile_n,"...",flush=True)
-			gmm_n = bn_train_from_file(problem, savefile=big_savefile, do_subset=N, doPrint=True)
+			gmm_n = bn_train_from_file(problem, savefile=big_savefile, ncomp=ncomp, do_subset=N, doPrint=True)
 			
 			bn_save_gmm(gmm_n, gmm_file=gmmfile_n)
 			list_gmm.append(gmmfile_n)
