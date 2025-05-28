@@ -178,8 +178,8 @@ if __name__ == '__main__':
 
 	elif args.run == "BN_find_ntrain":
 		ncomp=20
-		N_list = [10**3, 4*10**3, 10**4, 4*10**4, 10**5, 4*10**5, 10**6, 4*10**6, 10**7, 4*10**7]
-		bn_measure_validation_convergence(problem, "BN_batch_samples", ncomp=ncomp, N_list=N_list, N_val=1000, doPrint=True)
+		N_list = [10**3, 4*10**3, 10**4, 4*10**4, 10**5, 4*10**5]#, 10**6, 4*10**6, 10**7, 4*10**7]
+		bn_measure_validation_convergence(problem, "BN_batch_samples", ncomp=ncomp, N_list=N_list, N_val=1000, doPrint=True, doPlot=True)
 		#TODO I think i want that fn to produce a plot with many converging lines, but right now it only makes 1 line i think 
 	
 	elif args.run == "BN_find_ncomp":
@@ -187,7 +187,6 @@ if __name__ == '__main__':
 		bn_train_evaluate_ncomp(problem, trainfile="BN_batch_samples", doPlot=False, doPrint=True)
 		#bn_train_evaluate_ncomp_plot([],[])
 		#bn_train_evaluate_ncomp_sanitycheck(problem, trainfile="BN_samples", valfile="BN_validation", doPlot=True, doPrint=True)
-
 
 	###Optimal Bayesian Experimental Design
 	elif args.run == "OBED_test":
@@ -220,7 +219,6 @@ if __name__ == '__main__':
 			
 		#Take slices of that data for increasing n
 		mc_plot_trace_bootstrap(u_1m_list, 60, doLog=False, doEvery=10000)
-
 	
 	"""
 	histcost = fp.G(d_historical)
