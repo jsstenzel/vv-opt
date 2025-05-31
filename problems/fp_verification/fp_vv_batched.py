@@ -114,6 +114,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--run', metavar='string', required=True, help='Functions to run for this vvopt analysis')
 	parser.add_argument('-n', type=int, default=0, help='Number of iterations to give to the function')
+	parser.add_argument('-ncomp', type=int, default=0, help='Number of components for GMM')	
 	args = parser.parse_args()
 	
 	###Problem Definition
@@ -162,9 +163,9 @@ if __name__ == '__main__':
 	
 	elif args.run == "BN_train":
 		#Train the BN off of the saved data
-		ncomp = args.n
+		ncomp = args.ncomp
 		q, _ = bn_load_samples(problem, savefile="BN_batch_samples", doPrint=True, doDiagnostic=True)
-		gmm = bn_train_from_file(problem, savefile="BN_batch_samples", do_subset=0, ncomp=ncomp, doPrint=True)
+		gmm = bn_train_from_file(problem, savefile="BN_batch_samples", do_subset=args.n, ncomp=ncomp, doPrint=True)
 		
 		#Save the GMM to a file
 		filename = "BN_batch_model_" + str(len(q)) + "_ncomp" + str(ncomp) + '.pkl'
@@ -183,8 +184,8 @@ if __name__ == '__main__':
 		#TODO I think i want that fn to produce a plot with many converging lines, but right now it only makes 1 line i think 
 	
 	elif args.run == "BN_find_ncomp":
-		N_list = [5,10,20,30]
-		bn_train_evaluate_ncomp(problem, trainfile="BN_batch_samples", doPlot=False, doPrint=True)
+		N_list = []
+		bn_train_evaluate_ncomp(problem, trainfile="BN_batch_samples", do_subset=4*10**6, doPlot=False, doPrint=True)
 		#bn_train_evaluate_ncomp_plot([],[])
 		#bn_train_evaluate_ncomp_sanitycheck(problem, trainfile="BN_samples", valfile="BN_validation", doPlot=True, doPrint=True)
 

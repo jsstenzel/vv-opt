@@ -320,7 +320,7 @@ def bn_measure_validation_convergence(problem, big_savefile, ncomp=0, N_list=[],
 	###Plot them all, shifting the largest-N estimate of Q to zero to hopefully see a line converging
 	if doPlot:
 		plt.xlabel("N for training GMM")
-		plt.ylabel("Average log-likelihood of the validation set (Nv="+str()+')')
+		plt.ylabel("Average log-likelihood of the validation set (Nv="+str(N_val)+')')
 		plt.xscale('log')
 		#N_plot = N_val if N_val < 100 else 100
 		#for i in range(N_plot):
@@ -330,10 +330,9 @@ def bn_measure_validation_convergence(problem, big_savefile, ncomp=0, N_list=[],
 	
 #Similar to bn_train_from_file
 #Except I want to evaluate BIC and MSE, and MAE for each ncomp
-def bn_train_evaluate_ncomp(problem, trainfile, doPrint=True, doPlot=True):
+def bn_train_evaluate_ncomp(problem, trainfile, do_subset=0, N_list=[], doPrint=True, doPlot=True):
 	###Setup
-	do_subset=0
-	ncomps = [10,20,30,40,50,60,70,80,90,100,110,130,200]
+	ncomps = [10,20,30,40,50,60,70,80,90,100,110,130,200] if not N_list else N_list
 	print("Evaluating",trainfile,"training data for GMM with number of components:",ncomps,flush=True)
 	BICs = [None]*len(ncomps)
 	scores = [None]*len(ncomps)
