@@ -247,7 +247,7 @@ class ProblemDefinition:
 				gp_sample.plot_prior()
 	
 	#assumes single theta, not list of thetas
-	"""
+
 	def prior_pdf_unnorm(self, theta):
 		#evaluate and return a list of probabilities (dim_theta) for each distribution component
 		probabilities = []
@@ -289,7 +289,6 @@ class ProblemDefinition:
 		#need to renormalize the pdf right?
 		#but unnormalized may be ok for MCMC?
 		return probabilities
-	"""
 	
 	def _theta_nominal(self):
 		"""

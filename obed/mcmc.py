@@ -16,7 +16,7 @@ from obed.pdf_estimation import *
 #y				 - single data point
 #likelihood_kernel - function that you can evaluate to determine the likelihood fn at theta, y
 #prop_fn	 - distribution fn used to propose new data points; takes a mean as argument
-def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_width, prior_rvs, prior_pdf_unnorm, n, burnin=0, lag=1, doPlot=False, legend=None, doPrint=False):
+def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_cov, prior_rvs, prior_pdf_unnorm, n, burnin=0, lag=1, doAdaptive=False, doPlot=False, legend=None, doPrint=False):
 	N = n*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
 	
 	theta_current = prior_rvs(1)
@@ -28,7 +28,7 @@ def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_width, prior_rvs, prior_pdf_
 		#The key here is that we want to generate a new theta randomly, and only dependent on the previous theta
 		#Usual approach is a gaussian centered on theta_current with some efficient proposal_width, but that doesnt work on all domains
 		#I'll keep it general: have an proposal distribution as an argument, which takes theta_current as a mean/argument itself
-		theta_proposal = prop_fn(theta_current, prop_width)
+		theta_proposal = prop_fn(theta_current, prop_cov)
 		
 		#Compute likelihood of the "data" for both thetas with the provided kernel
 		ytheta_current = np.concatenate([theta_current, y])
@@ -65,6 +65,20 @@ def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_width, prior_rvs, prior_pdf_
 		randwalk_rate = randwalk_count / (i+1)
 		if doPrint:
 			print(str(i+1)+"/"+str(N), acceptance_count, randwalk_count, theta_current, '\t', end='\r', flush=True)
+			
+		if doAdaptive and (i>2*burnin):
+			#if np.random.random_sample() < R: #only update the covariance upon acceptance?
+			if i%doAdaptive==0 and len(mcmc_trace)>len(theta_current)+1: #just update it every once in a while, at a pre-set rate
+				print('\n')
+				data = np.transpose(mcmc_trace)
+				if np.isinf(data).any():
+					print("bad trace")
+					exit
+				covariance = np.cov(data, ddof=1)
+				eps = 1e-12 * np.identity(len(theta_current))
+				sd = (2.4)**2 / len(theta_current)
+				prop_cov = sd*covariance + eps
+				exit
 		
 	acceptance_rate = acceptance_count / N
 	randwalk_rate = randwalk_count / N
@@ -73,7 +87,7 @@ def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_width, prior_rvs, prior_pdf_
 		plt.plot(mcmc_trace)
 		plt.legend(legend)
 		plt.show()
-	return mcmc_trace, acceptance_rate, randwalk_rate
+	return mcmc_trace, acceptance_rate, randwalk_rate, prop_cov
 
 
 #y				 - single data point
