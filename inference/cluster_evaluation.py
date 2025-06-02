@@ -10,6 +10,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.cluster import MiniBatchKMeans
 
+import matplotlib.cm as cm
+from sklearn.cluster import KMeans
+from sklearn.datasets import make_blobs
+from sklearn.metrics import silhouette_samples, silhouette_score
+from sklearn.metrics import calinski_harabasz_score
+
 sys.path.append('..')
 #from inference.goal_based_inference import *
 				
@@ -54,18 +60,31 @@ def cluster_load_samples(savefile, expected_length, doPrint=False, do_subset=0, 
 
 	return standard_data
 		
-def cluster_criterion_plot(ks, BICs, AICs):
+def cluster_criterion_plot(ks, BICs, AICs, inertias, scores):
 	###Print, plot
-	fig, ax1 = plt.subplots()
+	fig, (ax1, ax2) = plt.subplots(1,2)
 
 	# Plot the first data set on the left y-axis
+	"""
 	ax1.plot(ks, BICs, color='blue', label='BIC')
 	ax1.plot(ks, AICs, color='orange', label='AIC')
 	ax1.set_xlabel("Number of clusters")
 	ax1.set_xticks(ks)
-	#ax1.set_ylabel('BIC', color='blue')
-	ax1.tick_params(axis='y', labelcolor='blue')
-	plt.legend()
+	ax1.set_ylabel('Information criterion')
+	ax1.legend()
+	"""
+	ax1.plot(ks, scores, color='purple')#, label='BIC')
+	ax1.set_xlabel("Number of clusters")
+	ax1.set_xticks(ks)
+	ax1.set_ylabel('Calinski-Harabasz score')
+	#ax1.legend()
+	
+	ax2.set_xlabel("Number of clusters")
+	ax2.set_xticks(ks)
+	ax2.plot(ks, inertias, color='green')#, label='inertia')
+	ax2.tick_params(axis='y')
+	ax2.set_ylabel('Inertia')
+	#ax2.legend()
 
 	plt.show()
 
@@ -102,9 +121,11 @@ def cluster_eval_k(data, k, doPrint=True):
 	scores = kmeans.score(data)
 	score = np.mean(scores)
 	
+	CH_score = calinski_harabasz_score(data, kmeans.labels_)
+	
 	###return BIC, AIC
 	_, BIC, AIC = cluster_calc_criteria(score, k, d, N)
-	return BIC, AIC
+	return BIC, AIC, kmeans.inertia_, CH_score
 
 ###run the whole problem for multiple k, then plot
 def cluster_eval(savefile, ks, expected_length, do_subset=0, doPrint=True):
@@ -113,20 +134,91 @@ def cluster_eval(savefile, ks, expected_length, do_subset=0, doPrint=True):
 	data = cluster_load_samples(savefile, expected_length=expected_length, doPrint=doPrint, do_subset=do_subset, doDiagnostic=False)
 	BICs = [None]*len(ks)
 	AICs = [None]*len(ks)
+	inertias = [None]*len(ks)
+	scores = [None]*len(ks)
 	
 	for i,k in enumerate(ks):
 		if doPrint:
 			print("Evaluating k="+str(k),'...',flush=True)
-		BIC, AIC = cluster_eval_k(data, k=k, doPrint=False)
-		print(BIC, AIC)
+		BIC, AIC, inertia, CH_score = cluster_eval_k(data, k=k, doPrint=False)
+		print(BIC, AIC, inertia, CH_score)
 		BICs[i] = BIC
 		AICs[i] = AIC
+		inertias[i] = inertia
+		scores[i] = CH_score
 		
-	cluster_criterion_plot(ks, BICs, AICs)
+	cluster_criterion_plot(ks, BICs, AICs, inertias, scores)
+	
+def silhouette_scoring(savefile, n_clusters=2, expected_length=0, do_subset=0, doPrint=True):
+	if doPrint:
+		print("Getting data from",savefile,'...',flush=True)
+	data = cluster_load_samples(savefile, expected_length=expected_length, doPrint=doPrint, do_subset=do_subset, doDiagnostic=False)
+	X = np.array(data)
+
+	fig, ax1 = plt.subplots(1, 1)
+	fig.set_size_inches(18, 7)
+	# The 1st subplot is the silhouette plot
+	# The silhouette coefficient can range from -1, 1 but in this example all
+	# lie within [-0.1, 1]
+	ax1.set_xlim([-0.1, 1])
+	# The (n_clusters+1)*10 is for inserting blank space between silhouette
+	# plots of individual clusters, to demarcate them clearly.
+	ax1.set_ylim([0, len(X) + (n_clusters + 1) * 10])
+
+	# Initialize the clusterer with n_clusters value and a random generator
+	# seed of 10 for reproducibility.
+	clusterer = KMeans(n_clusters=n_clusters, random_state=10)
+	cluster_labels = clusterer.fit_predict(X)
+
+	# The silhouette_score gives the average value for all the samples.
+	# This gives a perspective into the density and separation of the formed
+	# clusters
+	silhouette_avg = silhouette_score(X, cluster_labels)
+	print(
+		"For n_clusters =",
+		n_clusters,
+		"The average silhouette_score is :",
+		silhouette_avg,
+	)
+
+	# Compute the silhouette scores for each sample
+	sample_silhouette_values = silhouette_samples(X, cluster_labels)
+
+	y_lower = 10
+	
+	for i in range(n_clusters):
+		# Aggregate the silhouette scores for samples belonging to
+		# cluster i, and sort them
+		ith_cluster_silhouette_values = sample_silhouette_values[cluster_labels == i]
+
+		ith_cluster_silhouette_values.sort()
+
+		size_cluster_i = ith_cluster_silhouette_values.shape[0]
+		y_upper = y_lower + size_cluster_i
+
+		color = cm.nipy_spectral(float(i) / n_clusters)
+		ax1.fill_betweenx(
+			np.arange(y_lower, y_upper),
+			0,
+			ith_cluster_silhouette_values,
+			facecolor=color,
+			edgecolor=color,
+			alpha=0.7,
+		)
+
+		# Label the silhouette plots with their cluster numbers at the middle
+		ax1.text(-0.05, y_lower + 0.5 * size_cluster_i, str(i))
+
+		# Compute the new y_lower for next plot
+		y_lower = y_upper + 10  # 10 for the 0 samples
+		
+	plt.show()
 
 if __name__ == '__main__':  
-	ks = [k*1000 for k in range(10,50+1)]
-	cluster_eval("BN_samples", ks, expected_length=62, do_subset=0, doPrint=True)
+	ks = [k for k in range(2,100)]
+	cluster_eval("BN_batch_samples", ks, expected_length=10, do_subset=4000000, doPrint=True)
+	#for n in [2,3,4,5,6,7,8,9,10]:
+	#	silhouette_scoring("BN_batch_samples", n_clusters=n, do_subset=4000000, expected_length=10)
 	
 """
 Evaluating k=10 ...
