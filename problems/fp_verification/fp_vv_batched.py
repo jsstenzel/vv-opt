@@ -107,6 +107,30 @@ def replot_optimal_points():
 			]
 	
 	plot_nsga2([C_hist], [U_hist], design_pts=pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
+
+def vv_OPT(problem, gmm_file, ysamples_file, design_pts, epsilon, util_err, do_hrs, do_min, threads, popSize, nMC, displayFreq=10):
+	#Load the GMM and presampled y from file
+	print("Loading GMM and presamples...",flush=True)
+	gmm = bn_load_gmm(gmm_file)
+	presampled_ylist = bn_load_y(problem, ysamples_file, doPrint=False, doDiagnostic=False)
+	
+	costs, utilities, designs = nsga2_obed_bn(
+		n_threads=threads,
+		prob=problem,
+		hours=do_hrs,
+		minutes=do_min,
+		popSize=popSize,
+		nSkip=2,
+		tolDelta=epsilon,#utility_conf95/1.96,
+		nPeriod=5,
+		nMonteCarlo=nMC,
+		GMM=gmm,
+		Ylist=presampled_ylist,
+		displayFreq=displayFreq
+		#initial_pop=nmcp4_final
+	)
+	plot_nsga2(costs, utilities, design_pts, util_err=util_err, showPlot=True, savePlot=False, logPlotXY=[False,False])
+
 	
 
 if __name__ == '__main__':  
@@ -164,8 +188,8 @@ if __name__ == '__main__':
 	elif args.run == "BN_train":
 		#Train the BN off of the saved data
 		ncomp = args.ncomp
-		q, _ = bn_load_samples(problem, savefile="BN_batch_samples", doPrint=True, doDiagnostic=True)
-		gmm = bn_train_from_file(problem, savefile="BN_batch_samples", do_subset=args.n, ncomp=ncomp, doPrint=True)
+		q, _ = bn_load_samples(problem, savefile="BN_40k_samples", doPrint=True, doDiagnostic=True)
+		gmm = bn_train_from_file(problem, savefile="BN_40k_samples", do_subset=args.n, ncomp=ncomp, doPrint=True)
 		
 		#Save the GMM to a file
 		filename = "BN_batch_model_" + str(len(q)) + "_ncomp" + str(ncomp) + '.pkl'
@@ -193,18 +217,22 @@ if __name__ == '__main__':
 	elif args.run == "OBED_test":
 		#Load the GMM and presampled y from file
 		print("Loading GMM and presamples...",flush=True)
-		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
+		gmm = bn_load_gmm("BN_batch_model_4000000_ncomp45.pkl")
 		presampled_ylist = bn_load_y(problem, "BN_batch_samples.csv", doPrint=False, doDiagnostic=False)
 		
 		#Calculate U for several different designs
 		U_dhist, _ = U_varH_gbi_joint_presampled(d_historical, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
-		print("U_dmin:",U_dmin,flush=True)	
+		print("U_dhist:",U_dhist,flush=True)	
+		U_dbest, _ = U_varH_gbi_joint_presampled(d_best, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_dbest:",U_dbest,flush=True)
+		U_dworst, _ = U_varH_gbi_joint_presampled(d_worst, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_dworst:",U_dworst,flush=True)		
 	
 		
 	elif args.run == "OBED_convergence":
 		#Load the GMM and presampled y from file
 		print("Loading GMM and presamples...",flush=True)
-		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
+		gmm = bn_load_gmm("BN_batch_model_4000000_ncomp45.pkl")
 		presampled_ylist = bn_load_y(problem, "BN_batch_samples.csv", doPrint=False, doDiagnostic=False)
 		
 		#Calculate U_hist for large n_mc, and save the individual MC results
@@ -219,7 +247,7 @@ if __name__ == '__main__':
 			u_1m_list = pickle.load(file)
 			
 		#Take slices of that data for increasing n
-		mc_plot_trace_bootstrap(u_1m_list, 60, doLog=False, doEvery=10000)
+		mc_plot_trace_bootstrap(u_1m_list, 60, doLog=False, savePlot=True, doEvery=10000)
 	
 	"""
 	histcost = fp.G(d_historical)
@@ -227,6 +255,12 @@ if __name__ == '__main__':
 	print("historical design:",histcost, "seconds or",histcost/(3600),"hours")
 	print("best design:",bestcost, "seconds or",bestcost/(3600),"hours")
 	"""
+	design_pts = [
+		[problem.G(d_historical), 0.034652027998787686, "d_hist", 0.00018466215028162876],
+		[problem.G(d_best), 0.09829097382501674, "d_hist", 0.00018466215028162876],
+		[problem.G(d_worst), 0.028210891335003707, "d_hist", 0.00018466215028162876],
+	]
+
 	
 	if args.run == "OBED_plot":
 		#U_hist = fp_vv_obed_gbi(d_historical)
@@ -258,4 +292,22 @@ if __name__ == '__main__':
 			popSize=40,# if args.n==0 else args.n,
 			nMC=10,
 			displayFreq=10
+		)
+
+	elif args.run == "OPT":
+		conf95 = 0.0003478985402516399
+		std_frac = conf95 / (1.96*(0.0047856764435419575 - 0.0022957744137691916))
+		vv_OPT(
+			problem,
+			gmm_file="BN_batch_model_4000000_ncomp45.pkl",
+			ysamples_file="BN_batch_samples.csv",
+			design_pts=design_pts,
+			epsilon=0.001,
+			util_err=conf95,
+			do_hrs = 0,
+			do_min = 0,
+			threads = 25,#1 if args.n == 0 else args.n,
+			popSize=50,#30 if args.n==0 else args.n,
+			nMC=10**4,
+			displayFreq=5
 		)
