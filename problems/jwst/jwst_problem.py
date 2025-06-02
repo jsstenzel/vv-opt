@@ -76,8 +76,8 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 		["zeta_sunshield", ["uniform", unif_margin(0.005*5)], "continuous"],
 		["zeta_isolator", ["uniform", unif_margin(0.005*20)], "continuous"],
 		["zeta_solarpanel", ["uniform", unif_margin(0.005*20)], "continuous"],
-		["stiffness_rt_factor", ["uniform", unif_margin(0.1)], "continuous"], #at higher temperatures, stiffness goes down
-		["damping_rt_factor",  ["uniform", unif_margin(10)], "continuous"] #at higher temperatures, damping goes up
+		#["stiffness_rt_factor", ["uniform", unif_margin(0.1)], "continuous"], #at higher temperatures, stiffness goes down
+		#["damping_rt_factor",  ["uniform", unif_margin(10)], "continuous"] #at higher temperatures, damping goes up
 	]
 
 	y_defs = [	
