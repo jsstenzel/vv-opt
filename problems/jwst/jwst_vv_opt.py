@@ -390,9 +390,6 @@ if __name__ == '__main__':
 	elif args.run == "SA_jitter_sample":
 		vv_SA_jitter_sample(problem, N=args.n, filename=args.filename)
 
-	elif args.run == "SA_jitter_sample":
-		vv_SA_jitter_sample(problem, N=args.n)
-
 	elif args.run == "SA_jitter_evaluate":
 		vv_SA_jitter_evaluate(problem, do_subset=args.n)
 		
