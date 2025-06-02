@@ -21,8 +21,8 @@ from uq.uncertainty_propagation import *
 from inference.bn_modeling import *
 from inference.bn_evaluation import *
 from opt.nsga import *
-
-
+import pickle
+from obed.mcmc import *
 
 ################################
 #Analysis functions
@@ -131,7 +131,102 @@ def vv_OPT(problem, gmm_file, ysamples_file, design_pts, tolDelta, util_err, do_
 	)
 	plot_nsga2(costs, utilities, design_pts, util_err=util_err, showPlot=True, savePlot=False, logPlotXY=[False,False])
 
+def kde_train(grid_density, d, doDiagnostic=False):
+	print("Generating kernel",flush=True)
+	kde_gains = np.linspace(0,3,grid_density)
+	kde_rn = np.linspace(1,4,grid_density)
+	kde_dc = np.linspace(0,.01,grid_density)
+	kde_thetas = np.vstack((np.meshgrid(kde_gains, kde_rn, kde_dc))).reshape(3,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
+	if doDiagnostic:
+		uncertainty_prop_plots(kde_thetas, xlabs=['gain','rn','dc'])
+	kde_ys = [fp.eta(theta, d_historical) for theta in kde_thetas]
+	if doDiagnostic:
+		uncertainty_prop_plots(kde_ys, xlabs=['Y0','Y1','Y2'])
+	likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys)
 	
+	print("Pickling kernel",flush=True)
+	with open('likelihood_kde.pkl', 'wb') as file:
+		pickle.dump(likelihood_kernel, file)
+		
+	if doDiagnostic:
+		kde_plot(likelihood_kernel, kde_ythetas, plotStyle='together', ynames=['gain','rn','dc','y1','y2','y3'])
+	
+	return likelihood_kernel
+
+def fp_prior_update(ydata, d, n_mcmc, loadKDE=False, loadMCMC=False, doDiagnostic=False):
+	def proposal_fn_norm(theta_curr, prop_cov):
+		#theta_prop = [0] * len(theta_curr)
+		#for i,_ in enumerate(theta_prop):
+		#	#proposal dists are gammas, to match
+		#	mean = abs(theta_curr[i])
+		#	stddev = proposal_width[i]
+		#	theta_prop[i] = scipy.stats.norm.rvs(size=1, loc=mean, scale=stddev)[0]
+		
+		theta_prop = scipy.stats.multivariate_normal.rvs(mean=theta_curr, cov=prop_cov, size=1)
+		return theta_prop
+		
+	###First, get the KDE
+	if loadKDE:
+		print("Loading kernel",flush=True)
+		with open('likelihood_kde.pkl', 'rb') as file:
+			likelihood_kernel = pickle.load(file)
+	else:
+		likelihood_kernel = kde_train(grid_density=100, d=d, doDiagnostic=doDiagnostic)
+	
+	if loadMCMC:
+			mcmc_trace = []
+		with open('mcmc.csv', 'r', newline='') as csvfile:
+			csvreader = csv.reader(csvfile, delimiter=' ')
+			for theta in csvreader:
+				mcmc_trace.append([float(t) for t in theta])
+	else:
+		###Then, do MCMC to get posterior samples
+		prop_cov = [[ 0.2**2, 0, 0],
+					[ 0, 0.25**2, 0],
+					[ 0, 0, 0.001**2]]
+		prop_cov = [[ 9.56717238e-05, -1.74880135e-04,  1.04860536e-07],
+					[-1.74880135e-04,  3.81200241e-02, -5.36382479e-06],
+					[ 1.04860536e-07, -5.36382479e-06,  5.69947631e-07]]
+		mcmc_trace, arate, rrate, last_prop_width = mcmc_kernel(	
+			ydata, 
+			likelihood_kernel, 
+			proposal_fn_norm, 
+			prop_cov, 
+			fp.prior_rvs, 
+			fp.prior_pdf_unnorm, 
+			n_mcmc, 
+			burnin=300, 
+			lag=1, 
+			doAdaptive=100,
+			doPlot=True, 
+			legend=fp.theta_names, 
+			doPrint=True)
+		print(arate, rrate)
+		print(last_prop_width)
+		
+		###Analyze the mcmc posterior samples and plot the posterior distributions
+		#save data, do analysis and plots
+		with open('mcmc.csv', 'w', newline='') as csvfile:
+			csvwriter = csv.writer(csvfile, delimiter=' ')
+			for theta in mcmc_trace:
+				csvwriter.writerow(theta)
+		
+	###Analyze the mcmc posterior samples and plot the posterior distributions
+	#save data, do analysis and plots
+	print("mean, stddev, covariance of posterior sample:")
+	means, stddevs, cov = mcmc_analyze(mcmc_trace,doPlot=True)
+	print(means)
+	print(stddevs)
+	print(cov)
+	H_posterior = [fp.H(tt) for tt in mcmc_trace]
+	print("Posterior probability of meeting the requirement: ", np.sum([int(h <= req) for h in H_posterior])/len(H_posterior))
+	
+	uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Gain [ADU/e-]")
+	uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
+	uncertainty_prop_plot([sample[2] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
+	###Lastly, use those samples to plot the posterior predictive distribution
+	uncertainty_prop_plot(H_posterior, c='darkgreen', xlab="Posterior QoI: Avg. Noise [e-]", vline=[req])
+	#could fit a gaussian to that guy to estimate the probability change!
 
 if __name__ == '__main__':  
 	import argparse
@@ -175,10 +270,26 @@ if __name__ == '__main__':
 	theta_nominal = [1.1, 2.5, .001]
 	QoI_nominal = fp.H(theta_nominal)
 	y_nominal = problem.eta(theta_nominal, d_historical, err=False)
+	
+	"""
+	histcost = fp.G(d_historical)
+	bestcost = fp.G([14.34365321,  3, 19, 24, 1.00236047,  2.24834641])
+	print("historical design:",histcost, "seconds or",histcost/(3600),"hours")
+	print("best design:",bestcost, "seconds or",bestcost/(3600),"hours")
+	"""
+	design_pts = [
+		[problem.G(d_historical), 0.034652027998787686, "d_hist", 0.00018466215028162876],
+		[problem.G(d_best), 0.09829097382501674, "d_best", 0.00018466215028162876],
+		[problem.G(d_worst), 0.028210891335003707, "d_worst", 0.00018466215028162876],
+	]
 
 	###Uncertainty Quantification
 	if args.run == "nominal":
 		vv_nominal(problem, req, theta_nominal, y_nominal)
+		
+	if args.run == "UP_jitter_from_BN":
+		Qs, _ = bn_load_samples(problem, savefile="BN_40k_samples", doPrint=True, doDiagnostic=True)
+		uncertainty_prop_plot(Qs, xlab="QoI: Avg. Noise [e-]", vline=[req])
 	
 	###Train Bayesian network model
 	elif args.run == "BN_sample":
@@ -249,20 +360,7 @@ if __name__ == '__main__':
 		#Take slices of that data for increasing n
 		mc_plot_trace_bootstrap(u_1m_list, 60, doLog=False, savePlot=True, doEvery=10000)
 	
-	"""
-	histcost = fp.G(d_historical)
-	bestcost = fp.G([14.34365321,  3, 19, 24, 1.00236047,  2.24834641])
-	print("historical design:",histcost, "seconds or",histcost/(3600),"hours")
-	print("best design:",bestcost, "seconds or",bestcost/(3600),"hours")
-	"""
-	design_pts = [
-		[problem.G(d_historical), 0.034652027998787686, "d_hist", 0.00018466215028162876],
-		[problem.G(d_best), 0.09829097382501674, "d_best", 0.00018466215028162876],
-		[problem.G(d_worst), 0.028210891335003707, "d_worst", 0.00018466215028162876],
-	]
-
-	
-	if args.run == "OBED_plot":
+	elif args.run == "OBED_plot":
 		#U_hist = fp_vv_obed_gbi(d_historical)
 		U_hist = 0.4981609760099987
 		C_hist = np.log(fp.G(d_historical))
@@ -278,7 +376,7 @@ if __name__ == '__main__':
 		pts = [[C_hist, U_hist, "d_hist"], [C_best, U_best, "d_max"], [C_worst, U_worst, "d_min"]]
 		plot_ngsa2([C_hist], [U_hist], design_pts=pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
 
-	if args.run == "OPT_test":
+	elif args.run == "OPT_test":
 		vv_OPT(
 			problem, 
 			gmm_file="ncomp_testing/BN_model_1639027_ncomp20.pkl", 
@@ -365,3 +463,10 @@ if __name__ == '__main__':
 			displayFreq=5,
 			samples=[pop[2:] for pop in first_run],
 		)
+		
+	elif args.run == "prior_update":
+		ydata = [yi*1.1 for yi in y_nominal] #test data, just choosing things on the large end of y
+		fp_prior_update(ydata, d_historical, n_mcmc=args.n, loadKDE=True, doDiagnostic=True)
+	
+	else:
+		print("I don't recognize the command",args.run)
