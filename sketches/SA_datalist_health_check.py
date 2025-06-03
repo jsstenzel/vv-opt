@@ -69,6 +69,7 @@ def read_SA_files(base_name,var_names,do_subset=0,doPrint=False):
 
 		for p,name in enumerate(var_names):
 			Ciy = []
+			print(name)
 			with open(base_name+'_C_'+name+'.csv') as csvfile:
 				csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
 				for l,row in enumerate(csvreader):
@@ -76,7 +77,11 @@ def read_SA_files(base_name,var_names,do_subset=0,doPrint=False):
 						if doDiagnostic:
 							print("Warning: dropped line",l+1,"(length "+str(len(row))+')',"from",base_name+'_C_'+name+'.csv')
 					else:
-						Ciy.append([float(elem) for elem in row])
+						try:
+							Ciy.append([float(elem) for elem in row])
+						except:
+							print(row)
+							Ciy.append([0 for elem in row])
 			Cy.append(Ciy)
 	else:
 		lim = int(do_subset/2)
@@ -113,10 +118,10 @@ def read_SA_files(base_name,var_names,do_subset=0,doPrint=False):
 			
 	return Ay,By,Cy
 
-def temp_cut_rows(Ay,By,lines):
+def temp_cut_rows(Ay,By,Cy,lines):
 	Ay_cut = []
 	By_cut = []
-	#Cy_cut = []
+	Cy_cut = []
 
 	for i,line in enumerate(Ay):
 		if i+1 not in lines:
@@ -126,16 +131,14 @@ def temp_cut_rows(Ay,By,lines):
 		if i+1 not in lines:
 			By_cut.append(line)
 	
-	"""
 	for p,name in enumerate(var_names):
 		Ciy_cut = []
 		for i,line in enumerate(Cy[p]):
 			if i+1 not in lines:
 				Ciy_cut.append(line)
 		Cy_cut.append(Ciy_cut)
-	"""
 				
-	return Ay_cut,By_cut
+	return Ay_cut,By_cut,Cy_cut
 	
 def oversave(base_name, var_names, Ay,By,Cy):
 	aw = 'w+'# if os.path.exists(base_name+'_A.csv') else 'w+'
@@ -266,10 +269,17 @@ def base_combine(primary_base, var_names, list_bases, save=False):
 def base_trim(base_name, var_names, do_subset=0):	
 	Ay,By,Cy = read_SA_files(base_name, var_names, do_subset=do_subset, doPrint=True)
 	oversave(base_name, var_names, Ay,By,Cy)
+	
+def base_line_cut(base_name, var_names, lines):
+	Ay,By,Cy = read_SA_files(base_name, var_names, do_subset=0, doPrint=True)
+	temp_cut_rows(Ay,By,Cy,lines)
+	oversave(base_name, var_names, Ay,By,Cy)
 		
 if __name__ == '__main__':
 
+	#base_line_cut("SA_jitter", var_names, [29398,29397])
 	health_check("SA_jitter",var_names)
+	
 	#Check all bases
 	#base_names = ["SA_QoI_bank"+str(i) for i in range(1,129)]
 	#print(base_names)
@@ -279,6 +289,7 @@ if __name__ == '__main__':
 	#check some trimmed bases
 	#health_check("SA_QoI_bank35", var_names, do_subset=246*2)
 	#base_trim("SA_QoI_bank35", var_names, do_subset=246*2)
+	#base_trim("SA_jitter", var_names, do_subset=29398*2)
 	
 	#health_check("SA_QoI_bank91", var_names, do_subset=222*2)
 	#base_trim("SA_QoI_bank91", var_names, do_subset=222*2)
