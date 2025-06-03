@@ -21,8 +21,10 @@ from uq.uncertainty_propagation import *
 from inference.bn_modeling import *
 from inference.bn_evaluation import *
 from opt.nsga import *
+from opt.utility_max_costcap import *
 import pickle
 from obed.mcmc import *
+
 
 ################################
 #Analysis functions
@@ -34,79 +36,62 @@ def vv_nominal(problem, req, theta_nominal, y_nominal):
 	print("Given the nominal theta:", theta_nominal)
 	#print("Nominal y:", y_nominal)
 	print("Nominal QoI:", QoI_nominal)
+	
+def replot_nsga(design_pts, util_err):	
+	pareto = [
+		[3021.3,0.0235377,0.100038,1,3,2,1.00001,2.76496],
+		[3046.8,0.0229329,0.101129,1,5,2,1.00104,2.88654],
+		[3100.57,0.0222279,39.7335,1,3,2,1.00002,0.46484],
+		[3286.9,0.0215993,122.701,1,4,2,1.00038,2.47238],
+		[3332.4,0.0205716,0.100038,62,2,2,1.00121,0.528267],
+		[3342.6,0.0204546,0.100056,64,1,2,1.00121,0.528267],
+		[3353.83,0.0196779,0.100056,64,1,4,1.00121,0.528267],
+		[3358.93,0.0189023,0.100055,65,2,4,1.00024,0.528267],
+		[3399.83,0.018136,0.101077,73,1,4,1.01352,0.551472],
+		[3415.08,0.0174439,0.100063,76,1,4,1.01356,0.435721],
+		[3453.04,0.0167077,0.108727,80,1,7,1.00086,0.518346],
+		[3519.29,0.0158149,0.108727,80,13,7,1.00086,0.578323],
+		[3550.71,0.014904,0.109703,91,2,15,1.00001,2.68692],
+		[3554.93,0.0142274,0.100112,92,2,15,1.00001,2.68692],
+		[3565.62,0.0140648,0.100112,92,2,17,1.00041,2.68692],
+		[3724.85,0.0132064,0.109725,84,38,18,1.03787,2.79654],
+		[3730.8,0.0126392,0.116272,81,42,18,1.09693,2.77286],
+		[3798.5,0.0118342,0.118226,89,43,22,1.09219,2.72553],
+		[3879.48,0.0115567,0.475658,96,44,23,1.09403,2.72553],
+		[6154.89,0.0114627,34.8071,74,10,21,1.00069,0.528237],
+		[6307.84,0.0111663,38.2868,71,14,21,1.08007,0.431858],
+		[6396.94,0.0103785,34.8071,80,10,21,1.25751,0.529687],
+		[6627.34,0.0095346,38.4666,78,12,23,1.15142,0.431858],
+		[6950.76,0.00882877,41.9568,80,5,21,1.22864,0.420593],
+		[7050.37,0.00861584,44.1265,78,10,21,1.00167,0.528107],
+		[7174.39,0.00790691,41.6345,84,14,21,2.56232,0.423237],
+		[7406.25,0.0077057,49.8757,75,23,21,1.00084,0.519905],
+		[7570.91,0.0070139,49.8757,78,23,21,1.00274,0.519517],
+		[8012.48,0.00678689,54.4345,80,15,21,1.26173,0.497562],
+		[8256.26,0.00621329,57.5071,80,14,21,1.26173,0.497562],
+		[8938.3,0.00598604,62.3074,84,14,22,2.56232,0.42297],
+		[12894.5,0.00597515,101.384,91,1,20,1.00215,2.77225],
+		[13806.1,0.00583011,111.293,91,1,20,1.00009,2.7701],
+		[14626.5,0.0056716,120.206,91,1,20,1.02236,2.69656],
+		[15450.6,0.00542667,127.723,92,1,20,1.00126,2.64808],
+		[16263.9,0.00535724,134.962,93,1,20,1.01814,2.64659],
+		[16264.4,0.00529055,134.969,93,1,20,1.01814,2.77167],
+		[17014.1,0.0051372,144.471,92,1,21,1.09697,2.70443],
+		[17738.3,0.00498594,152.263,92,1,21,1.01411,2.69028],
+		[18399.9,0.00479681,159.378,92,1,21,1.01366,2.69123],
+		[19211.7,0.00471889,168.101,92,1,21,1.09882,2.69047],
+		[19976,0.00461837,175.448,92,16,21,1.01021,2.69122],
+		[20880.5,0.00459253,188.129,91,1,21,1.00019,2.72462],
+		[20962.3,0.00437662,188.129,91,15,22,1.00019,2.76492],
+		[22579.2,0.00427538,203.601,92,13,21,1.06234,2.68431],
+		[23413.1,0.00416489,212.407,92,15,22,1.00038,2.87492],
+		[23886.9,0.00404214,217.498,92,15,22,1.03951,2.79583],
+		[24844,0.00402226,230.261,91,15,23,1.03551,2.7738],
+		[25433.6,0.00401443,236.73,91,15,22,1.0184,2.76765],
+		[25917.1,0.00396416,236.73,93,15,22,1.0184,2.76765]
+	]
 
-
-def vv_obed_gbi(problem, d):
-	U, U_list = U_varH_gbi(d, problem, n_mc=10**5, n_gmm=10**5, doPrint=True)
-	print(U)
-	#print(U_list)
-	uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")#, saveFig='OBEDresult')
-	return U
-	
-def optimality_study():
-	#U_hist = fp_vv_obed_gbi(d_historical)
-	U_hist = 0.4981609760099987
-	C_hist = np.log(fp.G(d_historical))
-	print(C_hist, flush=True)
-	
-	#U_best = fp_vv_obed_gbi(d_best)
-	U_best = 0.48310825880372715
-	C_best = np.log(fp.G(d_best))
-	
-	#U_worst = fp_vv_obed_gbi(d_worst)
-	U_worst = 1.2584888138976271
-	C_worst = np.log(fp.G(d_worst))
-		
-	pts = [[C_hist, U_hist, "d_hist"], [C_best, U_best, "d_max"], [C_worst, U_worst, "d_min"]]
-	plot_nsga2([C_hist], [U_hist], design_pts=pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
-	
-	#costs, utilities, designs = ngsa2_problem(fp, nGenerations=200, popSize=30, nMonteCarlo=5*10**3, nGMM=10**3)
-	#costs, utilities, designs = ngsa2_problem(fp, nGenerations=10, popSize=2, nMonteCarlo=5*10**3, nGMM=10**3)
-	#costs, utilities, designs = ngsa2_problem_parallel(8, fp, hours=0, minutes=0, popSize=12, nMonteCarlo=5*10**3, nGMM=10**3)
-	costs, utilities, designs = ngsa2_problem_parallel(8, fp, hours=0, minutes=0, popSize=12, nMonteCarlo=5*10**3, nGMM=5*10**3)
-
-	pts = [[C_hist, U_hist, "d_hist"], [C_best, U_best, "d_max"], [C_worst, U_worst, "d_min"]]
-	plot_nsga2(costs, utilities, design_pts=pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
-	
-def replot_optimal_points():
-	#U_hist = fp_vv_obed_gbi(d_historical)
-	U_hist = 0.4950101158
-	C_hist = np.log(fp.G(d_historical))
-	
-	#U_best = fp_vv_obed_gbi(d_best)
-	U_best = 0.48206003
-	C_best = np.log(fp.G(d_best))
-	
-	#U_worst = fp_vv_obed_gbi(d_worst)
-	U_worst = 1.6773693263
-	C_worst = np.log(fp.G(d_worst))
-	
-	#t_gain
-	#I_gain
-	#n_meas_rn
-	#d_num
-	#d_max
-	#d_pow
-	d1 = [34.24242879,  1, 6,  24, 1.00236049,  2.17136203]
-	d2 = [14.34365321,  3, 19, 24, 1.00236047,  2.24834641]
-	d3 = [9.03012734,   1, 32, 2,  10.6248672,  0.251100910]
-
-	U1 = 0.48891192#fp_vv_obed_gbi(d1)
-	C1 = np.log(fp.G(d1))
-	U2 = 0.49705924#fp_vv_obed_gbi(d2)
-	C2 = np.log(fp.G(d2))
-	U3 = 0.53882345#fp_vv_obed_gbi(d3)
-	C3 = np.log(fp.G(d3))
-	
-	pts = [[C_hist, U_hist, "d_hist"], 
-			[C_best, U_best, "d_max"], 
-			[C_worst, U_worst, "d_min"],
-			[C1, U1, "d_1"],
-			[C2, U2, "d_2"],
-			[C3, U3, "d_3"]
-			]
-	
-	plot_nsga2([C_hist], [U_hist], design_pts=pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
+	plot_nsga2([p[0] for p in pareto], [p[1] for p in pareto], design_pts=design_pts, util_err=util_err, showPlot=True, savePlot=False, logPlotXY=[False,False])
 
 def vv_OPT(problem, gmm_file, ysamples_file, design_pts, tolDelta, util_err, do_hrs, do_min, threads, popSize, nMC, displayFreq, samples):
 	#Load the GMM and presampled y from file
@@ -174,7 +159,7 @@ def fp_prior_update(ydata, d, n_mcmc, loadKDE=False, loadMCMC=False, doDiagnosti
 		likelihood_kernel = kde_train(grid_density=100, d=d, doDiagnostic=doDiagnostic)
 	
 	if loadMCMC:
-			mcmc_trace = []
+		mcmc_trace = []
 		with open('mcmc.csv', 'r', newline='') as csvfile:
 			csvreader = csv.reader(csvfile, delimiter=' ')
 			for theta in csvreader:
@@ -249,7 +234,7 @@ if __name__ == '__main__':
 		2        #d_pow   #approx
 	]
 
-	d_best = [
+	d_max = [
 		600,   #t_gain
 		100,   #I_gain
 		50,     #n_meas_rn
@@ -258,7 +243,7 @@ if __name__ == '__main__':
 		3     #d_pow   #approx
 	]	
 
-	d_worst = [
+	d_min = [
 		1,   #t_gain
 		1,   #I_gain
 		1,      #n_meas_rn
@@ -278,9 +263,9 @@ if __name__ == '__main__':
 	print("best design:",bestcost, "seconds or",bestcost/(3600),"hours")
 	"""
 	design_pts = [
-		[problem.G(d_historical), 0.034652027998787686, "d_hist", 0.00018466215028162876],
-		[problem.G(d_best), 0.09829097382501674, "d_best", 0.00018466215028162876],
-		[problem.G(d_worst), 0.028210891335003707, "d_worst", 0.00018466215028162876],
+		[problem.G(d_historical),  0.03470218984967855, "d_hist", 0.0003478985402516399],
+		[problem.G(d_min), 0.028370595422594045, "d_min", 0.0003478985402516399],
+		[problem.G(d_max), 0.09897076229757248, "d_max", 0.0003478985402516399],
 	]
 
 	###Uncertainty Quantification
@@ -308,7 +293,6 @@ if __name__ == '__main__':
 		bn_save_gmm(gmm, gmm_file=filename)
 		
 	elif args.run == "BN_examine":
-		print("U_dmin:",U_dmin,flush=True)
 		bn_compare_model_covariance(problem, "BN_batch_samples", "BN_batch_model_1639027_ncomp200.csv", doPrint=True)
 		#bn_plot_data_density(problem, "BN_samples_1639027", "BN_model_1639027_ncomp200.csv", do_subset=100, doGMMPlot=False, doPrint=True)
 
@@ -334,10 +318,10 @@ if __name__ == '__main__':
 		#Calculate U for several different designs
 		U_dhist, _ = U_varH_gbi_joint_presampled(d_historical, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
 		print("U_dhist:",U_dhist,flush=True)	
-		U_dbest, _ = U_varH_gbi_joint_presampled(d_best, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
-		print("U_dbest:",U_dbest,flush=True)
-		U_dworst, _ = U_varH_gbi_joint_presampled(d_worst, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
-		print("U_dworst:",U_dworst,flush=True)		
+		U_dmax, _ = U_varH_gbi_joint_presampled(d_max, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_dmax:",U_dmax,flush=True)
+		U_dmin, _ = U_varH_gbi_joint_presampled(d_min, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_dmin:",U_dmin,flush=True)		
 	
 		
 	elif args.run == "OBED_convergence":
@@ -359,22 +343,6 @@ if __name__ == '__main__':
 			
 		#Take slices of that data for increasing n
 		mc_plot_trace_bootstrap(u_1m_list, 60, doLog=False, savePlot=True, doEvery=10000)
-	
-	elif args.run == "OBED_plot":
-		#U_hist = fp_vv_obed_gbi(d_historical)
-		U_hist = 0.4981609760099987
-		C_hist = np.log(fp.G(d_historical))
-		
-		#U_best = fp_vv_obed_gbi(d_best)
-		U_best = 0.48310825880372715
-		C_best = np.log(fp.G(d_best))
-		
-		#U_worst = fp_vv_obed_gbi(d_worst)
-		U_worst = 1.2584888138976271
-		C_worst = np.log(fp.G(d_worst))
-		
-		pts = [[C_hist, U_hist, "d_hist"], [C_best, U_best, "d_max"], [C_worst, U_worst, "d_min"]]
-		plot_ngsa2([C_hist], [U_hist], design_pts=pts, showPlot=True, savePlot=False, logPlotXY=[False,False])
 
 	elif args.run == "OPT_test":
 		vv_OPT(
@@ -462,6 +430,21 @@ if __name__ == '__main__':
 			nMC=22000,
 			displayFreq=5,
 			samples=[pop[2:] for pop in first_run],
+		)
+		
+	elif args.run == "OPT_replot":
+		replot_nsga(design_pts, 0.0003478985402516399)
+		
+	#Find the highest utility design, subject to a cost cap
+	elif args.run == "OPT_costcap":
+		minimize_with_penality(
+		problem, 
+		costcap=8000, 
+		gmm_file="BN_batch_model_4000000_ncomp45.pkl", 
+		ylist_file="BN_batch_samples.csv",
+		n_mc=22000, 
+		n_tries=2, 
+		x0=[.2,2,2,4,2,1]
 		)
 		
 	elif args.run == "prior_update":
