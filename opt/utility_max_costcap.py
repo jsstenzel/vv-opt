@@ -30,12 +30,14 @@ def parallel_design_print(costs, utils, designs, prob):
 		table.append(row)
 	print(tabulate(table,headers),flush=True)
 
-def minimize_with_penality(problem, costcap, gmm_file, ylist_file, n_mc, n_tries, x0):
+def minimize_with_penalty(problem, costcap, gmm_file, ylist_file, n_mc, n_tries, x0, ftol, penalty):
 	print("Loading GMM and presamples...",flush=True)
 	gmm = bn_load_gmm(gmm_file)
 	presampled_ylist = bn_load_y(problem, ylist_file, doPrint=False, doDiagnostic=False)
 	#for the initial guess, pick a pareto optimal design that satisfies the constraint
-	bounds = scipy.optimize.Bounds([.1, 1, 1, 2, 1 ,0], [600, 100, 50, 25, 12000, 3])
+	d_lowers = [d_dist[1][0] for d_dist in problem.d_dists]
+	d_uppers = [d_dist[1][1] for d_dist in problem.d_dists]
+	bounds = scipy.optimize.Bounds(d_lowers, d_uppers)
 	
 	def fn_to_minimize(d):
 		U_d,_ = U_varH_gbi_joint_presampled(d, problem, gmm, presampled_ylist, n_mc=n_mc, doPrint=False)
@@ -43,15 +45,17 @@ def minimize_with_penality(problem, costcap, gmm_file, ylist_file, n_mc, n_tries
 		
 		#Note that minimizing U_d actually maximizes the utility
 		#Add a penalty factor if we exceed the cost cap
-		penalty = 1 if C_d < costcap else 4 + (costcap - C_d)
-		return penalty * U_d
+		if C_d < costcap:
+			return U_d
+		else:
+			return U_d + penalty + (costcap - C_d)
 	
 	costs = []
 	utilities = []
 	designs = []
 	###do a few iterations of minimization here
 	for i in range(n_tries):
-		res = scipy.optimize.minimize(fn_to_minimize, x0, method='SLSQP', options={'ftol': 0.0003478985402516399, 'disp': True}, bounds=bounds)
+		res = scipy.optimize.minimize(fn_to_minimize, x0, method='SLSQP', options={'ftol': ftol, 'disp': True}, bounds=bounds)
 		costs.append(problem.G(res.x))
 		utilities.append(res.fun)
 		designs.append(res.x)

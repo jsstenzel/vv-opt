@@ -8,7 +8,9 @@ import scipy.stats
 
 from itertools import islice
 
-var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
+#var_names = ["gain_red","gain_gre","gain_blu","rn_red","rn_gre","rn_blu","dc_red","dc_gre","dc_blu","qe_red_prec","qe_gre_prec","qe_blu_prec","vph_red_prec","vph_gre_prec","vph_blu_prec","sl_prec","bg_prec","coll_prec","red_l1_prec","red_l2_prec","red_l3_prec","red_l4_prec","red_l5_prec","red_l6_prec","red_l7_prec","gre_l1_prec","gre_l2_prec","gre_l3_prec","gre_l4_prec","gre_l5_prec","gre_l6_prec","gre_l7_prec","blu_l1_prec","blu_l2_prec","blu_l3_prec","blu_l4_prec","blu_l5_prec","blu_l6_prec","blu_l7_prec","blu_l8_prec","fiber_frd"]
+var_names = ["Us","Ud","Qc","I_SMhubt","I_SMhuba","K_yPM","I_xRWA","I_yRWA","I_RWt","I_RWa","I_ISOa","I_ISOt","K_yISO","K_xISO","I_bus","I_propt","I_propa","I_i1","I_i2","I_i3","A_sptop","D_sp","t_sp","I_ss","K_rad1","K_rad2","K_rISO","K_act1","K_act2","I_iso","K_zpet","K_pm1","K_pm3","K_pm4","K_pm5","K_pm6","K_act_pm2","K_act_pm3","K_act_pm4","K_act_pm5","K_act_pm6","K_xpet","c_RWA","c_RWAI","c_SM_act","c_PM","c_PM_act","c_petal","zeta_sunshield","zeta_isolator","zeta_solarpanel","Ru","fc","Tst","Srg","Sst","Tgs","lambda_","Ro","QE","Mgs","fca","Kc","Kcf"]
+
 
 def read_SA_files(base_name,var_names,do_subset=0,doPrint=False):
 	doDiagnostic=doPrint
@@ -67,6 +69,7 @@ def read_SA_files(base_name,var_names,do_subset=0,doPrint=False):
 
 		for p,name in enumerate(var_names):
 			Ciy = []
+			print(name)
 			with open(base_name+'_C_'+name+'.csv') as csvfile:
 				csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
 				for l,row in enumerate(csvreader):
@@ -74,7 +77,11 @@ def read_SA_files(base_name,var_names,do_subset=0,doPrint=False):
 						if doDiagnostic:
 							print("Warning: dropped line",l+1,"(length "+str(len(row))+')',"from",base_name+'_C_'+name+'.csv')
 					else:
-						Ciy.append([float(elem) for elem in row])
+						try:
+							Ciy.append([float(elem) for elem in row])
+						except:
+							print(row)
+							Ciy.append([0 for elem in row])
 			Cy.append(Ciy)
 	else:
 		lim = int(do_subset/2)
@@ -111,10 +118,10 @@ def read_SA_files(base_name,var_names,do_subset=0,doPrint=False):
 			
 	return Ay,By,Cy
 
-def temp_cut_rows(Ay,By,lines):
+def temp_cut_rows(Ay,By,Cy,lines):
 	Ay_cut = []
 	By_cut = []
-	#Cy_cut = []
+	Cy_cut = []
 
 	for i,line in enumerate(Ay):
 		if i+1 not in lines:
@@ -124,16 +131,14 @@ def temp_cut_rows(Ay,By,lines):
 		if i+1 not in lines:
 			By_cut.append(line)
 	
-	"""
 	for p,name in enumerate(var_names):
 		Ciy_cut = []
 		for i,line in enumerate(Cy[p]):
 			if i+1 not in lines:
 				Ciy_cut.append(line)
 		Cy_cut.append(Ciy_cut)
-	"""
 				
-	return Ay_cut,By_cut
+	return Ay_cut,By_cut,Cy_cut
 	
 def oversave(base_name, var_names, Ay,By,Cy):
 	aw = 'w+'# if os.path.exists(base_name+'_A.csv') else 'w+'
@@ -264,18 +269,27 @@ def base_combine(primary_base, var_names, list_bases, save=False):
 def base_trim(base_name, var_names, do_subset=0):	
 	Ay,By,Cy = read_SA_files(base_name, var_names, do_subset=do_subset, doPrint=True)
 	oversave(base_name, var_names, Ay,By,Cy)
+	
+def base_line_cut(base_name, var_names, lines):
+	Ay,By,Cy = read_SA_files(base_name, var_names, do_subset=0, doPrint=True)
+	temp_cut_rows(Ay,By,Cy,lines)
+	oversave(base_name, var_names, Ay,By,Cy)
 		
 if __name__ == '__main__':
 
+	#base_line_cut("SA_jitter", var_names, [29398,29397])
+	health_check("SA_jitter",var_names)
+	
 	#Check all bases
-	base_names = ["SA_QoI_bank"+str(i) for i in range(1,129)]
-	print(base_names)
+	#base_names = ["SA_QoI_bank"+str(i) for i in range(1,129)]
+	#print(base_names)
 	#for base in base_names:
 	#	health_check(base, var_names)
 		
 	#check some trimmed bases
 	#health_check("SA_QoI_bank35", var_names, do_subset=246*2)
 	#base_trim("SA_QoI_bank35", var_names, do_subset=246*2)
+	#base_trim("SA_jitter", var_names, do_subset=29398*2)
 	
 	#health_check("SA_QoI_bank91", var_names, do_subset=222*2)
 	#base_trim("SA_QoI_bank91", var_names, do_subset=222*2)
@@ -284,4 +298,4 @@ if __name__ == '__main__':
 	#base_combine("SA_QoI", var_names, base_names, False)
 	
 	#combine and save
-	base_combine("SA_QoI", var_names, base_names, True)
+	#base_combine("SA_QoI", var_names, base_names, True)
