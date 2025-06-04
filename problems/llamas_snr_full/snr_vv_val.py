@@ -175,6 +175,9 @@ if __name__ == '__main__':
 						0, #d_bluecam_n_pts		no measurements for camera exp
 						0  #d_frd_n_meas 		no measurements for FRD exp
 					]
+	d_opt_cheap = [5,0,0,2,0.1,1.9834,0,0,0,3954,0,0,0,0,0] #cost utility 7909.68 0.00383216,
+	d_opt_balanced = [64,0,0,2,0.1,1.9236,0,3,0,5067,1144,0,0,0,0] #cost utility 9189.14,0.00220183,
+	d_opt_expensive = [24,0,0,10,720.094,1.9834,5,63,10,4906,1216,6,112,118,10] #cost utility 118974,0.00203262
 	problem = construct_llamas_snr_problem()
 	
 	req = 3.0
@@ -232,6 +235,78 @@ if __name__ == '__main__':
 	
 	###Lastly, Compare p(Q| theta, d=dhist, y=yhist) to p(Q| theta, d=d*, y)
 	#this will show that d* is likely to give us more information than d_hist
+
+	###############################
+
+	#Calculate a bunch of y|theta,d_historical or y|theta,d_opt_balanced
+	elif args.run == "GMM_train_dhist":
+		###Get samples
+		print("sampling thetas:",flush=True)
+		thetas = problem.prior_rvs(args.n)
+		print("sampling Qs",flush=True)
+		Qs = [problem.H(theta) for theta in thetas]
+		print("sampling ys",flush=True)
+		ys = [problem.eta(theta, d_historical) for theta in thetas]
+
+		#train a gmm with 30 components
+		print("saving gmm...")
+		gmm = gbi_train_model(Qs, ys, ncomp=30, careful=True)
+		bn_save_gmm(gmm, 'GMM_yq_dhistorical_'+str(args.n))
+
+	#Calculate a bunch of y|theta,d_historical or y|theta,d_opt_balanced
+	elif args.run == "GMM_train_dbalanced":
+		###Get samples
+		print("sampling thetas:",flush=True)
+		thetas = problem.prior_rvs(args.n)
+		print("sampling Qs",flush=True)
+		Qs = [problem.H(theta) for theta in thetas]
+		print("sampling ys",flush=True)
+		ys = [problem.eta(theta, d_opt_balanced) for theta in thetas]
+
+		#train a gmm with 30 components
+		print("saving gmm...")
+		gmm = gbi_train_model(Qs, ys, ncomp=30, careful=True)
+		bn_save_gmm(gmm, 'GMM_yq_dbalanced_'+str(args.n))
+
+	elif args.run == "dhist_compare":
+                gmm_dhist = bn_load_gmm("GMM_yq_dhistorical_10000")
+
+		###Get Q|theta,dhist,yhist
+		yhist = get_y_hist(problem)
+                beta_2, mu_Yd_2, Sig_Yd_2 = gbi_condition_model(gmm_dhist, yhist, verbose=True)
+
+		###Get Q|theta,dhist,ynom
+		ynominal = problem.eta(theta_nominal, d_historical, err=False)
+                beta_1, mu_Yd_1, Sig_Yd_1 = gbi_condition_model(gmm_dhist, ynominal, verbose=True)
+
+		###Compare
+		plot_predictive_posterior(beta_1, mu_Yd_1, Sig_Yd_1, lbound=0, rbound=10, drawplot=False, plotmean=False, compplot=True, maincolor='k')
+		plot_predictive_posterior(beta_2, mu_Yd_2, Sig_Yd_2, lbound=0, rbound=10, drawplot=True, plotmean=False, compplot=True, maincolor='r')
+
+		print("Variance of Q|theta,dhist,yhist ", gbi_gmm_variance(beta_2, mu_Yd_2, Sig_Yd_2))
+		print("Variance of Q|theta,dhist,ynom ", gbi_gmm_variance(beta_1, mu_Yd_1, Sig_Yd_1))
+
+	elif args.run == "compare_designs":
+		gmm_dhist = bn_load_gmm("GMM_yq_dhistorical_10000")
+		gmm_dbalanced = bn_load_gmm("GMM_yq_dbalanced_10000")
+
+		###Get Q|theta,dhist,yhist
+		yhist = get_y_hist(problem)
+		beta_1, mu_Yd_1, Sig_Yd_1 = gbi_condition_model(gmm_dhist, yhist, verbose=True)
+
+		###Get Q|theta,d*,y*
+		ystar = problem.eta(theta_nominal, d_balanced, err=False)
+		beta_2, mu_Yd_2, Sig_Yd_2 = gbi_condition_model(gmm_dbalanced, ystar, verbose=True)
+
+		###Compare
+		plot_predictive_posterior(beta_1, mu_Yd_1, Sig_Yd_1, lbound=0, rbound=10, drawplot=False, plotmean=False, compplot=True, maincolor='k')
+		plot_predictive_posterior(beta_2, mu_Yd_2, Sig_Yd_2, lbound=0, rbound=10, drawplot=True, plotmean=False, compplot=True, maincolor='g')
+
+		print("Variance of Q|theta,dhist,yhist ", gbi_gmm_variance(beta_1, mu_Yd_1, Sig_Yd_1))
+		print("Variance of Q|theta,d*,y* ", gbi_gmm_variance(beta_2, mu_Yd_2, Sig_Yd_2))
+
+
+
 	
 	else:
 		print("I don't recognize that command")
