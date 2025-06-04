@@ -182,15 +182,56 @@ if __name__ == '__main__':
 	y_nominal = problem.eta(theta_nominal, d_historical, err=False)
 
 	###Make y_hist
-	if args.run == "y_hist":
-		y = get_y_hist(problem)
-		print(y)
+	if args.run == "yhist":
+		yhist = get_y_hist(problem)
+		print(yhist)
 
-	###Propagate through the joint model to get p(Q|y_hist)
+	################################################
+	### Final analysis
+	################################################
+	
+	###Compare yhist to p(y|theta,dhist)
+	elif args.run == "plot_yhist":
+		yhist = get_y_hist(problem)
+		
+		print("Comparing yhist to experiments simulated from the joint distribution")
+		print("sampling thetas:",flush=True)
+		uq_thetas = problem.prior_rvs(args.n)
+		print("sampling ys:",flush=True)
+		uq_ys = [problem.eta(theta, d_historical) for theta in uq_thetas]
+		uncertainty_prop_plots(uq_ys, c='orchid', xlabs=problem.y_names, saveFig='', vline_per_plot=yhist)
+
+		###Based on the above, calculate likelihood of yhist
+		#This will probably involve a kde
+	
+	###Propagate yhist through the BN model to get p(Q| yhist)
+	elif args.run == "Q_yhist":
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200")
+		yhist = get_y_hist(problem)
+		yd = np.concatenate((yhist,d_historical))
+		
+		beta, mu_Yd, Sig_Yd = gbi_condition_model(gmm, yd, verbose=True)
+		plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound=-15, rbound=0, drawplot=True, plotmean=False, compplot=True, maincolor='k')
+		print(gbi_gmm_variance(beta, mu_Yd, Sig_Yd))
+	
+	###Compare p(Q| theta, d=dhist, y=yhist) to p(Q) and to p(Q| theta, d=dhist, y=ynominal)
+	#here, i can comment that the historical data gives us more information, which does indeed
+	#i can also comment that the historical verification plan gave us about as much info as we expected
+	elif args.run == "Q_ynominal":
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200")
+		ynominal = problem.eta(theta_nominal, d_historical, err=False)
+		yd = np.concatenate((ynominal,d_historical))
+		
+		beta, mu_Yd, Sig_Yd = gbi_condition_model(gmm, yd, verbose=True)
+		plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound=-15, rbound=0, drawplot=True, plotmean=False, compplot=True, maincolor='k')
+		print(gbi_gmm_variance(beta, mu_Yd, Sig_Yd))
 	
 	
-	###Propagate d* through the exp model to get p(y|theta,d*) and its mean, y*
+	###If it makes sense, compare p(Q| theta, d=dhist, y=yhist) to p(Q| theta, d=dhist, y)
+	#former will be more narrow than the latter
 	
-	###Propagate y* through the joint model to get p(Q| y*)
+	###Lastly, Compare p(Q| theta, d=dhist, y=yhist) to p(Q| theta, d=d*, y)
+	#this will show that d* is likely to give us more information than d_hist
 	
-	###Compare
+	else:
+		print("I don't recognize that command")

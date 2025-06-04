@@ -86,7 +86,7 @@ def uncertainty_prop_plot(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False
 		plt.clf()
 		plt.close()
 	
-def uncertainty_prop_plots(Y, xlabs=None, c='#21aad3', transpose=True, saveFig=''):
+def uncertainty_prop_plots(Y, xlabs=None, c='#21aad3', transpose=True, saveFig='', vline_per_plot=[]):
 	if transpose==True:
 		Y = np.transpose(Y)
 
@@ -99,7 +99,8 @@ def uncertainty_prop_plots(Y, xlabs=None, c='#21aad3', transpose=True, saveFig='
 		fignames = [saveFig+"_"+str(i) for i,_ in enumerate(Y)]
 		
 	for i,y in enumerate(Y):
-		uncertainty_prop_plot(y, xlab=xlabs[i], c=c, saveFig=fignames[i])
+		vline = [] if not vline_per_plot else [vline_per_plot[i]]
+		uncertainty_prop_plot(y, xlab=xlabs[i], c=c, saveFig=fignames[i], vline=vline)
 	
 #this function is intended to take in a set of n_mc results from a big Monte Carlo run
 #and show you how the mean and confidence interval of that one run change over n-factor

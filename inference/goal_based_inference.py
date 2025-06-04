@@ -186,7 +186,7 @@ def gbi_condition_model(gmm, Yd_raw, inv_Sig_dd_precalc=None, logdet_Sig_dd_prec
 		inv_Sig_dd = inv_Sig_dd_precalc
 		logdet_Sig_dd = logdet_Sig_dd_precalc
 	else: #no half-measures!
-		inv_Sig_dd, logdet_Sig_dd = gbi_precalc_Sigdd(gmm_qyd, p_dim=1)
+		inv_Sig_dd, logdet_Sig_dd = gbi_precalc_Sigdd(gmm, p_dim=1)
 
 	#parameters for the new GMM:
 	column_diff = [np.array(Yd - ymean_d[k]).reshape(len(Yd), 1) for k in range(ncomp)]
