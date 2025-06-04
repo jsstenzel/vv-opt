@@ -45,7 +45,7 @@ def minimize_with_penalty(problem, costcap, gmm_file, ylist_file, n_mc, n_tries,
 		
 		#Note that minimizing U_d actually maximizes the utility
 		#Add a penalty factor if we exceed the cost cap
-		if C_d < costcap:
+		if C_d <= costcap:
 			return U_d
 		else:
 			return U_d + penalty + (costcap - C_d)
@@ -55,7 +55,7 @@ def minimize_with_penalty(problem, costcap, gmm_file, ylist_file, n_mc, n_tries,
 	designs = []
 	###do a few iterations of minimization here
 	for i in range(n_tries):
-		res = scipy.optimize.minimize(fn_to_minimize, x0, method='SLSQP', options={'ftol': ftol, 'disp': True}, bounds=bounds)
+		res = scipy.optimize.minimize(fn_to_minimize, x0, method='nelder-mead', options={'fatol': ftol, 'adaptive':True, 'disp': True}, bounds=bounds)
 		costs.append(problem.G(res.x))
 		utilities.append(res.fun)
 		designs.append(res.x)
