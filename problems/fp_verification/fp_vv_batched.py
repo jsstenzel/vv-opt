@@ -213,6 +213,90 @@ def fp_prior_update(ydata, d, n_mcmc, loadKDE=False, loadMCMC=False, doDiagnosti
 	uncertainty_prop_plot(H_posterior, c='darkgreen', xlab="Posterior QoI: Avg. Noise [e-]", vline=[req])
 	#could fit a gaussian to that guy to estimate the probability change!
 
+def gain_prior_update(ygain, d, n_mcmc, n_kde, loadKDE=False, loadMCMC=False, doDiagnostic=False):
+	def proposal_fn_norm(theta_curr, prop_width):		
+		theta_prop = scipy.stats.norm.rvs(loc=theta_curr, scale=prop_width, size=1)[0]
+		return theta_prop
+		
+	###First, get the KDE
+	if loadKDE:
+		print("Loading kernel",flush=True)
+		with open('gain_likelihood_kde.pkl', 'rb') as file:
+			likelihood_kernel = pickle.load(file)
+	else:
+		print("Generating kernel",flush=True)
+		kde_gains = scipy.stats.uniform.rvs(size=n_kde, loc=0, scale=3-0)
+		kde_rn = scipy.stats.gamma.rvs(size=n_kde, a=2.5**2 / 0.25**2, scale=0.25**2/2.5)
+		kde_dc = scipy.stats.gamma.rvs(size=n_kde, a=0.001**2 / .001**2, scale=.001**2/0.001)
+		t_d = d[0]
+		I_d = d[1]
+		x = problem.x_dict
+		kde_thetas = [[gain,rn,dc] for gain,rn,dc in zip(kde_gains,kde_rn,kde_dc)]
+		if doDiagnostic:
+			uncertainty_prop_plots(kde_thetas, xlabs=['gain','rn','dc'])
+		kde_ys = [gain_exp(theta[0], theta[1], theta[2], t_d, I_d, x, err=True) for theta in kde_thetas]
+		if doDiagnostic:
+			uncertainty_prop_plot(kde_ys, xlab=['Y gain'])
+			print(kde_gains)
+			print(kde_ys)
+		y_theta_values = np.array([[gain,y] for gain,y in zip(kde_gains,kde_ys)])
+		likelihood_kernel = scipy.stats.gaussian_kde(y_theta_values.T)
+		
+		print("Pickling kernel",flush=True)
+		with open('gain_likelihood_kde.pkl', 'wb') as file:
+			pickle.dump(likelihood_kernel, file)
+			
+		if doDiagnostic:
+			kde_plot(likelihood_kernel, y_theta_values, plotStyle='together', ynames=['gain','y1'])
+	
+	if loadMCMC:
+		mcmc_trace = []
+		with open('gain_mcmc.csv', 'r', newline='') as csvfile:
+			csvreader = csv.reader(csvfile, delimiter=' ')
+			for theta in csvreader:
+				mcmc_trace.append([float(t) for t in theta])
+	else:
+		###Then, do MCMC to get posterior samples
+		prop_width = 0.2**2
+		def gain_rvs(n):
+			return scipy.stats.gamma.rvs(size=1, a=1.1**2 / 0.2**2, scale=0.2**2/1.1)[0]
+			
+		def gain_pdf(g):
+			return scipy.stats.gamma.pdf(g, a=1.1**2 / 0.2**2, scale=0.2**2/1.1)
+			
+		mcmc_trace, arate, rrate, last_prop_width = mcmc_kernel_1D(	
+			ygain, 
+			likelihood_kernel, 
+			proposal_fn_norm, 
+			prop_width, 
+			gain_rvs, 
+			gain_pdf, 
+			n_mcmc, 
+			burnin=300, 
+			lag=1, 
+			doAdaptive=100,
+			doPlot=True, 
+			legend=["gain"], 
+			doPrint=True)
+		print(arate, rrate)
+		print(last_prop_width)
+		
+		###Analyze the mcmc posterior samples and plot the posterior distributions
+		#save data, do analysis and plots
+		with open('gain_mcmc.csv', 'w', newline='') as csvfile:
+			csvwriter = csv.writer(csvfile, delimiter=' ')
+			for theta in mcmc_trace:
+				csvwriter.writerow([theta])
+		
+	###Analyze the mcmc posterior samples and plot the posterior distributions
+	#save data, do analysis and plots
+	print("mean, variance of posterior sample:")
+	print(np.mean(mcmc_trace))
+	print(np.var(mcmc_trace, ddof=1),flush=True)
+
+	uncertainty_prop_plot(mcmc_trace, c='limegreen', xlab="Gain [ADU/e-]")
+	###Lastly, use those samples to plot the posterior predictive distribution
+
 if __name__ == '__main__':  
 	import argparse
 	parser = argparse.ArgumentParser()
@@ -228,28 +312,28 @@ if __name__ == '__main__':
 	d_historical = [
 		20,   #t_gain
 		30,   #I_gain
-		1,      #n_meas_rn
-		8,      #d_num
+		1,	  #n_meas_rn
+		8,	  #d_num
 		9600, #d_max
-		2        #d_pow   #approx
+		2		#d_pow   #approx
 	]
 
 	d_max = [
 		600,   #t_gain
 		100,   #I_gain
-		50,     #n_meas_rn
-		100,    #d_num
+		50,	 #n_meas_rn
+		100,	#d_num
 		12000, #d_max
-		3     #d_pow   #approx
+		3	 #d_pow   #approx
 	]	
 
 	d_min = [
 		1,   #t_gain
 		1,   #I_gain
-		1,      #n_meas_rn
-		2,      #d_num
+		1,	  #n_meas_rn
+		2,	  #d_num
 		1, #d_max
-		0.1      #d_pow   #approx
+		0.1	  #d_pow   #approx
 	]
 
 	theta_nominal = [1.1, 2.5, .001]
@@ -454,7 +538,7 @@ if __name__ == '__main__':
 		
 	elif args.run == "prior_update":
 		###for the optimal design, d1, assume data that is nominal
-		d1 = []
+		d1 = d_historical #TBD
 		#ydata = [yi*1.1 for yi in y_nominal] #test data, just choosing things on the large end of y
 		ydata = problem.eta(theta_nominal, d1, err=False)		
 
@@ -462,13 +546,13 @@ if __name__ == '__main__':
 		fp_prior_update(ydata, d_historical, n_mcmc=args.n, loadKDE=True, doDiagnostic=True)
 	
 	elif args.run == "sequential_setup":
-		d1 = [] 
+		d1 = d_historical #TBD
 		###conduct gain experiment using d1, assume nominal
-                ydata = problem.eta(theta_nominal, d1, err=False)
+		ydata = problem.eta(theta_nominal, d1, err=False)
 		gaindata = ydata[0]
 
-                #update only the prior for the gain!
-                gain_prior_update(gaindata, d1, n_mcmc=args.n, loadKDE=False, doDiagnostic=True)
+		#update only the prior for the gain!
+		gain_prior_update(gaindata, d1, n_mcmc=args.n, n_kde=1000000, loadKDE=False, loadMCMC=False, doDiagnostic=True)
 
 	else:
 		print("I don't recognize the command",args.run)
