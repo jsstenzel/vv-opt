@@ -453,8 +453,22 @@ if __name__ == '__main__':
 		)
 		
 	elif args.run == "prior_update":
-		ydata = [yi*1.1 for yi in y_nominal] #test data, just choosing things on the large end of y
+		###for the optimal design, d1, assume data that is nominal
+		d1 = []
+		#ydata = [yi*1.1 for yi in y_nominal] #test data, just choosing things on the large end of y
+		ydata = problem.eta(theta_nominal, d1, err=False)		
+
+		###see what the benefit would be in the batch timeline, i.e. apply the design all at once
 		fp_prior_update(ydata, d_historical, n_mcmc=args.n, loadKDE=True, doDiagnostic=True)
 	
+	elif args.run == "sequential_setup":
+		d1 = [] 
+		###conduct gain experiment using d1, assume nominal
+                ydata = problem.eta(theta_nominal, d1, err=False)
+		gaindata = ydata[0]
+
+                #update only the prior for the gain!
+                gain_prior_update(gaindata, d1, n_mcmc=args.n, loadKDE=False, doDiagnostic=True)
+
 	else:
 		print("I don't recognize the command",args.run)
