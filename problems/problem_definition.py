@@ -214,7 +214,7 @@ class ProblemDefinition:
 				thetas_i = scipy.stats.uniform.rvs(size=num_vals, loc=left, scale=right-left) #dist is [loc, loc + scale]
 				vals.append(thetas_i.tolist())
 			elif dtype == 'nonrandom':
-				thetas_i = [param[0] for _ in range(num_vals)]
+				thetas_i = [params[0] for _ in range(num_vals)]
 				vals.append(thetas_i)
 			elif dtype == 'gp_expquad':
 				variance = params[0]
