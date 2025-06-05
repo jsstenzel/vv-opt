@@ -344,7 +344,28 @@ if __name__ == '__main__':
 
 		print("Variance of Q|theta,dhist,yhist ", gbi_gmm_variance(beta_1, mu_Yd_1, Sig_Yd_1))
 		print("Variance of Q|theta,d*,y* ", gbi_gmm_variance(beta_2, mu_Yd_2, Sig_Yd_2))
+		
+	elif args.run == "compare_yhist_to_dstar":
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
+		#Pre-calculate an inverse matrix, to speed up the MC loop:
+		inv_Sig_dd, logdet_Sig_dd = gbi_precalc_Sigdd(gmm, p_dim=1)
 
+		###Get Q|theta,dhist,yhist
+		yhist = get_y_hist(problem)
+		yhistdhist = np.concatenate((yhist,d_historical))
+		dhist_Qvariance = gbi_var_of_conditional_pp(gmm, yhistdhist, inv_Sig_dd_precalc=inv_Sig_dd, logdet_Sig_dd_precalc=logdet_Sig_dd, verbose=True)
+
+		###Get Q|theta,d*,y*
+		thetas = problem.prior_rvs(args.n)
+		ystar_Qvariances = []
+		for theta in thetas:
+			ystar = problem.eta(theta, d_opt_balanced, err=True)
+			ystardstar = np.concatenate((ystar,d_opt_balanced))
+			Qvar = gbi_var_of_conditional_pp(gmm, ystardstar, inv_Sig_dd_precalc=inv_Sig_dd, logdet_Sig_dd_precalc=logdet_Sig_dd, verbose=True)
+			ystar_Qvariances.append(Qvar)
+
+		print("Variance of Q|theta,dhist,yhist ", dhist_Qvariance)
+		uncertainty_prop_plot(ystar_Qvariances, c='orchid', xlab="Var[Q|theta,y,d=d*]", saveFig='', vline=[dhist_Qvariance])
 	
 	else:
 		print("I don't recognize that command")

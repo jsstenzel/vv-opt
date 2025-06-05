@@ -75,12 +75,12 @@ def cluster_criterion_plot(ks, BICs, AICs, inertias, scores):
 	"""
 	ax1.plot(ks, scores, color='purple')#, label='BIC')
 	ax1.set_xlabel("Number of clusters")
-	ax1.set_xticks(ks)
+	#ax1.set_xticks(ks)
 	ax1.set_ylabel('Calinski-Harabasz score')
 	#ax1.legend()
 	
 	ax2.set_xlabel("Number of clusters")
-	ax2.set_xticks(ks)
+	#ax2.set_xticks(ks)
 	ax2.plot(ks, inertias, color='green')#, label='inertia')
 	ax2.tick_params(axis='y')
 	ax2.set_ylabel('Inertia')
@@ -215,10 +215,11 @@ def silhouette_scoring(savefile, n_clusters=2, expected_length=0, do_subset=0, d
 	plt.show()
 
 if __name__ == '__main__':  
-	ks = [k for k in range(2,100)]
-	cluster_eval("BN_batch_samples", ks, expected_length=10, do_subset=4000000, doPrint=True)
+	ks = [k*10 for k in range(1,30)]
+	cluster_eval("BN_40k_samples", ks, expected_length=10, do_subset=4000000, doPrint=True)
 	#for n in [2,3,4,5,6,7,8,9,10]:
 	#	silhouette_scoring("BN_batch_samples", n_clusters=n, do_subset=4000000, expected_length=10)
+	
 	
 """
 Evaluating k=10 ...
