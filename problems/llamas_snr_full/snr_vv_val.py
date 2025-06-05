@@ -269,15 +269,15 @@ if __name__ == '__main__':
 		bn_save_gmm(gmm, 'GMM_yq_dbalanced_'+str(args.n))
 
 	elif args.run == "dhist_compare":
-                gmm_dhist = bn_load_gmm("GMM_yq_dhistorical_10000")
+		gmm_dhist = bn_load_gmm("GMM_yq_dhistorical_10000")
 
 		###Get Q|theta,dhist,yhist
 		yhist = get_y_hist(problem)
-                beta_2, mu_Yd_2, Sig_Yd_2 = gbi_condition_model(gmm_dhist, yhist, verbose=True)
+		beta_2, mu_Yd_2, Sig_Yd_2 = gbi_condition_model(gmm_dhist, yhist, verbose=True)
 
 		###Get Q|theta,dhist,ynom
 		ynominal = problem.eta(theta_nominal, d_historical, err=False)
-                beta_1, mu_Yd_1, Sig_Yd_1 = gbi_condition_model(gmm_dhist, ynominal, verbose=True)
+		beta_1, mu_Yd_1, Sig_Yd_1 = gbi_condition_model(gmm_dhist, ynominal, verbose=True)
 
 		###Compare
 		plot_predictive_posterior(beta_1, mu_Yd_1, Sig_Yd_1, lbound=0, rbound=10, drawplot=False, plotmean=False, compplot=True, maincolor='k')
@@ -295,7 +295,7 @@ if __name__ == '__main__':
 		beta_1, mu_Yd_1, Sig_Yd_1 = gbi_condition_model(gmm_dhist, yhist, verbose=True)
 
 		###Get Q|theta,d*,y*
-		ystar = problem.eta(theta_nominal, d_balanced, err=False)
+		ystar = problem.eta(theta_nominal, d_opt_balanced, err=False)
 		beta_2, mu_Yd_2, Sig_Yd_2 = gbi_condition_model(gmm_dbalanced, ystar, verbose=True)
 
 		###Compare
@@ -305,7 +305,45 @@ if __name__ == '__main__':
 		print("Variance of Q|theta,dhist,yhist ", gbi_gmm_variance(beta_1, mu_Yd_1, Sig_Yd_1))
 		print("Variance of Q|theta,d*,y* ", gbi_gmm_variance(beta_2, mu_Yd_2, Sig_Yd_2))
 
+	elif args.run == "dhist_compare_bn":
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
 
+		###Get Q|theta,dhist,yhist
+		yhist = get_y_hist(problem)
+		yhistdhist = np.concatenate((yhist,d_historical))
+		beta_2, mu_Yd_2, Sig_Yd_2 = gbi_condition_model(gmm, yhistdhist, verbose=True)
+
+		###Get Q|theta,dhist,ynom
+		ynominal = problem.eta(theta_nominal, d_historical, err=False)
+		ynomdhist = np.concatenate((ynominal,d_historical))
+		beta_1, mu_Yd_1, Sig_Yd_1 = gbi_condition_model(gmm, ynomdhist, verbose=True)
+
+		###Compare
+		plot_predictive_posterior(beta_1, mu_Yd_1, Sig_Yd_1, lbound=0, rbound=10, drawplot=False, plotmean=False, compplot=True, maincolor='k')
+		plot_predictive_posterior(beta_2, mu_Yd_2, Sig_Yd_2, lbound=0, rbound=10, drawplot=True, plotmean=False, compplot=True, maincolor='r')
+
+		print("Variance of Q|theta,dhist,yhist ", gbi_gmm_variance(beta_2, mu_Yd_2, Sig_Yd_2))
+		print("Variance of Q|theta,dhist,ynom ", gbi_gmm_variance(beta_1, mu_Yd_1, Sig_Yd_1))
+
+	elif args.run == "compare_designs_bn":
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
+
+		###Get Q|theta,dhist,yhist
+		yhist = get_y_hist(problem)
+		yhistdhist = np.concatenate((yhist,d_historical))
+		beta_1, mu_Yd_1, Sig_Yd_1 = gbi_condition_model(gmm, yhistdhist, verbose=True)
+
+		###Get Q|theta,d*,y*
+		ystar = problem.eta(theta_nominal, d_opt_balanced, err=False)
+		ystardstar = np.concatenate((ystar,d_opt_balanced))
+		beta_2, mu_Yd_2, Sig_Yd_2 = gbi_condition_model(gmm, ystardstar, verbose=True)
+
+		###Compare
+		plot_predictive_posterior(beta_1, mu_Yd_1, Sig_Yd_1, lbound=0, rbound=10, drawplot=False, plotmean=False, compplot=True, maincolor='k')
+		plot_predictive_posterior(beta_2, mu_Yd_2, Sig_Yd_2, lbound=0, rbound=10, drawplot=True, plotmean=False, compplot=True, maincolor='g')
+
+		print("Variance of Q|theta,dhist,yhist ", gbi_gmm_variance(beta_1, mu_Yd_1, Sig_Yd_1))
+		print("Variance of Q|theta,d*,y* ", gbi_gmm_variance(beta_2, mu_Yd_2, Sig_Yd_2))
 
 	
 	else:
