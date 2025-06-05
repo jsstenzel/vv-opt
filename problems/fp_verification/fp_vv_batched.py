@@ -359,6 +359,13 @@ if __name__ == '__main__':
 	if args.run == "UP_jitter_from_BN":
 		Qs, _ = bn_load_samples(problem, savefile="BN_40k_samples", doPrint=True, doDiagnostic=True)
 		uncertainty_prop_plot(Qs, xlab="QoI: Avg. Noise [e-]", vline=[req])
+
+		count_meetreq = 0
+		for Q in Qs:
+			if Q <= req:
+				count_meetreq += 1
+		prob_meetreq = count_meetreq / len(Qs)
+		print("Estimated probability of meeting requirement given priors:", prob_meetreq)
 	
 	###Train Bayesian network model
 	elif args.run == "BN_sample":

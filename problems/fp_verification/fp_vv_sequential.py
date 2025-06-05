@@ -10,17 +10,19 @@ import dill
 
 sys.path.append('../..')
 #focal plane
-from problems.fp2_verification.fp2_problem import *
+from problems.fp_verification.fp_problem_sequential import *
 #analysis
 from obed.obed_multivar import *
 from obed.mcmc import *
 from obed.obed_gbi import *
 from obed.pdf_estimation import *
 from uq.uncertainty_propagation import *
+from uq.saltelli_gsa import *
+from uq.gsa_convergence import *
+from uq.gsa_plot import *
 #from uq.sensitivity_analysis import *
 from inference.bn_modeling import *
 from inference.bn_evaluation import *
-from opt.nsga import *
 from opt.utility_max_costcap import *
 import pickle
 from obed.mcmc import *
@@ -48,8 +50,16 @@ if __name__ == '__main__':
 	###Problem Definition
 	problem = fp2
 	req = 4.38 #max noise
+	d_historical = [
+		#20,   #t_gain
+		#30,   #I_gain
+		1,	  #n_meas_rn
+		8,	  #d_num
+		9600, #d_max
+		2		#d_pow   #approx
+	]
 
-	theta_nominal = [1.1, 2.5, .001]
+	theta_nominal = [2.5, .001]
 	QoI_nominal = fp2.H(theta_nominal)
 	y_nominal = problem.eta(theta_nominal, d_historical, err=False)
 
@@ -57,9 +67,40 @@ if __name__ == '__main__':
 	if args.run == "nominal":
 		vv_nominal(problem, req, theta_nominal, y_nominal)
 		
-	if args.run == "UP_jitter_from_BN":
+	elif args.run == "UP_jitter_from_BN":
 		Qs, _ = bn_load_samples(problem, savefile="BN_sequential_samples", doPrint=True, doDiagnostic=True)
 		uncertainty_prop_plot(Qs, xlab="QoI: Avg. Noise [e-]", vline=[req])
+		
+	elif args.run == "SA_QoI":
+		N = args.n
+		param_defs = [                             
+			["gain", [2.5,0.25**2], "gamma_mv"], #mean, variance
+			["rn",   [0.001,.001**2], "gamma_mv"], 
+		]
+		var_names = [pdef[0] for pdef in param_defs]
+		var_bounds = [pdef[1] for pdef in param_defs]
+		var_dists = [pdef[2] for pdef in param_defs]
+
+		def model(params):
+			theta = params
+			return problem.H(theta, verbose=False)
+			
+		###Generate some new samples and save
+		#I want to save samples as often as possible. Therefore, iterate through N two at a time, corresponding to 2(p+2) model evals at a time
+		for _ in range(int(N/2)):
+			saltelli_eval_sample("SA_FP", 2, var_names, var_dists, var_bounds, model, doPrint=True)
+			
+	elif args.run == "SA_QoI_evaluate":
+		var_names = ["read noise","dark current"]
+		
+		#S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=0, doPrint=True)
+		total_order_convergence_tests(1200, "SA_FP", var_names, do_subset=0)
+		
+	elif args.run == "SA_QoI_plot":
+		varnames = ["read noise","dark current"]
+		S1 = [0.3738, 0.6343]
+		ST = [0.3496, 0.6201]
+		plot_gsa_full(varnames, S1, ST, S1_conf=[0.0018,0.0013], ST_conf=[0.0040,0.0032], title="", coplot=False, screening=0, xspin=False)
 	
 	###Train Bayesian network model
 	elif args.run == "BN_sample":

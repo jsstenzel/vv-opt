@@ -15,10 +15,9 @@ from problems.fp_verification.fp_experiment_models import *
 
 def fp_hlva_2(theta, x, verbose=False):
 	if type(theta) is dict:
-		new_theta = theta
-		new_theta["gain"] = 0
+		new_theta = [0, theta["rn"], theta["dc"]]
 	else:
-		new_theta = [0, rn, dc]
+		new_theta = [0, theta[0], theta[1]]
 	return fp_hlva(new_theta, x, verbose=verbose)
 
 def fp_likelihood_2(theta, d, x, dummy, err=True):
@@ -27,11 +26,9 @@ def fp_likelihood_2(theta, d, x, dummy, err=True):
 		rn = theta["rn"]
 		dc = theta["dc"]
 	else:
-		rn = theta[1]
-		dc = theta[2]
+		rn = theta[0]
+		dc = theta[1]
 	#define design variables, enforcing discreteness:
-	t_gain = d["t_gain"]
-	I_gain = d["I_gain"]
 	n_meas_rn = d["n_meas_rn"]
 	d_num = d["d_num"]
 	d_max = d["d_max"]
