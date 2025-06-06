@@ -23,101 +23,107 @@ Full matrix experiment model
 def apply_error(y, d, scale=0, err=True):
 	if err==False:
 		return y
+	else:
+		#this is a hack; i want to define this manually on a per-experiment basis i think
+		scale = scale if scale!=0 else abs(y)
+			
+		if d==0:
+			return 0 #the experiment essentially fails, no meaningful data
+		elif d==1:
+			stddev = scale * 2
+		elif d==2:
+			stddev = scale
+		elif d==3:
+			stddev = scale / 2
 		
-	if d==0:
-		return 0 #the experiment essentially fails, no meaningful data
-	elif d==1:
-		stddev = scale * 3
-	elif d==2:
-		stddev = scale
-	elif d==3:
-		stddev = scale / 3
-	
-	random = scipy.stats.norm.rvs(scale = stddev)
-	meas = y + random
-	return meas
+		random = scipy.stats.norm.rvs(scale = stddev)
+		meas = y + random
+		return meas
 
 def jwst_eta(theta, d, x, prior_mean, err=True):
 	#define interest params:
 	if type(theta) is not dict:
 		print("oh howd that happen now?")
 		sys.exit()
+		
+	stiff_rt = theta["stiffness_rt_factor"]
+	damp_rt = theta["damping_rt_factor"]
 	
 	#################################################
 	###Transmissibility tests: indirectly measure damping coefficient and stiffness of an element
 	#Spacecraft Bus - NOT MODELED
 	#Spacecraft Bus structure - NOT MODELED
 	#RWA Isolator
-	y_transmit_rwai = transmissibility_rwaisolator(theta, d["d_transmit_rwai"])
+	y_transmit_rwai = transmissibility_rwaisolator(theta, d["d_transmit_rwai"], err)
 	#CCA Isolator
-	y_transmit_ccai = transmissibility_ccaisolator(theta, d["d_transmit_ccai"])
+	y_transmit_ccai = transmissibility_ccaisolator(theta, d["d_transmit_ccai"], err)
 	#Isolator Array (IA)
-	y_transmit_ia = transmissibility_isolatorarray(theta, d["d_transmit_ia"])
+	y_transmit_ia = transmissibility_isolatorarray(theta, d["d_transmit_ia"], err)
 	#Optics - NOT MODELED
 	#Primary Mirrors & Structure
-	y_transmit_pmss = transmissibility_primaryassembly(theta, d["d_transmit_pmss"])
+	y_transmit_pmss = transmissibility_primaryassembly(theta, d["d_transmit_pmss"], err)
 	#Secondary Mirrors & Structure
-	y_transmit_smss = transmissibility_secondaryassembly(theta, d["d_transmit_smss"])
+	y_transmit_smss = transmissibility_secondaryassembly(theta, d["d_transmit_smss"], err)
 	#Telescope
-	y_transmit_telescope = transmissibility_telescope(theta, d["d_transmit_telescope"])
+	y_transmit_telescope = transmissibility_telescope(theta, d["d_transmit_telescope"], err)
 	
 	#################################################
 	###Stiffness tests
 	
 	#RWA Isolator
-	y_stiff_xISO = stiffness_measure(theta["K_xISO"], theta["stiffness_rt_factor"], d["d_stiff_rwai"]) #K_xISO
-	y_stiff_yISO = stiffness_measure(theta["K_yISO"], theta["stiffness_rt_factor"], d["d_stiff_rwai"]) #K_yISO
-	y_stiff_aISO = stiffness_measure((5/3)*theta["K_rISO"], theta["stiffness_rt_factor"], d["d_stiff_rwai"]) #K_aISO
-	y_stiff_rISO = stiffness_measure(theta["K_rISO"], theta["stiffness_rt_factor"], d["d_stiff_rwai"]) #K_rISO
+	y_stiff_xISO = stiffness_measure(theta["K_xISO"], stiff_rt, d["d_stiff_rwai"], err) #K_xISO
+	y_stiff_yISO = stiffness_measure(theta["K_yISO"], stiff_rt, d["d_stiff_rwai"], err) #K_yISO
+	y_stiff_aISO = stiffness_measure((5/3)*theta["K_rISO"], stiff_rt, d["d_stiff_rwai"], err) #K_aISO
+	y_stiff_rISO = stiffness_measure(theta["K_rISO"], stiff_rt, d["d_stiff_rwai"], err) #K_rISO
 	#CCA Isolator - SKIP
 	#Primary mirror support structure - NOT MODELED
 	#Primary mirrors (deployed)
-	y_stiff_pm1 = stiffness_measure(theta["K_pm1"], theta["stiffness_rt_factor"], d["d_stiff_pmss"]) #K_pm1
-	y_stiff_yPM = stiffness_measure(theta["K_yPM"], theta["stiffness_rt_factor"], d["d_stiff_pmss"]) #K_yPM
-	y_stiff_pm3 = stiffness_measure(theta["K_pm3"], theta["stiffness_rt_factor"], d["d_stiff_pmss"]) #K_pm3
-	y_stiff_pm4 = stiffness_measure(theta["K_pm4"], theta["stiffness_rt_factor"], d["d_stiff_pmss"]) #K_pm4
-	y_stiff_pm5 = stiffness_measure(theta["K_pm5"], theta["stiffness_rt_factor"], d["d_stiff_pmss"]) #K_pm5
-	y_stiff_pm6 = stiffness_measure(theta["K_pm6"], theta["stiffness_rt_factor"], d["d_stiff_pmss"]) #K_pm6
+	y_stiff_pm1 = stiffness_measure(theta["K_pm1"], stiff_rt, d["d_stiff_pmss"], err) #K_pm1
+	y_stiff_yPM = stiffness_measure(theta["K_yPM"], stiff_rt, d["d_stiff_pmss"], err) #K_yPM
+	y_stiff_pm3 = stiffness_measure(theta["K_pm3"], stiff_rt, d["d_stiff_pmss"], err) #K_pm3
+	y_stiff_pm4 = stiffness_measure(theta["K_pm4"], stiff_rt, d["d_stiff_pmss"], err) #K_pm4
+	y_stiff_pm5 = stiffness_measure(theta["K_pm5"], stiff_rt, d["d_stiff_pmss"], err) #K_pm5
+	y_stiff_pm6 = stiffness_measure(theta["K_pm6"], stiff_rt, d["d_stiff_pmss"], err) #K_pm6
 	#Isolator Array (IA) - NOT MODELED
 	#Tower Assembly - SKIP
 	#Solar array - NOT MODELED
 	#Sunshield - NOT MODELED
 	#Secondary mirror support structure - NOT MODELED
 	#PM Actuator - NOT JWST
-	y_stiff_act_pm2 = stiffness_measure(theta["K_act_pm2"], theta["stiffness_rt_factor"], d["d_stiff_pm"]) #K_act_pm2
-	y_stiff_act_pm3 = stiffness_measure(theta["K_act_pm3"], theta["stiffness_rt_factor"], d["d_stiff_pm"]) #K_act_pm3
-	y_stiff_act_pm4 = stiffness_measure(theta["K_act_pm4"], theta["stiffness_rt_factor"], d["d_stiff_pm"]) #K_act_pm4
-	y_stiff_act_pm5 = stiffness_measure(theta["K_act_pm5"], theta["stiffness_rt_factor"], d["d_stiff_pm"]) #K_act_pm5
-	y_stiff_act_pm6 = stiffness_measure(theta["K_act_pm6"], theta["stiffness_rt_factor"], d["d_stiff_pm"]) #K_act_pm6
+	y_stiff_act_pm2 = stiffness_measure(theta["K_act_pm2"], stiff_rt, d["d_stiff_pm"], err) #K_act_pm2
+	y_stiff_act_pm3 = stiffness_measure(theta["K_act_pm3"], stiff_rt, d["d_stiff_pm"], err) #K_act_pm3
+	y_stiff_act_pm4 = stiffness_measure(theta["K_act_pm4"], stiff_rt, d["d_stiff_pm"], err) #K_act_pm4
+	y_stiff_act_pm5 = stiffness_measure(theta["K_act_pm5"], stiff_rt, d["d_stiff_pm"], err) #K_act_pm5
+	y_stiff_act_pm6 = stiffness_measure(theta["K_act_pm6"], stiff_rt, d["d_stiff_pm"], err) #K_act_pm6
 	#Deployable petal
-	y_stiff_xpet = stiffness_measure(theta["K_xpet"], theta["stiffness_rt_factor"], d["d_stiff_petal"]) #K_xpet
-	y_stiff_zpet = stiffness_measure(theta["K_zpet"], theta["stiffness_rt_factor"], d["d_stiff_petal"]) #K_zpet
+	y_stiff_xpet = stiffness_measure(theta["K_xpet"], stiff_rt, d["d_stiff_petal"], err) #K_xpet
+	y_stiff_zpet = stiffness_measure(theta["K_zpet"], stiff_rt, d["d_stiff_petal"], err) #K_zpet
 	#SM Actuator
-	y_stiff_act1 = stiffness_measure(theta["K_act1"], theta["stiffness_rt_factor"], d["d_stiff_sm"]) #K_act1
-	y_stiff_act2 = stiffness_measure(theta["K_act2"], theta["stiffness_rt_factor"], d["d_stiff_sm"]) #K_act2
-	y_stiff_rad1 = stiffness_measure(theta["K_rad1"], theta["stiffness_rt_factor"], d["d_stiff_sm"]) #K_rad1
-	y_stiff_rad2 = stiffness_measure(theta["K_rad2"], theta["stiffness_rt_factor"], d["d_stiff_sm"]) #K_rad2
+	y_stiff_act1 = stiffness_measure(theta["K_act1"], stiff_rt, d["d_stiff_sm"], err) #K_act1
+	y_stiff_act2 = stiffness_measure(theta["K_act2"], stiff_rt, d["d_stiff_sm"], err) #K_act2
+	y_stiff_rad1 = stiffness_measure(theta["K_rad1"], stiff_rt, d["d_stiff_sm"], err) #K_rad1
+	y_stiff_rad2 = stiffness_measure(theta["K_rad2"], stiff_rt, d["d_stiff_sm"], err) #K_rad2
 	
 	#################################################
 	###Modal surveys: get dominant frequencies and mode shapes, from which we might be able to infer stiffness and transmissibility, but not directly measure
 	#Full Observatory - too complicated, SKIP
 	
 	#Telescope
-	y_modal_telescope = transmissibility_telescope(theta, d["d_modal_telescope"])
+	y_modal_telescope = transmissibility_telescope(theta, d["d_modal_telescope"], err)
 	#Primary Mirror & Structure
-	y_modal_pmss = transmissibility_primaryassembly(theta, d["d_modal_pmss"])
+	y_modal_pmss = transmissibility_primaryassembly(theta, d["d_modal_pmss"], err)
 	#Primary Mirror
 	#SKIP, not really distinguished for NEXUS
 	#Secondary Mirror & Structure
-	y_modal_smss = transmissibility_secondaryassembly(theta, d["d_modal_smss"])
+	y_modal_smss = transmissibility_secondaryassembly(theta, d["d_modal_smss"], err)
 	#Optics & Focal Plane -NOT MODELED
 	#Spacecraft Bus structure - NOT MODELED
 	#Cryo-cooler
-	y_modal_ccai = transmissibility_ccaisolator(theta, d["d_modal_ccai"])
+	y_modal_ccai = transmissibility_ccaisolator(theta, d["d_modal_ccai"], err)
 	#Sunshield
-	y_modal_sunshield = stiffness_measure(theta["zeta_sunshield"], theta["damping_rt_factor"], d["d_modal_sunshield"])
+	y_modal_sunshield = stiffness_measure(theta["zeta_sunshield"], damp_rt, d["d_modal_sunshield"], err)
 	#Solar Array -- NOT JWST
-	y_modal_solar = stiffness_measure(theta["zeta_solarpanel"], theta["damping_rt_factor"], d["d_modal_solar"])
+	y_modal_solar = stiffness_measure(theta["zeta_solarpanel"], damp_rt, d["d_modal_solar"], err)
 	
 	#################################################
 	###Micro-Vibe tests: measuring force and moment disturbances generated by these components
@@ -125,26 +131,27 @@ def jwst_eta(theta, d, x, prior_mean, err=True):
 	#c_RWA reaction wheel damping
 	#here, k and m refer to the mass and stiffness of the wheel
 	w_wheel = x["Ru"] * (1/60) #rpm -> hz
-	y_vibe_rwa = microvibe_RWA(theta["Us"], theta["Ud"], w=w_wheel, c=theta["c_RWA"], k=theta["K_rISO"], m=x["m_RWAchx"], di=d["d_vibe_rwa"])
+	y_vibe_rwa = microvibe_RWA(theta["Us"], theta["Ud"], w=w_wheel, c=theta["c_RWA"], k=theta["K_rISO"], m=x["m_RWAchx"], di=d["d_vibe_rwa"], err=err)
 	
 	#Reaction wheel disturbance with isolator
 	#c_RWA #reaction wheel damping
 	#c_RWAI #reaction wheel isolator damping
 	#here, k and m refer to the mass and stiffness of the isolator assembly as a whole
 	#use K_rISO and 
-	y_vibe_rwai = microvibe_RWA(theta["Us"], theta["Ud"], w=w_wheel, c=theta["c_RWA"]+theta["c_RWAI"], k=theta["K_rISO"], m=x["m_RW"], di=d["d_vibe_rwai"])
+	y_vibe_rwai = microvibe_RWA(theta["Us"], theta["Ud"], w=w_wheel, c=theta["c_RWA"]+theta["c_RWAI"], k=theta["K_rISO"], m=x["m_RW"], di=d["d_vibe_rwai"], err=err)
 	
 	#Cryo-cooler disturbance
-	y_vibe_cca = microvibe_CCA(C=x["C"], Qc=1, x=x, di=d["d_vibe_cca"]) #TODO make C in theta
+	#TODO make C in theta, right now the experiment gives the same answer each time
+	y_vibe_cca = microvibe_CCA(C=x["C"], Qc=1, x=x, di=d["d_vibe_cca"], err=err)
 	
 	#Cryo-cooler disturbance with isolator
-	y_vibe_ccai = microvibe_CCA(C=x["C"], Qc=theta["Qc"], x=x, di=d["d_vibe_ccai"])
+	y_vibe_ccai = microvibe_CCA(C=x["C"], Qc=theta["Qc"], x=x, di=d["d_vibe_ccai"], err=err)
 	
 	#################################################
 	###Other
 	#Cryogenic Modal Survey (characterize shift of stiffness and transmissibility from room temp to cryogenic temp)
-	y_cryo_stiffness = simple_measure(theta["stiffness_rt_factor"], d["d_cryo"])
-	y_cryo_damping = simple_measure(theta["damping_rt_factor"], d["d_cryo"])
+	y_cryo_stiffness = simple_measure(stiff_rt, d["d_cryo"], err)
+	y_cryo_damping = simple_measure(damp_rt, d["d_cryo"], err)
 	
 	y_full = [
 		y_transmit_rwai,
@@ -213,7 +220,7 @@ ADDED c_RWA, but thats just for the wheels, not the isolator?
 There are these other points as well - not RWA attach points, but with the same stiffness properties. 
 I think ill assume those are isolator assembly points, ADDED c_RWAI
 """
-def transmissibility_rwaisolator(theta, di):
+def transmissibility_rwaisolator(theta, di, err=True):
 	#K_xISO, K_yISO, K_aISO, K_rISO, c_RWAI
 	K_xISO = theta["K_xISO"] * theta["stiffness_rt_factor"]
 	K_yISO = theta["K_yISO"] * theta["stiffness_rt_factor"]
@@ -221,7 +228,7 @@ def transmissibility_rwaisolator(theta, di):
 	
 	y = c_RWAI / math.sqrt(K_xISO**2 + K_xISO**2 + K_yISO**2)
 	
-	meas = apply_error(y, di)
+	meas = apply_error(y, di, err=err)
 	return meas
 
 #CCA Isolator
@@ -231,12 +238,12 @@ def transmissibility_rwaisolator(theta, di):
 there is no CCA isolator in the NEXUS design
 However, the "cryocooler attenuation factor" Qc effectively models this I think
 """
-def transmissibility_ccaisolator(theta, di):
+def transmissibility_ccaisolator(theta, di, err=True):
 	Qc = theta["Qc"] * theta["damping_rt_factor"]
 	
 	y = Qc
 	
-	meas = apply_error(y, di)
+	meas = apply_error(y, di, err=err)
 	return meas
 
 #Isolator Array (IA)
@@ -246,12 +253,12 @@ However, they are not modeled in stiffness matrix
 (Could model the 4 connection points in nicelas2 with stiffness K_IA and damping c_IA, treat that as IA equivalent structure, but don't want to hack the NEXUS model representation)
 The effectively equivalent structure is the isolators on the support structure
 """
-def transmissibility_isolatorarray(theta, di):
+def transmissibility_isolatorarray(theta, di, err=True):
 	zeta_isolator = theta["zeta_isolator"] * theta["damping_rt_factor"]
 
 	y = zeta_isolator
 	
-	meas = apply_error(y, di)
+	meas = apply_error(y, di, err=err)
 	return meas
 
 #Optics
@@ -278,7 +285,7 @@ TODO Need to implement c_PM_act damping coefficient for the actuators 228-401
 TODO need to implement c_PM
 TODO need to implement K_xpet = 0.18000E+10, c_petal
 """
-def transmissibility_primaryassembly(theta, di):
+def transmissibility_primaryassembly(theta, di, err=True):
 	K_pm1 = theta["K_pm1"] * theta["stiffness_rt_factor"]
 	K_yPM = theta["K_yPM"] * theta["stiffness_rt_factor"]
 	K_pm3 = theta["K_pm3"] * theta["stiffness_rt_factor"]
@@ -298,7 +305,7 @@ def transmissibility_primaryassembly(theta, di):
 	y_xpet = c_PM_act / math.sqrt(K_xpet**2 + K_zpet**2 + K_xpet**2)
 	y = y_PM * y_PM_act * y_xpet
 	
-	meas = apply_error(y, di)
+	meas = apply_error(y, di, err=err)
 	return meas
 
 #Secondary Mirrors & Structure
@@ -314,7 +321,7 @@ The actuators (14,15,16,17,18,19,20,21,23,24,25,26) have stiffnesses defined:
 The secondary mirror support structure doesnt have stiffness defined - theyre assumed to be perfectly rigid
 TODO Need to implement c_SM_act damping coefficient for the actuators (21-93)
 """
-def transmissibility_secondaryassembly(theta, di):
+def transmissibility_secondaryassembly(theta, di, err=True):
 	#K_act1, K_act2, K_rad1, K_rad2, c_SM_act
 	K_act1 = theta["K_act1"] * theta["stiffness_rt_factor"]
 	K_act2 = theta["K_act2"] * theta["stiffness_rt_factor"]
@@ -322,14 +329,14 @@ def transmissibility_secondaryassembly(theta, di):
 	
 	y = c_SM_act / math.sqrt(K_act1**2 + K_act2**2 + K_act2**2)
 	
-	meas = apply_error(y, di)
+	meas = apply_error(y, di, err=err)
 	return meas
 
 #Telescope
 """Includes everything downstream from the 4 bus connection points
 Primary mirrors and structure + secondary mirrors and structure
 """	
-def transmissibility_telescope(theta, di):
+def transmissibility_telescope(theta, di, err=True):
 	K_pm1 = theta["K_pm1"] * theta["stiffness_rt_factor"]
 	K_yPM = theta["K_yPM"] * theta["stiffness_rt_factor"]
 	K_pm3 = theta["K_pm3"] * theta["stiffness_rt_factor"]
@@ -355,16 +362,16 @@ def transmissibility_telescope(theta, di):
 	#zeta_isolator
 	y = y_PM * y_PM_act * y_xpet * y_SM_act * zeta_isolator
 	
-	meas = apply_error(y, di)
+	meas = apply_error(y, di, err=err)
 	return meas
 
 
 #################################################
 ###Stiffness tests
-def stiffness_measure(K, stiffness_factor, di):
+def stiffness_measure(K, stiffness_factor, di, err=True):
 	y = K * stiffness_factor
 	
-	meas = apply_error(y, di)
+	meas = apply_error(y, di, err=err)
 	return meas
 
 #RWA Isolator
@@ -484,7 +491,7 @@ NOT MODELED"""
 #Ud [gcm^2]
 #c_RWA #reaction wheel damping
 #here, k and m refer to the mass and stiffness of the wheel
-def microvibe_RWA(Us, Ud, w, c, k, m, di):
+def microvibe_RWA(Us, Ud, w, c, k, m, di, err=True):
 	reaction_wheel_radius = 0.393 / 2
 	static_force = Us * w * w #force = static imbalance * angularmomentum^2
 	dynamic_torque = Ud * w * w #torque = dynamic imbalance * angularmomentum^2
@@ -497,7 +504,7 @@ def microvibe_RWA(Us, Ud, w, c, k, m, di):
 	w0 = math.sqrt(k/m)
 	y = F / math.sqrt(m*(w**2 - w0**2)**2 + c**2 * w**2)
 	
-	meas = apply_error(y, di)
+	meas = apply_error(y, di, err=err)
 	return meas
 
 #Reaction wheel disturbance with isolator
@@ -510,7 +517,7 @@ def microvibe_RWA(Us, Ud, w, c, k, m, di):
 #use K_rISO and 
 
 #Cryo-cooler disturbance
-def microvibe_CCA(C, Qc, x, di):
+def microvibe_CCA(C, Qc, x, di, err=True):
 	#x:
 	#n=3
 	#h = [1.0,2.0,3.0,4.0,5.0,6.0]
@@ -532,8 +539,8 @@ def microvibe_CCA(C, Qc, x, di):
 		for ind2 in range(n):
 			zij[ind1][ind2]=1/(2*wc*h[ind2])
 			kij[ind1][ind2]=2*zij[ind1][ind2]*wc*h[ind2]*Qc*C[ind1][ind2]
-	print(zij)
-	print(kij)
+	#print(zij)
+	#print(kij)
 
 	#fix this
 	Adc=[ #NxN = 12x12
@@ -582,7 +589,7 @@ def microvibe_CCA(C, Qc, x, di):
 	y_peak = min(yi[2] for yi in y)
 	
 	#TODO add error with di
-	meas = apply_error(y_peak, di)
+	meas = apply_error(y_peak, di, err=err)
 	return meas
 
 #Cryo-cooler disturbance with isolator
@@ -592,8 +599,8 @@ def microvibe_CCA(C, Qc, x, di):
 ###Other
 #Cryogenic Modal Survey (characterize shift of stiffness and transmissibility from room temp to cryogenic temp)
 #simple measure, include stiffness_rt_factor and damping_rt_factor in theta, put into every experiment
-def simple_measure(theta, di):
+def simple_measure(theta, di, err=True):
 	y = theta
 	
-	meas = apply_error(y, di)
+	meas = apply_error(y, di, err=err)
 	return meas
