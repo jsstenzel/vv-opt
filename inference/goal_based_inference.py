@@ -5,6 +5,7 @@ import math
 import numpy as np
 from mpmath import mp
 import scipy.stats
+from scipy.special import logsumexp
 import matplotlib.pyplot as plt
 from sklearn.mixture import GaussianMixture
 
@@ -88,13 +89,75 @@ def gbi_train_model(qoi_samples, y_samples, verbose=0, ncomp=0, ncomp_start=1, c
 		
 	else:
 		#Allow someone to override this process if they think they know how many components they want
-		gmm = GaussianMixtureNormalized(n_components=ncomp, standardized_mean=y_mean, standardized_std=y_std).fit(data)
+		if careful:
+			gmm = GaussianMixtureNormalized(n_components=ncomp, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std).fit(data)
+		else:
+			gmm = GaussianMixtureNormalized(n_components=ncomp, standardized_mean=y_mean, standardized_std=y_std).fit(data)
 		print("Using provided number of components,",ncomp,flush=True) if verbose else 0
 		
 	return gmm
 
-#online, condition the joint gmm on the data to get the posterior predictive
-def gbi_condition_model(gmm, Yd_raw, verbose=0):
+
+#as above, but take in a warm-started gmm and continue to train it
+def gbi_train_model_warm(qoi_samples, y_samples, gmm, verbose=0, careful=False):
+	ncomp = len(gmm.weights_)
+	gmm.warm_start = True
+	
+	print("getting data...",flush=True) if verbose else 0
+	p_mean = np.mean(qoi_samples)
+	p_std = np.std(qoi_samples)
+	yp_sample = [(qoi - p_mean)/p_std for qoi in qoi_samples]
+	d_mean = np.mean(y_samples, axis=0)
+	d_std = np.std(y_samples, axis=0)
+	yd_sample = [list((yd - d_mean)/d_std) for i,yd in enumerate(y_samples)]
+	#print(p_mean)
+	#print(p_std)
+	#print(d_mean)
+	#print(d_std)
+	y_mean = [p_mean]+list(d_mean)
+	y_std = [p_std]+list(d_std) #TODO put these into all of the GaussianMixtures
+
+	p_dimension = 1 #len(yp_sample[0]) #1
+	d_dimension = len(yd_sample[0]) #3
+
+	data = np.array([np.hstack([yp_sample[i],yd_sample[i]]) for i,_ in enumerate(qoi_samples)])
+
+	#step 1: train 
+	#Get a a Gaussian mixture model from the push-forward of the prior through yd and yp
+	if careful:
+		GaussianMixtureNormalized(n_components=ncomp+1, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std).fit(data)
+	else:
+		gmm = GaussianMixtureNormalized(n_components=ncomp, standardized_mean=y_mean, standardized_std=y_std).fit(data)
+	print("Using provided number of components,",ncomp,flush=True) if verbose else 0
+	
+	return gmm
+
+
+def gbi_precalc_Sigdd(gmm, p_dim=1):
+	ncomp = len(gmm.weights_)
+	#just invert the Sig_dd matrices once, saves a lot of time!
+	Sig = [np.array(cov_k) for cov_k in gmm.covariances_]
+	Sig_dd = [Sig_k[p_dim:, p_dim:] for Sig_k in Sig]
+	inv_Sig_dd = [np.linalg.inv(Sig_dd_k) for Sig_dd_k in Sig_dd]
+	
+	#because the det is so small, I'm calling for the log of the det directly. slogdet requires careful unpacking
+	signs_logdets = [np.linalg.slogdet(Sig_dd_k) for Sig_dd_k in Sig_dd] #returns (sign, logdet)
+	logdet_Sig_dd = [None]*ncomp
+	for k in range(ncomp):
+		sign, logdet = signs_logdets[k]
+		if sign == 1:
+			logdet_Sig_dd[k] = logdet.item()
+		elif sign < 0:
+			print("Error: Sig_dd apparently wasn't positive semi-definite?")
+			sys.exit()
+		else:
+			print("Error: Sig_dd has a 0 determinant, that's unexpected")
+			sys.exit()
+	
+	return inv_Sig_dd, logdet_Sig_dd
+	
+#using decimal instead of mpmath
+def gbi_condition_model(gmm, Yd_raw, inv_Sig_dd_precalc=None, logdet_Sig_dd_precalc=None, verbose=0):
 	ncomp = gmm.n_components
 	#step 2
 	#Now we have our data, and we find the posterior predictive from that
@@ -104,12 +167,12 @@ def gbi_condition_model(gmm, Yd_raw, verbose=0):
 	yd_means = gmm.standardized_mean[1:]
 	yd_stds = gmm.standardized_std[1:]
 	Yd_standard = [(y-yd_means[j])/yd_stds[j] for j,y in enumerate(Yd_raw)]
-	Yd = mp.matrix(Yd_standard)
-
+	Yd = np.array(Yd_standard)
+	
 	#get key parameters from the GMM
-	mu = [mp.matrix(mu_k) for mu_k in gmm.means_]
-	Sig = [mp.matrix(cov_k) for cov_k in gmm.covariances_]
-	alpha = mp.matrix(gmm.weights_)
+	mu = [np.array(mu_k) for mu_k in gmm.means_]
+	Sig = [np.array(cov_k) for cov_k in gmm.covariances_]
+	alpha = np.array(gmm.weights_)
 	p_dimension = len(mu[0]) - len(Yd) #scalar, this is usually 1
 	ymean_p = [mu_k[:p_dimension] for mu_k in mu] #column
 	ymean_d = [mu_k[p_dimension:] for mu_k in mu] #column (kinda)
@@ -118,44 +181,45 @@ def gbi_condition_model(gmm, Yd_raw, verbose=0):
 	Sig_dp = [Sig_k[p_dimension:, :p_dimension] for Sig_k in Sig]
 	Sig_dd = [Sig_k[p_dimension:, p_dimension:] for Sig_k in Sig]
 	
-	if verbose==2:
-		print("ymean_p:\n", ymean_p)
-		#print("ymean_d:\n", ymean_d)
-		print("Sig_pp:\n", Sig_pp)
-		#print("Sig_pd:\n", Sig_pd)
-		#print("Sig_dp:\n", Sig_dp)
-		print("ncomp:",ncomp)
-		#for i in range(ncomp):
-		#	print("Sig_dd:\n", mp.det(Sig_dd[i]), flush=True)
-		#	eigenval, _ = mp.eig(Sig_dd[i])
-		#	print("eigenvalues of the",i,"th covariance matrix:",eigenval)
-		#	sys.exit()
+	###These things can be precalculated, to save time. check if they have been
+	if inv_Sig_dd_precalc and logdet_Sig_dd_precalc:
+		inv_Sig_dd = inv_Sig_dd_precalc
+		logdet_Sig_dd = logdet_Sig_dd_precalc
+	else: #no half-measures!
+		inv_Sig_dd, logdet_Sig_dd = gbi_precalc_Sigdd(gmm_qyd, p_dim=1)
 
 	#parameters for the new GMM:
-	B1 = [alpha[k] * (2*math.pi)**(-ncomp/2.0) * mp.det(Sig_dd[k])**(-0.5) 
-			* mp.exp(mp.norm(-0.5 * (Yd - ymean_d[k]).T * (Sig_dd[k])**-1 * (Yd - ymean_d[k])),p=1)
-			for k in range(ncomp)] #something is busted here
-	B0 = sum(B1)
-	if B0 == 0:
-		print("Something stupid happened")
-		print(B1)
-		sys.exit()
-	beta = [B1[k] / B0 for k in range(ncomp)]
-	mu_Yd = [ymean_p[k] + Sig_pd[k] * (Sig_dd[k])**-1 * (Yd - ymean_d[k]) for k in range(ncomp)]
-	Sig_Yd = [Sig_pp[k] - Sig_pd[k] * (Sig_dd[k])**-1 * Sig_dp[k] for k in range(ncomp)]
-	###
+	column_diff = [np.array(Yd - ymean_d[k]).reshape(len(Yd), 1) for k in range(ncomp)]
+	exponent = [-0.5 * (column_diff[k].T @ inv_Sig_dd[k] @ column_diff[k]).item() for k in range(ncomp)] #TODO matrix mult isnt workin here
+	logB1 = [(-ncomp/2.0)*np.log(alpha[k]*2*math.pi) 
+			- 0.5 * logdet_Sig_dd[k]
+			+ exponent[k]
+			for k in range(ncomp)]
+	#B1 = [np.exp(logbk) for logbk in logB1] #this is broken; would need to use Decimal to do this without loss of precision
+	#B0 = math.fsum(B1) #this lets us sum floating-point numbers without loss of precision
 	
-	#convert back to np arrays, annoyingly:
-	beta = np.array([float(mp.norm(x,p=1)) for x in beta])
-	mu_Yd = np.array([[float(mp.norm(x,p=1))] for x in mu_Yd])
-	Sig_Yd = np.array([[[float(mp.norm(x,p=1))]] for x in Sig_Yd])
+	#scipy.special.logsumexp does log( SUMi exp(ai) )
+	#-- similar to np.logaddexp, which does log(exp(a) + exp(b) safely
+	logB0 = logsumexp(logB1)
+	#lnB0 = ln [SUMk exp(lnBk)], equivalent to B0 = sum(Bk)
+	
+	#because we're dividing really small numbers, sometimes we get 1e-10 terms (or 1e-100 !), but those aren't harmful so leave em in
+	#beta = [B1[k] / B0 for k in range(ncomp)] 
+	beta = [np.exp(logB1[k] - logB0) for k in range(ncomp)]
+	mu_Yd = [ymean_p[k] + Sig_pd[k] @ inv_Sig_dd[k] @ column_diff[k] for k in range(ncomp)]
+	Sig_Yd = [Sig_pp[k] - Sig_pd[k] @ inv_Sig_dd[k] @ Sig_dp[k] for k in range(ncomp)]
+	
+	#convert back to np arrays, annoyingly: #TODO is this necessary?
+	beta = [np.array(x) for x in beta]
+	mu_Yd = [np.array(x) for x in mu_Yd]
+	Sig_Yd = [np.array(x) for x in Sig_Yd]
 	
 	##LASTLY its very important that we de-normalize this input data according to the normalization of Q in the GaussianMixtureNormalized
 	#should just involve multiplying the mean and std
 	yp_mean = gmm.standardized_mean[0]
-	yp_cov = gmm.standardized_std[0]
-	mu_Y = [yp_cov*mu + yp_mean for mu in mu_Yd]
-	Sig_Yd = [(yp_cov**2)*var for var in Sig_Yd]
+	yp_std = gmm.standardized_std[0]
+	mu_Y = [yp_std*mu + yp_mean for mu in mu_Yd] #xnorm = (x-xmean)/xstd
+	Sig_Yd = [(yp_std**2)*var for var in Sig_Yd] #rescaling stddev=1 back to yp_std
 	
 	if verbose==2:
 		print("beta:", beta)
@@ -182,8 +246,8 @@ def gbi_gmm_variance(beta, mu_Yd, Sig_Yd):
 	var = moment2 - moment1**2
 	return var
 	
-def gbi_var_of_conditional_pp(gmm, Yd, verbose=0):
-	beta, mu_Yd, Sig_Yd = gbi_condition_model(gmm, Yd, verbose=verbose)
+def gbi_var_of_conditional_pp(gmm, Yd, verbose=0, inv_Sig_dd_precalc=None, logdet_Sig_dd_precalc=None):
+	beta, mu_Yd, Sig_Yd = gbi_condition_model(gmm, Yd, inv_Sig_dd_precalc=inv_Sig_dd_precalc, logdet_Sig_dd_precalc=logdet_Sig_dd_precalc, verbose=verbose)
 	return gbi_gmm_variance(beta, mu_Yd, Sig_Yd)
 	
 #Given a GMM and a conditional Yd, what is a sample of Yp?

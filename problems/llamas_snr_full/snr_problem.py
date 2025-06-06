@@ -118,17 +118,13 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	#So for now, I will continue to define the mean function and kernel properties manually
 	ppts, _ = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_sl_prior.txt", 3, doPlot=False)
 	lval_sl, steppt_sl, rval_sl, power_sl, _ = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_sl_prior.txt", doPlot=verbose_probdef, doErr=False)
-	def meanfn_sl_prior(t):
-		thru = throughput_from_sigmoidfit_coeffs(lval_sl, steppt_sl, rval_sl, power_sl, [t])
-		return t_to_u(thru[0])
+	meanfn_sl_prior = t_to_u(throughput_from_sigmoidfit_coeffs(lval_sl, steppt_sl, rval_sl, power_sl, ppts))
 	var_u = 1.0 #kind of a WAG
 	prior_gp_sl = ["gp_expquad", [var_u, _lengthscale, ppts, meanfn_sl_prior]]
 
 	ppts, _ = get_ppts_meanfn_file(_dir+"ECI_FusedSilica_bg_prior.txt", 3, doPlot=False)
 	lval_bg, steppt_bg, rval_bg, power_bg, _ = sigmoid_fit_throughput_file(_dir+"ECI_FusedSilica_bg_prior.txt", doPlot=verbose_probdef, doErr=False)
-	def meanfn_bg_prior(t):
-		thru = throughput_from_sigmoidfit_coeffs(lval_bg, steppt_bg, rval_bg, power_bg, [t])
-		return t_to_u(thru[0])
+	meanfn_bg_prior = t_to_u(throughput_from_sigmoidfit_coeffs(lval_bg, steppt_bg, rval_bg, power_bg, ppts))
 	var_u = 1.0 #kind of a WAG
 	prior_gp_bg = ["gp_expquad", [var_u, _lengthscale, ppts, meanfn_bg_prior]]
 
@@ -139,12 +135,7 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	coll_mean_pts.append(0.98)
 	var_u = 1.0 #kind of a WAG
 	ls = 8
-	def coll_fn(t):
-		try:
-			val = np.interp(t, coll_prior_pts, coll_mean_pts)
-		except ValueError:
-			return 0.0
-		return t_to_u(val)
+	coll_fn = t_to_u(coll_mean_pts)
 	prior_gp_coll = ["gp_expquad", [var_u, ls, coll_prior_pts, coll_fn]]
 	
 	###Red Lens priors -- manufacturer curves for 60-30110
@@ -273,16 +264,55 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 					"y_frd"
 				]
 
-	d_defs = [
+
+	d_defs_full = [
 					["t_gain", ['uniform', [.1, 600]], "continuous"], #gain
 					["I_gain", ['uniform', [0, 100]], "discrete"],    #gain
 					["n_meas_rn", ['uniform', [0, 50]], "discrete"],  #rn
-					["d_num", ['uniform', [0, 25]], "discrete"],      #dc
-					["d_max", ['uniform', [1, 12000]], "continuous"], #dc
+					["d_num", ['uniform', [2, 25]], "discrete"],      #dc
+					["d_max", ['uniform', [0, 12000]], "continuous"], #dc
 					["d_pow", ['uniform', [0.01,3]], "continuous"],      #dc
 					
 					["n_qe", ['uniform', [0, 100]], "discrete"],   #qe
 					["t_qe", ['uniform', [.1, 600]], "continuous"],#qe
+					
+					["d_vph_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
+					["d_dichroic_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
+					["d_coll_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
+					["d_redcam_n_pts", ['uniform', [0,(_wave_max-_wave_redgreen)*10]], "discrete"], #i guess??
+					["d_greencam_n_pts", ['uniform', [0,(_wave_redgreen-_wave_greenblue)*10]], "discrete"], #i guess??
+					["d_bluecam_n_pts", ['uniform', [0,(_wave_greenblue-_wave_min)*10]], "discrete"], #i guess??
+					["d_frd_n_meas", ['uniform', [0,2400]], "discrete"],
+				]
+	d_defs_non0 = [
+					["t_gain", ['uniform', [.1, 600]], "continuous"], #gain
+					["I_gain", ['uniform', [1, 100]], "discrete"],    #gain
+					["n_meas_rn", ['uniform', [1, 50]], "discrete"],  #rn
+					["d_num", ['uniform', [2, 25]], "discrete"],      #dc
+					["d_max", ['uniform', [1, 12000]], "continuous"], #dc
+					["d_pow", ['uniform', [0.01,3]], "continuous"],      #dc
+					
+					["n_qe", ['uniform', [1, 100]], "discrete"],   #qe
+					["t_qe", ['uniform', [.1, 600]], "continuous"],#qe
+					
+					["d_vph_n_pts", ['uniform', [1,_bandpass*10]], "discrete"],
+					["d_dichroic_n_pts", ['uniform', [1,_bandpass*10]], "discrete"],
+					["d_coll_n_pts", ['uniform', [1,_bandpass*10]], "discrete"],
+					["d_redcam_n_pts", ['uniform', [1,(_wave_max-_wave_redgreen)*10]], "discrete"], #i guess??
+					["d_greencam_n_pts", ['uniform', [1,(_wave_redgreen-_wave_greenblue)*10]], "discrete"], #i guess??
+					["d_bluecam_n_pts", ['uniform', [1,(_wave_greenblue-_wave_min)*10]], "discrete"], #i guess??
+					["d_frd_n_meas", ['uniform', [1,2400]], "discrete"],
+				]
+	d_defs_discrete = [
+					["t_gain", ['uniform', [0, 600]], "discrete"], #gain
+					["I_gain", ['uniform', [0, 100]], "discrete"],    #gain
+					["n_meas_rn", ['uniform', [0, 50]], "discrete"],  #rn
+					["d_num", ['uniform', [2, 25]], "discrete"],      #dc
+					["d_max", ['uniform', [.1, 12000]], "discretized100"], #dc
+					["d_pow", ['uniform', [0.01,3]], "discretized100"],      #dc
+					
+					["n_qe", ['uniform', [0, 100]], "discrete"],   #qe
+					["t_qe", ['uniform', [0, 600]], "discrete"],#qe
 					
 					["d_vph_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
 					["d_dichroic_n_pts", ['uniform', [0,_bandpass*10]], "discrete"],
@@ -377,16 +407,16 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 					["t_rn_buffer", [], "continuous", 5], #rough estimate based on experience
 					["t_dc_buffer", [], "continuous", 5], #rough estimate based on experience
 					["fp_testbed_setup", [], "continuous", 1800], #rough estimate based on experience
-					["t_qe_setup", [], "continuous", 1200], #WAG, best i can do
-					["t_qe_buffer", [], "continuous", 5], #WAG, best i can do
+					["t_qe_setup", [], "continuous", 1200], #WAG just assuming all setups are 1hr
+					["t_qe_buffer", [], "continuous", 60], #WAG - need to adjust photodiode or sensor or something, so say about a minute
 					["t_vph_setup", [], "continuous", 1200], #WAG just assuming all setups are 1hr
-					["t_vph_per_pt", [], "continuous", 5], #WAG assuming all thru exposures + buffers are 5sec
+					["t_vph_per_pt", [], "continuous", 5*60], #WAG - individual measurements -5 min each with buffer
 					["t_dichroic_setup", [], "continuous", 1200], #WAG just assuming all setups are 1hr
-					["t_dichroic_per_pt", [], "continuous", 5], #WAG assuming all thru exposures + buffers are 5sec
+					["t_dichroic_per_pt", [], "continuous", 0.01], #WAG - this captures tradeoff between spectral resolution and integration time
 					["t_coll_setup", [], "continuous", 1200], #WAG just assuming all setups are 1hr
-					["t_coll_per_pt", [], "continuous", 5], #WAG assuming all thru exposures + buffers are 5sec
+					["t_coll_per_pt", [], "continuous", 0.05], #WAG - this captures tradeoff between spectral resolution and integration time
 					["t_camera_test_setup", [], "continuous", 1800], #WAG this setup is probably more complicated
-					["t_camera_per_pt", [], "continuous", 5], #WAG assuming all thru exposures + buffers are 5sec
+					["t_camera_per_pt", [], "continuous", 5*60], #WAG - individual measurements - 5 min each with buffer
 					["t_frd_setup", [], "continuous", 1200], #WAG just assuming all setups are 1hr
 					["t_frd_test", [], "continuous", 600], #WAG i think this test was probably pretty fiddly, since we only tested 10
 					#["C_engineer", [], "continuous", 0.00694444444] #WAG $/s, from $25/hr
@@ -398,7 +428,7 @@ def construct_llamas_snr_problem(verbose_probdef=False):
 	eta = snr_likelihood_fn
 	H = sensitivity_hlva
 	Gamma = snr_cost
-	llamas_snr = ProblemDefinition(eta, H, Gamma, theta_defs, y_defs, d_defs, x_defs)
+	llamas_snr = ProblemDefinition(eta, H, Gamma, theta_defs, y_defs, d_defs_discrete, x_defs)
 	print("llamas_snr_full problem constructed.",flush=True)
 	return llamas_snr
 	

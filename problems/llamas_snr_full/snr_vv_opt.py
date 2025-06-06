@@ -16,11 +16,12 @@ from obed.obed_multivar import *
 from obed.obed_gbi import *
 #from obed.pdf_estimation import *
 from inference.bn_modeling import *
+from inference.bn_evaluation import *
 from uq.uncertainty_propagation import *
 from uq.sensitivity_analysis import *
 from uq.saltelli_gsa import *
 from uq.gsa_convergence import *
-from opt.ngsa import *
+from opt.nsga import *
 
 ################################
 #Useful definitions
@@ -313,13 +314,6 @@ def vv_gbi_test(problem, d, N, y=[], ncomp=0):
 		plt.show()
 	else:
 		plot_predictive_posterior(a, b, c, 0, 500, drawplot=True)
-
-def vv_obed_gbi(problem, d):
-	U, U_list = U_varH_gbi(d, problem, n_mc=10**4, n_gmm=10**4, doPrint=True)
-	print(U)
-	#print(U_list)
-	uncertainty_prop_plot(U_list, c='royalblue', xlab="specific U")#, saveFig='OBEDresult')
-	return U
 	
 def uncertainty_mc(problem, dd, n_mc=10**2, n_gmm=10**2, n_test=10**2):
 	util_samples = []
@@ -331,6 +325,28 @@ def uncertainty_mc(problem, dd, n_mc=10**2, n_gmm=10**2, n_test=10**2):
 	uncertainty_prop_plot(util_samples, c='purple', xlab="utility for d=d_hist")
 	print(statistics.variance(util_samples))
 	return util_samples
+	
+def vv_OPT(problem, gmm_file, ysamples_file, design_pts, epsilon, util_err, do_hrs, do_min, threads, popSize, nMC, displayFreq=10):
+	#Load the GMM and presampled y from file
+	print("Loading GMM and presamples...",flush=True)
+	gmm20 = bn_load_gmm(gmm_file)
+	presampled_ylist = bn_load_y(problem, ysamples_file, doPrint=False, doDiagnostic=False)
+	
+	costs, utilities, designs = nsga2_obed_bn(	
+					n_threads=threads, 
+					prob=problem, 
+					hours=do_hrs, 
+					minutes=do_min, 
+					popSize=popSize, 
+					nSkip=2, 
+					tolDelta=epsilon,#utility_conf95/1.96, 
+					nPeriod=5, 
+					nMonteCarlo=nMC, 
+					GMM=gmm20, 
+					Ylist=presampled_ylist,
+					displayFreq=displayFreq
+				)
+	plot_nsga2(costs, utilities, design_pts, util_err=util_err, showPlot=True, savePlot=False, logPlotXY=[False,False])
 
 if __name__ == '__main__':  
 	import argparse
@@ -341,6 +357,12 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 	
 	###Problem Definition
+	_wave_min = 350.0
+	_wave_max = 975.0
+	_wave_redgreen = 690.0
+	_wave_greenblue = 480.0
+	_bandpass = _wave_max - _wave_min
+
 	d_historical = [
 						20,   #t_gain
 						30,   #I_gain
@@ -353,21 +375,20 @@ if __name__ == '__main__':
 						3, #d_vph_n_pts
 						801, #d_dichroic_n_pts
 						1501, #d_coll_n_pts #MIT Run 9-2730		
-						11, #d_redcam_n_pts #protoLLAMAS camera testing
+						13, #d_redcam_n_pts #protoLLAMAS camera testing
 						0, #d_greencam_n_pts #protoLLAMAS camera testing
-						11, #d_bluecam_n_pts #protoLLAMAS camera testing
+						13, #d_bluecam_n_pts #protoLLAMAS camera testing
 						10 #d_frd_n_meas #from evaluating_cleaving_through_bigger.xlsx
 					]
-					
-	d_min = [
-						0, #t_gain 				0-length exposure for gain exp
+	d_0 = [
+						0.1, #t_gain 				0-length exposure for gain exp
 						0, #I_gain 				no measurements for gain exp
 						0, #n_meas_rn 			no measurements for rn exp
 						0, #d_num 				no measurements for dc exp
-						0, #d_max 				dc exp filer
-						0, #d_pow 				dc exp filler
+						1, #d_max 				dc exp filer
+						0.01, #d_pow 				dc exp filler
 						0, #n_qe 				no measurements for qe exp
-						0, #t_qe 				0-length exposure for qe exp
+						0.1, #t_qe 				0-length exposure for qe exp
 						0, #d_vph_n_pts 		no measurements for vph exp
 						0, #d_dichroic_n_pts 	no measurements for dichroic exp
 						0, #d_coll_n_pts		no measurements for collimator exp
@@ -376,11 +397,56 @@ if __name__ == '__main__':
 						0, #d_bluecam_n_pts		no measurements for camera exp
 						0  #d_frd_n_meas 		no measurements for FRD exp
 					]
+	d_min = [
+						0.1, #t_gain 				0-length exposure for gain exp
+						1, #I_gain 				no measurements for gain exp
+						1, #n_meas_rn 			no measurements for rn exp
+						1, #d_num 				no measurements for dc exp
+						1, #d_max 				dc exp filer
+						0.01, #d_pow 				more short experiments
+						1, #n_qe 				no measurements for qe exp
+						0.1, #t_qe 				0-length exposure for qe exp
+						1, #d_vph_n_pts 		no measurements for vph exp
+						1, #d_dichroic_n_pts 	no measurements for dichroic exp
+						1, #d_coll_n_pts		no measurements for collimator exp
+						1, #d_redcam_n_pts		no measurements for camera exp
+						1, #d_greencam_n_pts		no measurements for camera exp
+						1, #d_bluecam_n_pts		no measurements for camera exp
+						1  #d_frd_n_meas 		no measurements for FRD exp
+					]
+
+	d_max = [
+						600, #t_gain
+						100, #I_gain
+						50, #n_meas_rn
+						25, #d_num
+						12000, #d_max
+						3, #d_pow
+						100, #n_qe
+						600, #t_qe
+						_bandpass*10, #d_vph_n_pts
+						_bandpass*10, #d_dichroic_n_pts
+						_bandpass*10, #d_coll_n_pts
+						(_wave_max-_wave_redgreen)*10, #d_redcam_n_pts
+						(_wave_redgreen-_wave_greenblue)*10, #d_greencam_n_pts
+						(_wave_greenblue-_wave_min)*10, #d_bluecam_n_pts
+						2400  #d_frd_n_meas
+					]
+	d_med = [dd/2 for dd in d_max]
+	d_med[5] = 1 #d_pow
 	problem = construct_llamas_snr_problem()
 	
 	req = 3.0
 	theta_nominal = problem.theta_nominal
 	y_nominal = problem.eta(theta_nominal, d_historical, err=False)
+	
+	design_pts = [
+		[problem.G(d_historical), 0.004240541527302059, "d_hist", 5.384503718405341e-05],
+		[problem.G(d_0), 0.0047856764435419575, "d_0", 5.384503718405341e-05],
+		[problem.G(d_max), 0.0022957744137691916, "d_max", 5.384503718405341e-05],
+		[problem.G(d_med), 0.004294863943612242, "d_med", 5.384503718405341e-05],
+		#[problem.G(d_min), 0.004772754162991483, "d_min", 5.384503718405341e-05]
+	]
 
 	###Uncertainty Quantification
 	if args.run == "nominal":
@@ -400,11 +466,11 @@ if __name__ == '__main__':
 		
 	elif args.run == "cheap_design":
 		print("Given the nominal theta:", theta_nominal)
-		print("and the cheapest design:", d_min)
-		y_cheap = problem.eta(theta_nominal, d_min, err=True)
+		print("and the cheapest design:", d_0)
+		y_cheap = problem.eta(theta_nominal, d_0, err=True)
 		
 		print("Cheapest y:", y_cheap)
-		print("Cost of design:", problem.G(d_min))
+		print("Cost of design:", problem.G(d_0))
 	
 	elif args.run == "UA_theta":
 		vv_UA_theta(problem, n=args.n)
@@ -418,7 +484,7 @@ if __name__ == '__main__':
 	elif args.run == "UP_exp":
 		vv_UP_exp(problem, d_historical, theta_nominal, n=args.n)
 	
-	if args.run == "SA_QoI_sample":
+	elif args.run == "SA_QoI_sample":
 		vv_SA_QoI_sample(problem, N=args.n, filename=args.filename)
 
 	elif args.run == "SA_QoI_sample":
@@ -433,7 +499,7 @@ if __name__ == '__main__':
 	#Still needs massaging...
 	#if args.run == "SA_exp":
 	#	vv_SA_exp(problem, d_historical)
-
+	
 	###Optimal Bayesian Experimental Design
 	elif args.run == "BN_sample":
 		rate = 10 if args.filename=="SA_QoI" else int(args.filename)	
@@ -441,53 +507,157 @@ if __name__ == '__main__':
 	
 	elif args.run == "BN_train":
 		#Train the BN off of the saved data
+		ncomp = 200
 		q, _ = bn_load_samples(problem, savefile="BN_samples", doPrint=True, doDiagnostic=True)
-		gmm = bn_train_from_file(problem, savefile="BN_samples", do_subset=args.n, doPrint=True)
+		gmm = bn_train_from_file(problem, savefile="BN_samples", do_subset=2000000, ncomp=ncomp, doPrint=True)
 		
 		#Save the GMM to a file
-		#filename = "BN_" + str(len(q)) + '.csv'
-		filename = "BN_model.csv"
+		filename = "BN_model_" + str(len(q)) + "_ncomp" + str(ncomp) + '.pkl'
+		#filename = "BN_model.csv"
 		bn_save_gmm(gmm, gmm_file=filename)
+		
+	elif args.run == "BN_examine":
+		bn_compare_model_covariance(problem, "BN_samples", "BN_model_1639027_ncomp200.csv", doPrint=True)
+		#bn_plot_data_density(problem, "BN_samples_1639027", "BN_model_1639027_ncomp200.csv", do_subset=100, doGMMPlot=False, doPrint=True)
 		
 	elif args.run == "BN_evaluate":
 		#Run the validation test
 		#gmm = bn_load_gmm("BN_model.csv")
 		#bn_measure_model_mse(problem, gmm, N=args.n, doPrint=True)
 		
-		#bn_compare_model_covariance(problem, "BN_samples", "BN_model_100000", doPrint=True)
-		
-		bn_evaluate_model_likelihood(problem, gmmfile="BN_model_1000", datafile="BN_samples", N_val=0, do_subset=1000, doPrint=True)
+		#bn_evaluate_model_likelihood(problem, gmmfile="BN_model_1000", datafile="BN_samples", N_val=0, do_subset=1000, doPrint=True)
+		bn_evaluate_convergence_confidence(problem, valfile="BN_validation", N_bootstrap=1000, doPrint=True)
 		
 	elif args.run == "BN_convergence":
 		#Run the convergence test
 		#bn_measure_stability_convergence(problem, , N_val=args.n, doPrint=True)
-		bn_measure_likelihood_convergence(problem, "BN_samples", doPrint=True)
+		#bn_measure_likelihood_convergence(problem, "BN_samples", doPrint=True)
+		#bn_measure_likelihood_convergence(problem, "BN_samples", doPrint=True)
+		#bn_measure_validation_convergence(problem, "BN_samples", N_val=args.n, doPrint=True)
+		bn_train_convergence_confidence(problem, trainfile="BN_samples", N_bootstrap=1000, ncomp=50, startnum=args.n, doPrint=True)
+		
+	elif args.run == "BN_find_ncomp":
+		bn_train_evaluate_ncomp(problem, trainfile="BN_samples_1639027", doPlot=True, doPrint=True)
+		#bn_train_evaluate_ncomp_plot([],[])
+		#bn_train_evaluate_ncomp_sanitycheck(problem, trainfile="BN_samples", valfile="BN_validation", doPlot=True, doPrint=True)
 	
 	elif args.run == "OBED_test":
-		#Load the GMM from file
-		gmm = bn_load_gmm("BN_model.csv")
-	
-		#Calculate U for several different designs
-		U_varH_gbi_joint(d_historical, problem, gmm, n_mc=args.n, ncomp=0, doPrint=True)
-		U_varH_gbi_joint(d_min, problem, gmm, n_mc=args.n, ncomp=0, doPrint=True)
-	
-		"""
-	elif args.run == "gbi_test":
-		vv_gbi_test(problem, d_historical, 10**1, y_nominal, ncomp=0)
-	elif args.run == "gbi_test_rand":
-		vv_gbi_test(problem, d_historical, 10**1, ncomp=10)
-	
-	elif args.run == "obed_gbi":
-		U_hist = vv_obed_gbi(problem, d_historical)
-	
-	elif args.run == "uncertainty_mc":
-		util_samples = uncertainty_mc(problem, d_historical, n_mc=10**2, n_gmm=10**2, n_test=3)
-		print(util_samples)
+		#Load the GMM and presampled y from file
+		print("Loading GMM and presamples...",flush=True)
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", doPrint=False, doDiagnostic=False)
 		
-	elif args.run == "vv_opt_parallel":
-		costs, utilities, designs = ngsa2_problem_parallel(8, problem, hours=0, minutes=0, popSize=10, nMonteCarlo=10**3, nGMM=10**3)
-		plot_ngsa2(costs, utilities, showPlot=True, savePlot=False, logPlotXY=[False,False])
+		#Calculate U for several different designs
 		"""
+		U_dhist,_ = U_varH_gbi_joint_presampled(d_historical, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_dhist:",U_dhist,flush=True)
+		U_d0, _ = U_varH_gbi_joint_presampled(d_0, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_d0:",U_d0,flush=True)
+		U_dmax, _ = U_varH_gbi_joint_presampled(d_max, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_dmax:",U_dmax,flush=True)
+		"""
+		U_dmin, _ = U_varH_gbi_joint_presampled(d_min, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_dmin:",U_dmin,flush=True)
+		U_dmed, _ = U_varH_gbi_joint_presampled(d_med, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_dmed:",U_dmed,flush=True)
+		
+		#Canonical values:
+		""" these are posterior variances of Q, averaged over many theta-y joint samples
+		U_dhist: 0.004240541527302059
+		U_d0: 0.0047856764435419575
+		U_dmax: 0.0022957744137691916
+		"""
+		
+	elif args.run == "OBED_convergence":
+		#Load the GMM and presampled y from file
+		print("Loading GMM and presamples...",flush=True)
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_samples.csv", doPrint=False, doDiagnostic=False)
+		
+		#Calculate U_hist for large n_mc, and save the individual MC results
+		U_hist,u_1m_list = U_varH_gbi_joint_presampled(d_historical, problem, gmm, presampled_ylist, n_mc=1000000, doPrint=True)
+		import pickle
+		with open("u_1m_list.pkl", 'wb') as file:
+			pickle.dump(u_1m_list, file)
+		
+	elif args.run == "OBED_convergence_eval":
+		import pickle
+		with open("u_1m_list.pkl", 'rb') as file:
+			u_1m_list = pickle.load(file)
+			
+		#Take slices of that data for increasing n
+		mc_plot_trace_bootstrap(u_1m_list, 60, doLog=False, doEvery=10000)
+	
+	elif args.run == "OPT_test":
+		vv_OPT(
+			problem, 
+			gmm_file="ncomp_testing/BN_model_1639027_ncomp20.pkl", 
+			ysamples_file="BN_samples_1639027.csv", 
+			design_pts=design_pts,
+			epsilon=0.01, #probably the ncomp20 model is better than this
+			util_err=0.001,
+			do_hrs = 0,
+			do_min = 0,
+			threads = 1 if args.n==0 else args.n,
+			popSize=40,# if args.n==0 else args.n,
+			nMC=10,
+			displayFreq=10
+		)
+
+	elif args.run == "OPT_nmc_p4":
+		conf95 = 0.0006962967583258008
+		conf_frac = conf95 = conf95 / (0.0047856764435419575 - 0.0022957744137691916)
+		vv_OPT(
+			problem, 
+			gmm_file="ncomp_testing/BN_model_1639027_ncomp200.pkl", 
+			ysamples_file="BN_samples_1639027.csv", 
+			design_pts=design_pts,
+			epsilon=conf_frac,
+			util_err=conf95,
+			do_hrs = 11 if args.filename == "timed" else 0,
+			do_min = 30 if args.filename == "timed" else 0,
+			threads = 5,#1 if args.n == 0 else args.n,
+			popSize=50,#30 if args.n==0 else args.n,
+			nMC=10**4,
+			displayFreq=10
+		)
+
+	elif args.run == "OPT_nmc_p5":
+		conf95 = 0.00019389166166701476
+		conf_frac = conf95 = conf95 / (0.0047856764435419575 - 0.0022957744137691916)
+		vv_OPT(
+			problem, 
+			gmm_file="BN_model_1639027_ncomp200.pkl", 
+			ysamples_file="ncomp_testing/BN_samples_1639027.csv", 
+			design_pts=design_pts,
+			epsilon=conf_frac, #rough analogue for nMC=10^5
+			util_err=conf95,
+			do_hrs = 11 if args.filename == "timed" else 0,
+			do_min = 30 if args.filename == "timed" else 0,
+			threads = 8 if args.n == 0 else args.n,
+			popSize=40,
+			nMC=10**5
+		)
+		
+	elif args.run == "OPT_nmc_p6":
+		#prepare initializaiton samples based on previous run + prepared designs
+	    
+		conf95 = 5.384503718405341e-05
+		conf_frac = conf95 / (0.0047856764435419575 - 0.0022957744137691916)
+		vv_OPT(
+			problem, 
+			gmm_file="BN_model_1639027_ncomp200.pkl", 
+			ysamples_file="ncomp_testing/BN_samples_1639027.csv", 
+			design_pts=design_pts,
+			epsilon=conf_frac, #the result for half the 95% confidence interval width for nMC=10^6
+			util_err=conf95,
+			do_hrs = 11 if args.filename == "timed" else 0,
+			do_min = 30 if args.filename == "timed" else 0,
+			threads = 8 if args.n == 0 else args.n,
+			popSize=60,
+			nMC=10**6,
+			samples=[]
+		)
 	
 	else:
 		print("I dont recognize the command",args.run)

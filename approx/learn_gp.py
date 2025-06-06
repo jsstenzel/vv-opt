@@ -56,12 +56,7 @@ def learn_gp_prior(wave_pts, thru_pts, err_pts=[], doPlot=False, doPrint=False, 
 	prior_pts = sorted(list(set(wave_pts)))
 	
 	#Define the mean fn, in u-domain
-	def mean_fn_from_training(t):
-		try:
-			val = np.interp(t, xplot, mu_u)
-		except ValueError:
-			return 0.0
-		return val
+	mean_fn_from_training = [make_mean_fn(t, xplot, mu_u) for t in prior_pts]
 		
 	#Interrogate the kernels for ls,variance
 	params = gpr.kernel_.get_params()
@@ -97,7 +92,7 @@ def learn_gp_prior(wave_pts, thru_pts, err_pts=[], doPlot=False, doPrint=False, 
 		#here's the real moneymaker
 		fine_plot = np.arange(Xmin,Xmax,0.1)
 		gp_std = np.array([np.sqrt(expquad_variance) for _ in fine_plot]) #plotting in u-domain
-		mean_pts = np.array([mean_fn_from_training(f) for f in fine_plot]) #plotting in u-domain
+		mean_pts = np.array([make_mean_fn(f, xplot, mu_u) for f in fine_plot]) #plotting in u-domain
 		plt.fill_between(fine_plot, (mean_pts - gp_std), (mean_pts + gp_std), facecolor='grey')
 		plt.plot(fine_plot, mean_pts)
 		plt.xlabel('wavelength')
@@ -149,7 +144,7 @@ def learn_save_gp_prior_to_file(save_file, filenames, meas_std, save=True, doPlo
 	variance, ls, prior_pts, mean_fn = learn_gp_prior_from_files(filenames, meas_std, doPlot=doPlot, doPrint=doPrint, careful=careful)
 	
 	#grab the mean fn points straight from the fn, so still in the u-domain
-	mean_fn_pts_u = [mean_fn(pt) for pt in prior_pts]
+	mean_fn_pts_u = mean_fn
 	
 	save_file_name = save_file if save_file.endswith('.csv') else save_file+'.csv'
 	if save:
@@ -181,18 +176,13 @@ def learn_load_gp_prior_from_file(load_file, returnObj=False, doPlot=False):
 			else:
 				prior_pts.append(float(row[0]))
 				mean_fn_pts_u.append(float(row[1]))
-			
-	def mean_fn_load_gp(t):
-		try:
-			val = np.interp(t, prior_pts, mean_fn_pts_u)
-		except ValueError:
-			return 0.0
-		return val
+	
+	mean_fn_load_gp = mean_fn_pts_u
 		
 	if doPlot:
 		fine_plot = np.arange(min(prior_pts),max(prior_pts),0.1)
 		gp_std = np.array([np.sqrt(variance) for _ in fine_plot]) #plotting in u-domain
-		mean_pts = np.array([mean_fn_load_gp(f) for f in fine_plot]) #plotting in u-domain
+		mean_pts = np.array([make_mean_fn(f, prior_pts, mean_fn_pts_u) for f in fine_plot]) #plotting in u-domain
 		plt.fill_between(fine_plot, (mean_pts - gp_std), (mean_pts + gp_std), facecolor='grey')
 		plt.plot(fine_plot, mean_pts)
 		plt.xlabel('wavelength')

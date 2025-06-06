@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=8
+#SBATCH -t 0-12:00 #Request time
+#SBATCH -p newnodes
+#SBATCH -o output_%j.txt #redirect output to output_JOBID.txt
+#SBATCH -e output_%j.txt #redirect errors to output_JOBID.txt
+#SBATCH --mem=10GB
+
+srun -N1 -n1 OPT_call_file 8 &
+
+wait
+

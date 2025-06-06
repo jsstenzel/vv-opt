@@ -61,7 +61,7 @@ In-house testing of a collimator was done, with 1501 measurement points.
 LENSES:
 It does not seem that camera throughput testing was done for LLAMAS. Plenty of optical tolerancing work was done on LLAMAS, but that is a separate set of parameters that serve other quantities of interest.
 
-Also located here are test results for detailed camera testing of the protoLLAMAS lenses. Here, the camera lens assemblies were tested all together, at 11 points each for the red and blue cameras. This constitutes the full historical camera throughput testing that was done.
+Also located here are test results for detailed camera testing of the protoLLAMAS lenses. Here, the camera lens assemblies were tested all together, at 13 points each for the red and blue cameras. This constitutes the full historical camera throughput testing that was done.
 
 FRD:
 From evaluating_cleavage...

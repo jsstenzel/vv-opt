@@ -107,6 +107,16 @@ if __name__ == '__main__':
 	elif args.run == "SA_QoI_bootstrap_profile":
 		profile_func(bootstrap_profile, [], 'SA_QoI_bootstrap_stats')
 		
+	elif args.run == "BN_train":
+		profile_func(bn_train_from_file, [problem, "BN_samples_1639027", 100000, 20, True], 'BN_train_stats')
+		
+	elif args.run == "OBED_test":
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", do_subset=10000, doPrint=False, doDiagnostic=False)
+		
+		profile_func(U_varH_gbi_joint_presampled, [d_historical, problem, gmm, presampled_ylist, 10000, True], "OBED_test_stats")
+	
+		
 	elif args.run == "gain_exp":
 		#Check to make sure the function works as expected over a range of inputs
 		
