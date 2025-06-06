@@ -213,8 +213,8 @@ def saltelli_indices(base_name, var_names, do_subset=0, doPrint=True):
 		print("Reading the data files...",flush=True)
 	
 	if do_subset == 0:
-		with open(base_name+'_A.csv') as csvfile:
-			csvreader = csv.reader(csvfile, delimiter=',')
+		with open(base_name+'_A.csv', errors='ignore') as csvfile:
+			csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
 			for row in csvreader:
 				Ay.append([float(elem) for elem in row])
 		#This change assumes that the data files are well-behaved; use SA_datalist_health_check first
@@ -223,16 +223,16 @@ def saltelli_indices(base_name, var_names, do_subset=0, doPrint=True):
 		By = np.zeros((M,pp+1))
 		Cy = []
 		
-		with open(base_name+'_B.csv') as csvfile:
-			csvreader = csv.reader(csvfile, delimiter=',')
+		with open(base_name+'_B.csv', errors='ignore') as csvfile:
+			csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
 			for i,row in enumerate(csvreader):
 				for e,elem in enumerate(row):
 					By[i][e] = float(elem)
 
 		for p,name in enumerate(var_names):
 			Ciy = np.zeros((M,pp+1))
-			with open(base_name+'_C_'+name+'.csv') as csvfile:
-				csvreader = csv.reader(csvfile, delimiter=',')
+			with open(base_name+'_C_'+name+'.csv', errors='ignore') as csvfile:
+				csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
 				for i,row in enumerate(csvreader):
 					for e,elem in enumerate(row):
 						Ciy[i][e] = float(elem)
@@ -240,8 +240,8 @@ def saltelli_indices(base_name, var_names, do_subset=0, doPrint=True):
 	else:
 		lim = int(do_subset/2)
 		###Optionally, we can analyze less than the full set of provided samples
-		with open(base_name+'_A.csv') as csvfile:
-			csvreader = csv.reader(csvfile, delimiter=',')
+		with open(base_name+'_A.csv', errors='ignore') as csvfile:
+			csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
 			for row in islice(csvreader, lim):
 				Ay.append([float(elem) for elem in row])
 		#This change assumes that the data files are well-behaved; use SA_datalist_health_check first
@@ -250,15 +250,15 @@ def saltelli_indices(base_name, var_names, do_subset=0, doPrint=True):
 		By = np.zeros((M,pp+1))
 		Cy = []
 		
-		with open(base_name+'_B.csv') as csvfile:
-			csvreader = csv.reader(csvfile, delimiter=',')
+		with open(base_name+'_B.csv', errors='ignore') as csvfile:
+			csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
 			for i,row in enumerate(islice(csvreader, lim)):
 				By[i] = [float(elem) for elem in row]
 
 		for p,name in enumerate(var_names):
 			Ciy = np.zeros((M,pp+1))
-			with open(base_name+'_C_'+name+'.csv') as csvfile:
-				csvreader = csv.reader(csvfile, delimiter=',')
+			with open(base_name+'_C_'+name+'.csv', errors='ignore') as csvfile:
+				csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
 				for row in islice(csvreader, lim):
 					for e,elem in enumerate(row):
 						Ciy[i][e] = float(elem)
