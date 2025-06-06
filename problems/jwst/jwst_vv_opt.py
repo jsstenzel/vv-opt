@@ -38,14 +38,25 @@ def vv_system(problem, theta_nominal):
 	#print("Nominal y:", y_nominal)
 	print("Nominal QoI:", QoI_nominal)
 	
-def vv_experiment(problem, theta_nominal, d):
+def vv_experiment(problem, theta_nominal, ds):
 	print(problem)
 	print("Given the nominal theta:", theta_nominal)
-	print("And this design:", theta_nominal)
-	ynom = problem.eta(theta_nominal, d, err=False)
-	print("Nominal y:", ynom)
-	y = problem.eta(theta_nominal, d, err=True)
-	print("A sampled y:", y)
+	print("Nominal y for d=0:", problem.eta(theta_nominal, ds[0], err=False))
+	print("Nominal y for d=1:", problem.eta(theta_nominal, ds[1], err=False))
+	print("Nominal y for d=2:", problem.eta(theta_nominal, ds[2], err=False))
+	print("Nominal y for d=3:", problem.eta(theta_nominal, ds[3], err=False))
+	#y = problem.eta(theta_nominal, d, err=True)
+	#print("A sampled y:", y)
+	
+def vv_experiment_sensitivity(problem, d):
+	print("Sanity check to show that the experiment is sensitive to theta")
+	uq_thetas = problem.prior_rvs(3)
+	theta = [np.concatenate((t[:-2],[1,1])) for t in uq_thetas]
+	#make the room temp factors 1, just for funsies
+	print("y:", problem.eta(theta[0], d, err=False))
+	print("y:", problem.eta(theta[1], d, err=False))
+	print("y:", problem.eta(theta[2], d, err=False))
+	#print("A sampled y:", y)
 
 ###uncertainty analysis
 def vv_UA_theta(problem, n=10**4):
@@ -351,7 +362,10 @@ if __name__ == '__main__':
 		vv_system(problem, theta_nominal)
 		
 	elif args.run == "experiment_nominal":	
-		vv_experiment(problem, theta_nominal, d2s)
+		vv_experiment(problem, theta_nominal, [d0s,d1s,d2s,d3s])
+		
+	elif args.run == "experiment_check":
+		vv_experiment_sensitivity(problem, d0s)
 	
 		"""
 	elif args.run == "system_model":
