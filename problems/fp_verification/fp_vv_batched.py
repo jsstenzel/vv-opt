@@ -576,7 +576,7 @@ if __name__ == '__main__':
 		
 	elif args.run == "prior_update":
 		###for the optimal design, d1, assume data that is nominal
-		d1 = d_historical #TBD
+		d1 = [235.632, 92, 14, 21, 4.35234, 2.75273]
 		#ydata = [yi*1.1 for yi in y_nominal] #test data, just choosing things on the large end of y
 		ydata = problem.eta(theta_nominal, d1, err=False)		
 
@@ -584,7 +584,7 @@ if __name__ == '__main__':
 		fp_prior_update(ydata, d_historical, n_mcmc=args.n, loadKDE=True, doDiagnostic=True)
 	
 	elif args.run == "sequential_setup":
-		d1 = d_historical #TBD
+		d1 = [235.632, 92, 14, 21, 4.35234, 2.75273]
 		###conduct gain experiment using d1, assume nominal
 		ydata = problem.eta(theta_nominal, d1, err=False)
 		gaindata = ydata[0]

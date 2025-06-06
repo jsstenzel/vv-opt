@@ -43,8 +43,8 @@ def fp_likelihood_2(theta, d, x, dummy, err=True):
  
 def fp_cost_2(d, x):
 	d_old = d
-	d_old["t_gain"] = 0 #TBD d1
-	d_old["I_gain"] = 0 #TBD d1
+	d_old["t_gain"] = 235.632 #dstar
+	d_old["I_gain"] = 92 #dstar
 	return fp_cost_simple(d, x)
 
 #these priors are based on requirements that were met, see Camera Qual Report
