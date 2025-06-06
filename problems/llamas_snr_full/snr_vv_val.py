@@ -356,16 +356,11 @@ if __name__ == '__main__':
 		dhist_Qvariance = gbi_var_of_conditional_pp(gmm, yhistdhist, inv_Sig_dd_precalc=inv_Sig_dd, logdet_Sig_dd_precalc=logdet_Sig_dd, verbose=True)
 
 		###Get Q|theta,d*,y*
-		thetas = problem.prior_rvs(args.n)
-		ystar_Qvariances = []
-		for theta in thetas:
-			ystar = problem.eta(theta, d_opt_balanced, err=True)
-			ystardstar = np.concatenate((ystar,d_opt_balanced))
-			Qvar = gbi_var_of_conditional_pp(gmm, ystardstar, inv_Sig_dd_precalc=inv_Sig_dd, logdet_Sig_dd_precalc=logdet_Sig_dd, verbose=True)
-			ystar_Qvariances.append(Qvar)
+		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", doPrint=False, doDiagnostic=False)
+		_, ystar_Qvariances = U_varH_gbi_joint_presampled(d_opt_balanced, problem, gmm, presampled_ylist, n_mc=10**5, doPrint=True)
 
 		print("Variance of Q|theta,dhist,yhist ", dhist_Qvariance)
-		uncertainty_prop_plot(ystar_Qvariances, c='orchid', xlab="Var[Q|theta,y,d=d*]", saveFig='', vline=[dhist_Qvariance])
+		uncertainty_prop_plot(ystar_Qvariances, c='orchid', xlab="Var[Q|theta,y,d=d*]", saveFig='compare_yhist_to_dstar.png', vline=[dhist_Qvariance])
 	
 	else:
 		print("I don't recognize that command")
