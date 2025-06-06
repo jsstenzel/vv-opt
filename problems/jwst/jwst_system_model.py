@@ -116,6 +116,7 @@ def nexus_lyapunov_system_model(theta, x, verbose=True):
 		matlab.double(theta["zeta_sunshield"]),
 		matlab.double(theta["zeta_isolator"]),
 		matlab.double(theta["zeta_solarpanel"]),
+		matlab.double(theta["CCA_factor"]),
 		1 if verbose else 0 #diagnostics
 	)
 	

@@ -28,6 +28,7 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 		["Us", ["uniform", unif_margin(1.8)], "continuous"], #static wheel imbalance         [gcm]
 		["Ud", ["uniform", unif_margin(60.0)], "continuous"], #dynamic wheel imbalance        [gcm^2]
 		["Qc", ["uniform", unif_margin(0.005)], "continuous"], #cryocooler attenuation factor 
+		["CCA_factor", ["uniform", [.5,1.5]], "continuous"], #a scaling factor applied to C to increase or decrease force at all modes
 		#TODO add something else for cryocooler
 		["K_yPM", ["uniform", unif_margin(0.77400E+06)], "continuous"], #PM outer bipod actuator transverse stiffness
 		["K_yISO", ["uniform", unif_margin(0.14600E+04)], "continuous"], #Hexapod (i.e. secondary mirror support structure) isolator strut axial stiffness %actually this is not true, its for RWA isolator as well
@@ -137,40 +138,41 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 		#put eng in here, for accessibility
 		#["eng", [], "discrete", eng],
 		#x dict random
-		["Ru", ["uniform", unif_margin(3000)], "continuous", 3000.0], #upper operational wheel speed  [RPM]
-		["fc", ["uniform", unif_margin(30)], "continuous", 30.0], #cryocooler drive frequency
-		["Tst", ["uniform", unif_margin(20)], "continuous", 20.0], #Star Tracker update rate
-		["Srg", ["uniform", unif_margin(3e-14)], "continuous", 3e-14], #rate gyro noise intensity
-		["Sst", ["uniform", unif_margin(2)], "continuous", 2], #Star Tracker one sigma
-		["Tgs", ["uniform", unif_margin(0.04)], "continuous", 0.04], #Guider integration time 
-		["lambda_", ["uniform", unif_margin(1e-6)], "continuous", 1e-6], #center optical wavelength
-		["Ro", ["uniform", unif_margin(0.98)], "continuous", 0.98], #optical surface transmissivity
-		["QE", ["uniform", unif_margin(0.8)], "continuous", 0.8], #CCD quantum efficiency
-		["Mgs", ["uniform", unif_margin(15)], "continuous", 15], #magnitude of faint guide star
-		["fca", ["uniform", unif_margin(0.01)], "continuous", 0.01], #Target ACS control bandwidth
-		["Kc", ["uniform", [0,1]], "continuous", 0.0], #FSM-to-ACS cross coupling gain
-		["Kcf", ["uniform", unif_margin(2000)], "continuous", 2000.0], #FSM controller gain
+		["Ru", [], "continuous", 3000.0], #upper operational wheel speed  [RPM]
+		["fc", [], "continuous", 30.0], #cryocooler drive frequency
+		["Tst", [], "continuous", 20.0], #Star Tracker update rate
+		["Srg", [], "continuous", 3e-14], #rate gyro noise intensity
+		["Sst", [], "continuous", 2], #Star Tracker one sigma
+		["Tgs", [], "continuous", 0.04], #Guider integration time 
+		["lambda_", [], "continuous", 1e-6], #center optical wavelength
+		["Ro", [], "continuous", 0.98], #optical surface transmissivity
+		["QE", [], "continuous", 0.8], #CCD quantum efficiency
+		["Mgs", [], "continuous", 15], #magnitude of faint guide star
+		["fca", [], "continuous", 0.01], #Target ACS control bandwidth
+		["Kc", [], "continuous", 0.0], #FSM-to-ACS cross coupling gain
+		["Kcf", [], "continuous", 2000.0], #FSM controller gain
+
 				
 		#other random parameters
-		["I_SMhubt", ["uniform", unif_margin(0.25200E+00)], "continuous", 0.25200E+00], #SM hub inertia transverse
-		["I_SMhuba", ["uniform", unif_margin(0.45900E+00)], "continuous", 0.45900E+00], #SM hub inertia axial
-		["I_xRWA", ["uniform", unif_margin(0.40187E+00)], "continuous", 0.40187E+00], #Ix moment of inertia of RWA chassis
-		["I_yRWA", ["uniform", unif_margin(0.22445E+00)], "continuous", 0.22445E+00], #Iy moment of inertia of RWA chassis
-		["I_RWt", ["uniform", unif_margin(0.83595E-01)], "continuous", 0.83595E-01], #Transverse Inertia of ITHACO E reaction wheel
-		["I_RWa", ["uniform", unif_margin(0.14339E+00)], "continuous", 0.14339E+00], #Axial Inertia of ITHACO E reaction wheel
-		["I_ISOa", ["uniform", unif_margin(0.11720E-03)], "continuous", 0.11720E-03], #RWA isolator strut axial inertia
-		["I_ISOt", ["uniform", unif_margin(0.39300E-01)], "continuous", 0.39300E-01], #RWA isolator strut transverse inertia
-		["I_propt", ["uniform", unif_margin(0.51100E+01)], "continuous", 0.51100E+01], #propulsion system transverse inertia 
-		["I_propa", ["uniform", unif_margin(0.74000E+00)], "continuous", 0.74000E+00], #propulsion system axial inertia
-		["I_i1", ["uniform", unif_margin(0.49200E+01)], "continuous", 0.49200E+01], #Instrument moment of inertia 1-axis
-		["I_i2", ["uniform", unif_margin(0.75420E+01)], "continuous", 0.75420E+01], #Instrument moment of inertia 2-axis
-		["I_i3", ["uniform", unif_margin(0.41280E+01)], "continuous", 0.41280E+01], #Instrument moment of inertia 3-axis
-		["A_sptop", ["uniform", unif_margin(0.14040E-02)], "continuous", 0.14040E-02], #Cross sectional area of SM spider (top)
+		["I_SMhubt", [], "continuous", 0.25200E+00], #SM hub inertia transverse
+		["I_SMhuba", [], "continuous", 0.45900E+00], #SM hub inertia axial
+		["I_xRWA", [], "continuous", 0.40187E+00], #Ix moment of inertia of RWA chassis
+		["I_yRWA", [], "continuous", 0.22445E+00], #Iy moment of inertia of RWA chassis
+		["I_RWt", [], "continuous", 0.83595E-01], #Transverse Inertia of ITHACO E reaction wheel
+		["I_RWa", [], "continuous", 0.14339E+00], #Axial Inertia of ITHACO E reaction wheel
+		["I_ISOa", [], "continuous", 0.11720E-03], #RWA isolator strut axial inertia
+		["I_ISOt", [], "continuous", 0.39300E-01], #RWA isolator strut transverse inertia
+		["I_propt", [], "continuous", 0.51100E+01], #propulsion system transverse inertia
+		["I_propa", [], "continuous", 0.74000E+00], #propulsion system axial inertia
+		["I_i1", [], "continuous", 0.49200E+01], #Instrument moment of inertia 1-axis
+		["I_i2", [], "continuous", 0.75420E+01], #Instrument moment of inertia 2-axis
+		["I_i3", [], "continuous", 0.41280E+01], #Instrument moment of inertia 3-axis
+		["A_sptop", [], "continuous", 0.14040E-02], #Cross sectional area of SM spider (top)
 		["D_sp", ["uniform", unif_margin(0.060)], "continuous", 0.060], #SM spider (bottom) diameter
 		["t_sp", ["uniform", unif_margin(0.003)], "continuous", 0.003], #SM spider (bottom) wall thickness  [m]
-		["I_ss", ["uniform", unif_margin(0.78350E-08)], "continuous", 0.78350E-08], #Sunshield out-of-plane bending moment of inertia,
-		["I_bus", ["uniform", unif_margin(0.85080E+02)], "continuous", 0.85080E+02], #NEXUS spacecraft bus principal inertia
-		["I_iso", ["uniform", unif_margin(1.00000E-5)], "continuous", 1.00000E-5], #RW wheel isolator bending m.o.I. [m^4]
+		["I_ss", [], "continuous", 0.78350E-08], #Sunshield out-of-plane bending moment of inertia,
+		["I_bus", [], "continuous", 0.85080E+02], #NEXUS spacecraft bus principal inertia
+		["I_iso", [], "continuous", 1.00000E-5], #RW wheel isolator bending m.o.I. [m^4]
 				
 		#x dict fixed
 		["m_SM", [], "discrete", 2.49],
@@ -200,8 +202,8 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 		["n", [], "discrete", 3],
 		["h", [], "discrete", [1.0,2.0,3.0,4.0,5.0,6.0]],
 		["C", [], "discrete", [
-			[42,0.95,4.1,2.75,0.9,1.2],
-			[0.2,0.09,0.25,1.0,5.0,0.4]
+			[42, 0.95,4.1, 2.75,0.9,1.2],
+			[0.2,0.09,0.25,1.0, 5.0,0.4]
 		]],
 		["Nsurf", [], "discrete", 10],
 		["D", [], "discrete", 2.8],

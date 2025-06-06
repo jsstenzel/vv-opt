@@ -257,7 +257,7 @@ mass=[752.094612601836,1.03216046820620e-15,2.23432383705813e-15,3.2372619509063
 % --------------------------   fsm stuff  ----------------------
 % --------------------------------------------------------------
 FgsNom = 30;			      % nominal FSM sample rate (Hz)
-
+CCA_factor = 1;
 
 
 
@@ -265,4 +265,4 @@ FgsNom = 30;			      % nominal FSM sample rate (Hz)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CALL THE FUNCTION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Q = nexus_lyapunov(Ru,Us,Ud,fc,Qc,Tst,Srg,Sst,Tgs,m_SM,m_SMhub,I_SMhubt,I_SMhuba,m_RW,K_yPM,I_xRWA,I_yRWA,I_RWt,I_RWa,m_ISO,I_ISOa,I_ISOt,K_yISO,K_xISO,m_RWAchx,I_bus,m_bus,m_prop,I_propt,I_propa,m_instr,I_i1,I_i2,I_i3,A_sptop,D_sp,t_sp,I_ss,K_rad1,K_rad2,K_rISO,K_act1,K_act2,I_iso,K_zpet,lambda,Ro,QE,Mgs,fca,Kc,Kcf,nray,caxi,crad,ctor,haxi,hrad,htor,zeta1,a,wheel_locs,n,h,C,Nsurf,D,BP,PH,R0,mass,FgsNom,K_pm1,K_pm3,K_pm4,K_pm5,K_pm6,K_act_pm2,K_act_pm3,K_act_pm4,K_act_pm5,K_act_pm6,K_xpet,c_RWA,c_RWAI,c_SM_act,c_PM,c_PM_act,c_petal,zeta_sunshield,zeta_isolator,zeta_solarpanel,1)
+Q = nexus_lyapunov(Ru,Us,Ud,fc,Qc,Tst,Srg,Sst,Tgs,m_SM,m_SMhub,I_SMhubt,I_SMhuba,m_RW,K_yPM,I_xRWA,I_yRWA,I_RWt,I_RWa,m_ISO,I_ISOa,I_ISOt,K_yISO,K_xISO,m_RWAchx,I_bus,m_bus,m_prop,I_propt,I_propa,m_instr,I_i1,I_i2,I_i3,A_sptop,D_sp,t_sp,I_ss,K_rad1,K_rad2,K_rISO,K_act1,K_act2,I_iso,K_zpet,lambda,Ro,QE,Mgs,fca,Kc,Kcf,nray,caxi,crad,ctor,haxi,hrad,htor,zeta1,a,wheel_locs,n,h,C,Nsurf,D,BP,PH,R0,mass,FgsNom,K_pm1,K_pm3,K_pm4,K_pm5,K_pm6,K_act_pm2,K_act_pm3,K_act_pm4,K_act_pm5,K_act_pm6,K_xpet,c_RWA,c_RWAI,c_SM_act,c_PM,c_PM_act,c_petal,zeta_sunshield,zeta_isolator,zeta_solarpanel,CCA_factor,1)

@@ -15,6 +15,7 @@ import multiprocessing as mp
 import math
 from copy import deepcopy
 import scipy.optimize as optimization
+import scipy.signal
 
 """
 Full matrix experiment model
@@ -142,10 +143,10 @@ def jwst_eta(theta, d, x, prior_mean, err=True):
 	
 	#Cryo-cooler disturbance
 	#TODO make C in theta, right now the experiment gives the same answer each time
-	y_vibe_cca = microvibe_CCA(C=x["C"], Qc=1, x=x, di=d["d_vibe_cca"], err=err)
+	y_vibe_cca = microvibe_CCA(CCA_factor=theta["CCA_factor"], Qc=1, x=x, di=d["d_vibe_cca"], err=err)
 	
 	#Cryo-cooler disturbance with isolator
-	y_vibe_ccai = microvibe_CCA(C=x["C"], Qc=theta["Qc"], x=x, di=d["d_vibe_ccai"], err=err)
+	y_vibe_ccai = microvibe_CCA(CCA_factor=theta["CCA_factor"], Qc=theta["Qc"], x=x, di=d["d_vibe_ccai"], err=err)
 	
 	#################################################
 	###Other
@@ -517,7 +518,7 @@ def microvibe_RWA(Us, Ud, w, c, k, m, di, err=True):
 #use K_rISO and 
 
 #Cryo-cooler disturbance
-def microvibe_CCA(C, Qc, x, di, err=True):
+def microvibe_CCA(CCA_factor, Qc, x, di, err=True):
 	#x:
 	#n=3
 	#h = [1.0,2.0,3.0,4.0,5.0,6.0]
@@ -528,7 +529,7 @@ def microvibe_CCA(C, Qc, x, di, err=True):
 	#fc = 30 #ish
 	n = x["n"]
 	h = x["h"]
-	#C = x["C"] #maybe i should make this a theta? otherwise nothing is tested here
+	C = x["C"] #maybe i should make this a theta? otherwise nothing is tested here
 	fc = x["fc"]
 	wc=2*math.pi*fc # drive frequency
 
@@ -537,8 +538,8 @@ def microvibe_CCA(C, Qc, x, di, err=True):
 	kij = np.zeros((2,n))
 	for ind1 in [0,1]:
 		for ind2 in range(n):
-			zij[ind1][ind2]=1/(2*wc*h[ind2])
-			kij[ind1][ind2]=2*zij[ind1][ind2]*wc*h[ind2]*Qc*C[ind1][ind2]
+			zij[ind1][ind2]=1/(2*wc*h[ind2]) #this is kind of like zeta; we're looking at the first 6 modes of the drive frequency
+			kij[ind1][ind2]=2*zij[ind1][ind2]*wc*h[ind2]*Qc*CCA_factor*C[ind1][ind2]
 	#print(zij)
 	#print(kij)
 
