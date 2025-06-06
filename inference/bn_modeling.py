@@ -17,7 +17,7 @@ from inference.goal_based_inference import *
 
 #Draw N samples and save in a consistent 1-line format to savefile
 #Do it iteratively, to support parallelization and clustering
-def bn_sampling(problem, savefile, N, buffer_rate=1, doPrint=False):
+def bn_sampling(problem, savefile, N, buffer_rate=1, doPrint=False, sample_x=False):
 	filename = savefile if savefile.endswith('.csv') else savefile+'.csv'
 	
 	data_buffer = []
@@ -27,9 +27,13 @@ def bn_sampling(problem, savefile, N, buffer_rate=1, doPrint=False):
 		#Drawing samples theta, d
 		theta_sample = problem.prior_rvs(1)
 		d_sample = problem.sample_d(1)
+		if sample_x:
+			x_sample = problem.sample_x(1)
+		else:
+			x_sample=[]
 			
 		#Model propagation for Q, y
-		qoi_train = problem.H(theta_sample)
+		qoi_train = problem.H(theta_sample, x_sample)
 		y_train = problem.eta(theta_sample, d_sample)
 		
 		#Append the new BN sample to file
