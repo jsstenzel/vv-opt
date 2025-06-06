@@ -542,6 +542,37 @@ if __name__ == '__main__':
 		ftol=0.0006407042183632374,
 		penalty=10
 		)
+
+	elif args.run == "OPT_dumbsearch":
+		#Load the GMM and presampled y from file
+		print("Loading GMM and presamples...",flush=True)
+		gmm = bn_load_gmm("BN_batch_model_4000000_ncomp45.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_40k_samples.csv", doPrint=False, doDiagnostic=False)
+
+		while(True):
+			di = problem.sample_d(1)
+			costi = problem.G(di)
+			if 25583.3 < costi and costi <= 35482.15:
+				print("Trying a d...",flush=True)
+				Ui, _ = U_varH_gbi_joint_presampled(di, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=False)
+				if Ui < 0.03470218984967855:
+					print(costi, Ui, di, flush=True)
+				else:
+					print("No good",flush=True)
+
+	elif args.run == "OPT_check":
+		dstar_a = [242.052,92,15,22,1.01794,2.73681]
+		dstar_b = [235.632,92,14,21,4.35234,2.75273]
+
+		print("Loading GMM and presamples...",flush=True)
+		gmm = bn_load_gmm("BN_batch_model_4000000_ncomp45.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_40k_samples.csv", doPrint=False, doDiagnostic=False)
+
+		Ua, _ = U_varH_gbi_joint_presampled(dstar_a, problem, gmm, presampled_ylist, n_mc=400000, doPrint=True)
+		Ub, _ = U_varH_gbi_joint_presampled(dstar_b, problem, gmm, presampled_ylist, n_mc=400000, doPrint=True)
+		print(problem.G(dstar_a), Ua, dstar_a)
+		print(problem.G(dstar_b), Ub, dstar_b)
+
 		
 	elif args.run == "prior_update":
 		###for the optimal design, d1, assume data that is nominal
