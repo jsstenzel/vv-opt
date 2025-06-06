@@ -50,12 +50,15 @@ def minimize_with_penalty(problem, costcap, gmm_file, ylist_file, n_mc, n_tries,
 		else:
 			return U_d + penalty + (costcap - C_d)
 	
+	def callback_function(d):
+		print(f"Current design:",d,"C(d) =",problem.G(d), flush=True)
+
 	costs = []
 	utilities = []
 	designs = []
 	###do a few iterations of minimization here
 	for i in range(n_tries):
-		res = scipy.optimize.minimize(fn_to_minimize, x0, method='nelder-mead', options={'fatol': ftol, 'adaptive':True, 'disp': True}, bounds=bounds)
+		res = scipy.optimize.minimize(fn_to_minimize, x0, method='nelder-mead', callback=callback_function, options={'fatol': ftol, 'adaptive':True, 'disp': True}, bounds=bounds)
 		costs.append(problem.G(res.x))
 		utilities.append(res.fun)
 		designs.append(res.x)

@@ -270,6 +270,10 @@ def base_trim(base_name, var_names, do_subset=0):
 	Ay,By,Cy = read_SA_files(base_name, var_names, do_subset=do_subset, doPrint=True)
 	oversave(base_name, var_names, Ay,By,Cy)
 	
+def base_trim_right(base_name, var_names, grab_from_right=0):	
+	Ay,By,Cy = read_SA_files(base_name, var_names, do_subset=0, doPrint=True)
+	oversave(base_name+'_righttrim', var_names, Ay[grab_from_right:],By[grab_from_right:],[Ciy[grab_from_right:] for Ciy in Cy])
+	
 def base_line_cut(base_name, var_names, lines):
 	Ay,By,Cy = read_SA_files(base_name, var_names, do_subset=0, doPrint=True)
 	temp_cut_rows(Ay,By,Cy,lines)
@@ -277,8 +281,10 @@ def base_line_cut(base_name, var_names, lines):
 		
 if __name__ == '__main__':
 
-	#base_line_cut("SA_jitter", var_names, [29398,29397])
-	health_check("SA_jitter",var_names)
+	#base_line_cut("SA_jitter", var_names, [6033*2])
+	#health_check("SA_jitter",var_names,do_subset=0)
+	#health_check("SA_jitter2",var_names,do_subset=0)
+	base_trim_right("SA_jitter",var_names,grab_from_right=10000)
 	
 	#Check all bases
 	#base_names = ["SA_QoI_bank"+str(i) for i in range(1,129)]
@@ -289,7 +295,7 @@ if __name__ == '__main__':
 	#check some trimmed bases
 	#health_check("SA_QoI_bank35", var_names, do_subset=246*2)
 	#base_trim("SA_QoI_bank35", var_names, do_subset=246*2)
-	#base_trim("SA_jitter", var_names, do_subset=29398*2)
+	#base_trim("SA_jitter", var_names, do_subset=6033*2)
 	
 	#health_check("SA_QoI_bank91", var_names, do_subset=222*2)
 	#base_trim("SA_QoI_bank91", var_names, do_subset=222*2)
