@@ -85,7 +85,6 @@ class ProblemDefinition:
 			x_dict = deepcopy(self.x_dict)
 		else:
 			x_dict = dict(zip(self.x_names, x))
-	
 		if len(theta) != self.dim_theta:
 			raise ValueError("Input to ProblemDefinition eta: theta size "+str(self.dim_theta)+" expected, "+str(len(theta))+" provided.")
 		if len(d) != self.dim_d:
@@ -106,7 +105,6 @@ class ProblemDefinition:
 			x_dict = deepcopy(self.x_dict)
 		else:
 			x_dict = dict(zip(self.x_names, x))
-		
 		if len(d) != self.dim_d:
 			raise ValueError("Input to ProblemDefinition G: theta size "+str(self.dim_d)+" expected, "+str(len(d))+" provided.")
 		if len(x_dict) != self.dim_x:
@@ -122,7 +120,6 @@ class ProblemDefinition:
 			x_dict = deepcopy(self.x_dict)
 		else:
 			x_dict = dict(zip(self.x_names, x))
-			
 		if len(theta) != self.dim_theta:
 			raise ValueError("Input to ProblemDefinition H: theta size "+str(self.dim_theta)+" expected, "+str(len(theta))+" provided.")
 		if len(x_dict) != self.dim_x:
@@ -223,7 +220,7 @@ class ProblemDefinition:
 				thetas_i = scipy.stats.uniform.rvs(size=num_vals, loc=left, scale=right-left) #dist is [loc, loc + scale]
 				vals.append(thetas_i.tolist())
 			elif dtype == 'nonrandom':
-				thetas_i = [param[0] for _ in range(num_vals)]
+				thetas_i = [params[0] for _ in range(num_vals)]
 				vals.append(thetas_i)
 			elif dtype == 'gp_expquad':
 				variance = params[0]
@@ -256,7 +253,7 @@ class ProblemDefinition:
 				gp_sample.plot_prior()
 	
 	#assumes single theta, not list of thetas
-	"""
+
 	def prior_pdf_unnorm(self, theta):
 		#evaluate and return a list of probabilities (dim_theta) for each distribution component
 		probabilities = []
@@ -298,7 +295,6 @@ class ProblemDefinition:
 		#need to renormalize the pdf right?
 		#but unnormalized may be ok for MCMC?
 		return probabilities
-	"""
 	
 	def _theta_nominal(self):
 		"""
@@ -338,7 +334,7 @@ class ProblemDefinition:
 			elif dtype == 'uniform':
 				left = params[0]
 				right = params[1]
-				tnom.append((right+left)/2)
+				tnom.append(right-left)
 			elif dtype == 'nonrandom':
 				tnom.append(param[0])
 			elif dtype == 'gp_expquad':

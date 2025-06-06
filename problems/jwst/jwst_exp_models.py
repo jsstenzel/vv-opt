@@ -521,15 +521,15 @@ def microvibe_RWA(Us, Ud, w, c, k, m, di, err=True):
 def microvibe_CCA(CCA_factor, Qc, x, di, err=True):
 	#x:
 	#n=3
-	#h = [1.0,2.0,3.0,4.0,5.0,6.0]
-	#C = [
-	#		[42,0.95,4.1,2.75,0.9,1.2],
-	#		[0.2,0.09,0.25,1.0,5.0,0.4]
-	#	]
+	h = [1.0,2.0,3.0,4.0,5.0,6.0]
+	C = [
+			[42,0.95,4.1,2.75,0.9,1.2],
+			[0.2,0.09,0.25,1.0,5.0,0.4]
+		]
 	#fc = 30 #ish
 	n = x["n"]
-	h = x["h"]
-	C = x["C"] #maybe i should make this a theta? otherwise nothing is tested here
+	#h = x["h"]
+	#C = x["C"] #maybe i should make this a theta? otherwise nothing is tested here
 	fc = x["fc"]
 	wc=2*math.pi*fc # drive frequency
 

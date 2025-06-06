@@ -20,7 +20,7 @@ from uq.uncertainty_propagation import *
 from uq.sensitivity_analysis import *
 from uq.saltelli_gsa import *
 from uq.gsa_convergence import *
-from opt.ngsa import *
+from opt.nsga import *
 
 ################################
 #Useful definitions
@@ -413,12 +413,12 @@ if __name__ == '__main__':
 		"""
 	#Still needs massaging...
 	#if args.run == "SA_exp":
-	#	vv_SA_exp(problem, d_historical)
+	#	vv_SA_exp(problem, d_historical)"""
 
 	###Optimal Bayesian Experimental Design
 	elif args.run == "BN_sample":
-		rate = 10 if args.filename=="SA_jitter" else int(args.filename)	
-		bn_sampling(problem, savefile="BN_samples", N=args.n, buffer_rate=rate, doPrint=True)
+		rate = 10
+		bn_sampling(problem, savefile="BN_samples", N=args.n, buffer_rate=rate, doPrint=True, sample_x=True)
 	
 	elif args.run == "BN_train":
 		#Train the BN off of the saved data
@@ -451,7 +451,6 @@ if __name__ == '__main__':
 		#Calculate U for several different designs
 		U_varH_gbi_joint(d_historical, problem, gmm, n_mc=args.n, ncomp=0, doPrint=True)
 		U_varH_gbi_joint(d_min, problem, gmm, n_mc=args.n, ncomp=0, doPrint=True)
-	"""
 	
 	else:
 		print("I dont recognize the command",args.run)
