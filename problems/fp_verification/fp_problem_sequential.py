@@ -71,7 +71,7 @@ _sigmaE = math.sqrt((_m0 * _c**2) / (_k*_temp*_e0**2))
 _w = 3.66 + 0.000615*(300-_temp)
 fp2_x_defs = [
 				#sequential
-				["gain", ["gamma_mv", [1.1,0.2**2]], "continuous", 1.1], #TBD, gain posterior
+				["gain", ["gamma_mv", [1.0999913287843317,1.5998220769876884e-06]], "continuous", 1.1], #gain posterior mean and variance
 				#general
 				["nx", [], "discrete", 2048],
 				["ny", [], "discrete", 2048],
