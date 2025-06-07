@@ -17,8 +17,8 @@ from obed.mcmc import *
 from obed.obed_gbi import *
 from obed.pdf_estimation import *
 from uq.uncertainty_propagation import *
-#from uq.sensitivity_analysis import *
-from opt.ngsa import *
+from uq.sensitivity_analysis import *
+from opt.nsga import *
 
 ################################
 #Useful definitions
@@ -465,7 +465,6 @@ if __name__ == '__main__':
 
 	theta_nominal = [1.1, 2.5, .001]
 	QoI_nominal = fp.H(theta_nominal)
-	y_nominal = fp_likelihood_fn(dict(zip(fp.theta_names, theta_nominal)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)
 
 	d_historical = [
 					20,   #t_gain
@@ -493,6 +492,8 @@ if __name__ == '__main__':
 					1, #d_max
 					0.1	 #d_pow   #approx
 			]
+	"""
+	y_nominal = fp_likelihood_fn(dict(zip(fp.theta_names, theta_nominal)), dict(zip(fp.d_names, d_historical)), dict(zip(fp.x_names, fp.x_default)), err=False)
 
 	###Uncertainty Quantification
 	if args.run == "nominal":
@@ -503,16 +504,16 @@ if __name__ == '__main__':
 	
 	if args.run == "SA_QoI":
 		vv_SA_QoI(problem)
-	
+	"""
+	if args.run == "SA_exp":
+		fp_vv_SA_exp(fp, d_historical, p=12)
+	"""
 	#fp_vv_UP_exp(d_historical)
 	#fp_vv_UP_exp(d_best, False)
 	#fp_vv_UP_exp(d_worst, False)
 	if args.run == "UP_exp":
 		vv_UP_exp(problem, d_historical, theta_nominal)
-	
-	#fp_vv_SA_exp(d_historical)
-	if args.run == "UP_exp":
-		vv_UP_exp(problem, design, theta_nominal)
+	"""
 	
 	### Messing with MCMC approaches
 	

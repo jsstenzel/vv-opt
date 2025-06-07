@@ -60,7 +60,7 @@ def sobol_saltelli(function, N, var_names, var_dists, var_bounds, conf = 0.95, d
 	Si = sobol_analyze_samples(problem, Y, doSijCalc, conf, doPrint, writeReport)
 	
 	if doPlot:
-		plot_gsa(var_names, Si=Si, logplot=True)
+		plot_gsa(var_names, Si=Si, logplot=False)
 	
 	return Si
 
@@ -300,7 +300,7 @@ def plot_gsa(varnames, Si=None, filename=None, logplot=False):
 	plt.xlabel('Parameters', fontweight ='bold', fontsize = 10)
 	plt.ylabel('S_T', fontweight ='bold', fontsize = 10)
 	#plt.xticks([r + barWidth for r in range(len(varnames))], varnames)
-	plt.xticks(rotation=90)
+	#plt.xticks(rotation=90)
 	plt.tight_layout()
 	if logplot:
 		plt.yscale('log')	
