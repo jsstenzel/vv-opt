@@ -204,6 +204,8 @@ def fp_prior_update(ydata, d, n_mcmc, loadKDE=False, loadMCMC=False, doDiagnosti
 	print(stddevs)
 	print(cov)
 	H_posterior = [fp.H(tt) for tt in mcmc_trace]
+	print("QoI posterior mean:", np.mean(H_posterior))
+	print("QoI posterior stddev:", np.std(H_posterior))
 	print("Posterior probability of meeting the requirement: ", np.sum([int(h <= req) for h in H_posterior])/len(H_posterior))
 	
 	uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Gain [ADU/e-]")
@@ -581,7 +583,7 @@ if __name__ == '__main__':
 		ydata = problem.eta(theta_nominal, d1, err=False)		
 
 		###see what the benefit would be in the batch timeline, i.e. apply the design all at once
-		fp_prior_update(ydata, d_historical, n_mcmc=args.n, loadKDE=True, doDiagnostic=True)
+		fp_prior_update(ydata, d_historical, n_mcmc=args.n, loadKDE=True, loadMCMC=True, doDiagnostic=True)
 	
 	elif args.run == "sequential_setup":
 		d1 = [235.632, 92, 14, 21, 4.35234, 2.75273]

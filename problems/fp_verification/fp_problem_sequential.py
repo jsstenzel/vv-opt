@@ -59,7 +59,7 @@ fp2_d_defs = [
 				["n_meas_rn", ['uniform', [1, 50]], "discrete"],  #rn
 				["d_num", ['uniform', [2, 25]], "discrete"],     #dc
 				["d_max", ['uniform', [1, 12000]], "continuous"], #dc
-				["d_pow", ['uniform', [0,3]], "continuous"]       #dc
+				["d_pow", ['uniform', [0.1,3]], "continuous"]       #dc
 			]
 	
 _temp= -90+273.15 #K

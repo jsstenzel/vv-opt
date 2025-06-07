@@ -120,16 +120,16 @@ if __name__ == '__main__':
 		
 	#Find the highest utility design, subject to a cost cap
 	elif args.run == "OPT_costcap":
-		print(problem.G(d_historical))
+		print(35482.15)
 		minimize_with_penalty(
 		problem, 
 		costcap=problem.G(d_historical), 
 		gmm_file="BN_sequential_model_4000000_ncomp45.pkl", 
-		ylist_file="BN_40k_samples.csv",
-		n_mc=220000, 
+		ylist_file="BN_sequential_samples.csv",
+		n_mc=50000, 
 		n_tries=1, 
-		x0=[236.73,93,15,22,1.0184,2.76765],
-		ftol=0.0003478985402516399,
+		x0=[15,22,1.0184,2.76765],
+		ftol=1e-8, #0.0006407042183632374,
 		penalty=10
 		)
 		
