@@ -123,12 +123,12 @@ if __name__ == '__main__':
 		print(35482.15)
 		minimize_with_penalty(
 		problem, 
-		costcap=problem.G(d_historical), 
+		costcap=35482.15, 
 		gmm_file="BN_sequential_model_4000000_ncomp45.pkl", 
 		ylist_file="BN_sequential_samples.csv",
 		n_mc=50000, 
 		n_tries=1, 
-		x0=[15,22,1.0184,2.76765],
+		x0=[14, 21, 4.35234, 2.75273],
 		ftol=1e-8, #0.0006407042183632374,
 		penalty=10
 		)
