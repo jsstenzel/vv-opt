@@ -467,16 +467,45 @@ if __name__ == '__main__':
 		
 	elif args.run == "BN_convergence":
 		#Run the convergence test
-		bn_measure_likelihood_convergence(problem, N_val=args.n, doPrint=True)
-		#bn_measure_validation_convergence(problem, "BN_30M_samples", N_val=args.n, doPrint=True)
+
+		#bn_measure_stability_convergence(problem, , N_val=args.n, doPrint=True)
+		bn_measure_likelihood_convergence(problem, "BN_new_samples", doPrint=True)
 	
 	elif args.run == "OBED_test":
 		#Load the GMM from file
-		gmm = bn_load_gmm("BN_model.csv")
+		gmm = bn_load_gmm("BN_model_3121355_ncomp70.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_new_samples.csv", doPrint=False, doDiagnostic=False)
 	
 		#Calculate U for several different designs
-		U_varH_gbi_joint(d_historical, problem, gmm, n_mc=args.n, ncomp=0, doPrint=True)
-		U_varH_gbi_joint(d_min, problem, gmm, n_mc=args.n, ncomp=0, doPrint=True)
+		U_d0, _ = U_varH_gbi_joint_presampled(d0s, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_d0:",U_d0,flush=True)
+		U_d1, _ = U_varH_gbi_joint_presampled(d1s, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_d1:",U_d1,flush=True)
+		U_d2, _ = U_varH_gbi_joint_presampled(d2s, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_d2:",U_d2,flush=True)
+		U_d3, _ = U_varH_gbi_joint_presampled(d3s, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_d3:",U_d3,flush=True)
+
+
+	elif args.run == "OBED_convergence":
+		#Load the GMM and presampled y from file
+		print("Loading GMM and presamples...",flush=True)
+		gmm = bn_load_gmm("BN_model_3121355_ncomp70.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_new_samples.csv", doPrint=False, doDiagnostic=False)
+		
+		#Calculate U_hist for large n_mc, and save the individual MC results
+		U_hist,u_1m_list = U_varH_gbi_joint_presampled(d_historical, problem, gmm, presampled_ylist, n_mc=1000000, doPrint=True)
+		import pickle
+		with open("u_1m_list.pkl", 'wb') as file:
+			pickle.dump(u_1m_list, file)
+		
+	elif args.run == "OBED_convergence_eval":
+		import pickle
+		with open("u_1m_list.pkl", 'rb') as file:
+			u_1m_list = pickle.load(file)
+			
+		#Take slices of that data for increasing n
+		mc_plot_trace_bootstrap(u_1m_list, 60, doLog=False, savePlot=True, doEvery=10000)
 	
 	else:
 		print("I dont recognize the command",args.run)
