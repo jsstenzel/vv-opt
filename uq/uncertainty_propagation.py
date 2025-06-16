@@ -24,7 +24,7 @@ def uncertainty_prop_file(datafile, doPlot=False, doPrint=False):
 	return uncertainty_prop(y, doPlot, doPrint)
 
 #y_j: list of all model evaluation results, assumed to be single number
-def uncertainty_prop(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False, vline=[], doPlot=True, doPrint=True):
+def uncertainty_prop(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False, vline=[], doPlot=True, doPrint=True, yLog=False, xLog=False, doBins='auto'):
 	mean = statistics.mean(y_j)
 	stddev = statistics.stdev(y_j, mean) #note! This is sample stddev, not population stddev. Different n-factor in front
 
@@ -37,11 +37,27 @@ def uncertainty_prop(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False, vli
 		print("Gaussian fit p-value:",pvalue,"(p-value > 0.05 means its normal)")
 	
 	if doPlot:
-		uncertainty_prop_plot(y_j, xlab, c, saveFig, rescaled, vline)
+		uncertainty_prop_plot(y_j, xlab, c, saveFig, rescaled, vline, xLog=xLog, yLog=yLog, doBins=doBins)
 	
 	return mean, stddev
 	
-def uncertainty_prop_plot(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False, vline=[]):	
+def plot_loghist(x, bins, c='#21aad3', xlab='', vline=None):
+	logbins = np.logspace(np.log10(np.min(x)),np.log10(np.max(x)),bins+1)
+	plt.hist(x, bins=logbins, color=c)
+	plt.xscale('log')
+	
+	if vline:
+		plt.axvline(vline, c='k')
+	
+	plt.rcParams['text.usetex'] = True
+	plt.rcParams['mathtext.default'] = 'regular'
+	plt.rcParams['text.latex.preamble'] = [r"""\usepackage{bm}"""]
+	plt.xlabel(xlab)
+	plt.ylabel("Frequency (N=" + str(len(x)) + ")")
+	
+	plt.show()
+	
+def uncertainty_prop_plot(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False, vline=[], yLog=False, xLog=False, doBins='auto'):	
 	"""
 	###remarkably, plt.hist draws a memory error if there are outliers. it tries to list out a trillion bins.
 	#Fix: prune out the worst outliers as standard practice:
@@ -58,20 +74,22 @@ def uncertainty_prop_plot(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False
 
 	try:
 		if rescaled==False:
-			n, bins, patches = plt.hist(x=y_j, bins='auto', color=c, alpha=1.0, rwidth=0.85)
+			n, bins, patches = plt.hist(x=y_j, bins=doBins, color=c, alpha=1.0, rwidth=0.85, log=yLog)
 		else:
-			n, bins, patches = plt.hist(x=y_j, bins='auto', color=c, alpha=1.0, rwidth=0.85, density=True)
+			n, bins, patches = plt.hist(x=y_j, bins=doBins, color=c, alpha=1.0, rwidth=0.85, log=yLog, density=True)
 	except MemoryError:
 		if rescaled==False:
-			n, bins, patches = plt.hist(x=y_j, bins=1000, color=c, alpha=1.0, rwidth=0.85)
+			n, bins, patches = plt.hist(x=y_j, bins=1000, color=c, alpha=1.0, rwidth=0.85, log=yLog)
 		else:
-			n, bins, patches = plt.hist(x=y_j, bins=1000, color=c, alpha=1.0, rwidth=0.85, density=True)	
+			n, bins, patches = plt.hist(x=y_j, bins=1000, color=c, alpha=1.0, rwidth=0.85, log=yLog, density=True)	
 		
 	plt.grid(axis='y', alpha=0.75)
 	plt.ylim(ymax=np.ceil(n.max() / 10) * 10 + n.max()*0.05)
 	#plt.xticks(rotation=90)
 	plt.xlabel(xlab)
 	plt.ylabel("Frequency (N=" + str(len(y_j)) + ")")
+	if xLog:
+		plt.xscale('log')
 	
 	if vline:
 		for v in vline:
