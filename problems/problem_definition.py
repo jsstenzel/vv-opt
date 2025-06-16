@@ -334,7 +334,7 @@ class ProblemDefinition:
 			elif dtype == 'uniform':
 				left = params[0]
 				right = params[1]
-				tnom.append(right-left)
+				tnom.append((right+left)/2.0)
 			elif dtype == 'nonrandom':
 				tnom.append(param[0])
 			elif dtype == 'gp_expquad':
