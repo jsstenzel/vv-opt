@@ -16,6 +16,7 @@ from obed.obed_multivar import *
 from obed.obed_gbi import *
 #from obed.pdf_estimation import *
 from inference.bn_modeling import *
+from inference.bn_evaluation import *
 from uq.uncertainty_propagation import *
 from uq.sensitivity_analysis import *
 from uq.saltelli_gsa import *
@@ -422,14 +423,18 @@ if __name__ == '__main__':
 	
 	elif args.run == "BN_train":
 		#Train the BN off of the saved data
-		q, _ = bn_load_samples(problem, savefile="BN_samples", doPrint=True, doDiagnostic=True)
-		gmm = bn_train_from_file(problem, savefile="BN_samples", do_subset=args.n, doPrint=True)
+		ncomp = args.n
+		q, _ = bn_load_samples(problem, savefile="BN_3M_samples", doPrint=True, doDiagnostic=True)
+		gmm = bn_train_from_file(problem, savefile="BN_3M_samples", do_subset=0, ncomp=ncomp, doPrint=True)
 		
 		#Save the GMM to a file
 		#filename = "BN_" + str(len(q)) + '.csv'
-		filename = "BN_model.csv"
+		filename = "BN_model_" + str(len(q)) + "_ncomp" + str(ncomp) + ".csv"
 		bn_save_gmm(gmm, gmm_file=filename)
 		
+	elif args.run == "BN_train_many":	
+		bn_train_evaluate_ncomp(problem, "BN_3M_samples", N_list=[10,30,50,70,100,150,200], doPrint=True)	
+
 	elif args.run == "BN_evaluate":
 		#Run the validation test
 		#gmm = bn_load_gmm("BN_model.csv")
@@ -442,7 +447,7 @@ if __name__ == '__main__':
 	elif args.run == "BN_convergence":
 		#Run the convergence test
 		#bn_measure_stability_convergence(problem, , N_val=args.n, doPrint=True)
-		bn_measure_likelihood_convergence(problem, "BN_samples", doPrint=True)
+		bn_measure_likelihood_convergence(problem, "BN_30M_samples", doPrint=True)
 	
 	elif args.run == "OBED_test":
 		#Load the GMM from file

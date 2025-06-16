@@ -14,9 +14,9 @@ from approx.learn_gp import *
 from approx.regression_models import *
 #llamas
 from problems.jwst.jwst_exp_models import *
-from problems.jwst.jwst_system_model import *
+#from problems.jwst.jwst_system_model import *
 #from problems.jwst.jwst_cost_model import *
-import matlab.engine
+#import matlab.engine
 
 def unif_margin(nominal):
 	return [nominal - 0.2*nominal, nominal + 0.2*nominal]
@@ -197,7 +197,7 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 
 	#_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
 	eta = jwst_eta
-	H = nexus_lyapunov_system_model
+	H = None#nexus_lyapunov_system_model
 	Gamma = None#jwst_cost
 	jwst_jitter = ProblemDefinition(eta, H, Gamma, theta_defs, y_defs, d_defs, x_defs)
 	print("jwst_jitter problem constructed.",flush=True)
