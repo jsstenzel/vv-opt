@@ -42,10 +42,12 @@ def vv_system(problem, theta_nominal):
 def vv_experiment(problem, theta_nominal, ds):
 	print(problem)
 	print("Given the nominal theta:", theta_nominal)
-	print("Nominal y for d=0:", problem.eta(theta_nominal, ds[0], err=False))
-	print("Nominal y for d=1:", problem.eta(theta_nominal, ds[1], err=False))
-	print("Nominal y for d=2:", problem.eta(theta_nominal, ds[2], err=False))
-	print("Nominal y for d=3:", problem.eta(theta_nominal, ds[3], err=False))
+	results = [str(yi)+' '+str(namei) for yi,namei in zip(problem.eta(theta_nominal, ds[0], err=False),problem.y_names)]
+	for result in results:
+		print(result)
+	#print("Nominal y for d=1:", problem.eta(theta_nominal, ds[1], err=False))
+	#print("Nominal y for d=2:", problem.eta(theta_nominal, ds[2], err=False))
+	#print("Nominal y for d=3:", problem.eta(theta_nominal, ds[3], err=False))
 	#y = problem.eta(theta_nominal, d, err=True)
 	#print("A sampled y:", y)
 	
@@ -65,6 +67,19 @@ def vv_UA_theta(problem, n=10**4):
 	uq_thetas = problem.prior_rvs(n)
 	
 	covmatrix_heatmap(uq_thetas, names=problem.theta_names, rescale=True)
+	
+def vv_UP_exp(problem, n):
+	d = d2s
+	uq_thetas = problem.prior_rvs(n)
+	uq_ys = [problem.eta(theta, d, err=True) for theta in uq_thetas]
+	
+	uncertainty_prop_plots(uq_ys, xlabs=problem.y_names)
+	
+def vv_UP_exp_intrinsic(problem, theta_nominal, n):
+	d = d2s
+	uq_ys = [problem.eta(theta_nominal, d, err=True) for _ in range(n)]
+	
+	uncertainty_prop_plots(uq_ys, xlabs=problem.y_names)
 	
 def vv_UP_QoI(problem, req, n=10**4):
 	#uncertainty propagation of HLVA
@@ -392,6 +407,12 @@ if __name__ == '__main__':
 	
 	elif args.run == "UA_theta":
 		vv_UA_theta(problem, n=args.n)	
+		
+	elif args.run == "UP_exp":
+		vv_UP_exp(problem, n=args.n)
+		
+	elif args.run == "UP_exp_intrinsic":
+		vv_UP_exp_intrinsic(problem, theta_nominal, n=args.n)
 
 	elif args.run == "UP_QoI":
 		vv_UP_QoI(problem, 0, n=args.n)
@@ -419,13 +440,13 @@ if __name__ == '__main__':
 	###Optimal Bayesian Experimental Design
 	elif args.run == "BN_sample":
 		rate = 10
-		bn_sampling(problem, savefile="BN_samples", N=args.n, buffer_rate=rate, doPrint=True, sample_x=True)
+		bn_sampling(problem, savefile="BN_new_samples", N=args.n, buffer_rate=rate, doPrint=True, sample_x=True)
 	
 	elif args.run == "BN_train":
 		#Train the BN off of the saved data
 		ncomp = args.n
-		q, _ = bn_load_samples(problem, savefile="BN_3M_samples", doPrint=True, doDiagnostic=True)
-		gmm = bn_train_from_file(problem, savefile="BN_3M_samples", do_subset=0, ncomp=ncomp, doPrint=True)
+		q, _ = bn_load_samples(problem, savefile="BN_new_samples", doPrint=True, doDiagnostic=True)
+		gmm = bn_train_from_file(problem, savefile="BN_new_samples", do_subset=0, ncomp=ncomp, doPrint=True)
 		
 		#Save the GMM to a file
 		#filename = "BN_" + str(len(q)) + '.csv'
@@ -433,21 +454,21 @@ if __name__ == '__main__':
 		bn_save_gmm(gmm, gmm_file=filename)
 		
 	elif args.run == "BN_train_many":	
-		bn_train_evaluate_ncomp(problem, "BN_3M_samples", N_list=[10,30,50,70,100,150,200], doPrint=True)	
+		bn_train_evaluate_ncomp(problem, "BN_new_samples", N_list=[10,30,50,70], do_subset=0, doPrint=True)	
 
 	elif args.run == "BN_evaluate":
 		#Run the validation test
 		#gmm = bn_load_gmm("BN_model.csv")
 		#bn_measure_model_mse(problem, gmm, N=args.n, doPrint=True)
 		
-		#bn_compare_model_covariance(problem, "BN_3M_samples", "BN_model_3121355_ncomp70", doPrint=True)
+		#bn_compare_model_covariance(problem, "BN_new_samples", "BN_model_3121355_ncomp70", doPrint=True)
 		
-		bn_evaluate_model_likelihood(problem, gmmfile="BN_model_1000", datafile="BN_samples", N_val=0, do_subset=1000, doPrint=True)
+		bn_evaluate_model_likelihood(problem, gmmfile="BN_model_1000", datafile="BN_samples", do_subset=1000, doPrint=True)
 		
 	elif args.run == "BN_convergence":
 		#Run the convergence test
-		#bn_measure_stability_convergence(problem, , N_val=args.n, doPrint=True)
-		bn_measure_likelihood_convergence(problem, "BN_30M_samples", doPrint=True)
+		bn_measure_likelihood_convergence(problem, N_val=args.n, doPrint=True)
+		#bn_measure_validation_convergence(problem, "BN_30M_samples", N_val=args.n, doPrint=True)
 	
 	elif args.run == "OBED_test":
 		#Load the GMM from file

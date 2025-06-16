@@ -192,6 +192,19 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 		["PH", [], "discrete", 1.0e10],
 		["R0", [], "discrete", 4*60],
 		["FgsNom", [], "discrete", 30.0],
+		
+		#exp err
+		#component > subsystem > system
+		#modal > transmiss
+		["ia_err", [], "discrete", 0.2],
+		["transmiss_component_err", [], "discrete", 1e-12],
+		["transmiss_subsystem_err", [], "discrete", 1e-13],
+		["transmiss_system_err", [], "discrete", 1e-14],
+		["stiffness_err", [], "discrete", 1.0],
+		["modal_component_err", [], "discrete", 0.01],
+		["modal_subsystem_err", [], "discrete", 1e-12],
+		["modal_system_err", [], "discrete", 1e-13], #i know this breaks the pattern
+		["microvibe_err", [], "discrete", 0.01],
 	]
 
 	#_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
