@@ -21,7 +21,7 @@ def fp_hlva(theta, x, verbose=False):
 	#define parameters:
 	tau = x["tau"] #seconds, exposure time
 
-	QoI = np.sqrt(rn**2 + (tau*dc)**2)
+	QoI = np.sqrt(rn**2 + (tau*dc))
 	return QoI
 	
 """
@@ -48,7 +48,7 @@ def fp_qe_hlva(theta, x):
 	qes = [wave_qe[1] for wave_qe in list_wavelength_qe]
 	avg_qe = np.mean(qes)
 
-	QoI = np.sqrt(rn**2 + (tau*dc)**2) / avg_qe
+	QoI = np.sqrt(rn**2 + (tau*dc)) / avg_qe
 	return QoI
 	
 """

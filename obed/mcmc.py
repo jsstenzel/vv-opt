@@ -16,7 +16,7 @@ from obed.pdf_estimation import *
 #y				 - single data point
 #likelihood_kernel - function that you can evaluate to determine the likelihood fn at theta, y
 #prop_fn	 - distribution fn used to propose new data points; takes a mean as argument
-def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_width, prior_rvs, prior_pdf_unnorm, n, burnin=0, lag=1, doPlot=False, legend=None, doPrint=False):
+def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_cov, prior_rvs, prior_pdf_unnorm, n, burnin=0, lag=1, doAdaptive=False, doPlot=False, legend=None, doPrint=False):
 	N = n*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
 	
 	theta_current = prior_rvs(1)
@@ -28,7 +28,7 @@ def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_width, prior_rvs, prior_pdf_
 		#The key here is that we want to generate a new theta randomly, and only dependent on the previous theta
 		#Usual approach is a gaussian centered on theta_current with some efficient proposal_width, but that doesnt work on all domains
 		#I'll keep it general: have an proposal distribution as an argument, which takes theta_current as a mean/argument itself
-		theta_proposal = prop_fn(theta_current, prop_width)
+		theta_proposal = prop_fn(theta_current, prop_cov)
 		
 		#Compute likelihood of the "data" for both thetas with the provided kernel
 		ytheta_current = np.concatenate([theta_current, y])
@@ -65,6 +65,19 @@ def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_width, prior_rvs, prior_pdf_
 		randwalk_rate = randwalk_count / (i+1)
 		if doPrint:
 			print(str(i+1)+"/"+str(N), acceptance_count, randwalk_count, theta_current, '\t', end='\r', flush=True)
+			
+		if doAdaptive and (i>2*burnin):
+			#if np.random.random_sample() < R: #only update the covariance upon acceptance?
+			if i%doAdaptive==0 and len(mcmc_trace)>len(theta_current)+1: #just update it every once in a while, at a pre-set rate
+				print('\n')
+				data = np.transpose(mcmc_trace)
+				if np.isinf(data).any():
+					print("bad trace")
+					exit
+				covariance = np.cov(data, ddof=1)
+				eps = 1e-12 * np.identity(len(theta_current))
+				sd = (2.4)**2 / len(theta_current)
+				prop_cov = sd*covariance + eps
 		
 	acceptance_rate = acceptance_count / N
 	randwalk_rate = randwalk_count / N
@@ -73,7 +86,79 @@ def mcmc_kernel(y, likelihood_kernel, prop_fn, prop_width, prior_rvs, prior_pdf_
 		plt.plot(mcmc_trace)
 		plt.legend(legend)
 		plt.show()
-	return mcmc_trace, acceptance_rate, randwalk_rate
+	return mcmc_trace, acceptance_rate, randwalk_rate, prop_cov
+	
+def mcmc_kernel_1D(y, likelihood_kernel, prop_fn, prop_width, prior_rvs, prior_pdf_unnorm, n, burnin=0, lag=1, doAdaptive=False, doPlot=False, legend=None, doPrint=False):
+	N = n*lag + burnin #number of samples of the posterior i want, times lag plus burn-in
+	
+	theta_current = prior_rvs(1)
+	mcmc_trace = []
+	acceptance_count = 0
+	randwalk_count = 0
+	for i in range(N): #MCMC loop
+		#Propose a new value of theta with Markov chain
+		#The key here is that we want to generate a new theta randomly, and only dependent on the previous theta
+		#Usual approach is a gaussian centered on theta_current with some efficient proposal_width, but that doesnt work on all domains
+		#I'll keep it general: have an proposal distribution as an argument, which takes theta_current as a mean/argument itself
+		theta_proposal = prop_fn(theta_current, prop_width)
+		
+		#Compute likelihood of the "data" for both thetas with the provided kernel
+		ytheta_current = np.array([theta_current, y])
+		ytheta_proposal = np.array([theta_proposal, y])
+		loglikelihood_current = likelihood_kernel.logpdf(ytheta_current.T)[0] #using kde to estimate pdf
+		loglikelihood_proposal = likelihood_kernel.logpdf(ytheta_proposal.T)[0] #calc probability at the data y
+		
+		#Compute acceptance ratio
+		prior_current = np.prod(prior_pdf_unnorm(theta_current))
+		logp_current = loglikelihood_current + np.log(prior_current)
+		if(not np.isfinite(logp_current) or prior_current==0):
+			#Crazy idea: for R=nan, random walk until you get to suitable region
+			R = 1 #dont even check p_proposal, just accept it
+			randwalk_count += 1
+		else:
+			prior_proposal = np.prod(prior_pdf_unnorm(theta_proposal))
+			if prior_proposal==0:
+				R=0
+			else:
+				logp_proposal = loglikelihood_proposal + np.log(prior_proposal)
+				logR = logp_proposal - logp_current
+				R = np.exp(logR)
+		#print(R)
+		
+		#Accept our new value of theta according to the acceptance probability R:
+		if np.random.random_sample() < R:
+			theta_current = theta_proposal
+			acceptance_count += 1
+		#Include theta_current in my trace according to rules
+		if i > burnin and i%lag == 0:
+			mcmc_trace.append(theta_current)
+			
+		acceptance_rate = acceptance_count / (i+1)
+		randwalk_rate = randwalk_count / (i+1)
+		if doPrint:
+			print(str(i+1)+"/"+str(N), acceptance_count, randwalk_count, theta_current, '\t', end='\r', flush=True)
+			
+		if doAdaptive and (i>2*burnin):
+			#if np.random.random_sample() < R: #only update the covariance upon acceptance?
+			if i%doAdaptive==0: #just update it every once in a while, at a pre-set rate
+				print('\n')
+				data = np.transpose(mcmc_trace)
+				if np.isinf(data).any():
+					print("bad trace")
+					exit
+				covariance = np.std(data, ddof=1)
+				eps = 1e-12
+				sd = (2.4)**2 / 1
+				prop_width = sd*covariance + eps
+		
+	acceptance_rate = acceptance_count / N
+	randwalk_rate = randwalk_count / N
+		
+	if doPlot:
+		plt.plot(mcmc_trace)
+		plt.legend(legend)
+		plt.show()
+	return mcmc_trace, acceptance_rate, randwalk_rate, prop_width
 
 
 #y				 - single data point

@@ -86,7 +86,7 @@ def uncertainty_prop_plot(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False
 		plt.clf()
 		plt.close()
 	
-def uncertainty_prop_plots(Y, xlabs=None, c='#21aad3', transpose=True, saveFig=''):
+def uncertainty_prop_plots(Y, xlabs=None, c='#21aad3', transpose=True, saveFig='', vline_per_plot=[]):
 	if transpose==True:
 		Y = np.transpose(Y)
 
@@ -99,7 +99,8 @@ def uncertainty_prop_plots(Y, xlabs=None, c='#21aad3', transpose=True, saveFig='
 		fignames = [saveFig+"_"+str(i) for i,_ in enumerate(Y)]
 		
 	for i,y in enumerate(Y):
-		uncertainty_prop_plot(y, xlab=xlabs[i], c=c, saveFig=fignames[i])
+		vline = [] if not vline_per_plot else [vline_per_plot[i]]
+		uncertainty_prop_plot(y, xlab=xlabs[i], c=c, saveFig=fignames[i], vline=vline)
 	
 #this function is intended to take in a set of n_mc results from a big Monte Carlo run
 #and show you how the mean and confidence interval of that one run change over n-factor
@@ -133,6 +134,7 @@ def mc_plot_trace(samples, plotConf=True, showPlot=True, c='black', a=1.0, doLog
 	if plotConf:
 		plt.plot(n_list,[mean-confs[i] for i,mean in enumerate(means)], c='r')
 		plt.plot(n_list,[mean+confs[i] for i,mean in enumerate(means)], c='r')
+	
 	if showPlot:
 		plt.show()
 		
@@ -142,7 +144,7 @@ def mc_plot_trace(samples, plotConf=True, showPlot=True, c='black', a=1.0, doLog
 #do the above, with multiple MC results, plotting them all and using them all for confidence interval
 #this was helpful: 
 #https://stats.stackexchange.com/questions/525063/trying-to-calculate-confidence-intervals-for-a-monte-carlo-estimate-of-pi-what
-def mc_plot_trace_ensemble(main_sample, multi_samples, doLog=False, doEvery=1):
+def mc_plot_trace_ensemble(main_sample, multi_samples, doLog=False, savePlot=False, doEvery=1):
 	n_mc = len(multi_samples[0])
 	n_runs = len(multi_samples)
 	
@@ -182,7 +184,10 @@ def mc_plot_trace_ensemble(main_sample, multi_samples, doLog=False, doEvery=1):
 	#TODO change this so that its around the mean of all traces
 	plt.plot(n_list,[best_estimate-ci for ci in overall_ci], c='r')
 	plt.plot(n_list,[best_estimate+ci for ci in overall_ci], c='r')
-	plt.show()#F, Y1, Y2, Y3, Y4)
+	if savePlot:
+		plt.savefig("mc_plot_trace.png", bbox_inches='tight', transparent=True)
+	else:
+		plt.show()
 	
 	print("n:\t CI:")
 	for n,ci in zip(n_list,overall_ci):
@@ -192,7 +197,7 @@ def mc_plot_trace_ensemble(main_sample, multi_samples, doLog=False, doEvery=1):
 	return best_estimate
 
 #performs bootstrapping on one MC run, and then does mc_plot_trace_ensemble
-def mc_plot_trace_bootstrap(samples, n_bootstrap, doLog=False, doEvery=1):
+def mc_plot_trace_bootstrap(samples, n_bootstrap, doLog=False, savePlot=False, doEvery=1):
 	bootstrap_samples = [None]*n_bootstrap
 	for j in range(n_bootstrap):
 		###Make bootstrap sample
@@ -200,7 +205,7 @@ def mc_plot_trace_bootstrap(samples, n_bootstrap, doLog=False, doEvery=1):
 		bootstrap_sample = [samples[i] for i in i_samples]
 		bootstrap_samples[j] = bootstrap_sample
 		
-	return mc_plot_trace_ensemble(samples, bootstrap_samples, doLog=doLog, doEvery=doEvery)
+	return mc_plot_trace_ensemble(samples, bootstrap_samples, doLog=doLog, savePlot=savePlot, doEvery=doEvery)
 	
 if __name__ == '__main__':  
 	print("uncertainty_propagation.py: Use me to analyze and plot the results of model samples!")

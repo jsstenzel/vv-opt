@@ -175,6 +175,9 @@ if __name__ == '__main__':
 						0, #d_bluecam_n_pts		no measurements for camera exp
 						0  #d_frd_n_meas 		no measurements for FRD exp
 					]
+	d_opt_cheap = [5,0,0,2,0.1,1.9834,0,0,0,3954,0,0,0,0,0] #cost utility 7909.68 0.00383216,
+	d_opt_balanced = [64,0,0,2,0.1,1.9236,0,3,0,5067,1144,0,0,0,0] #cost utility 9189.14,0.00220183,
+	d_opt_expensive = [24,0,0,10,720.094,1.9834,5,63,10,4906,1216,6,112,118,10] #cost utility 118974,0.00203262
 	problem = construct_llamas_snr_problem()
 	
 	req = 3.0
@@ -182,15 +185,182 @@ if __name__ == '__main__':
 	y_nominal = problem.eta(theta_nominal, d_historical, err=False)
 
 	###Make y_hist
-	if args.run == "y_hist":
-		y = get_y_hist(problem)
-		print(y)
+	if args.run == "yhist":
+		yhist = get_y_hist(problem)
+		print(yhist)
 
-	###Propagate through the joint model to get p(Q|y_hist)
+	################################################
+	### Final analysis
+	################################################
+	
+	###Compare yhist to p(y|theta,dhist)
+	elif args.run == "plot_yhist":
+		yhist = get_y_hist(problem)
+		
+		print("Comparing yhist to experiments simulated from the joint distribution")
+		print("sampling thetas:",flush=True)
+		uq_thetas = problem.prior_rvs(args.n)
+		print("sampling ys:",flush=True)
+		uq_ys = [problem.eta(theta, d_historical) for theta in uq_thetas]
+		uncertainty_prop_plots(uq_ys, c='orchid', xlabs=problem.y_names, saveFig='', vline_per_plot=yhist)
+
+		###Based on the above, calculate likelihood of yhist
+		#This will probably involve a kde
+	
+	###Propagate yhist through the BN model to get p(Q| yhist)
+	elif args.run == "Q_yhist":
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200")
+		yhist = get_y_hist(problem)
+		yd = np.concatenate((yhist,d_historical))
+		
+		beta, mu_Yd, Sig_Yd = gbi_condition_model(gmm, yd, verbose=True)
+		plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound=-15, rbound=0, drawplot=True, plotmean=False, compplot=True, maincolor='k')
+		print(gbi_gmm_variance(beta, mu_Yd, Sig_Yd))
+	
+	###Compare p(Q| theta, d=dhist, y=yhist) to p(Q) and to p(Q| theta, d=dhist, y=ynominal)
+	#here, i can comment that the historical data gives us more information, which does indeed
+	#i can also comment that the historical verification plan gave us about as much info as we expected
+	elif args.run == "Q_ynominal":
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200")
+		ynominal = problem.eta(theta_nominal, d_historical, err=False)
+		yd = np.concatenate((ynominal,d_historical))
+		
+		beta, mu_Yd, Sig_Yd = gbi_condition_model(gmm, yd, verbose=True)
+		plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound=-15, rbound=0, drawplot=True, plotmean=False, compplot=True, maincolor='k')
+		print(gbi_gmm_variance(beta, mu_Yd, Sig_Yd))
 	
 	
-	###Propagate d* through the exp model to get p(y|theta,d*) and its mean, y*
+	###If it makes sense, compare p(Q| theta, d=dhist, y=yhist) to p(Q| theta, d=dhist, y)
+	#former will be more narrow than the latter
 	
-	###Propagate y* through the joint model to get p(Q| y*)
+	###Lastly, Compare p(Q| theta, d=dhist, y=yhist) to p(Q| theta, d=d*, y)
+	#this will show that d* is likely to give us more information than d_hist
+
+	###############################
+
+	#Calculate a bunch of y|theta,d_historical or y|theta,d_opt_balanced
+	elif args.run == "GMM_train_dhist":
+		###Get samples
+		print("sampling thetas:",flush=True)
+		thetas = problem.prior_rvs(args.n)
+		print("sampling Qs",flush=True)
+		Qs = [problem.H(theta) for theta in thetas]
+		print("sampling ys",flush=True)
+		ys = [problem.eta(theta, d_historical) for theta in thetas]
+
+		#train a gmm with 30 components
+		print("saving gmm...")
+		gmm = gbi_train_model(Qs, ys, ncomp=30, careful=True)
+		bn_save_gmm(gmm, 'GMM_yq_dhistorical_'+str(args.n))
+
+	#Calculate a bunch of y|theta,d_historical or y|theta,d_opt_balanced
+	elif args.run == "GMM_train_dbalanced":
+		###Get samples
+		print("sampling thetas:",flush=True)
+		thetas = problem.prior_rvs(args.n)
+		print("sampling Qs",flush=True)
+		Qs = [problem.H(theta) for theta in thetas]
+		print("sampling ys",flush=True)
+		ys = [problem.eta(theta, d_opt_balanced) for theta in thetas]
+
+		#train a gmm with 30 components
+		print("saving gmm...")
+		gmm = gbi_train_model(Qs, ys, ncomp=30, careful=True)
+		bn_save_gmm(gmm, 'GMM_yq_dbalanced_'+str(args.n))
+
+	elif args.run == "dhist_compare":
+		gmm_dhist = bn_load_gmm("GMM_yq_dhistorical_10000")
+
+		###Get Q|theta,dhist,yhist
+		yhist = get_y_hist(problem)
+		beta_2, mu_Yd_2, Sig_Yd_2 = gbi_condition_model(gmm_dhist, yhist, verbose=True)
+
+		###Get Q|theta,dhist,ynom
+		ynominal = problem.eta(theta_nominal, d_historical, err=False)
+		beta_1, mu_Yd_1, Sig_Yd_1 = gbi_condition_model(gmm_dhist, ynominal, verbose=True)
+
+		###Compare
+		plot_predictive_posterior(beta_1, mu_Yd_1, Sig_Yd_1, lbound=0, rbound=10, drawplot=False, plotmean=False, compplot=True, maincolor='k')
+		plot_predictive_posterior(beta_2, mu_Yd_2, Sig_Yd_2, lbound=0, rbound=10, drawplot=True, plotmean=False, compplot=True, maincolor='r')
+
+		print("Variance of Q|theta,dhist,yhist ", gbi_gmm_variance(beta_2, mu_Yd_2, Sig_Yd_2))
+		print("Variance of Q|theta,dhist,ynom ", gbi_gmm_variance(beta_1, mu_Yd_1, Sig_Yd_1))
+
+	elif args.run == "compare_designs":
+		gmm_dhist = bn_load_gmm("GMM_yq_dhistorical_10000")
+		gmm_dbalanced = bn_load_gmm("GMM_yq_dbalanced_10000")
+
+		###Get Q|theta,dhist,yhist
+		yhist = get_y_hist(problem)
+		beta_1, mu_Yd_1, Sig_Yd_1 = gbi_condition_model(gmm_dhist, yhist, verbose=True)
+
+		###Get Q|theta,d*,y*
+		ystar = problem.eta(theta_nominal, d_opt_balanced, err=False)
+		beta_2, mu_Yd_2, Sig_Yd_2 = gbi_condition_model(gmm_dbalanced, ystar, verbose=True)
+
+		###Compare
+		plot_predictive_posterior(beta_1, mu_Yd_1, Sig_Yd_1, lbound=0, rbound=10, drawplot=False, plotmean=False, compplot=True, maincolor='k')
+		plot_predictive_posterior(beta_2, mu_Yd_2, Sig_Yd_2, lbound=0, rbound=10, drawplot=True, plotmean=False, compplot=True, maincolor='g')
+
+		print("Variance of Q|theta,dhist,yhist ", gbi_gmm_variance(beta_1, mu_Yd_1, Sig_Yd_1))
+		print("Variance of Q|theta,d*,y* ", gbi_gmm_variance(beta_2, mu_Yd_2, Sig_Yd_2))
+
+	elif args.run == "dhist_compare_bn":
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
+
+		###Get Q|theta,dhist,yhist
+		yhist = get_y_hist(problem)
+		yhistdhist = np.concatenate((yhist,d_historical))
+		beta_2, mu_Yd_2, Sig_Yd_2 = gbi_condition_model(gmm, yhistdhist, verbose=True)
+
+		###Get Q|theta,dhist,ynom
+		ynominal = problem.eta(theta_nominal, d_historical, err=False)
+		ynomdhist = np.concatenate((ynominal,d_historical))
+		beta_1, mu_Yd_1, Sig_Yd_1 = gbi_condition_model(gmm, ynomdhist, verbose=True)
+
+		###Compare
+		plot_predictive_posterior(beta_1, mu_Yd_1, Sig_Yd_1, lbound=0, rbound=10, drawplot=False, plotmean=False, compplot=True, maincolor='k')
+		plot_predictive_posterior(beta_2, mu_Yd_2, Sig_Yd_2, lbound=0, rbound=10, drawplot=True, plotmean=False, compplot=True, maincolor='r')
+
+		print("Variance of Q|theta,dhist,yhist ", gbi_gmm_variance(beta_2, mu_Yd_2, Sig_Yd_2))
+		print("Variance of Q|theta,dhist,ynom ", gbi_gmm_variance(beta_1, mu_Yd_1, Sig_Yd_1))
+
+	elif args.run == "compare_designs_bn":
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
+
+		###Get Q|theta,dhist,yhist
+		yhist = get_y_hist(problem)
+		yhistdhist = np.concatenate((yhist,d_historical))
+		beta_1, mu_Yd_1, Sig_Yd_1 = gbi_condition_model(gmm, yhistdhist, verbose=True)
+
+		###Get Q|theta,d*,y*
+		ystar = problem.eta(theta_nominal, d_opt_balanced, err=False)
+		ystardstar = np.concatenate((ystar,d_opt_balanced))
+		beta_2, mu_Yd_2, Sig_Yd_2 = gbi_condition_model(gmm, ystardstar, verbose=True)
+
+		###Compare
+		plot_predictive_posterior(beta_1, mu_Yd_1, Sig_Yd_1, lbound=0, rbound=10, drawplot=False, plotmean=False, compplot=True, maincolor='k')
+		plot_predictive_posterior(beta_2, mu_Yd_2, Sig_Yd_2, lbound=0, rbound=10, drawplot=True, plotmean=False, compplot=True, maincolor='g')
+
+		print("Variance of Q|theta,dhist,yhist ", gbi_gmm_variance(beta_1, mu_Yd_1, Sig_Yd_1))
+		print("Variance of Q|theta,d*,y* ", gbi_gmm_variance(beta_2, mu_Yd_2, Sig_Yd_2))
+		
+	elif args.run == "compare_yhist_to_dstar":
+		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
+		#Pre-calculate an inverse matrix, to speed up the MC loop:
+		inv_Sig_dd, logdet_Sig_dd = gbi_precalc_Sigdd(gmm, p_dim=1)
+
+		###Get Q|theta,dhist,yhist
+		yhist = get_y_hist(problem)
+		yhistdhist = np.concatenate((yhist,d_historical))
+		dhist_Qvariance = gbi_var_of_conditional_pp(gmm, yhistdhist, inv_Sig_dd_precalc=inv_Sig_dd, logdet_Sig_dd_precalc=logdet_Sig_dd, verbose=True)
+
+		###Get Q|theta,d*,y*
+		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", doPrint=False, doDiagnostic=False)
+		_, ystar_Qvariances = U_varH_gbi_joint_presampled(d_opt_balanced, problem, gmm, presampled_ylist, n_mc=10**5, doPrint=True)
+
+		print("Variance of Q|theta,dhist,yhist ", dhist_Qvariance)
+		uncertainty_prop_plot(ystar_Qvariances, c='orchid', xlab="Var[Q|theta,y,d=d*]", saveFig='compare_yhist_to_dstar.png', vline=[dhist_Qvariance])
 	
-	###Compare
+	else:
+		print("I don't recognize that command")

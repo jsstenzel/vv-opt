@@ -453,6 +453,9 @@ if __name__ == '__main__':
 		#[problem.G(d_med), 0.004294863943612242, "d_med", 5.384503718405341e-05],
 		#[problem.G(d_min), 0.004772754162991483, "d_min", 5.384503718405341e-05]
 	]
+
+	if args.run == "G_hist":
+		print(problem.G(d_historical))
 	
 	if args.run == "OPT_test":
 		vv_OPT(

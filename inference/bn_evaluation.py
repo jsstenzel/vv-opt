@@ -194,7 +194,7 @@ def bn_compare_model_covariance(problem, datafile, gmmfile, doPrint=True):
 	#punt it for now
 	0
 	
-def bn_evaluate_model_likelihood(problem, gmmfile, datafile="", samples=[], do_subset=0, doPrint=True):
+def bn_evaluate_model_likelihood(problem, gmmfile, datafile="", samples=[], do_subset=0, returnSet=False, doPrint=True):
 	if doPrint:
 		print("Evaluating model likelihood for",gmmfile,"GMM...",flush=True)
 	
@@ -223,6 +223,9 @@ def bn_evaluate_model_likelihood(problem, gmmfile, datafile="", samples=[], do_s
 	###Calculate the log likelihood of the data
 	sample_loglikelihoods = gmm.score_samples(standardized_samples)
 	avg_loglikelihood = np.mean(sample_loglikelihoods)
+	
+	if returnSet:
+		return sample_loglikelihoods
 
 	###print and return
 	if doPrint:
@@ -261,7 +264,7 @@ def bn_measure_likelihood_convergence(problem, big_savefile, doPrint=True):
 		#N_val: we're not evaluating validation samples
 		#do_subset: N, so that we're evaluating the N gmm with the N values used to train it
 		score = bn_evaluate_model_likelihood(problem, gmmfile=list_gmm[i], datafile=big_savefile, do_subset=N, doPrint=True)
-		scores[i] = score
+		scores[i] = val_score
 	
 	###Plot them all, shifting the largest-N estimate of Q to zero to hopefully see many lines converging
 	plt.xlabel("N for training GMM")
@@ -270,9 +273,9 @@ def bn_measure_likelihood_convergence(problem, big_savefile, doPrint=True):
 	plt.plot(N_list, scores, c='r')
 	plt.show()
 	
-def bn_measure_validation_convergence(problem, big_savefile, N_val=0, doPrint=True):	
+def bn_measure_validation_convergence(problem, big_savefile, ncomp=0, N_list=[], N_val=0, doPrint=True, doPlot=True):	
 	N_val = N_val if N_val>0 else 5		
-	N_list = [1000,4000,10000,40000,100000,400000,1000000,1635000]
+	N_list = [1000,4000,10000,40000,100000,400000,1000000,1635000] if not N_list else N_list
 	
 	###Get validation set
 	#this is for evaluating accuracy of the model
@@ -297,7 +300,7 @@ def bn_measure_validation_convergence(problem, big_savefile, N_val=0, doPrint=Tr
 			###Train and save it
 			if doPrint:
 				print("Training and saving",gmmfile_n,"...",flush=True)
-			gmm_n = bn_train_from_file(problem, savefile=big_savefile, do_subset=N, doPrint=True)
+			gmm_n = bn_train_from_file(problem, savefile=big_savefile, ncomp=ncomp, do_subset=N, doPrint=True)
 			
 			bn_save_gmm(gmm_n, gmm_file=gmmfile_n)
 			list_gmm.append(gmmfile_n)
@@ -311,22 +314,25 @@ def bn_measure_validation_convergence(problem, big_savefile, N_val=0, doPrint=Tr
 		#datafile: we're not evaluating training samples
 		#samples: validation set
 		#do_subset: we're not evaluating training samples, so its irrelevant
-		score = bn_evaluate_model_likelihood(problem, gmmfile=list_gmm[i], samples=samples, doPrint=True)
+		score = bn_evaluate_model_likelihood(problem, gmmfile=list_gmm[i], datafile=big_savefile, returnSet=False, do_subset=N, doPrint=True)
 		scores[i] = score
-	
-	###Plot them all, shifting the largest-N estimate of Q to zero to hopefully see many lines converging
-	plt.xlabel("N for training GMM")
-	plt.ylabel("Average log-likelihood of the validation set (Nv="+str()+')')
-	plt.xscale('log')
-	plt.plot(N_list, scores, c='r')
-	plt.show()
+
+	###Plot them all, shifting the largest-N estimate of Q to zero to hopefully see a line converging
+	if doPlot:
+		plt.xlabel("N for training GMM")
+		plt.ylabel("Average log-likelihood of the validation set (Nv="+str(N_val)+')')
+		plt.xscale('log')
+		#N_plot = N_val if N_val < 100 else 100
+		#for i in range(N_plot):
+		#	plt.plot(N_list, [v_score[i] for v_score in scores], c='r')
+		plt.plot(N_list, scores, c='r')
+		plt.show()
 	
 #Similar to bn_train_from_file
 #Except I want to evaluate BIC and MSE, and MAE for each ncomp
-def bn_train_evaluate_ncomp(problem, trainfile, doPrint=True, doPlot=True):
+def bn_train_evaluate_ncomp(problem, trainfile, do_subset=0, N_list=[], doPrint=True, doPlot=True):
 	###Setup
-	do_subset=0
-	ncomps = [10,20,30,40,50,60,70,80,90,100,110,130,200]
+	ncomps = [10,20,30,40,50,60,70,80,90,100,110,130,200] if not N_list else N_list
 	print("Evaluating",trainfile,"training data for GMM with number of components:",ncomps,flush=True)
 	BICs = [None]*len(ncomps)
 	scores = [None]*len(ncomps)

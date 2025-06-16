@@ -286,12 +286,10 @@ def base_split(base_name, var_names, splitpoint):
 		
 if __name__ == '__main__':
 
-	health_check("SA_jitter",var_names,do_subset=0)
-	#health_check("SA_jitter_desk",var_names,do_subset=0)
-	#base_trim_right("SA_jitter",var_names,grab_from_right=10000)
-	
+	#base_line_cut("SA_jitter", var_names, [6033*2])
 	#health_check("SA_jitter",var_names,do_subset=0)
-	#health_check("SA_jitter_righttrim",var_names,do_subset=0)
+	#health_check("SA_jitter2",var_names,do_subset=0)
+	base_trim_right("SA_jitter",var_names,grab_from_right=10000)
 	
 	#Check all bases
 	#base_names = ["SA_QoI_bank"+str(i) for i in range(1,129)]

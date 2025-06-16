@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats
 
-def plot_gsa_full(varnames, S1, ST, S1_conf=[], ST_conf=[], title="", coplot=False, screening=0):
+def plot_gsa_full(varnames, S1, ST, S1_conf=[], ST_conf=[], title="", coplot=False, screening=0, xspin=True):
 	# set width of bar
 	barWidth = 0.3
 	barColor = "lightgrey"
@@ -22,7 +22,8 @@ def plot_gsa_full(varnames, S1, ST, S1_conf=[], ST_conf=[], title="", coplot=Fal
 		plt.xlabel('Parameters', fontweight ='bold', fontsize = 10)
 		plt.ylabel("Sobol' main-effect index", fontweight ='bold', fontsize = 10)
 		#plt.xticks([r + barWidth for r in range(len(varnames))], varnames)
-		plt.xticks(rotation=90)
+		if xspin:
+			plt.xticks(rotation=90)
 		plt.tight_layout()
 		#if logplot:
 		#	plt.yscale('log')	
@@ -43,7 +44,8 @@ def plot_gsa_full(varnames, S1, ST, S1_conf=[], ST_conf=[], title="", coplot=Fal
 		plt.xlabel('Parameters', fontweight ='bold', fontsize = 10)
 		plt.ylabel("Sobol' total-order index", fontweight ='bold', fontsize = 10)
 		#plt.xticks([r + barWidth for r in range(len(varnames))], varnames)
-		plt.xticks(rotation=90)
+		if xspin:
+			plt.xticks(rotation=90)
 		plt.tight_layout()
 		#if logplot:
 		#	plt.yscale('log')	
@@ -63,7 +65,8 @@ def plot_gsa_full(varnames, S1, ST, S1_conf=[], ST_conf=[], title="", coplot=Fal
 		###Make two adjacent subplots sharing an axis
 		fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 		plt.xlabel('Parameters', fontweight ='bold', fontsize = 10)
-		plt.xticks(rotation=90)
+		if xspin:
+			plt.xticks(rotation=90)
 		plt.tight_layout()
 		plt.title(title)
 		

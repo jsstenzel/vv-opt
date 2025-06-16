@@ -9,7 +9,7 @@ from approx.gaussian_process import *
 """
 Full matrix experiment model
 """
-def fp_likelihood_fn(theta, d, x, err=True):
+def fp_likelihood_fn(theta, d, x, dummy, err=True):
 	#define interest params:
 	if type(theta) is dict:
 		gain = theta["gain"]
