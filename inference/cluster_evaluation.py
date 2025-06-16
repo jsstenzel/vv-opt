@@ -42,13 +42,18 @@ def cluster_load_samples(savefile, expected_length, doPrint=False, do_subset=0, 
 				if doDiagnostic:
 					print("Warning: dropped line",l+1,"(length "+str(len(row))+' expected', str(expected_length)+')',"from",filename)
 			elif do_subset == 0 or len(qyd) < do_subset:
-				qyd_line = [float(e) for e in row]
-				qyd.append(qyd_line)
+				try:
+					qyd_line = [float(e) for e in row]
+					qyd.append(qyd_line)
+				except:
+					continue
 			else:
 				break
 	
 	if do_subset:
 		qyd = qyd[:do_subset]
+		
+	print("Number of elements in",savefile,len(qyd))
 		
 	###Standardize
 	data_mean = np.mean(qyd, axis=0)
@@ -215,11 +220,10 @@ def silhouette_scoring(savefile, n_clusters=2, expected_length=0, do_subset=0, d
 	plt.show()
 
 if __name__ == '__main__':  
-	ks = [k*10 for k in range(1,30)]
-	cluster_eval("BN_40k_samples", ks, expected_length=10, do_subset=4000000, doPrint=True)
+	ks = [k*10 for k in range(1,30+1)]
+	cluster_eval("BN_3M_samples", ks, expected_length=63, do_subset=0, doPrint=True)
 	#for n in [2,3,4,5,6,7,8,9,10]:
 	#	silhouette_scoring("BN_batch_samples", n_clusters=n, do_subset=4000000, expected_length=10)
-	
 	
 """
 Evaluating k=10 ...

@@ -29,7 +29,6 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 		["Ud", ["uniform", unif_margin(60.0)], "continuous"], #dynamic wheel imbalance        [gcm^2]
 		["Qc", ["uniform", unif_margin(0.005)], "continuous"], #cryocooler attenuation factor 
 		["CCA_factor", ["uniform", [.5,1.5]], "continuous"], #a scaling factor applied to C to increase or decrease force at all modes
-		#TODO add something else for cryocooler
 		["K_yPM", ["uniform", unif_margin(0.77400E+06)], "continuous"], #PM outer bipod actuator transverse stiffness
 		["K_yISO", ["uniform", unif_margin(0.14600E+04)], "continuous"], #Hexapod (i.e. secondary mirror support structure) isolator strut axial stiffness %actually this is not true, its for RWA isolator as well
 		["K_xISO", ["uniform", unif_margin(0.14000E+12)], "continuous"], #Hexapod (i.e. secondary mirror support structure) isolator strut transverse stiffness %actually this is not true, its for RWA isolator as well

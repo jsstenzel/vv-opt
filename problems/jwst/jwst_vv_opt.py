@@ -16,6 +16,7 @@ from obed.obed_multivar import *
 from obed.obed_gbi import *
 #from obed.pdf_estimation import *
 from inference.bn_modeling import *
+from inference.bn_evaluation import *
 from uq.uncertainty_propagation import *
 from uq.sensitivity_analysis import *
 from uq.saltelli_gsa import *
@@ -435,7 +436,7 @@ if __name__ == '__main__':
 		#gmm = bn_load_gmm("BN_model.csv")
 		#bn_measure_model_mse(problem, gmm, N=args.n, doPrint=True)
 		
-		#bn_compare_model_covariance(problem, "BN_samples", "BN_model_100000", doPrint=True)
+		#bn_compare_model_covariance(problem, "BN_3M_samples", "BN_model_3121355_ncomp70", doPrint=True)
 		
 		bn_evaluate_model_likelihood(problem, gmmfile="BN_model_1000", datafile="BN_samples", N_val=0, do_subset=1000, doPrint=True)
 		
