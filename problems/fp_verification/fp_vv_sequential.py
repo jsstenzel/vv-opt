@@ -38,6 +38,100 @@ def vv_nominal(problem, req, theta_nominal, y_nominal):
 	print("Given the nominal theta:", theta_nominal)
 	#print("Nominal y:", y_nominal)
 	print("Nominal QoI:", QoI_nominal)
+	
+def kde_train(problem, grid_density, d, doDiagnostic=False):
+	print("Generating kernel",flush=True)
+	kde_gains = scipy.stats.gamma.rvs(size=grid_density, a=1.0999913287843317**2 / 1.5998220769876884e-06**2, scale=1.5998220769876884e-06**2/1.0999913287843317)
+	kde_rn = np.linspace(1,4,grid_density)
+	kde_dc = np.linspace(0,.01,grid_density)
+	kde_thetas = np.vstack((np.meshgrid(kde_rn, kde_dc))).reshape(2,-1).T #thanks https://stackoverflow.com/questions/18253210/creating-a-numpy-array-of-3d-coordinates-from-three-1d-arrays
+	if doDiagnostic:
+		uncertainty_prop_plots(kde_thetas, xlabs=['rn','dc'])
+	kde_ys = [problem.eta(theta, d, x=problem.sample_x(1)) for theta in kde_thetas]
+	if doDiagnostic:
+		uncertainty_prop_plots(kde_ys, xlabs=['Y1','Y2'])
+	likelihood_kernel, kde_ythetas = general_likelihood_kernel(kde_thetas, kde_ys)
+	
+	print("Pickling kernel",flush=True)
+	with open('likelihood_kde.pkl', 'wb') as file:
+		pickle.dump(likelihood_kernel, file)
+		
+	if doDiagnostic:
+		kde_plot(likelihood_kernel, kde_ythetas, plotStyle='together', ynames=['rn','dc','y2','y3'])
+	
+	return likelihood_kernel
+	
+def fp_prior_update(fp, ydata, d, n_mcmc, loadKDE=False, loadMCMC=False, doDiagnostic=False):
+	def proposal_fn_norm(theta_curr, prop_cov):
+		#theta_prop = [0] * len(theta_curr)
+		#for i,_ in enumerate(theta_prop):
+		#	#proposal dists are gammas, to match
+		#	mean = abs(theta_curr[i])
+		#	stddev = proposal_width[i]
+		#	theta_prop[i] = scipy.stats.norm.rvs(size=1, loc=mean, scale=stddev)[0]
+		
+		theta_prop = scipy.stats.multivariate_normal.rvs(mean=theta_curr, cov=prop_cov, size=1)
+		return theta_prop
+		
+	###First, get the KDE
+	if loadKDE:
+		print("Loading kernel",flush=True)
+		with open('likelihood_kde_seq.pkl', 'rb') as file:
+			likelihood_kernel = pickle.load(file)
+	else:
+		likelihood_kernel = kde_train(fp, grid_density=500, d=d, doDiagnostic=doDiagnostic)
+	
+	if loadMCMC:
+		mcmc_trace = []
+		with open('mcmc.csv', 'r', newline='') as csvfile:
+			csvreader = csv.reader(csvfile, delimiter=' ')
+			for theta in csvreader:
+				mcmc_trace.append([float(t) for t in theta])
+	else:
+		###Then, do MCMC to get posterior samples
+		prop_cov = [[1.13951239e-04, 1.67431766e-07],
+					[1.67431766e-07, 1.03994093e-07]]
+		mcmc_trace, arate, rrate, last_prop_width = mcmc_kernel(	
+			ydata, 
+			likelihood_kernel, 
+			proposal_fn_norm, 
+			prop_cov, 
+			fp.prior_rvs, 
+			fp.prior_pdf_unnorm, 
+			n_mcmc, 
+			burnin=300, 
+			lag=1, 
+			doAdaptive=100,
+			doPlot=True, 
+			legend=fp.theta_names, 
+			doPrint=True)
+		print(arate, rrate)
+		print(last_prop_width)
+		
+		###Analyze the mcmc posterior samples and plot the posterior distributions
+		#save data, do analysis and plots
+		with open('mcmc_seq.csv', 'w', newline='') as csvfile:
+			csvwriter = csv.writer(csvfile, delimiter=' ')
+			for theta in mcmc_trace:
+				csvwriter.writerow(theta)
+		
+	###Analyze the mcmc posterior samples and plot the posterior distributions
+	#save data, do analysis and plots
+	print("mean, stddev, covariance of posterior sample:")
+	means, stddevs, cov = mcmc_analyze(mcmc_trace,doPlot=True)
+	print(means)
+	print(stddevs)
+	print(cov)
+	H_posterior = [fp.H(tt) for tt in mcmc_trace]
+	print("QoI posterior mean:", np.mean(H_posterior))
+	print("QoI posterior stddev:", np.std(H_posterior))
+	print("Posterior probability of meeting the requirement: ", np.sum([int(h <= req) for h in H_posterior])/len(H_posterior))
+	
+	uncertainty_prop_plot([sample[0] for sample in mcmc_trace], c='limegreen', xlab="Read noise [e-]")
+	uncertainty_prop_plot([sample[1] for sample in mcmc_trace], c='limegreen', xlab="Dark current [e-/s]")
+	###Lastly, use those samples to plot the posterior predictive distribution
+	uncertainty_prop_plot(H_posterior, c='darkgreen', xlab="Posterior QoI: Avg. Noise [e-]", vline=[req])
+	#could fit a gaussian to that guy to estimate the probability change!
 
 if __name__ == '__main__':  
 	import argparse
@@ -70,37 +164,6 @@ if __name__ == '__main__':
 	elif args.run == "UP_jitter_from_BN":
 		Qs, _ = bn_load_samples(problem, savefile="BN_sequential_samples", doPrint=True, doDiagnostic=True)
 		uncertainty_prop_plot(Qs, xlab="QoI: Avg. Noise [e-]", vline=[req])
-		
-	elif args.run == "SA_QoI":
-		N = args.n
-		param_defs = [                             
-			["gain", [2.5,0.25**2], "gamma_mv"], #mean, variance
-			["rn",   [0.001,.001**2], "gamma_mv"], 
-		]
-		var_names = [pdef[0] for pdef in param_defs]
-		var_bounds = [pdef[1] for pdef in param_defs]
-		var_dists = [pdef[2] for pdef in param_defs]
-
-		def model(params):
-			theta = params
-			return problem.H(theta, verbose=False)
-			
-		###Generate some new samples and save
-		#I want to save samples as often as possible. Therefore, iterate through N two at a time, corresponding to 2(p+2) model evals at a time
-		for _ in range(int(N/2)):
-			saltelli_eval_sample("SA_FP", 2, var_names, var_dists, var_bounds, model, doPrint=True)
-			
-	elif args.run == "SA_QoI_evaluate":
-		var_names = ["read noise","dark current"]
-		
-		#S, ST, n_eval = saltelli_indices("SA_QoI", var_names, do_subset=0, doPrint=True)
-		total_order_convergence_tests(1200, "SA_FP", var_names, do_subset=0)
-		
-	elif args.run == "SA_QoI_plot":
-		varnames = ["read noise","dark current"]
-		S1 = [0.3738, 0.6343]
-		ST = [0.3496, 0.6201]
-		plot_gsa_full(varnames, S1, ST, S1_conf=[0.0018,0.0013], ST_conf=[0.0040,0.0032], title="", coplot=False, screening=0, xspin=False)
 	
 	###Train Bayesian network model
 	elif args.run == "BN_sample":
@@ -118,6 +181,20 @@ if __name__ == '__main__':
 		#filename = "BN_model.csv"
 		bn_save_gmm(gmm, gmm_file=filename)
 		
+	elif args.run == "OBED_test":
+		#Load the GMM and presampled y from file
+		print("Loading GMM and presamples...",flush=True)
+		gmm = bn_load_gmm("BN_sequential_model_4000000_ncomp45.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_sequential_samples.csv", doPrint=False, doDiagnostic=False)
+		
+		#Calculate U for several different designs
+		dstar = [14, 21, 4.35234, 2.75273]
+		U_dstar, _ = U_varH_gbi_joint_presampled(dstar, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_dstar:",U_dstar,flush=True)
+		dstarstar = [15,21,14.1764,2.76208]
+		U_dstarstar, _ = U_varH_gbi_joint_presampled(dstarstar, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U_dstarstar:",U_dstarstar,flush=True)
+		
 	#Find the highest utility design, subject to a cost cap
 	elif args.run == "OPT_costcap":
 		print(35482.15)
@@ -132,15 +209,19 @@ if __name__ == '__main__':
 		ftol=1e-8, #0.0006407042183632374,
 		penalty=10
 		)
-		
+	
+		"""
+   Cost    Utility    n_meas_rn    d_num    d_max    d_pow
+-------  ---------  -----------  -------  -------  -------
+25830.7    0.06744           14       21  44.7397  2.73757"""
 	elif args.run == "prior_update":
 		###for the optimal design, d1, assume data that is nominal
-		d2 = d_historical #TBD
+		d2 = [14,21,44.7397,2.73757]
 		#ydata = [yi*1.1 for yi in y_nominal] #test data, just choosing things on the large end of y
 		ydata = problem.eta(theta_nominal, d2, err=False)		
 
 		###see what the benefit would be in the batch timeline, i.e. apply the design all at once
-		fp2_prior_update(ydata, d_historical, n_mcmc=args.n, loadKDE=True, doDiagnostic=True)
+		fp_prior_update(fp2, ydata, d_historical, n_mcmc=args.n, loadKDE=False, doDiagnostic=True)
 
 	else:
 		print("I don't recognize the command",args.run)
