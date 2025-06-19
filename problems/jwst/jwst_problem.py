@@ -15,7 +15,7 @@ from approx.regression_models import *
 #llamas
 from problems.jwst.jwst_exp_models import *
 #from problems.jwst.jwst_system_model import *
-#from problems.jwst.jwst_cost_model import *
+from problems.jwst.jwst_cost_model import *
 #import matlab.engine
 
 def unif_margin(nominal):
@@ -108,7 +108,6 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 	#0=dont do 1=do cheaply 2=do well 3=commit serious effort
 	#note that uniform-discrete takes the integer floor of the sample
 	d_defs = [
-		["t_gain", ['uniform', [0,4]], "discrete"],
 		["d_transmit_rwai", ['uniform', [0,4]], "discrete"],
 		["d_transmit_ccai", ['uniform', [0,4]], "discrete"],
 		["d_transmit_ia", ['uniform', [0,4]], "discrete"],
@@ -120,12 +119,12 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 		["d_stiff_pm", ['uniform', [0,4]], "discrete"],
 		["d_stiff_petal", ['uniform', [0,4]], "discrete"],
 		["d_stiff_sm", ['uniform', [0,4]], "discrete"],
-		["d_modal_telescope", ['uniform', [0,4]], "discrete"],
-		["d_modal_pmss", ['uniform', [0,4]], "discrete"],
-		["d_modal_smss", ['uniform', [0,4]], "discrete"],
-		["d_modal_ccai", ['uniform', [0,4]], "discrete"],
-		["d_modal_sunshield", ['uniform', [0,4]], "discrete"],
-		["d_modal_solar", ['uniform', [0,4]], "discrete"],
+		["d_modal_telescope", ['uniform', [1,4]], "discrete"],
+		["d_modal_pmss", ['uniform', [1,4]], "discrete"],
+		["d_modal_smss", ['uniform', [1,4]], "discrete"],
+		["d_modal_ccai", ['uniform', [1,4]], "discrete"],
+		["d_modal_sunshield", ['uniform', [1,4]], "discrete"],
+		["d_modal_solar", ['uniform', [1,4]], "discrete"],
 		["d_vibe_rwa", ['uniform', [0,4]], "discrete"],
 		["d_vibe_rwai", ['uniform', [0,4]], "discrete"],
 		["d_vibe_cca", ['uniform', [0,4]], "discrete"],
@@ -210,7 +209,7 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 	#_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
 	eta = jwst_eta
 	H = None#nexus_lyapunov_system_model
-	Gamma = None#jwst_cost
+	Gamma = jwst_cost
 	jwst_jitter = ProblemDefinition(eta, H, Gamma, theta_defs, y_defs, d_defs, x_defs)
 	print("jwst_jitter problem constructed.",flush=True)
 	return jwst_jitter

@@ -439,7 +439,7 @@ if __name__ == '__main__':
 
 	###Optimal Bayesian Experimental Design
 	elif args.run == "BN_sample":
-		rate = 10
+		rate = 100
 		bn_sampling(problem, savefile="BN_new_samples", N=args.n, buffer_rate=rate, doPrint=True, sample_x=True)
 	
 	elif args.run == "BN_train":
