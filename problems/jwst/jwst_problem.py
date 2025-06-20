@@ -200,9 +200,9 @@ def construct_jwst_jitter_problem(verbose_probdef=False):
 		["transmiss_subsystem_err", [], "discrete", 1e-13],
 		["transmiss_system_err", [], "discrete", 1e-14],
 		["stiffness_err", [], "discrete", 1.0],
-		["modal_component_err", [], "discrete", 0.01],
+		["modal_component_err", [], "discrete", 0.01], #i know this breaks the pattern
 		["modal_subsystem_err", [], "discrete", 1e-12],
-		["modal_system_err", [], "discrete", 1e-13], #i know this breaks the pattern
+		["modal_system_err", [], "discrete", 1e-13],
 		["microvibe_err", [], "discrete", 0.01],
 	]
 

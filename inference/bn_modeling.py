@@ -96,13 +96,13 @@ def bn_load_samples(problem, savefile, doPrint=False, do_subset=0, doDiagnostic=
 	return Q, yd
 
 #Call bn_load_samples and gbi_train_model
-def bn_train_from_file(problem, savefile, do_subset=0, ncomp=0, doPrint=False):
+def bn_train_from_file(problem, savefile, do_subset=0, ncomp=0, pca=None, doPrint=False):
 	###Load file
 	qoi_train, y_d_train = bn_load_samples(problem, savefile, doPrint, do_subset)
 	#y_d_train = [[yd[0], yd[1]] for yd in y_d_train] #stupid cut for speed
 	
 	###Train model
-	gmm = gbi_train_model(qoi_train, y_d_train, verbose=2, ncomp=ncomp, careful=True)
+	gmm = gbi_train_model(qoi_train, y_d_train, verbose=2, ncomp=ncomp, pca=pca, careful=True)
 	
 	###Print and return
 	if doPrint:

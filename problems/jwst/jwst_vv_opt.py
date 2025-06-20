@@ -22,6 +22,7 @@ from uq.sensitivity_analysis import *
 from uq.saltelli_gsa import *
 from uq.gsa_convergence import *
 from opt.nsga import *
+from approx.pca_reduce import *
 
 ################################
 #Useful definitions
@@ -442,11 +443,16 @@ if __name__ == '__main__':
 		rate = 100
 		bn_sampling(problem, savefile="BN_new_samples", N=args.n, buffer_rate=rate, doPrint=True, sample_x=True)
 	
+	elif args.run == "BN_pca":
+		#pca_analysis(problem, "BN_new_samples", do_subset=args.n, doPlot=True)
+		pca_train(problem, "BN_new_samples", ncomp=39, do_subset=args.n, savefile="jwst_pca_39.pkl")
+	
 	elif args.run == "BN_train":
 		#Train the BN off of the saved data
 		ncomp = args.n
 		q, _ = bn_load_samples(problem, savefile="BN_new_samples", doPrint=True, doDiagnostic=True)
-		gmm = bn_train_from_file(problem, savefile="BN_new_samples", do_subset=0, ncomp=ncomp, doPrint=True)
+		pca = pca_load("jwst_pca_39.pkl")
+		gmm = bn_train_from_file(problem, savefile="BN_new_samples", do_subset=0, ncomp=ncomp, pca=pca, doPrint=True)
 		
 		#Save the GMM to a file
 		#filename = "BN_" + str(len(q)) + '.csv'
