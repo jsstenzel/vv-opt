@@ -12,10 +12,9 @@ from sklearn.mixture import GaussianMixture
 sys.path.append('..')
 
 class GaussianMixtureNormalized(GaussianMixture):
-	def __init__(self, n_components=1, *, covariance_type='full', tol=0.001, reg_covar=1e-06, max_iter=100, n_init=1, init_params='kmeans', weights_init=None, means_init=None, precisions_init=None, random_state=None, warm_start=False, verbose=0, verbose_interval=10, standardized_mean, standardized_std, pca):
+	def __init__(self, n_components=1, *, covariance_type='full', tol=0.001, reg_covar=1e-06, max_iter=100, n_init=1, init_params='kmeans', weights_init=None, means_init=None, precisions_init=None, random_state=None, warm_start=False, verbose=0, verbose_interval=10, standardized_mean, standardized_std):
 		self.standardized_mean = standardized_mean
 		self.standardized_std = standardized_std
-		self.pca = pca
 		super().__init__(n_components=n_components, covariance_type=covariance_type, tol=tol, reg_covar=reg_covar, max_iter=max_iter, n_init=n_init, init_params=init_params, weights_init=weights_init, means_init=means_init, precisions_init=precisions_init, random_state=random_state, warm_start=warm_start, verbose=verbose, verbose_interval=verbose_interval)
 	
 	"""	
@@ -27,7 +26,7 @@ class GaussianMixtureNormalized(GaussianMixture):
 	"""
 
 #offline, train the model based on provided samples
-def gbi_train_model(qoi_samples, y_samples, verbose=0, ncomp=0, ncomp_start=1, pca=None, careful=False):
+def gbi_train_model(qoi_samples, y_samples, verbose=0, ncomp=0, ncomp_start=1, careful=False):
 	#step 0: normalize
 	#Find y_mean and y_std, use them to standardize data, and keep
 	print("getting data...",flush=True) if verbose else 0
@@ -48,11 +47,6 @@ def gbi_train_model(qoi_samples, y_samples, verbose=0, ncomp=0, ncomp_start=1, p
 	d_dimension = len(yd_sample[0]) #3
 
 	data = np.array([np.hstack([yp_sample[i],yd_sample[i]]) for i,_ in enumerate(qoi_samples)])
-	
-	if pca:
-		#We can train a pca on a reduced dimension, so we can have a lower-dimension GMM
-		#This will require transforming data in and out, and carrying the pca with the gmm
-		data = pca.transform(data)
 
 	#step 1: train 
 	#Get a a Gaussian mixture model from the push-forward of the prior through yd and yp
@@ -64,11 +58,11 @@ def gbi_train_model(qoi_samples, y_samples, verbose=0, ncomp=0, ncomp_start=1, p
 	gmm = None
 	if ncomp == 0:
 		print("calculating ideal ncomp...",flush=True) if verbose else 0
-		curr_gmm = GaussianMixtureNormalized(n_components=ncomp_start, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std, pca=pca) if careful else GaussianMixtureNormalized(n_components=ncomp_start, standardized_mean=y_mean, standardized_std=y_std, pca=pca)
+		curr_gmm = GaussianMixtureNormalized(n_components=ncomp_start, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std) if careful else GaussianMixtureNormalized(n_components=ncomp_start, standardized_mean=y_mean, standardized_std=y_std)
 		curr_gmm.fit(data)
 		curr_bic = curr_gmm.bic(data)
 		print(curr_bic, flush=True) if verbose==2 else 0
-		next_gmm = GaussianMixtureNormalized(n_components=ncomp_start+1, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std, pca=pca) if careful else GaussianMixtureNormalized(n_components=ncomp_start+1, standardized_mean=y_mean, standardized_std=y_std, pca=pca)
+		next_gmm = GaussianMixtureNormalized(n_components=ncomp_start+1, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std) if careful else GaussianMixtureNormalized(n_components=ncomp_start+1, standardized_mean=y_mean, standardized_std=y_std)
 		next_gmm.fit(data)
 		next_bic = next_gmm.bic(data)
 		print(next_bic, flush=True) if verbose==2 else 0
@@ -79,14 +73,14 @@ def gbi_train_model(qoi_samples, y_samples, verbose=0, ncomp=0, ncomp_start=1, p
 			ncomp += 1
 			if careful:
 				try:
-					next_gmm = GaussianMixtureNormalized(n_components=ncomp+1, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std, pca=pca).fit(data)
+					next_gmm = GaussianMixtureNormalized(n_components=ncomp+1, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std).fit(data)
 				except:
 					#Exceptions are likely to happen if the number of components is larger than the sample size can support without introducing singularities in the covariance
 					next_bic = curr_bic * 2 #flunk out to end the loop if it fails to converge
 					print("(GMM with",ncomp+1,"components failed to converge)") if verbose else 0
 					continue
 			else:
-				next_gmm = GaussianMixtureNormalized(n_components=ncomp+1, standardized_mean=y_mean, standardized_std=y_std, pca=pca).fit(data)
+				next_gmm = GaussianMixtureNormalized(n_components=ncomp+1, standardized_mean=y_mean, standardized_std=y_std).fit(data)
 			next_bic = next_gmm.bic(data)
 			print(next_bic, flush=True) if verbose else 0
 
@@ -96,9 +90,9 @@ def gbi_train_model(qoi_samples, y_samples, verbose=0, ncomp=0, ncomp_start=1, p
 	else:
 		#Allow someone to override this process if they think they know how many components they want
 		if careful:
-			gmm = GaussianMixtureNormalized(n_components=ncomp, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std, pca=pca).fit(data)
+			gmm = GaussianMixtureNormalized(n_components=ncomp, max_iter=1000, n_init=5, reg_covar=1e-5, standardized_mean=y_mean, standardized_std=y_std).fit(data)
 		else:
-			gmm = GaussianMixtureNormalized(n_components=ncomp, standardized_mean=y_mean, standardized_std=y_std, pca=pca).fit(data)
+			gmm = GaussianMixtureNormalized(n_components=ncomp, standardized_mean=y_mean, standardized_std=y_std).fit(data)
 		print("Using provided number of components,",ncomp,flush=True) if verbose else 0
 		
 	return gmm
@@ -219,13 +213,6 @@ def gbi_condition_model(gmm, Yd_raw, inv_Sig_dd_precalc=None, logdet_Sig_dd_prec
 	beta = [np.array(x) for x in beta]
 	mu_Yd = [np.array(x) for x in mu_Yd]
 	Sig_Yd = [np.array(x) for x in Sig_Yd]
-	
-	#convert back through pca before destandardizing
-	if gmm.pca:
-		pca_matrix = gmm.pca.components_
-		pca_matrix_inv = np.linalg.inv(pca_matrix)
-		mu_Yd = pca_matrix_inv @ mu_Yd
-		Sig_Yd = pca_matrix_inv @ Sig_Yd
 	
 	##LASTLY its very important that we de-normalize this input data according to the normalization of Q in the GaussianMixtureNormalized
 	#should just involve multiplying the mean and std
