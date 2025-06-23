@@ -14,10 +14,12 @@ from pymoo.optimize import minimize
 from pymoo.core.population import Population
 #from pymoo.visualization.scatter import Scatter
 #from pymoo.operators.crossover.pntx import TwoPointCrossover
-#from pymoo.operators.mutation.bitflip import BitflipMutation
+from pymoo.operators.mutation.pm import PM
+from pymoo.operators.mutation.rm import ChoiceRandomMutation
 #from pymoo.operators.sampling.rnd import BinaryRandomSampling
 from pymoo.util.display.display import Display
 from pymoo.util.display.multi import MultiObjectiveOutput
+from pymoo.operators.repair.rounding import RoundingRepair
 
 #parallel:
 from pymoo.core.problem import ElementwiseProblem
@@ -216,13 +218,19 @@ class VerificationProblemSingle(ElementwiseProblem):
 		out["F"] = np.column_stack([cost, U])
 		#out["G"] = np.column_stack([...,...,...])
 			
-def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPeriod, nMonteCarlo, GMM, Ylist, displayFreq=10, initial_pop=[]):	
+def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPeriod, nMonteCarlo, GMM, Ylist, displayFreq=10, initial_pop=[], doMutation="default"):	
 	# initialize the thread pool and create the runner
 	pool = Pool(n_threads)
 	runner = StarmapParallelization(pool.starmap)
 
 	# define the problem by passing the starmap interface of the thread pool
 	nsga_problem = VerificationProblemSingle(prob=prob, GMM=GMM, Ylist=Ylist, nMonteCarlo=nMonteCarlo, elementwise_runner=runner)
+
+	#set parameters
+	if doMutation=="RM":
+		mutation = PM(prob=1.0, eta=1.0, vtype=int, repair=RoundingRepair()) #ChoiceRandomMutation()	
+	else:
+		mutation = PM(eta=20)
 
 	###2. Run nsga-II
 	#Allow initialization with a pre-sampled population
@@ -232,7 +240,7 @@ def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPe
 		algorithm = NSGA2(pop_size=popSize,
 						  #sampling=BinaryRandomSampling(), #what
 						  #crossover=TwoPointCrossover(), #what
-						  #mutation=BitflipMutation(), #https://pymoo.org/operators/mutation.html?
+						  mutation=mutation,
 						  eliminate_duplicates=True)
 	elif len(initial_pop) < popSize:
 		#draw more random samples so that we're up to pop = nmc
@@ -241,18 +249,21 @@ def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPe
 		greater_pop = initial_pop + random_sample
 		pop_obj = Population.new("X", greater_pop)
 		algorithm = NSGA2(pop_size=popSize,
-						  sampling=pop_obj,
-						  eliminate_duplicates=True)
+			mutation=mutation,
+			sampling=pop_obj,
+			eliminate_duplicates=True)
 	elif len(initial_pop) == popSize:
 		pop_obj = Population.new("X", initial_pop)
 		algorithm = NSGA2(pop_size=popSize,
-						  sampling=pop_obj,
-						  eliminate_duplicates=True)
+			mutation=mutation,			
+			sampling=pop_obj,
+			eliminate_duplicates=True)
 	else: #len(initial_pop) > popSize
 		pop_obj = Population.new("X", initial_pop)
 		algorithm = NSGA2(pop_size=popSize,
-						  sampling=pop_obj,
-						  eliminate_duplicates=False)
+			mutation=mutation,
+			sampling=pop_obj,
+			eliminate_duplicates=False)
 
 	if hours==0 and minutes==0:
 		#termination = DefaultMultiObjectiveTermination(
