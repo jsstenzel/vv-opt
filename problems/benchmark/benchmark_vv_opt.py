@@ -3,6 +3,7 @@ import os
 import scipy.stats
 import math
 import matplotlib.pyplot as plt
+from matplotlib import cm
 import numpy as np
 import seaborn as sns
 import csv
@@ -258,13 +259,17 @@ if __name__ == '__main__':
 		covs = [np.array(cov_k) for cov_k in model.covariances_]
 		weights = np.array(model.weights_)
 		
+		# Setup colormapping
+		cmap = cm.get_cmap("gist_rainbow")
+		norm = plt.Normalize(vmin=min(weights), vmax=max(weights))
+		scalar_map = cm.ScalarMappable(norm=norm, cmap=cmap)
+		fig.colorbar(scalar_map, ax=ax, label='Weight of Gaussian component')
+		
 		#TODO at each mean, plot each ellipsoid using the cov, find the method
 		for mu, cov, weight in zip(means, covs, weights):
 			#additional step to de-rescale the GMM mu and cov
-			mu_rescale = model.standardized_std[0]*mu + model.standardized_mean[0] #xnorm = (x-xmean)/xstd
-			cov_rescale = (model.standardized_std[0]**2)*cov #rescaling stddev=1 back to yp_std
-			print(mu_rescale)
-		
+			mu_rescale = model.standardized_std*mu + model.standardized_mean #xnorm = (x-xmean)/xstd
+			cov_rescale = np.diag(model.standardized_std)*cov*np.diag(model.standardized_std) #rescaling stddev=1 back to yp_std
 			vals, vecs = np.linalg.eigh(cov_rescale)
 			
 			# Create Unit Sphere
@@ -281,8 +286,9 @@ if __name__ == '__main__':
 			ellipsoid = ellipsoid @ (vecs * radii).T + mu_rescale
 			
 			#plot
+			color = scalar_map.to_rgba(weight)
 			ax.plot_surface(ellipsoid[:,:,0], ellipsoid[:,:,1], ellipsoid[:,:,2], 
-                color='royalblue', alpha=0.5, edgecolor='navy', linewidth=0.5)
+                color=color, alpha=0.5, linewidth=0.5) #, edgecolor='white'
 			
 		plt.show()
 

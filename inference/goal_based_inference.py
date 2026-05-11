@@ -216,10 +216,10 @@ def gbi_condition_model(gmm, Yd_raw, inv_Sig_dd_precalc=None, logdet_Sig_dd_prec
 	
 	##LASTLY its very important that we de-normalize this input data according to the normalization of Q in the GaussianMixtureNormalized
 	#should just involve multiplying the mean and std
-	yp_mean = gmm.standardized_mean[0]
-	yp_std = gmm.standardized_std[0]
+	yp_mean = gmm.standardized_mean[0] #cutting out the yd, which we just conditioned on
+	yp_std = gmm.standardized_std[0] #i.e. every gaussian is now 1d
 	mu_Y = [yp_std*mu + yp_mean for mu in mu_Yd] #xnorm = (x-xmean)/xstd
-	Sig_Yd = [(yp_std**2)*var for var in Sig_Yd] #rescaling stddev=1 back to yp_std
+	Sig_Yd = [yp_std*var*yp_std for var in Sig_Yd] #rescaling stddev=1 back to yp_std
 	
 	if verbose==2:
 		print("beta:", beta)
