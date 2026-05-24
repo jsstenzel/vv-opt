@@ -228,6 +228,27 @@ def gbi_condition_model(gmm, Yd_raw, inv_Sig_dd_precalc=None, logdet_Sig_dd_prec
 	
 	return beta, mu_Yd, Sig_Yd
 	
+def gbi_condition_to_gmm(gmm, Yd_raw, inv_Sig_dd_precalc=None, logdet_Sig_dd_precalc=None, verbose=0):
+	beta_cond, mu_cond, Sig_cond = gbi_condition_model(gmm, Yd_raw, inv_Sig_dd_precalc=inv_Sig_dd_precalc, logdet_Sig_dd_precalc=logdet_Sig_dd_precalc, verbose=verbose)
+	precisions = np.linalg.inv(Sig_cond)
+	ncomp = len(beta_cond)
+	means = np.array(mu_cond).reshape(-1,1)
+	
+	gmm_cond = GaussianMixture(
+		n_components=ncomp,
+		weights_init=beta_cond,
+		means_init=means,
+		precisions_init=precisions,
+		covariance_type='full',
+		max_iter=0 # Set to 0 if you want to use the model strictly as defined without training
+	)
+	gmm_cond.covariances_ = Sig_cond
+	
+	#Dummy fit required to initialize internal sklearn structures, arbitrary X
+	dummy_X = np.array([1.0 for _ in range(ncomp+2)]).reshape(-1, 1)
+	gmm_cond.fit(dummy_X)
+	return gmm_cond
+	
 #online, get the pdf from the posterior predictive
 #i.e., given the data Yd, what is the probability of seeing the QoI yp
 def gbi_pdf_posterior_predictive(beta, mu_Yd, Sig_Yd, yp, verbose=0):

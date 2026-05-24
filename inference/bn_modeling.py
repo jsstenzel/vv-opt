@@ -52,7 +52,40 @@ def bn_sampling(problem, savefile, N, buffer_rate=1, doPrint=False, sample_x=Fal
 					for data in data_buffer:
 						writer.writerow(data)
 				data_buffer.clear()
-				
+
+def bn_pQ_sampling(problem, savefile, N, buffer_rate=1, doPrint=False, sample_x=False):
+	filename = savefile if savefile.endswith('.csv') else savefile+'.csv'
+	
+	data_buffer = []
+	for i in range(N):
+		if doPrint:
+			print("Drawing Q & y samples",i,"...",flush=True)
+		#Drawing samples theta, d
+		theta_sample = problem.prior_rvs(1)
+		if sample_x:
+			x_sample = problem.sample_x(1)
+		else:
+			x_sample=[]
+			
+		#Model propagation for Q, y
+		qoi_train = problem.H(theta_sample, x_sample)
+		
+		#Append the new BN sample to file
+		save_data = [qoi_train]
+		
+		if buffer_rate <= 1: #just stream it into the save file
+			with open(filename, 'a+', newline='') as csvfile:
+				writer = csv.writer(csvfile)
+				writer.writerow(save_data)
+		else: #save to buffer, and dump buffer to file at buffer_rate
+			data_buffer.append(save_data)
+			if (i+1) % buffer_rate == 0:
+				print("(dump)",flush=True)
+				with open(filename, 'a+', newline='') as csvfile:
+					writer = csv.writer(csvfile)
+					for data in data_buffer:
+						writer.writerow(data)
+				data_buffer.clear()
 
 #Read and interpret the savefile
 def bn_load_samples(problem, savefile, doPrint=False, do_subset=0, doDiagnostic=False):
@@ -107,6 +140,53 @@ def bn_train_from_file(problem, savefile, do_subset=0, ncomp=0, doPrint=False):
 	###Print and return
 	if doPrint:
 		print("Trained GMM with",len(qoi_train),"samples from",savefile)
+		print(gmm,len(gmm.means_[0]),"dimensions", flush=True)
+		
+	return gmm
+	
+#Call bn_load_samples and gbi_train_model
+def bn_pQ_train_from_file(problem, savefile, do_subset=0, ncomp=0, doPrint=False):
+	filename = savefile if savefile.endswith('.csv') else savefile+'.csv'
+
+	###Make sure the files exist
+	if not os.path.isfile(filename):
+		print("File",filename,"is missing")
+		sys.exit()
+		
+	###Safely read out all of the samples into matrices
+	Q = []
+	
+	if doPrint:
+		print("Reading the data files...",flush=True)
+	
+	with open(filename) as csvfile:
+		csvreader = csv.reader((line.replace('\0','') for line in csvfile ), delimiter=',')
+		for l,row in enumerate(csvreader):
+			if len(row) != 1:
+				if doPrint:
+					print("Warning: dropped line",l+1,"(length "+str(len(row))+' expected', str(problem.dim_y + problem.dim_d + 1)+')',"from",filename)
+			elif not do_subset or len(Q) < do_subset:
+				try:
+					Qgrab = float(row[0])
+				except ValueError: #recently im seeing some '' values in y? hopefully this avoids that ugliness
+					continue
+				Q.append(Qgrab)
+			else:
+				break
+	
+	###Train model
+	data = np.array(Q).reshape(-1,1)
+
+	careful=True
+	if careful:
+		gmm = GaussianMixture(n_components=ncomp, max_iter=1000, n_init=5, reg_covar=1e-5).fit(data)
+	else:
+		gmm = GaussianMixture(n_components=ncomp).fit(data)
+	print("Using provided number of components,",ncomp,flush=True) if doPrint else 0
+	
+	###Print and return
+	if doPrint:
+		print("Trained GMM with",len(Q),"samples from",savefile)
 		print(gmm,len(gmm.means_[0]),"dimensions", flush=True)
 		
 	return gmm

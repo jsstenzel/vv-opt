@@ -332,7 +332,7 @@ def bn_measure_validation_convergence(problem, big_savefile, ncomp=0, N_list=[],
 #Except I want to evaluate BIC and MSE, and MAE for each ncomp
 def bn_train_evaluate_ncomp(problem, trainfile, do_subset=0, N_list=[], doPrint=True, doPlot=True):
 	###Setup
-	ncomps = [10,20,30,40,50,60,70,80,90,100,110,130,200] if not N_list else N_list
+	ncomps = [1,10,20,30,40,50,60,70,80,90,100,110,130,200] if not N_list else N_list
 	print("Evaluating",trainfile,"training data for GMM with number of components:",ncomps,flush=True)
 	BICs = [None]*len(ncomps)
 	scores = [None]*len(ncomps)

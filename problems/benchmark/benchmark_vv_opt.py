@@ -4,8 +4,9 @@ import scipy.stats
 import math
 import matplotlib.pyplot as plt
 from matplotlib import cm
+from matplotlib import colormaps
 import numpy as np
-import seaborn as sns
+from scipy.interpolate import griddata
 import csv
 import dill
 
@@ -34,7 +35,7 @@ from opt.nsga import *
 
 def vv_eval_problem(problem):
 	print(problem)
-	res = 100
+	res = 400
 	thetas = np.arange(0,1,1/res)
 	
 	###plot output of H vs theta
@@ -45,6 +46,7 @@ def vv_eval_problem(problem):
 	plt.title("Q = H(theta)")
 	plt.show()
 	
+	"""
 	###plot output of eta as heatmap on theta vs d
 	ds = np.arange(0,1,1/res)
 	#ys = [problem.eta(t, d, err=False) for t,d in join(thetas,ds)]
@@ -54,6 +56,22 @@ def vv_eval_problem(problem):
 			ys[i_t,i_d] = problem.eta([t], [d], err=False)[0]
 	sns.heatmap(ys, cmap="inferno")
 	plt.title("y = eta(theta,d)")
+	plt.ylabel('theta')
+	plt.xlabel('d')
+	plt.show()
+	"""
+	def easy_eta(t,d):
+		return problem.eta([t], [d], err=False)[0]
+	vectorized_eta = np.vectorize(easy_eta)
+	
+	ds = np.linspace(0,1,res)
+	ts = np.linspace(0,1,res)
+	#ys = np.array([[easy_eta(t,d) for d in ds] for t in ts])
+	
+	D, T = np.meshgrid(ds, ts)
+	Y = vectorized_eta(T, D)
+	img = plt.pcolormesh(D, T, Y, cmap="inferno", shading="auto")
+	plt.colorbar(img, label="y = eta(theta,d)")
 	plt.ylabel('theta')
 	plt.xlabel('d')
 	plt.show()
@@ -101,7 +119,7 @@ def vv_UP_QoI(problem, req=None, n=10**4):
 		print("Probability of meeting requirement given priors:", prob_meetreq)
 		
 	#uncertainty_prop_plot([theta[0] for theta in uq_thetas], xlab="How to plot this...")
-	uncertainty_prop(Qs, xlab="QoI: SNR", vline=vline)
+	uncertainty_prop(Qs, xlab="Q", vline=vline)
 
 #Uncertainty analysis of the experiment models
 def vv_UP_exp(problem, dd, theta_nominal, n=10**4, savefig=False):
@@ -209,15 +227,12 @@ if __name__ == '__main__':
 		#Train the BN off of the saved data
 		ncomp = 200
 		q, _ = bn_load_samples(problem, savefile="BN_T1samples", doPrint=True, doDiagnostic=True)
-		gmm = bn_train_from_file(problem, savefile="BN_T1samples", do_subset=2000000, ncomp=ncomp, doPrint=True)
+		gmm = bn_train_from_file(problem, savefile="BN_T1samples", do_subset=0, ncomp=ncomp, doPrint=True)
 		
 		#Save the GMM to a file
 		filename = "BN_model_" + str(len(q)) + "_ncomp" + str(ncomp) + '.pkl'
 		#filename = "BN_model.csv"
 		bn_save_gmm(gmm, gmm_file=filename)
-		
-	elif args.run == "BN_examine":
-		bn_compare_model_covariance(problem, "BN_T1samples", "BN_model_1639027_ncomp200.csv", doPrint=True)
 		
 	elif args.run == "BN_3dplot":
 		bn_plot_data_density(problem, "BN_T1samples", "BN_model_1000000_ncomp1", do_subset=args.n, doGMMPlot=True, doPrint=False)
@@ -260,7 +275,7 @@ if __name__ == '__main__':
 		weights = np.array(model.weights_)
 		
 		# Setup colormapping
-		cmap = cm.get_cmap("gist_rainbow")
+		cmap = colormaps["gist_rainbow"]
 		norm = plt.Normalize(vmin=min(weights), vmax=max(weights))
 		scalar_map = cm.ScalarMappable(norm=norm, cmap=cmap)
 		fig.colorbar(scalar_map, ax=ax, label='Weight of Gaussian component')
@@ -291,39 +306,67 @@ if __name__ == '__main__':
                 color=color, alpha=0.5, linewidth=0.5) #, edgecolor='white'
 			
 		plt.show()
-
-	elif args.run == "BN_evaluate":
-		#Run the validation test
-		#gmm = bn_load_gmm("BN_model.csv")
-		#bn_measure_model_mse(problem, gmm, N=args.n, doPrint=True)
-		
-		#bn_evaluate_model_likelihood(problem, gmmfile="BN_model_1000", datafile="BN_samples", N_val=0, do_subset=1000, doPrint=True)
-		bn_evaluate_convergence_confidence(problem, valfile="BN_validation", N_bootstrap=1000, doPrint=True)
-		
-	elif args.run == "BN_convergence":
-		#Run the convergence test
-		#bn_measure_stability_convergence(problem, , N_val=args.n, doPrint=True)
-		#bn_measure_likelihood_convergence(problem, "BN_T1samples", doPrint=True)
-		#bn_measure_likelihood_convergence(problem, "BN_T1samples", doPrint=True)
-		#bn_measure_validation_convergence(problem, "BN_T1samples", N_val=args.n, doPrint=True)
-		bn_train_convergence_confidence(problem, trainfile="BN_T1samples", N_bootstrap=1000, ncomp=50, startnum=args.n, doPrint=True)
 		
 	elif args.run == "BN_find_ncomp":
 		bn_train_evaluate_ncomp(problem, trainfile="BN_T1samples", doPlot=True, doPrint=True)
 		#bn_train_evaluate_ncomp_plot([],[])
 		#bn_train_evaluate_ncomp_sanitycheck(problem, trainfile="BN_samples", valfile="BN_validation", doPlot=True, doPrint=True)
 	
-		"""
+
 	elif args.run == "OBED_test":
 		#Load the GMM and presampled y from file
 		print("Loading GMM and presamples...",flush=True)
-		gmm = bn_load_gmm("BN_model_1639027_ncomp200.pkl")
-		presampled_ylist = bn_load_y(problem, "BN_samples_1639027.csv", doPrint=False, doDiagnostic=False)
+		gmm = bn_load_gmm("BN_model_1000000_ncomp200.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_T1samples.csv", doPrint=False, doDiagnostic=False)
+		
+		#Calculate U for a design
+		U_dmin, _ = U_varH_gbi_joint_presampled([0], problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+		print("U(d=0):",U_dmin,flush=True)
+		
+	elif args.run == "OBED_convergence":
+		#Load the GMM and presampled y from file
+		print("Loading GMM and presamples...",flush=True)
+		gmm = bn_load_gmm("BN_model_1000000_ncomp200.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_T1samples.csv", doPrint=False, doDiagnostic=False)
+		
+		#Calculate U_hist for large n_mc, and save the individual MC results
+		U_hist,u_10m_list = U_varH_gbi_joint_presampled([0.3], problem, gmm, presampled_ylist, n_mc=10000000, doPrint=True)
+		import pickle
+		with open("u_10m_list.pkl", 'wb') as file:
+			pickle.dump(u_10m_list, file)
+		
+	elif args.run == "OBED_convergence_eval":
+		import pickle
+		with open("u_1m_list.pkl", 'rb') as file:
+			u_1m_list = pickle.load(file)
+			
+		#Take slices of that data for increasing n
+		mc_plot_trace_bootstrap(u_1m_list, 60, doLog=False, doEvery=10000)
+		
+	elif args.run == "OBED_full":
+		#Load the GMM and presampled y from file
+		print("Loading GMM and presamples...",flush=True)
+		gmm = bn_load_gmm("BN_model_1000000_ncomp200.pkl")
+		presampled_ylist = bn_load_y(problem, "BN_T1samples.csv", doPrint=False, doDiagnostic=False)
+		#do args.n >= 100000
+		#do args.v = 10
 		
 		#Calculate U for several different designs
-		U_dmin, _ = U_varH_gbi_joint_presampled(d_min, problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
-		print("U_dmin:",U_dmin,flush=True)
+		res=int(args.v)
+		ds = np.linspace(0,1,res)
+		Us = [0]*len(ds)
+		for j,d in enumerate(ds):
+			U, _ = U_varH_gbi_joint_presampled([0], problem, gmm, presampled_ylist, n_mc=args.n, doPrint=True)
+			print("U(d="+str(d)+"):",U,flush=True)
+			Us[j] = U
 		
+		print(Us)
+		plt.plot(ds,Us)
+		plt.xlabel("d")
+		plt.ylabel("-U(d)")
+		plt.show()
+		
+		"""
 	elif args.run == "OBED_convergence":
 		#Load the GMM and presampled y from file
 		print("Loading GMM and presamples...",flush=True)
@@ -343,43 +386,53 @@ if __name__ == '__main__':
 			
 		#Take slices of that data for increasing n
 		mc_plot_trace_bootstrap(u_1m_list, 60, doLog=False, doEvery=10000)
+	"""
 	
-	elif args.run == "OPT_test":
-		vv_OPT(
-			problem, 
-			gmm_file="ncomp_testing/BN_model_1639027_ncomp20.pkl", 
-			ysamples_file="BN_samples_1639027.csv", 
-			design_pts=design_pts,
-			epsilon=0.01, #probably the ncomp20 model is better than this
-			util_err=0.001,
-			do_hrs = 0,
-			do_min = 0,
-			threads = 1 if args.n==0 else args.n,
-			popSize=40,# if args.n==0 else args.n,
-			nMC=10,
-			displayFreq=10
-		)
+	elif args.run == "BN_sampletrain_pQ":
+		rate = 1000	
+		ntrain = 10000000
+		#bn_pQ_sampling(problem, savefile="BN_T1_pQ_samples", N=ntrain, buffer_rate=rate, doPrint=True)
+	
+		#Train the BN off of the saved data
+		ncomp = 30
+		gmm = bn_pQ_train_from_file(problem, savefile="BN_T1_pQ_samples", do_subset=0, ncomp=ncomp, doPrint=True)
 		
-	elif args.run == "OPT_nmc_p6":
-		#prepare initializaiton samples based on previous run + prepared designs
-	    
-		conf95 = 5.384503718405341e-05
-		conf_frac = conf95 / (0.0047856764435419575 - 0.0022957744137691916)
-		vv_OPT(
-			problem, 
-			gmm_file="BN_model_1639027_ncomp200.pkl", 
-			ysamples_file="ncomp_testing/BN_samples_1639027.csv", 
-			design_pts=design_pts,
-			epsilon=conf_frac, #the result for half the 95% confidence interval width for nMC=10^6
-			util_err=conf95,
-			do_hrs = 11 if args.filename == "timed" else 0,
-			do_min = 30 if args.filename == "timed" else 0,
-			threads = 8 if args.n == 0 else args.n,
-			popSize=60,
-			nMC=10**6,
-			samples=[]
-		)
-		"""
+		#Save the GMM to a file
+		filename = "pQ_model_"+str(ncomp)+"_T1.pkl"
+		#filename = "BN_model.csv"
+		bn_save_gmm(gmm, gmm_file=filename)
+	
+	elif args.run == "OBED_goalinfo_test":
+		#Load the GMM and presampled y from file
+		print("Loading GMMs...",flush=True)
+		gmm_qyd = bn_load_gmm("BN_model_1000000_ncomp200.pkl")
+		gmm_q = bn_load_gmm("pQ_model_30_T1.pkl")
+		
+		#Calculate U for a design
+		d = [0.2]
+		U, _ = U_infoH_gbi_joint(d, problem, gmm_qyd, gmm_q, n_mc=args.n, doPrint=True)
+		print("U(d="+str(d[0])+"):",U,flush=True)
+	
+	elif args.run == "OBED_goalinfo_full":
+		#Load the GMM and presampled y from file
+		print("Loading GMMs...",flush=True)
+		gmm_qyd = bn_load_gmm("BN_model_1000000_ncomp200.pkl")
+		gmm_q = bn_load_gmm("pQ_model_30_T1.pkl")
+		
+		#Calculate U for several different designs
+		res=int(args.v)
+		ds = np.linspace(0,1,res)
+		Us = [0]*len(ds)
+		for j,d in enumerate(ds):
+			U, _ = U_infoH_gbi_joint([d], problem, gmm_qyd, gmm_q, n_mc=args.n, doPrint=True)
+			print("U(d="+str(d)+"):",U,flush=True)
+			Us[j] = U
+		
+		print(Us)
+		plt.plot(ds,Us)
+		plt.xlabel("d")
+		plt.ylabel("goal-oriented info criterion U(d)")
+		plt.show()
 	
 	else:
 		print("I dont recognize the command",args.run)

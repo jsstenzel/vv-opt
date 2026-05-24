@@ -41,7 +41,7 @@ def uncertainty_prop(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False, vli
 	
 	return mean, stddev
 	
-def uncertainty_prop_plot(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False, vline=[]):	
+def uncertainty_prop_plot(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False, vline=[], bins='auto', doLog=False):	
 	"""
 	###remarkably, plt.hist draws a memory error if there are outliers. it tries to list out a trillion bins.
 	#Fix: prune out the worst outliers as standard practice:
@@ -58,14 +58,14 @@ def uncertainty_prop_plot(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False
 
 	try:
 		if rescaled==False:
-			n, bins, patches = plt.hist(x=y_j, bins='auto', color=c, alpha=1.0, rwidth=0.85)
+			n, bins, patches = plt.hist(x=y_j, bins=bins, color=c, alpha=1.0, rwidth=0.85, log=doLog)
 		else:
-			n, bins, patches = plt.hist(x=y_j, bins='auto', color=c, alpha=1.0, rwidth=0.85, density=True)
+			n, bins, patches = plt.hist(x=y_j, bins=bins, color=c, alpha=1.0, rwidth=0.85, density=True, log=doLog)
 	except MemoryError:
 		if rescaled==False:
-			n, bins, patches = plt.hist(x=y_j, bins=1000, color=c, alpha=1.0, rwidth=0.85)
+			n, bins, patches = plt.hist(x=y_j, bins=1000, color=c, alpha=1.0, rwidth=0.85, log=doLog)
 		else:
-			n, bins, patches = plt.hist(x=y_j, bins=1000, color=c, alpha=1.0, rwidth=0.85, density=True)	
+			n, bins, patches = plt.hist(x=y_j, bins=1000, color=c, alpha=1.0, rwidth=0.85, density=True, log=doLog)	
 		
 	plt.grid(axis='y', alpha=0.75)
 	plt.ylim(ymax=np.ceil(n.max() / 10) * 10 + n.max()*0.05)
@@ -86,7 +86,7 @@ def uncertainty_prop_plot(y_j, xlab="Y", c='#21aad3', saveFig='', rescaled=False
 		plt.clf()
 		plt.close()
 	
-def uncertainty_prop_plots(Y, xlabs=None, c='#21aad3', transpose=True, saveFig='', vline_per_plot=[]):
+def uncertainty_prop_plots(Y, xlabs=None, c='#21aad3', transpose=True, saveFig='', vline_per_plot=[], bins='auto', doLog=False):
 	if transpose==True:
 		Y = np.transpose(Y)
 
@@ -100,7 +100,7 @@ def uncertainty_prop_plots(Y, xlabs=None, c='#21aad3', transpose=True, saveFig='
 		
 	for i,y in enumerate(Y):
 		vline = [] if not vline_per_plot else [vline_per_plot[i]]
-		uncertainty_prop_plot(y, xlab=xlabs[i], c=c, saveFig=fignames[i], vline=vline)
+		uncertainty_prop_plot(y, xlab=xlabs[i], c=c, saveFig=fignames[i], vline=vline, bins=bins, doLog=doLog)
 	
 #this function is intended to take in a set of n_mc results from a big Monte Carlo run
 #and show you how the mean and confidence interval of that one run change over n-factor
