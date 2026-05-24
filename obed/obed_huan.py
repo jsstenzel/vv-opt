@@ -15,7 +15,10 @@ from obed.mcmc import *
 this is a general evaluation of the utiltiy
 assumes nothing about how we sample from the likelihood fn, or evaluate the likelihood of data
 """
-def U_Huan(d, problem, G, n_out, n_in=0, doReuse=False, doPrint=False):   
+def U_Huan(d, problem, G, n_out, doPrint=False):   
+	return U_Huan_general(d, problem, G, n_out, n_in=n_out, doReuse=True, doPrint=doPrint)
+
+def U_Huan_general(d, problem, G, n_out, n_in=0, doReuse=False, doPrint=False):   
 	#Draw theta_i from the prior
 	thetas = problem.prior_rvs(n_out)
 	#these can be reused, potentially
