@@ -14,7 +14,7 @@ def kl_divergence_2gammas(a1, b1, a2, b2):
 	return a2*np.log(b1/b2) - scipy.special.gammaln(a1) + scipy.special.gammaln(a2) + (a1-a2)*scipy.special.digamma(a1) - (b1 - b2)*(a1/b1)
 
 def kl_divergence_2bernoullis(q1, q2):
-	return q2 * np.log(q2/q1) + (1 - q1) * ln((1-q2)/(1-q1))
+	return q1 * np.log(q1/q2) + (1 - q1) * np.log((1-q1)/(1-q2))
 	
 def make_ecdf(data):
 	x = np.sort(data)

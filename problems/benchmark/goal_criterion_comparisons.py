@@ -13,10 +13,11 @@ sys.path.append('../..')
 from problems.benchmark.benchmark_problem_1d import *
 #analysis
 from obed.obed_multivar import *
-from obed.obed_gbi import *
+from obed.obed_rd import *
 #from obed.pdf_estimation import *
 from inference.bn_modeling import *
 from inference.bn_evaluation import *
+from inference.mdn_joint_model import *
 from uq.uncertainty_propagation import *
 from uq.sensitivity_analysis import *
 from uq.saltelli_gsa import *
@@ -31,17 +32,38 @@ from opt.nsga import *
 #	2. goal-oriented information criterion
 #		use...
 #	3. requirements-driven variance criterion
-#		use GBI method
+#		use posterior probability classification method
 #	4. requirements-drive information criterion
-#		use GBI method
+#		use posterior probability classification method
 #
 # According to several experimental design benchmark problems:
-# 	1. T0 - degenerate case where Q=theta
-# 	2. H1 - H(theta) is a Gaussian
-# 	3. H2 - 
-# 	4. H3
-# 	5. 
-# 	6. 
+# 	T0 - Linear Gaussian degenerate case where Q=theta
+#		prediction model: 
+#			Q = t
+# 		observation model:
+#			y = (t**3)*(d**2) + t * math.exp(-abs(0.2-d)) + N(0, 10^-4)
+#			d in [0,1]
+#		prior model:
+#			t ~ U(0,1)
+# 		requirement on the goal criterion:
+#			Q < 0.2
+#	H1 - 
+# 	H2 - Nonlinear right-tailed model
+#		prediction model: 
+#			Q = math.sin(t) + t*math.exp(t + abs(0.5-t)) + N(0, 0.1)
+# 		observation model:
+#			y = (t**3)*(d**2) + t * math.exp(-abs(0.2-d)) + N(0, 10^-4)
+#			d in [0,1]
+#		prior model:
+#			t ~ N(0,1)
+# 		requirement on the goal criterion:
+#			Q < 0.2
+# 	H3 - Nonlinear left-tailed model
+# 		requirement on the goal criterion:
+#			Q > 0.2
+# 		Same as H2 in every other way
+# 	 
+# 	 
 #
 # Note that, in each experimental design problem, there is a:
 # 	prediction model
@@ -57,8 +79,9 @@ from opt.nsga import *
 
 def vv_eval_problem(problem):
 	print(problem)
-	res = 100
-	thetas = np.arange(0,1,1/res)
+	res = 1000
+	dummy_thetas = problem.prior_rvs(res*10)
+	thetas = np.arange(min(dummy_thetas),max(dummy_thetas),1/res)
 	
 	###plot output of H vs theta
 	Qs = [problem.H([t]) for t in thetas]
@@ -69,14 +92,18 @@ def vv_eval_problem(problem):
 	plt.show()
 	
 	###plot output of eta as heatmap on theta vs d
-	ds = np.arange(0,1,1/res)
-	#ys = [problem.eta(t, d, err=False) for t,d in join(thetas,ds)]
-	ys = np.empty((res,res))
-	for i_t, t in enumerate(thetas):
-		for i_d, d in enumerate(ds):
-			ys[i_t,i_d] = problem.eta([t], [d], err=False)[0]
-	sns.heatmap(ys, cmap="inferno")
-	plt.title("y = eta(theta,d)")
+	def easy_eta(t,d):
+		return problem.eta([t], [d], err=False)[0]
+	vectorized_eta = np.vectorize(easy_eta)
+	
+	ds = np.linspace(0,1,res)
+	ts = np.linspace(min(dummy_thetas),max(dummy_thetas),res)
+	#ys = np.array([[easy_eta(t,d) for d in ds] for t in ts])
+	
+	D, T = np.meshgrid(ds, ts)
+	Y = vectorized_eta(T, D)
+	img = plt.pcolormesh(D, T, Y, cmap="inferno", shading="auto")
+	plt.colorbar(img, label="y = eta(theta,d)")
 	plt.ylabel('theta')
 	plt.xlabel('d')
 	plt.show()
@@ -98,7 +125,7 @@ def vv_eval_theta(problem, theta):
 	plt.show()
 
 ###uncertainty analysis	
-def vv_UP_QoI(problem, req=None, n=10**4):
+def vv_UP_QoI(problem, n=10**4):
 	#uncertainty propagation of HLVA
 	uq_thetas = problem.prior_rvs(n)
 	Qs = []
@@ -106,25 +133,25 @@ def vv_UP_QoI(problem, req=None, n=10**4):
 		print(i, flush=True)
 		try:
 			Q = problem.H(theta) 
-			print(Q, flush=True)
+			#print(Q, flush=True)
 			Qs.append(Q)
 		except:
 			print("System model eval fail?", flush=True)
 	#print(Qs)
 
 	vline=[]
-	if req:
-		vline=[req]
+	if problem.req_type != None:
+		vline=[problem.req]
 		#prob of meeting req along priors:
 		count_meetreq = 0
 		for Q in Qs:
-			if Q >= req:
+			if problem.check_req(Q):
 				count_meetreq += 1
-		prob_meetreq = count_meetreq / len(Qs)
-		print("Probability of meeting requirement given priors:", prob_meetreq)
+		q_prior = count_meetreq / len(Qs)
+		print("Prior probability of meeting requirement:", q_prior)
 		
 	#uncertainty_prop_plot([theta[0] for theta in uq_thetas], xlab="How to plot this...")
-	uncertainty_prop(Qs, xlab="QoI: SNR", vline=vline)
+	uncertainty_prop(Qs, xlab="Q", vline=vline)
 
 #Uncertainty analysis of the experiment models
 def vv_UP_exp(problem, dd, theta_nominal, n=10**4, savefig=False):
@@ -166,8 +193,79 @@ if __name__ == '__main__':
 		
 	elif args.run == "UP_exp":
 		vv_UP_exp(problem, [0.5], [0.1], n=args.n)
+		
+	elif args.run == "OBED_sample":
+		sample_file = args.case + "_classifier_samples.csv"
+		sample_requirements_classifier(problem, sample_file, n_samples=args.n, sample_x=False, buffer_rate=1000)
+		#TODO this is the same as bn_sampling, should consolidate that someday
+		
+	###Goal-oriented OBED for a given case
 	
+	elif args.run == "GO_train":
+		#Train the MDN representing the problem
+		print("Initializing MDN...",flush=True)
+		mdn = JointMDN(problem, n_components=5, hdim=64)
+		
+		print("Training MDN...",flush=True)
+		sample_file = args.case + "_classifier_samples.csv"
+		mdn.train_model_file(sample_file, iterations=10)
+		
+		#test it?
+		samples = mdn.sample_Qy(self, d=0.5, n=100)
+		print(samples)
 
+		
+	###Requirements-driven OBED for a given case
+
+
+		
+	elif args.run == "RD_train":
+		print("Training classifier...",flush=True)
+		sample_file = args.case + "_classifier_samples.csv"
+		classifier, scaler = train_requirements_classifier(problem, sample_file)
+		#pickle it
+		
+		#validate it right away
+		validate_requirements_classifier(classifier, scaler, problem, n_val=args.n, sample_x=False)
+		
+	elif args.run == "RD_test":
+		print("Training classifier...",flush=True)
+		sample_file = args.case + "_classifier_samples.csv"
+		classifier, scaler = train_requirements_classifier(problem, sample_file)
+		
+		d = 0.5
+		U_info, U_entropy, _ = U_rd_class([d], problem, n_mc=args.n, q_prior=args.v, classifier=classifier, scaler=scaler, doPrint=True)
+		print("U_rd_info",U_info)
+		print("U_rd_entropy",U_entropy)
+		
+	elif args.run == "RD_full":
+		print("Training classifier...",flush=True)
+		sample_file = args.case + "_classifier_samples.csv"
+		classifier, scaler = train_requirements_classifier(problem, sample_file)
+		#q_prior = 0.86299 #case H1, w/ n=1000000
+		#q_prior = 0.5 #H2
+		#q_prior = 0.14528 #H3
+		q_prior = 0.719641
+		
+		#Calculate U for several different designs
+		res=int(args.v)
+		ds = np.linspace(0,1,res)
+		U_infos = [0]*len(ds)
+		U_ents = [0]*len(ds)
+		for j,d in enumerate(ds):
+			U_info, U_entropy, _ = U_rd_class([d], problem, n_mc=args.n, q_prior=q_prior, classifier=classifier, scaler=scaler, doPrint=False)
+			print("U(d="+str(d)+"):",U_info,U_entropy,flush=True)
+			U_infos[j] = U_info
+			U_ents[j] = U_entropy
+		
+		print(U_infos)
+		print(U_ents)
+		plt.plot(ds,U_infos, 'b')
+		plt.plot(ds,U_ents, 'r')
+		plt.xlabel("d")
+		plt.ylabel("requirements-driven info criterion U(d)")
+		plt.legend(["U_rd_info","U_rd_ent"])
+		plt.show()
 	
 	else:
 		print("I dont recognize the command",args.run)

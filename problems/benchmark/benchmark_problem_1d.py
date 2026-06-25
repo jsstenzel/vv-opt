@@ -10,21 +10,42 @@ import csv
 sys.path.append('../..')
 from problems.problem_definition import *
 
-###First, define the fixed def objects
+###Let's define a ProblemDefinition that tracks requirements
+class ProblemReqDefinition(ProblemDefinition):
+	def __init__(self, _eta, _H, _G, _theta_defs, _y_defs, _d_defs, _x_defs, _req=0, _req_type=None):
+		super().__init__(_eta, _H, _G, _theta_defs, _y_defs, _d_defs, _x_defs)
+		
+		self.req = _req
+		allowed_satisfaction_criteria = [
+			"Q < r",
+			"Q <= r",
+			"Q > r",
+			"Q >= r",
+			"ra <= Q <= rb",
+			"None"
+		]
+		if _req_type in allowed_satisfaction_criteria:
+			self.req_type = _req_type
+		elif _req_type == "ra <= Q <= rb" and not isinstance(_req, list):
+			if len(_req) != 2:
+				raise ValueError("For requirement satisfaction criterion ra <= Q <= rb, req must be a list of length 2. req: "+str(_req))
+		else:
+			raise ValueError("Unrecognized requirement satisfaction criterion: "+str(_req_type))
 
-theta_req_defs = [ 
-					["theta", ["uniform", [0,1]], "continuous"]
-				]
-
-y_defs = ["y"]
-
-d_defs = [
-				["d", ['uniform', [0, 1]], "continuous"], #gain
-		 ]
-
-x_defs = [
-				#["nx", ["nonrandom", [2048]], "discrete", 2048],
-			]
+	def check_req(self, Q):
+		if self.req_type == "Q < r":
+			return Q < self.req
+		elif self.req_type == "Q <= r":
+			return Q <= self.req
+		elif self.req_type == "Q > r":
+			return Q > self.req
+		elif self.req_type == "Q >= r":
+			return Q >= self.req
+		elif self.req_type == "ra <= Q <= rb":
+			return (self.req[0] <= Q and Q <= self.req[1])
+		else:
+			return False
+		
 
 ###Then, define the possible benchmarking models
 
@@ -45,6 +66,11 @@ def zhongT1_prediction_model(theta, x, verbose=False):
 	t = theta["theta"]
 	z = math.sin(t) + t*math.exp(t + abs(0.5-t))
 	return z
+	
+def zhongT1_gaussian(theta, x, verbose=False):
+	z = zhongT1_prediction_model(theta, x, verbose=verbose)
+	xi = scipy.stats.norm.rvs(scale = 0.1)
+	return z + xi
 	
 def zhongT2_prediction_model(theta, x, verbose=False):
 	t = theta["theta"]
@@ -105,27 +131,87 @@ def cost_simple(d, x):
 
 #_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
 def make_1D_benchmark_problem(case=None):
-	eta = benchmark_1D_obs_model
-	Gamma = cost_simple
-	tdefs = theta_req_defs
-	ydefs = y_defs
-	ddefs = d_defs
-	xdefs = x_defs
-	
+	#T cases, from Zhong et al	
 	if case == "T0":
 		H = baseline_prediction_model
-	if case == "T1":
+		eta = benchmark_1D_obs_model
+		Gamma = cost_simple
+		tdefs = [["theta", ["uniform", [0,1]], "continuous"]]
+		ydefs = ["y"]
+		ddefs = [["d", ['uniform', [0, 1]], "continuous"]]
+		xdefs = []
+		req = 0
+		req_type = "None"
+	elif case == "T1":
 		H = zhongT1_prediction_model
+		eta = benchmark_1D_obs_model
+		Gamma = cost_simple
+		tdefs = [["theta", ["uniform", [0,1]], "continuous"]]
+		ydefs = ["y"]
+		ddefs = [["d", ['uniform', [0, 1]], "continuous"]]
+		xdefs = []
+		req = 2.5
+		req_type = "Q < r"
 	elif case == "T2":
 		H = zhongT2_prediction_model
+		eta = benchmark_1D_obs_model
+		Gamma = cost_simple
+		tdefs = [["theta", ["uniform", [0,1]], "continuous"]]
+		ydefs = ["y"]
+		ddefs = [["d", ['uniform', [0, 1]], "continuous"]]
+		xdefs = []
+		req = 0
+		req_type = "None"
 	elif case == "T3":
 		H = zhongT3_prediction_model
+		eta = benchmark_1D_obs_model
+		Gamma = cost_simple
+		tdefs = [["theta", ["uniform", [0,1]], "continuous"]]
+		ydefs = ["y"]
+		ddefs = [["d", ['uniform', [0, 1]], "continuous"]]
+		xdefs = []
+		req = 0
+		req_type = "None"
+
+	#My own H cases - an adaptation of T1 with gaussian prior and noisy H
 	elif case == "H1":
-		tdefs = [["theta", ["gaussian", [0,1]], "continuous"]]
-		H = bellcurve_prediction_model
+		req = 2.5
+		req_type = "Q < r"
+		H = zhongT1_gaussian
+		eta = benchmark_1D_obs_model
+		tdefs = [["theta", ["gaussian", [0.5,0.2]], "continuous"]]
+		ddefs = [["d", ['uniform', [0, 1]], "continuous"]]
+		ydefs = ["y"]
+		xdefs = []
+		Gamma = cost_simple
+	elif case == "H2":
+		#Same as H1, but with the requirement set to have 50/50 prior q
+		req = 1.327
+		req_type = "Q < r"
+		H = zhongT1_gaussian
+		eta = benchmark_1D_obs_model
+		tdefs = [["theta", ["gaussian", [0.5,0.2]], "continuous"]]
+		ddefs = [["d", ['uniform', [0, 1]], "continuous"]]
+		ydefs = ["y"]
+		xdefs = []
+		Gamma = cost_simple
+	elif case == "H3":
+		#Same as H2, but with the requirement set to fail in the prior
+		req = 0.75
+		req_type = "Q < r"
+		H = zhongT1_gaussian
+		eta = benchmark_1D_obs_model
+		tdefs = [["theta", ["gaussian", [0.5,0.2]], "continuous"]]
+		ddefs = [["d", ['uniform', [0, 1]], "continuous"]]
+		ydefs = ["y"]
+		xdefs = []
+		Gamma = cost_simple
+	
+	
 	else:
-		H = baseline_prediction_model
+		print("Don't recognize that case")
+		sys.exit()
 		
-	problem = ProblemDefinition(eta, H, Gamma, tdefs, ydefs, d_defs, x_defs)
+	problem = ProblemReqDefinition(eta, H, Gamma, tdefs, ydefs, ddefs, xdefs, req, req_type)
 
 	return problem

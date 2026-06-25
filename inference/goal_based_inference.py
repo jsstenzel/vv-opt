@@ -276,9 +276,9 @@ def gbi_sample_of_conditional_pp(gmm, Yd, verbose=0):
 	beta, mu_Yd, Sig_Yd = gbi_condition_model(gmm, Yd, verbose=verbose)
 	samples = np.array([p * scipy.stats.norm.rvs(loc=mu, scale=np.sqrt(sd)) for mu, sd, p in zip(mu_Yd, Sig_Yd, beta)])
 	sample = np.sum(np.array(samples))
+	#TODO this is actually wrong, sampling from a GMM isn't a weighted sum of iid samples...
 	
 	return sample
-	
 
 def plot_predictive_posterior(beta, mu_Yd, Sig_Yd, lbound, rbound, drawplot=True, plotmean=False, compplot=True, maincolor='k'):
 	#p is one-dimensional, give it a plot
