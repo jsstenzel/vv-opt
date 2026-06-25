@@ -284,3 +284,99 @@ def nsga2_obed_bn(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPe
 	design_print(pareto_costs, pareto_utilities, pareto_designs, prob)
 		
 	return pareto_costs, pareto_utilities, pareto_designs
+	
+class VerificationProblemBuiltIn(ElementwiseProblem):
+	param = {}
+
+	def __init__(self, prob, nMonteCarlo, **kwargs):
+		self.prob = prob
+		self.nMonteCarlo = nMonteCarlo
+	
+		d_lowers = [d_dist[1][0] for d_dist in prob.d_dists]
+		d_uppers = [d_dist[1][1] for d_dist in prob.d_dists]
+		param_types = [float if (dmask=="continuous") else int for dmask in prob.d_masks]
+
+		#translate the key problem parameters here
+		#2 objectives, utility and cost
+		#For now, we won't consider that cost or utility or anything else are constrained
+		super().__init__(n_var=prob.dim_d, n_obj=2, n_constr=0, xl=d_lowers, xu=d_uppers, vtype=param_types, **kwargs)
+		
+	def _evaluate(self, design, out, *args, **kwargs):
+		print(flush=True, end="")
+		utility_list = []
+		cost_list = []
+		
+		U, _ = self.prob.utility(d=design, n_MC=self.nMonteCarlo)
+		cost = self.prob.G(design)
+		
+		out["F"] = np.column_stack([cost, U])
+		#out["G"] = np.column_stack([...,...,...])
+	
+def nsga2_obed_builtin(n_threads, prob, hours, minutes, popSize, nSkip, tolDelta, nPeriod, nMonteCarlo, displayFreq=10, initial_pop=[]):	
+	# initialize the thread pool and create the runner
+	pool = Pool(n_threads)
+	runner = StarmapParallelization(pool.starmap)
+
+	# define the problem by passing the starmap interface of the thread pool
+	nsga_problem = VerificationProblemBuiltIn(prob=prob, nMonteCarlo=nMonteCarlo, elementwise_runner=runner)
+
+	###2. Run nsga-II
+	#Allow initialization with a pre-sampled population
+	#https://pymoo.org/customization/initialization.html
+	#it can be a different size from nmc, but not smaller if we're eliminating duplicates
+	if len(initial_pop) == 0:
+		algorithm = NSGA2(pop_size=popSize,
+						  #sampling=BinaryRandomSampling(), #what
+						  #crossover=TwoPointCrossover(), #what
+						  #mutation=BitflipMutation(), #https://pymoo.org/operators/mutation.html?
+						  eliminate_duplicates=True)
+	elif len(initial_pop) < popSize:
+		#draw more random samples so that we're up to pop = nmc
+		diff = popSize - len(initial_pop)
+		random_sample = list(prob.sample_d(diff)) if diff>1 else [prob.sample_d(diff)]
+		greater_pop = initial_pop + random_sample
+		pop_obj = Population.new("X", greater_pop)
+		algorithm = NSGA2(pop_size=popSize,
+						  sampling=pop_obj,
+						  eliminate_duplicates=True)
+	elif len(initial_pop) == popSize:
+		pop_obj = Population.new("X", initial_pop)
+		algorithm = NSGA2(pop_size=popSize,
+						  sampling=pop_obj,
+						  eliminate_duplicates=True)
+	else: #len(initial_pop) > popSize
+		pop_obj = Population.new("X", initial_pop)
+		algorithm = NSGA2(pop_size=popSize,
+						  sampling=pop_obj,
+						  eliminate_duplicates=False)
+
+	if hours==0 and minutes==0:
+		#termination = DefaultMultiObjectiveTermination(
+		#	f_tol=0.0025,
+		#	period=30,
+		#	n_max_gen=500
+		#)	
+		termination = RobustTermination(MultiObjectiveSpaceTermination(tol=tolDelta, n_skip=nSkip), period=nPeriod)
+	else:
+		time_string = f"{hours:02}"+":"+f"{minutes:02}"+":00"
+		print(time_string)
+		termination=get_termination("time", time_string)
+		
+	res = minimize(nsga_problem,
+				   algorithm,
+				   termination,
+				   #seed=1,
+				   display=PeriodicPopulationDisplay(displayFreq, prob),
+				   verbose=True)
+				   
+	pool.close()
+	
+	pareto_costs = [f[0] for f in res.F]
+	pareto_utilities = [f[1] for f in res.F]
+	pareto_designs = res.X
+	pareto_costs, pareto_utilities, pareto_designs = zip(*sorted(zip(pareto_costs, pareto_utilities, pareto_designs)))
+	
+	#do a final print of the optimal designs
+	design_print(pareto_costs, pareto_utilities, pareto_designs, prob)
+		
+	return pareto_costs, pareto_utilities, pareto_designs

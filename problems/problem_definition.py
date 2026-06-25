@@ -148,6 +148,7 @@ class ProblemDefinition:
 		'gaussian_multivar': 2, #mean vector, covariance
 		'gamma_ab': 2, #alpha, beta
 		'gamma_mv': 2, #mean, variance
+		'gamma_me': 2, #mean, exposure (beta)
 		'beta': 2, #a, b
 		'lognorm': 2, #mean, variance
 		'uniform': 2, #left, right
@@ -204,6 +205,13 @@ class ProblemDefinition:
 				beta = mean / variance
 				thetas_i = scipy.stats.gamma.rvs(size=num_vals, a=alpha, scale=1.0/beta)
 				vals.append(thetas_i.tolist())
+			elif dtype == 'gamma_me':
+				mean = params[0]
+				beta = params[1]
+				#variance = mean / beta
+				alpha = mean * beta
+				post_thetas_i = scipy.stats.gamma.rvs(size=num_vals, a=alpha, scale=1.0/beta)
+				vals.append(post_thetas_i.tolist())
 			elif dtype == 'beta':
 				a = params[0]
 				b = params[1]
@@ -322,6 +330,9 @@ class ProblemDefinition:
 				beta = params[1]
 				tnom.append(alpha/beta)
 			elif dtype == 'gamma_mv':
+				mean = params[0]
+				tnom.append(mean)
+			elif dtype == "gamma_me":
 				mean = params[0]
 				tnom.append(mean)
 			elif dtype == 'beta':
