@@ -142,7 +142,7 @@ def make_1D_benchmark_problem(case=None):
 		xdefs = []
 		req = 0
 		req_type = "None"
-	elif case == "T1":
+	elif case == "T1meet":
 		H = zhongT1_prediction_model
 		eta = benchmark_1D_obs_model
 		Gamma = cost_simple
@@ -151,6 +151,29 @@ def make_1D_benchmark_problem(case=None):
 		ddefs = [["d", ['uniform', [0, 1]], "continuous"]]
 		xdefs = []
 		req = 2.5
+		#q_prior = 0.719641
+		req_type = "Q < r"
+	elif case == "T1equal":
+		H = zhongT1_prediction_model
+		eta = benchmark_1D_obs_model
+		Gamma = cost_simple
+		tdefs = [["theta", ["uniform", [0,1]], "continuous"]]
+		ydefs = ["y"]
+		ddefs = [["d", ['uniform', [0, 1]], "continuous"]]
+		xdefs = []
+		req = 1.327
+		#q_prior = 0.5
+		req_type = "Q < r"
+	elif case == "T1fail":
+		H = zhongT1_prediction_model
+		eta = benchmark_1D_obs_model
+		Gamma = cost_simple
+		tdefs = [["theta", ["uniform", [0,1]], "continuous"]]
+		ydefs = ["y"]
+		ddefs = [["d", ['uniform', [0, 1]], "continuous"]]
+		xdefs = []
+		req = 0.75
+		#q_prior = 0.28391
 		req_type = "Q < r"
 	elif case == "T2":
 		H = zhongT2_prediction_model
@@ -176,6 +199,7 @@ def make_1D_benchmark_problem(case=None):
 	#My own H cases - an adaptation of T1 with gaussian prior and noisy H
 	elif case == "H1":
 		req = 2.5
+		#q_prior = 0.86299 #case H1, w/ n=1000000
 		req_type = "Q < r"
 		H = zhongT1_gaussian
 		eta = benchmark_1D_obs_model
@@ -187,6 +211,7 @@ def make_1D_benchmark_problem(case=None):
 	elif case == "H2":
 		#Same as H1, but with the requirement set to have 50/50 prior q
 		req = 1.327
+		#q_prior = 0.5 #H2
 		req_type = "Q < r"
 		H = zhongT1_gaussian
 		eta = benchmark_1D_obs_model

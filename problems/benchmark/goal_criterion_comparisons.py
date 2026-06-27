@@ -240,15 +240,13 @@ if __name__ == '__main__':
 		
 	elif args.run == "RD_full":
 		print("Training classifier...",flush=True)
-		sample_file = args.case + "_classifier_samples.csv"
+		#sample_file = args.case + "_classifier_samples.csv"
+		sample_file = "T1_classifier_samples.csv"
 		classifier, scaler = train_requirements_classifier(problem, sample_file)
-		#q_prior = 0.86299 #case H1, w/ n=1000000
-		#q_prior = 0.5 #H2
-		#q_prior = 0.14528 #H3
-		q_prior = 0.719641
+		q_prior = args.v
 		
 		#Calculate U for several different designs
-		res=int(args.v)
+		res=100#int(args.v)
 		ds = np.linspace(0,1,res)
 		U_infos = [0]*len(ds)
 		U_ents = [0]*len(ds)
