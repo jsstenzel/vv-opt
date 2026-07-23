@@ -184,16 +184,52 @@ def H_total_downtime(theta, x, verbose=False):
 	
 	return Q
 
+km_per_hr = 0.5
+software_tests_per_hr = 100
+comms_tests_per_hr = 10
+bench_test_time = 0.25
+mech_test_time = 0.5
+	
+cj_defs = {
+	#MOBILITY/TRACTION
+		"test_roughkm_for_wheelwear":1/km_per_hr,
+		"test_event_for_stall":mech_test_time,
+		"test_cycle_for_harnessfatigue":mech_test_time,
+		"test_highloadhr_for_motordrivefault":1,
+	#NAVIGATION
+		"test_lowtexturekm_for_featureloss":1/km_per_hr,
+		"test_km_for_imufault":1/km_per_hr,
+		"test_attempt_for_mapfail":mech_test_time,
+		"test_opportunity_for_startrackerfail":bench_test_time,
+		"test_opportunity_for_radiometricdrop":bench_test_time,
+	#POWER/THERMAL
+		"test_coldhr_for_heaterfault":1,
+		"test_highloadhr_for_batteryfault":1,
+		"test_opportunity_for_thermalsensorfault":bench_test_time,
+		"test_event_for_busfault":bench_test_time,
+		"test_chargehr_for_solararrayfault":1,
+	#COMMUNICATIONS
+		"test_opportunity_for_antennafault":1/comms_tests_per_hr,
+		"test_session_for_transceiverfault":1/comms_tests_per_hr,
+		"test_window_for_linkloss":1/comms_tests_per_hr,
+		"test_pass_for_grounddropout":1/comms_tests_per_hr,
+		"test_event_for_commandcorruption":1/comms_tests_per_hr,
+	#SOFTWARE/COMPUTE
+		"test_cycle_for_fswexception":1/software_tests_per_hr,
+		"test_operation_for_memcorrupt":1/software_tests_per_hr,
+		"test_window_for_watchdogtrip":1/software_tests_per_hr,
+		"test_event_for_invalidplan":1/software_tests_per_hr,
+		"test_update_for_filterreset":1/software_tests_per_hr
+}
+
 #add up all time of all tests
 def cost_test_time(d, x=None):
 	total_time = 0
 	
-	km_per_hr = 0.5
-	software_tests_per_hr = 100
-	comms_tests_per_hr = 10
-	bench_test_time = 0.25
-	mech_test_time = 0.5
+	for dname, d in d.items():
+		total_time += d * cj_defs[dname]
 	
+	"""
 	#MOBILITY/TRACTION
 	total_time += d["test_roughkm_for_wheelwear"] / km_per_hr
 	total_time += d["test_event_for_stall"] * mech_test_time
@@ -223,14 +259,18 @@ def cost_test_time(d, x=None):
 	total_time += d["test_window_for_watchdogtrip"] / software_tests_per_hr
 	total_time += d["test_event_for_invalidplan"] / software_tests_per_hr
 	total_time += d["test_update_for_filterreset"] / software_tests_per_hr
+	"""
 	
 	return total_time
-	
+
+#TODO fold more stuff in that belongs to this specific subproblem
 class ProblemDefinitionPoissonGaussian(ProblemDefinition):
 	def __init__(self, _eta, _H, _G, _theta_defs, _y_defs, _d_defs, _x_defs):
 		super().__init__(_eta, _H, _G, _theta_defs, _y_defs, _d_defs, _x_defs)
 		
 		#TODO check to enforce Gamma priors
+		
+		#TODO check to enforce y_dim = d_dim = theta_dim = x_dim = cj_dim
 		
 	def sample_posterior(self, y, d):
 		vals = [] #a list length num_vals of random numbers of size dim_theta
@@ -301,6 +341,33 @@ class ProblemDefinitionPoissonGaussian(ProblemDefinition):
 			u += um
 		return u
 		
+	def infocriterion_per_mode(self, d, y, rescale_to_downtime=True):
+		u_per_mode = []
+		for m,prior in enumerate(self.priors): ###iterate over dim_theta
+			dm = d[m]
+			ym = y[m]
+			dtype = prior[0]
+			params = prior[1]
+			#need to do this carefully, we have multiple thetas and multiple samples
+	
+			if dtype == 'gamma_ab':
+				am = params[0]
+				bm = params[1]
+			elif dtype == 'gamma_mv':
+				mean = params[0]
+				variance = params[1]
+				am = mean**2 / variance + y
+				bm = mean / variance + d
+			elif dtype == 'gamma_me':
+				mean = params[0]
+				bm = params[1]
+				am = mean * bm
+			
+			#um = am*np.log((bm+dm)/bm) - scipy.special.gammaln(am+ym) + scipy.special.gammaln(am) + ym*scipy.special.digamma(am+ym) - dm*hm*((am+ym)/(bm+dm))
+			um = kl_divergence_2gammas(a1=am, b1=bm, a2=am+ym, b2=bm+dm)
+			u_per_mode.append(um)
+		return u_per_mode
+		
 	def utility(self, d, n_MC):
 		thetas = self.prior_rvs(n_MC)
 		if n_MC == 1:#ugh edge case
@@ -351,6 +418,60 @@ class ProblemDefinitionPoissonGaussian(ProblemDefinition):
 		
 		return S_indices, labels
 		
+	def plot_utility_at_cost(self, n_mc):
+		#iterate over d
+		ds = range(0,10000,100)
+		thetas = self.prior_rvs(n_mc)
+		
+		#utility and cost for mode j, at exposure d
+		#initialize an empty list for each of those
+		u_j_d = [ [ 0 for d in ds] for j in range(self.dim_y)]
+		cost_j_d = [ [ 0 for d in ds] for j in range(self.dim_y)]
+		upc_j_d = [ [ 0 for d in ds] for j in range(self.dim_y)]
+		#print(np.array(u_j_d).shape)
+		
+		#for each d, calculate the utility of each failure mode individually
+		#need a weird new method for that
+		for di,d in enumerate(ds):
+			print(d,flush=True)
+			dvector = [d for j in range(self.dim_d)]
+			ys = [self.eta(theta, dvector) for theta in thetas]
+			uis_per_mode = [None]*n_mc
+			for i,y in enumerate(ys):
+				ui_per_mode = self.infocriterion_per_mode(dvector, y)
+				uis_per_mode[i] = ui_per_mode
+			U_per_mode = np.mean(uis_per_mode,axis=0)
+			#for j,Uj in enumerate(U_per_mode):
+			#	u_j_d[j][d] = Uj
+			
+			#slot all the utilities-per-mode into place
+			#and the cost cd*dj of each failure mode		
+			for j, (dname, cj) in enumerate(cj_defs.items()):
+				Uj = U_per_mode[j]
+				u_j_d[j][di] = Uj
+				cost_j_d[j][di] = cj*d
+				upc_j_d[j][di] = 0 if math.isnan(Uj / (cj*d)) else (Uj / (cj*d))
+			
+		#plot all of those in one d vs util/cost plot
+		upc_scores = []
+		fig, ax = plt.subplots(layout="constrained")
+		ax.set_xlabel("d")
+		ax.set_ylabel("utility per unit cost")
+		colors = plt.cm.gist_rainbow(np.linspace(0, 1, self.dim_d))
+		for j in range(self.dim_y):
+			upc_j = [upc_j_d[j][di] for di,d in enumerate(ds)]
+			ax.plot(ds, upc_j, color=colors[j], label=self.theta_names[j])
+			
+			upc_j_avg = np.mean(upc_j)
+			upc_scores.append(upc_j_avg)
+		fig.legend(loc='outside right')
+		plt.show()
+		
+		#Rank each experiment in terms of its d-averaged utility-per-cost
+		experiment_scores = [(score, self.theta_names[j]) for j,score in enumerate(upc_scores)]
+		sorted_exp_scores = reversed(sorted(experiment_scores))
+		for score, name in sorted_exp_scores:
+			print(name,'\t\t\t', f"{score:.5f}")
 
 #_dim_d, _dim_theta, _dim_y, _dim_x, _eta, _H, _G, _x_default, _priors)
 def make_rover_reliability_problem():

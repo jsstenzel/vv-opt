@@ -104,7 +104,7 @@ def nsga2_problem(prob, nGenerations=100, popSize=100, nMonteCarlo=10**5, nGMM=1
 	return pareto_costs, pareto_utilities, res.X
 """
 	
-def plot_nsga2(pareto_costs, pareto_utilities, design_pts, util_err=None, showPlot=False, savePlot=False, logPlotXY=[False,False]):
+def plot_nsga2(pareto_costs, pareto_utilities, design_pts, util_err=None, showPlot=False, savePlot=False, logPlotXY=[False,False], labelsXY=[]):
 	costs, utilities = zip(*sorted(zip(pareto_costs, pareto_utilities)))
 	
 	if not util_err:
@@ -112,8 +112,12 @@ def plot_nsga2(pareto_costs, pareto_utilities, design_pts, util_err=None, showPl
 	else:
 		plt.errorbar(costs, utilities, yerr=util_err, fmt='.', c='r', capsize=5)
 	plt.plot(costs, utilities, c='k', alpha=0.7)
-	plt.xlabel("total testbed time [s]")
-	plt.ylabel(r"Var $[p(Q|\mathbf{y})]$")
+	if not labelsXY:
+		plt.xlabel("total testbed time [s]")
+		plt.ylabel(r"Var $[p(Q|\mathbf{y})]$")
+	else:
+		plt.xlabel(labelsXY[0])
+		plt.ylabel(labelsXY[1])
 	
 	if logPlotXY[0]:
 		plt.xscale('log')
