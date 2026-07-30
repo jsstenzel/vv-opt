@@ -8,6 +8,7 @@ import copy
 from pyvis.network import Network
 import inspect
 import types
+import csv
 
 #sys.path.append('..')
 #from problems.problem_definition import *
@@ -182,7 +183,11 @@ class SystemDependencyGraph:
 			fn_args = inspect.signature(fn).parameters.keys() #ordered list of fn parameters
 			
 			defined_args = set(arg_edge_mapping_dict.keys())
-			defined_in_nodes = sorted(arg_edge_mapping_dict.values())
+			defined_inputs = sorted(arg_edge_mapping_dict.values())
+			
+			#split inputs into in_nodes and constants
+			defined_in_nodes = sorted(list(set(defined_inputs) - set(self.__const_val_dict.keys())))
+			#defined_in_constants = list(set(defined_inputs) - set(defined_in_nodes))
 			
 			#sanity check: don't duplicate things in the spec, why would you do that?
 			#if len(defined_args) != len(set(defined_args)):
@@ -190,23 +195,23 @@ class SystemDependencyGraph:
 			#if len(defined_in_nodes) != len(set(defined_in_nodes)):
 			#	print("Error: the specified in nodes",defined_in_nodes,"contain repeated node names")
 			
-			#sanity check: make sure defined arguments are valid
+			#sanity check: make sure that the specified arguments are among the function's arguments
 			if not defined_args.issubset(set(fn_args)):
 				print("Error: the specified arguments",defined_args,"includes arguments that aren't among the arguments",set(fn_args)," for",fn,"on node",node)
 				sys.exit()
 				
-			#sanity check: make sure all edges (and only the edges) connect to an argument
+			#sanity check: make sure the specified in-nodes exactly match the graph's in-nodes
 			in_nodes = sorted(self.get_inputs(node))
 			if not defined_in_nodes == in_nodes:
 				print("Error: the input nodes",defined_in_nodes,"specified for",fn,"on node",node,"disagree with the graph structure:",in_nodes)
 				sys.exit()
 				
-			#for all nodes, allow for special arguments that don't refer to a node
+			#handle special function arguments that don't refer to a node
 			for special_arg in self.__special_args:
 				if special_arg in fn_args:
 					#supply the current epoch
 					arg_edge_mapping_dict[special_arg] = special_arg
-			
+
 			for i,arg in enumerate(fn_args):
 				#enumerating through fn_args because those are guaranteed to be in correct order
 				#for each node, add date defining that argument i of its function corresponds to a particular incident node
@@ -218,6 +223,10 @@ class SystemDependencyGraph:
 	def set_initial_values(self, node_val_dict):
 		for node, init in node_val_dict.items():
 			self.__dg.nodes[node]["init"] = init
+			
+	def define_constants(self, const_val_dict):
+		#for const_name, const_val in const_val_dict.items():
+		self.__const_val_dict = const_val_dict
 
 	##############################################
 	###Execute the graph
@@ -247,7 +256,7 @@ class SystemDependencyGraph:
 			arguments = []
 						
 			for i,arg in enumerate(fn_arg_names):
-				#Handle special arguments manually here
+				#Handle all special arguments manually here
 				if arg == 't':
 					arguments.append(self.__dt*self.__steps) #supply the current epoch
 				elif arg == 'dt':
@@ -256,11 +265,14 @@ class SystemDependencyGraph:
 					arguments.append(self.__dg.nodes[node]["val_timeseries"][self.__steps]) #supply the value returned by this function at t-1
 				else:
 					incident_node_i = self.__dg.nodes[node]["arg"+str(i+1)+"_node"]
-					if incident_node_i in self.__dg.nodes[node].get("get_history",[]): #return [] if nothing is defined for get_history
+					if incident_node_i in self.__const_val_dict.keys():
+						#Handle case when a incident_node_i isn't a node at all, and a constant is expected: provide it from the dictionary
+						val_i = self.__const_val_dict[incident_node_i]
+					elif incident_node_i in self.__dg.nodes[node].get("get_history",[]): #return [] if nothing is defined for get_history
 						#Handle cases when you want history from a node
 						val_i = self.__dg.nodes[incident_node_i]["val_timeseries"][:self.__steps+1] #from 0:t
 					else:
-						#Handle default case
+						#Handle default case: send latest value from in_node to node's function
 						val_i = self.__dg.nodes[incident_node_i]["val_timeseries"][self.__steps] #at time t
 					arguments.append(val_i)
 					
@@ -283,6 +295,51 @@ class SystemDependencyGraph:
 			else:
 				values[i] = [node,value]
 		return time, values
+		
+	def run_simulation(self, run_time, startOver=True, doPrint=True, logfile=None, lograte=-1):
+		if startOver:
+			self.init_simulation()
+		if doPrint:
+			print("t=0")
+		data_init = self.get_node_vals(doPrint=doPrint)
+		if logfile:
+			logfile_name = logfile if logfile.endswith(".csv") else logfile+".csv"
+			file = open(logfile_name, 'w', newline='')#, encoding='utf-8')
+			writer = csv.writer(file)
+			header = ["t"] + [node_data[0] for node_data in data_init]
+			writer.writerow(header)   # Writes a single row (header)
+	
+		time = 0
+		values_timeseries = []
+		times=[]
+		i = 0
+		while time < run_time:
+			i += 1
+			time, values = self.simulation_step()
+			if doPrint:
+				print("t="+str(time))
+			times.append(time)
+			values_timeseries.append([value[1] for value in values])
+			if logfile and lograte>0 and i % lograte == 0:
+				row = [time] + [value[1] for value in values]
+				writer.writerow(row)
+		
+		if logfile and lograte == -1:
+			row = [time] + [value[1] for value in values]
+			writedata = [[time]+values for time,values in zip(times, values_timeseries)]
+			writer.writerows(writedata)
+		
+		if logfile:
+			file.close()
+			
+		#print final values:
+		if doPrint:
+			print("Final simulation values at t="+str(run_time)+":")
+			for item in values:
+				print(item)
+			
+		return times,values_timeseries,values
+			
 
 	##############################################
 	###Access the graph
