@@ -358,9 +358,9 @@ if __name__ == '__main__':
 	if args.run == "nominal":
 		vv_nominal(problem, req, theta_nominal, y_nominal)
 		
-	if args.run == "UP_jitter_from_BN":
+	if args.run == "UP_QoI_from_BN":
 		Qs, _ = bn_load_samples(problem, savefile="BN_40k_samples", doPrint=True, doDiagnostic=True)
-		uncertainty_prop_plot(Qs, xlab="QoI: Avg. Noise [e-]", vline=[req])
+		uncertainty_prop(Qs, xlab="QoI: Avg. Noise [e-]", vline=[req])
 
 		count_meetreq = 0
 		for Q in Qs:

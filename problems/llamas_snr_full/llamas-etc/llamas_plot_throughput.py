@@ -145,14 +145,15 @@ def plot_throughput(llamas_red, llamas_green, llamas_blue):
 if __name__ == '__main__':
    _dir = "./COATINGS/"
    os.environ["COATINGS_PATH"] =_dir
+   os.environ["TEST_DATA_PATH"] =_dir
 
    llamas_red = spec.Spectrograph('LLAMAS_RED')
    llamas_blue = spec.Spectrograph('LLAMAS_BLUE')
    llamas_green = spec.Spectrograph('LLAMAS_GREEN') 
 
-   llamas_red.build_model('llamas_red1.def')
-   llamas_blue.build_model('llamas_blue1.def')
-   llamas_green.build_model('llamas_green1.def')
+   llamas_red.build_model('llamas_red2.def')
+   llamas_blue.build_model('llamas_blue2.def')
+   llamas_green.build_model('llamas_green2.def')
    #llamas_waves = np.array(np.concatenate([llamas_blue.waves,llamas_green.waves,llamas_red.waves]))
    llamas_waves = llamas_red.waves
 
