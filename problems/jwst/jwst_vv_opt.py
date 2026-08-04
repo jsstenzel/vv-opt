@@ -334,6 +334,7 @@ if __name__ == '__main__':
 	theta_nominal = problem.theta_nominal
 	
 	d0s = [0 for _ in problem.d_names]
+	dmin = [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0]
 	d1s = [1 for _ in problem.d_names]
 	d2s = [2 for _ in problem.d_names]
 	d3s = [3 for _ in problem.d_names]
@@ -512,7 +513,7 @@ if __name__ == '__main__':
 			doMutation='RM'
 		)
 
-	elif args.run == "OPT_plot_2":
+	elif args.run == "OPT_plot":
 		pareto = [
 		[310000,6.63553,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0], #dmin, effectively
 		[320000,4.93846,0,0,0,0,0,0,1,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
@@ -551,9 +552,23 @@ if __name__ == '__main__':
 		]
 		costs = [p[0] for p in pareto]
 		utilities = [p[1] for p in pareto]
-		design_pts = [] #TODO add dmin d1 d2 and d3 to this, might as well
 		
-		plot_nsga2(costs, utilities, design_pts, util_err=0.009940891441229605, showPlot=True, savePlot=False, logPlotXY=[False,False])
+		design_pts = [
+			[problem.G(dmin)/1000000, 6.63553, "dmin", 0.009940891441229605]#,
+			#[problem.G(d1s), 2.744, "d1s", 0.009940891441229605],
+			#[problem.G(d2s), 2.832, "d2s", 0.009940891441229605],
+			#[problem.G(d3s), 2.647, "d3s", 0.009940891441229605],
+		]
+		
+		for p in pareto:
+			design = p[2:]
+			design_shift = np.array(design) - np.array([0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0])
+			dvars = [d for i,d in enumerate(problem.d_names) if design_shift[i]>0]
+			print(p[0], dvars)
+		
+		plot_nsga2(costs, utilities, design_pts, cost="M$", util_err=0.009940891441229605, showPlot=True, savePlot=False, logPlotXY=[True,False])
+		
+		print(problem.G(d3s))
 	
 	else:
 		print("I dont recognize the command",args.run)
