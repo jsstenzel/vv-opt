@@ -1,0 +1,167 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 800px;
+                 background-color: #FFFFFF;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+             #config {
+                 float: left;
+                 width: 400px;
+                 height: 600px;
+             }
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+            <div id="config"></div>
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"category": "EVENT", "color": "#FF6F61", "fn": null, "font": {"color": "black"}, "id": "environment:[dust contamination]", "init": 0, "label": "environment:[dust contamination]", "shape": "dot", "size": 10, "subsystem": "environment", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "radiator:(efficiency)", "init": 0, "label": "radiator:(efficiency)", "shape": "dot", "size": 10, "subsystem": "radiator", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "thermal interface:(resistance)", "init": 0, "label": "thermal interface:(resistance)", "shape": "dot", "size": 10, "subsystem": "thermal interface", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "WEB:(temperature)", "init": 0, "label": "WEB:(temperature)", "shape": "dot", "size": 10, "subsystem": "WEB", "val_timeseries": []}, {"category": "EVENT", "color": "#FF6F61", "fn": null, "font": {"color": "black"}, "id": "power bus:[transient]", "init": 0, "label": "power bus:[transient]", "shape": "dot", "size": 10, "subsystem": "power bus", "val_timeseries": []}, {"category": "EVENT", "color": "#FF6F61", "fn": null, "font": {"color": "black"}, "id": "power bus:[brownout]", "init": 0, "label": "power bus:[brownout]", "shape": "dot", "size": 10, "subsystem": "power bus", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "environment:(temperature)", "init": 0, "label": "environment:(temperature)", "shape": "dot", "size": 10, "subsystem": "environment", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "battery:(power draw)", "init": 0, "label": "battery:(power draw)", "shape": "dot", "size": 10, "subsystem": "battery", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "wheel:(torque)", "init": 0, "label": "wheel:(torque)", "shape": "dot", "size": 10, "subsystem": "wheel", "val_timeseries": []}, {"category": "EVENT", "color": "#FF6F61", "fn": null, "font": {"color": "black"}, "id": "wheel:[stall]", "init": 0, "label": "wheel:[stall]", "shape": "dot", "size": 10, "subsystem": "wheel", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "motor drive electronics:(stress)", "init": 0, "label": "motor drive electronics:(stress)", "shape": "dot", "size": 10, "subsystem": "motor drive electronics", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "system:(downtime)", "init": 0, "label": "system:(downtime)", "shape": "dot", "size": 10, "subsystem": "system", "val_timeseries": []}, {"category": "EVENT", "color": "#FF6F61", "fn": null, "font": {"color": "black"}, "id": "environment:[rock contact]", "init": 0, "label": "environment:[rock contact]", "shape": "dot", "size": 10, "subsystem": "environment", "val_timeseries": []}, {"category": "EVENT", "color": "#FF6F61", "fn": null, "font": {"color": "black"}, "id": "wheel:[snag]", "init": 0, "label": "wheel:[snag]", "shape": "dot", "size": 10, "subsystem": "wheel", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "wheel:(degradation)", "init": 0, "label": "wheel:(degradation)", "shape": "dot", "size": 10, "subsystem": "wheel", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "environment:(slope)", "init": 0, "label": "environment:(slope)", "shape": "dot", "size": 10, "subsystem": "environment", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "environment:(slip)", "init": 0, "label": "environment:(slip)", "shape": "dot", "size": 10, "subsystem": "environment", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "environment:(sinkage)", "init": 0, "label": "environment:(sinkage)", "shape": "dot", "size": 10, "subsystem": "environment", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "system:(traversal)", "init": 0, "label": "system:(traversal)", "shape": "dot", "size": 10, "subsystem": "system", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "system:(slope)", "init": 0, "label": "system:(slope)", "shape": "dot", "size": 10, "subsystem": "system", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "wheel:(slip)", "init": 0, "label": "wheel:(slip)", "shape": "dot", "size": 10, "subsystem": "wheel", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "system:(operational mode)", "init": 0, "label": "system:(operational mode)", "shape": "dot", "size": 10, "subsystem": "system", "val_timeseries": []}, {"category": "VAR", "color": "#ADD8E6", "fn": null, "font": {"color": "black"}, "id": "environment:(UTC time)", "init": 0, "label": "environment:(UTC time)", "shape": "dot", "size": 10, "subsystem": "environment", "val_timeseries": []}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "#808080", "from": "environment:[dust contamination]", "to": "radiator:(efficiency)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "environment:[dust contamination]", "to": "thermal interface:(resistance)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "radiator:(efficiency)", "to": "WEB:(temperature)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "WEB:(temperature)", "to": "thermal interface:(resistance)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "WEB:(temperature)", "to": "power bus:[transient]", "width": 1}, {"arrows": "to", "color": "#808080", "from": "WEB:(temperature)", "to": "power bus:[brownout]", "width": 1}, {"arrows": "to", "color": "#808080", "from": "thermal interface:(resistance)", "to": "WEB:(temperature)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "environment:(temperature)", "to": "WEB:(temperature)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "environment:(temperature)", "to": "environment:[dust contamination]", "width": 1}, {"arrows": "to", "color": "#808080", "from": "battery:(power draw)", "to": "WEB:(temperature)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "battery:(power draw)", "to": "power bus:[brownout]", "width": 1}, {"arrows": "to", "color": "#808080", "from": "wheel:(torque)", "to": "wheel:[stall]", "width": 1}, {"arrows": "to", "color": "#808080", "from": "wheel:(torque)", "to": "motor drive electronics:(stress)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "wheel:(torque)", "to": "power bus:[transient]", "width": 1}, {"arrows": "to", "color": "#808080", "from": "wheel:[stall]", "to": "system:(downtime)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "motor drive electronics:(stress)", "to": "wheel:[stall]", "width": 1}, {"arrows": "to", "color": "#808080", "from": "environment:[rock contact]", "to": "wheel:[snag]", "width": 1}, {"arrows": "to", "color": "#808080", "from": "environment:[rock contact]", "to": "wheel:(torque)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "environment:[rock contact]", "to": "wheel:(degradation)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "wheel:[snag]", "to": "wheel:(torque)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "wheel:[snag]", "to": "wheel:(degradation)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "wheel:[snag]", "to": "environment:[dust contamination]", "width": 1}, {"arrows": "to", "color": "#808080", "from": "environment:(slope)", "to": "wheel:(torque)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "environment:(slope)", "to": "environment:(slip)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "environment:(slip)", "to": "wheel:(torque)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "environment:(sinkage)", "to": "wheel:(torque)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "wheel:(degradation)", "to": "wheel:(torque)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "system:(traversal)", "to": "wheel:(degradation)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "system:(traversal)", "to": "environment:(slip)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "system:(traversal)", "to": "environment:(slope)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "system:(traversal)", "to": "environment:(sinkage)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "system:(slope)", "to": "environment:(sinkage)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "wheel:(slip)", "to": "environment:(sinkage)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "power bus:[transient]", "to": "system:(downtime)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "power bus:[brownout]", "to": "system:(downtime)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "system:(operational mode)", "to": "battery:(power draw)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "system:(operational mode)", "to": "system:(traversal)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "system:(downtime)", "to": "system:(traversal)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "environment:(UTC time)", "to": "system:(operational mode)", "width": 1}, {"arrows": "to", "color": "#808080", "from": "environment:(UTC time)", "to": "environment:(temperature)", "width": 1}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "physics"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": false
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+                  // if this network requires displaying the configure window,
+                  // put it in its div
+                  options.configure["container"] = document.getElementById("config");
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

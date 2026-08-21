@@ -41,7 +41,7 @@ def env_slope_sinemodel(t):
 	#Could be modeled with a gaussian process?
 	#I'll just model with a sine wave
 	#parameters
-	max_slope_angle = 10 #degrees
+	max_slope_angle = 15 #degrees
 	period = 10 #hours
 	
 	max_slope = np.tan(np.radians(max_slope_angle))
@@ -258,3 +258,13 @@ def ti_resistance_simulator(temp_hist, contaminants, prev_val, coeff_thermal_cyc
 	#degrade based on contamination events that just happened
 	ti_resistance *= (1 - coeff_contamination * contaminants)
 	return ti_resistance #units of K/W
+	
+def solar_radiation_simulator(t, UTC_time):
+	#determine day/night
+	
+	#determine solar angle
+	
+	#determine shadow / bounceback every once in a while
+	
+	#return solar_radiation [W] (?)
+	return 0

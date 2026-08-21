@@ -405,9 +405,12 @@ class SystemDependencyGraph:
 		print(f"NODES")
 		for node in self.__dg.nodes(data=False):
 			print(node) 
-		print(f"EDGES")
-		for edge in self.__dg.edges:
-			print(edge[0],"->", edge[1]) 
+		#print(f"EDGES")
+		#for edge in self.__dg.edges:
+		#	print(edge[0],"->", edge[1]) 
+		print(f"DEPENDENCIES")
+		for node in self.__dg.nodes(data=False):
+			self.get_inputs(node, doPrint=True)
 			
 	def print_subsystems(self):
 		#print(self.__dg.nodes(data=True))
