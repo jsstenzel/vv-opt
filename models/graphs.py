@@ -43,73 +43,19 @@ def __init__(self):
 			print(f"{node} -> {connections}")
 """
 
-class DependencyGraph:
-	def __init__(self):
-		self.dg = nx.DiGraph() #private
-		#self.allowable_categories = ["EVENT","VAR"]
-	
-	def add_node(self, node):
-		self.dg.add_node(node, category=_category, subsystem=_subsystem)
-
-	def add_dir_edge(self, u, v):
-		self.dg.add_edge(u,v)
-		
-	def add_nodes_inputs(self, node, input_list):
-		for in_node in input_list:
-			self.add_dir_edge(in_node, node)
-
-	def get_inputs(self, node):
-		print("Inputs to",node,":",list(self.dg.predecessors(node)))
-		return self.dg.predecessors(node)
-		
-	def get_dependencies(self, node):
-		print("Dependencies of",node,":",list(self.dg.successors(node)))
-		return self.dg.successors(node)
-
-	def printout(self):
-		print(f"NODES")
-		for node in self.dg.nodes(data=False):
-			print(node) 
-		print(f"EDGES")
-		for edge in self.dg.edges:
-			print(edge[0],"->", edge[1]) 
-			
-	def print_subsystems(self):
-		#print(self.dg.nodes(data=True))
-		each_subsystem = [node_data["subsystem"] for node,node_data in self.dg.nodes(data=True)]
-		print(list(set(each_subsystem)))
-		
-	def display(self, layout_type):		
-		#set node colors and shapes
-		node_list = []
-		for node, node_data in self.dg.nodes(data=True):
-			node_list.append(node)
-		
-		#draw
-		if layout_type == "circle":
-			pos = nx.circular_layout(self.dg)
-		if layout_type == "spring":
-			pos = nx.spring_layout(self.dg)
-		nx.draw_networkx_nodes(self.dg, pos,
-			nodelist=node_list,
-			node_color="lightblue"
-			)
-		nx.draw_networkx_edges(self.dg, pos, edge_color="gray", arrowsize=10)
-		nx.draw_networkx_labels(self.dg, pos, font_size=5)
-		plt.show()
-
-
 class SystemDependencyGraph:
 	##############################################
 	###Define the graph structure
 	##############################################
-	def __init__(self, node_input_dict, timestep=1):
+	def __init__(self, node_input_dict=None, timestep=1):
 		self.__dg = nx.DiGraph() #private
 		self.__dt = timestep
 		self.__steps = -1
 		self.__special_args = ['t','dt','prev_val']
-		for node, input_list in node_input_dict.items():
-			self.__add_nodes_inputs(node, input_list)
+		self.category_color_dict = {'VAR':'#ADD8E6',"EVENT":'#FF6F61'}
+		if node_input_dict:
+			for node, input_list in node_input_dict.items():
+				self.__add_nodes_inputs(node, input_list)
 	
 	def __add_node(self, node):
 		#parse category
@@ -144,6 +90,29 @@ class SystemDependencyGraph:
 	def __add_nodes_inputs(self, node, input_list):
 		for in_node in input_list:
 			self.__add_dir_edge(in_node, node)
+			
+	def add(self, first_node, rel=None, second_nodes=None):
+		if not rel and not second_nodes:
+			self.__add_node(first_node)
+		elif rel not in ["->","<-","<->"]:
+			print("Error: don't recognize node relationship type",rel)
+			sys.exit()
+		else:			
+			self.__add_node(first_node)
+			if isinstance(second_nodes, list):
+				for second_node in second_nodes:
+					self.__add_node(second_node)
+					if rel == "->" or rel == "<->":
+						self.__dg.add_edge(first_node, second_node)
+					if rel == "<-" or rel == "<->":
+						self.__dg.add_edge(second_node, first_node)
+			else:
+				self.__add_node(second_nodes)
+				if rel == "->" or rel == "<->":
+					self.__dg.add_edge(first_node, second_nodes)
+				if rel == "<-" or rel == "<->":
+					self.__dg.add_edge(second_nodes, first_node)
+			
 			
 	##############################################
 	###Define the graph content
@@ -217,8 +186,16 @@ class SystemDependencyGraph:
 				#for each node, add date defining that argument i of its function corresponds to a particular incident node
 				self.__dg.nodes[node]["arg"+str(i+1)+"_node"] = arg_edge_mapping_dict[arg]
 		else:
-			print("Error: node",node,"not recognized")
+			print("Error: node",node,"not recognized, can't categorize")
 			sys.exit()
+			
+	def categorize_nodes(self, node_category_dict):
+		for node, category in node_category_dict.items():
+			if node in self.__dg:
+				self.__dg.nodes[node]["category"] = category
+			else:
+				print("Warning: node",node,"doesn't exist.")
+				continue
 			
 	def set_initial_values(self, node_val_dict):
 		for node, init in node_val_dict.items():
@@ -417,13 +394,16 @@ class SystemDependencyGraph:
 		each_subsystem = [node_data["subsystem"] for node,node_data in self.__dg.nodes(data=True)]
 		print(list(set(each_subsystem)))
 		
+	def set_category_colors(self, category_color_dict):
+		self.category_color_dict = category_color_dict
+		
 	def display_simple(self, bipartite_nodes=None):		
 		#set node colors and shapes
 		node_color = []
 		node_shape = []
 		node_list = []
 		for node, node_data in self.__dg.nodes(data=True):
-			color = '#ADD8E6' if node_data["category"]=="VAR" else '#FF6F61'
+			color = self.category_color_dict.get(node_data["category"], '#FFFFFF')
 			#shape = "o" if node_data["category"]=="VAR" else "s"
 			node_list.append(node)
 			node_color.append(color)
@@ -471,7 +451,7 @@ class SystemDependencyGraph:
 		node_shape = []
 		node_list = []
 		for node, node_data in draw_dg.nodes(data=True):
-			color = '#ADD8E6' if node_data["category"]=="VAR" else '#FF6F61'
+			color = self.category_color_dict.get(node_data["category"], '#FFFFFF')
 			shape = "o" if node_data["category"]=="VAR" else "s"
 			node_list.append(node)
 			node_color.append(color)
@@ -518,7 +498,7 @@ class SystemDependencyGraph:
 		
 		for node,node_data in draw_dg.nodes(data=True):
 			#node_data['title'] = f"Hover info for Node {node}"
-			node_data['color'] = '#ADD8E6' if node_data["category"]=="VAR" else '#FF6F61'
+			node_data['color'] = self.category_color_dict.get(node_data["category"], '#FFFFFF')
 		
 		net.from_nx(draw_dg)
 		for edge in net.get_edges():
