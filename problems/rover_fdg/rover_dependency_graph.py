@@ -13,150 +13,138 @@ from models.graphs import *
 from problems.rover_fdg.rover_dg_simulators import *
 
 
-def full_problem():
-	#process:
-	#- identify the events/parameters in each failure mode
-	#- then in each cause/driver
-	#- then in each observable symptom & local effect
 
-	#note:
-	#- all variables have a time-dependence in general; think of them all as time series
-	#- in addition to this interdependence, discrete events can also have an intrinsic constant or time-varying failure rate
-
-	DG_rover_init = {
-	#POWER INVERTER FAULT
-	"power inverter:[overtemp fault]" : ["system:(current)", "system:(duty cycle)", "WEB:(temperature)"],
-	#POWER ELECTRONICS SWITCHING DEVICE FAULT
-	"power electronics switching device:[open]" : ["WEB:(temperature)", "system:(current)", "system:[electrical transient]", "environment:(radiation)"],
-	"power electronics switching device:[short]" : ["WEB:(temperature)", "system:(current)", "system:[electrical transient]", "environment:(radiation)"],
-	"power electronics switching device:(degradation)" : ["WEB:(temperature)", "system:(current)", "system:[electrical transient]", "environment:(radiation)"],
-	#CURRENT SENSING PATH FAULT
-	"current sensing path:[open]" : ["WEB:(temperature)"],
-	"current sensing path:(bias)" : ["ADC:(drift)", "WEB:(temperature)"],
-	"current sensing path:(drift)" : ["ADC:(drift)", "WEB:(temperature)"],
-	"current sensing path:(saturation)" : ["ADC:(drift)", "WEB:(temperature)"],
-	#HALL SENSOR FAULT
-	"hall sensor:[invalid signal fault]" : ["WEB:(temperature)", "environment:(radiation)"],
-	#FPGA FAULT
-	"motor controller/FPGA:[timing fault]" : ["wheel:(load)"],
-	"motor controller/FPGA:(saturation)" : ["wheel:(load)"],
-	#MOTOR WINDING FAULT
-	"motor winding:[open]" : ["WEB:(temperature)", "system:[mechanical shock]", "environment:[dust contamination]", "motor winding:(resistance)"],
-	"motor winding:[short]" : ["WEB:(temperature)", "system:[mechanical shock]", "environment:[dust contamination]", "motor winding:(resistance)"],
-	"motor winding:(resistance)" : ["WEB:(temperature)", "system:[mechanical shock]", "environment:[dust contamination]"],
-	#DRIVER MOTOR HARNESS FAULT
-	"driver-motor harness:[open]" : ["driver-motor harness:(flexure)", "WEB:(temperature)", "system:(vibration)", "environment:[dust contamination]", "driver-motor harness:(resistance)"],
-	"driver-motor harness:[short]" : ["driver-motor harness:(flexure)", "WEB:(temperature)", "system:(vibration)", "environment:[dust contamination]", "driver-motor harness:(resistance)"],
-	"driver-motor harness:(resistance)" : ["driver-motor harness:(flexure)", "WEB:(temperature)", "system:(vibration)", "environment:[dust contamination]"],
-	#THERMAL HARNESS FAULT
-	"thermal interface:(resistance)" : ["WEB:(temperature)", "environment:[dust contamination]"],
-	"WEB:(temperature)" : ["thermal interface:(resistance)", "environment:(temperature)"],
-	#WHEEL FAULT
-	"wheel:[stall]" : ["wheel:(load)", "environment:[rock contact]", "wheel:[snag]"],
-	"wheel:(load)" : ["environment:(slope)", "environment:(sinkage)"],
-	#POWER BUS FAULT
-	"power bus:[transient]" : ["wheel:(load)", "WEB:(temperature)", "battery:(power draw)"],
-	"power bus:[brownout]" : ["wheel:(load)", "WEB:(temperature)", "battery:(power draw)"],
-	#ALSO THINK ABOUT THE ENVIRONMENT:
-	#NOW THINK ABOUT WHAT GETS SENSED:
-	}
-	
-	DG_rover = SystemDependencyGraph(DG_rover_init)
-
-	#testing
-	#DG_rover.printout()
-	#DG_rover.display_simple()
-	#DG_rover.display("spring")
-	DG_rover.display_interactive()
-
-"""
-def simplified_problem():
-	DG_rover = SystemDependencyGraph()
-
-	DG_rover.add_nodes_inputs("power inverter:[fault]", #discrete event
-		["system:(current)", "system:(duty cycle)", "WEB:(temperature)"])
-
-	#POWER ELECTRONICS SWITCHING DEVICE FAULT
-	DG_rover.add_nodes_inputs("power electronics switching device:[fault]", #discrete event
-		["WEB:(temperature)", "system:(current)", "system:[electrical transient]", "environment:(radiation)"])
-
-	#CURRENT SENSING PATH FAULT
-	DG_rover.add_nodes_inputs("current sensing path:[fault]", #continuous variable
-		["ADC:(drift)", "WEB:(temperature)"])
-
-	#HALL SENSOR FAULT
-	DG_rover.add_nodes_inputs("hall sensor:[fault]", #discrete event
-		["WEB:(temperature)", "environment:(radiation)"])
-
-	#FPGA FAULT
-	DG_rover.add_nodes_inputs("motor controller/FPGA:[fault]", #discrete event
-		["wheel:(load)"])
-
-	#MOTOR WINDING FAULT
-	DG_rover.add_nodes_inputs("motor winding:[fault]", #discrete event
-		["WEB:(temperature)", "system:[mechanical shock]", "environment:[dust contamination]", "motor winding:(resistance)"])
-
-	#DRIVER MOTOR HARNESS FAULT
-	DG_rover.add_nodes_inputs("driver-motor harness:[fault]", #discrete event
-		["WEB:(temperature)", "system:(vibration)", "environment:[dust contamination]"])
-
-	#THERMAL HARNESS FAULT
-	DG_rover.add_nodes_inputs("thermal interface:(resistance)", #continuous variable
-		["WEB:(temperature)", "environment:[dust contamination]"])
-		
-	DG_rover.add_nodes_inputs("WEB:(temperature)", #continuous variable
-		["thermal interface:(resistance)", "environment:(temperature)"])
-
-	#WHEEL FAULT
-	DG_rover.add_nodes_inputs("wheel:[fault]", #discrete event
-		["environment:[rock contact]", "wheel:[snag]", "environment:(slope)", "environment:(sinkage)"])
-
-	#POWER BUS FAULT
-	DG_rover.add_nodes_inputs("power bus:[fault]", #discrete event
-		["wheel:(load)", "WEB:(temperature)", "battery:(power draw)"])
-
-	#testing
-	DG_rover.printout()
-	DG_rover.display_simple()
-	DG_rover.display()
-	"""
-
-def subproblem():
+def extended_problem():
 	###Define graph structure
 	DG_rover_init = {
+		#MISSION
+		"mission:(downtime)" : ["control:(fault recovery)"],
+		"mission:(distance traversed)": ["mission:(productive traversal)", "mission:(unproductive traversal)"], #simple addition
+		"mission:(productive traversal)" : ["control:(operational mode)", "control:(drive speed)", "mission:(unproductive traversal remaining)"], #drive at speed if in drive mode
+		#FAULTS
+		"mission:(unproductive traversal remaining)" : ["control:[avoid obstacle]", "software:[nav error]"],
+		"power bus:[transient]" : ["wheel:(torque)", "WEB:(temperature)"], #discrete event
+		"power bus:[brownout]" : ["WEB:(temperature)", "battery:(power draw)"], #discrete event
+		"actuator:[stall]" : ["wheel:(torque)", "motor drive electronics:(stress)"], #discrete event, when torque hits a limit
+		"actuator:[loss]" : ["wheel:(torque)", "environment:[dust contamination]"],
+		"wheel:[snag]" : ["environment:[rock contact]"],
+		"motor drive electronics:[fault]" : ["motor drive electronics:(stress)"],
+		#FDIR??
+		"fdir:[transient detected]" : ["power bus:[transient]"],
+		"fdir:[brownout detected]" : ["power bus:[brownout]"],
+		"fdir:[stall detected]" : ["actuator:[stall]"],
+		"fdir:[actuator loss detected]" : ["actuator:[loss]"],
+		"fdir:[mde fault detected]" : ["motor drive electronics:[fault]"],
+		"control:(fault recovery)" : ["fdir:[transient detected]", "fdir:[brownout detected]", "fdir:[stall detected]", "fdir:[actuator loss detected]", "fdir:[mde fault detected]"],
+		#SYSTEM & CONOPS
+		"system:(pose)" : ["mission:(productive traversal)", "mission:(unproductive traversal)"],
+		"control:(operational mode)" : ["environment:(UTC time)", "control:(fault recovery)"], #if we're accumulating downtime, then we have to be in safe mode
+		"control:(drive speed)" : ["actuator:[loss]", "fdir:[actuator loss detected]"], #with each actuator down, we have to go slower
+		"control:[avoid obstacle]" : ["environment:[obstacle]"],
+		#ENVIRONMENTAL INTERACTION
+		"environment:[dust contamination]" : ["environment:(temperature)", "environment:(slip ratio)"],
+		"environment:(temperature)" : ["environment:(UTC time)"],
+		"environment:(slip ratio)" : ["system:(pose)", "environment:(slope)", "environment:(sinkage)"],
+		"environment:(slope)" : ["system:(pose)"],
+		"environment:(sinkage)" : ["system:(pose)", "environment:(slope)"],
 		#THERMAL
 		"radiator:(efficiency)" :["environment:[dust contamination]"], #continuous variable
 		"thermal interface:(resistance)" :["WEB:(temperature)", "environment:[dust contamination]"], #continuous variable
 		"WEB:(temperature)" : ["thermal interface:(resistance)", "environment:(temperature)", "battery:(power draw)", "radiator:(efficiency)"], #continuous variable
 		#MOBILITY
-		"wheel:[stall]" : ["wheel:(torque)", "motor drive electronics:(stress)"], #discrete event, when torque hits a limit
-		"wheel:[snag]" : ["environment:[rock contact]"],
-		"wheel:(torque)" : ["environment:(slope)", "environment:(slip)", "environment:(sinkage)", "environment:[rock contact]", "wheel:[snag]", "wheel:(degradation)"], #continuous variable
-		"wheel:(degradation)" : ["system:(traversal)", "environment:[rock contact]", "wheel:[snag]"],
-		"environment:(slip)" : ["system:(traversal)", "environment:(slope)", "environment:(sinkage)"],
-		"environment:(slope)" : ["system:(traversal)"],
-		"environment:(sinkage)" : ["system:(traversal)", "environment:(slope)"],
+		"wheel:(torque)" : ["environment:(slope)", "environment:(slip ratio)", "environment:(sinkage)", "environment:[rock contact]", "wheel:[snag]", "wheel:(degradation)", "control:(drive speed)", "actuator:[loss]"], #continuous variable
+		"wheel:(degradation)" : ["mission:(distance traversed)", "environment:[rock contact]", "wheel:[snag]"],
 		"motor drive electronics:(stress)" : ["wheel:(torque)"],
-		#"steer actuator:[failure]" : ["wheel:(torque)", "environment:[dust contamination]"],
-		#"drive actuator:[failure]" : ["wheel:(torque)", "environment:[dust contamination]"],
-		#"hall sensor:()"
 		#POWER
-		"power bus:[transient]" : ["wheel:(torque)", "WEB:(temperature)"], #discrete event
-		"power bus:[brownout]" : ["WEB:(temperature)", "battery:(power draw)"], #discrete event
-		"battery:(power draw)" : ["system:(operational mode)"],
-		#system and environment
-		"system:(traversal)": ["system:(downtime)", "system:(operational mode)"],# "steer actuator:[failure]", "drive actuator:[failure]"],
-		"system:(operational mode)" : ["environment:(UTC time)"],
-		"environment:[dust contamination]" : ["environment:(temperature)", "wheel:[snag]"],
-		"environment:(temperature)" : ["environment:(UTC time)"],
-		#fault detection and recovery
-		"system:(downtime)" : ["power bus:[transient]", "power bus:[brownout]", "wheel:[stall]"],# "drive actuator:[failure]", "steer actuator:[failure]"]
+		"battery:(power draw)" : ["control:(operational mode)"],
 	}
+	"""
+		#POWER INVERTER FAULT
+		"power inverter:[overtemp fault]" : ["system:(current)", "system:(duty cycle)", "WEB:(temperature)"],
+		#POWER ELECTRONICS SWITCHING DEVICE FAULT
+		"power electronics switching device:[open]" : ["WEB:(temperature)", "system:(current)", "system:[electrical transient]", "environment:(radiation)"],
+		"power electronics switching device:[short]" : ["WEB:(temperature)", "system:(current)", "system:[electrical transient]", "environment:(radiation)"],
+		"power electronics switching device:(degradation)" : ["WEB:(temperature)", "system:(current)", "system:[electrical transient]", "environment:(radiation)"],
+		#CURRENT SENSING PATH FAULT
+		"current sensing path:[open]" : ["WEB:(temperature)"],
+		"current sensing path:(bias)" : ["ADC:(drift)", "WEB:(temperature)"],
+		"current sensing path:(drift)" : ["ADC:(drift)", "WEB:(temperature)"],
+		"current sensing path:(saturation)" : ["ADC:(drift)", "WEB:(temperature)"],
+		#HALL SENSOR FAULT
+		"hall sensor:[invalid signal fault]" : ["WEB:(temperature)", "environment:(radiation)"],
+		#FPGA FAULT
+		"motor controller/FPGA:[timing fault]" : ["wheel:(load)"],
+		"motor controller/FPGA:(saturation)" : ["wheel:(load)"],
+		#MOTOR WINDING FAULT
+		"motor winding:[open]" : ["WEB:(temperature)", "system:[mechanical shock]", "environment:[dust contamination]", "motor winding:(resistance)"],
+		"motor winding:[short]" : ["WEB:(temperature)", "system:[mechanical shock]", "environment:[dust contamination]", "motor winding:(resistance)"],
+		"motor winding:(resistance)" : ["WEB:(temperature)", "system:[mechanical shock]", "environment:[dust contamination]"],
+		#DRIVER MOTOR HARNESS FAULT
+		"driver-motor harness:[open]" : ["driver-motor harness:(flexure)", "WEB:(temperature)", "system:(vibration)", "environment:[dust contamination]", "driver-motor harness:(resistance)"],
+		"driver-motor harness:[short]" : ["driver-motor harness:(flexure)", "WEB:(temperature)", "system:(vibration)", "environment:[dust contamination]", "driver-motor harness:(resistance)"],
+		"driver-motor harness:(resistance)" : ["driver-motor harness:(flexure)", "WEB:(temperature)", "system:(vibration)", "environment:[dust contamination]"],
+		"""
 	DG_rover = SystemDependencyGraph(DG_rover_init, timestep=0.1)
 	DG_rover.printout()
+	
+	###Set categories and display
+	DG_rover_categorization = {
+		"control:(fault recovery)" : "CONTROL",
+		"mission:(downtime)" : "MISSION",
+		"mission:(productive traversal)" : "MISSION",
+		"mission:(distance traversed)" : "MISSION",
+		"mission:(unproductive traversal)" : "MISSION",
+		"control:(operational mode)" : "CONTROL",
+		"control:(drive speed)" : "CONTROL",
+		"mission:(unproductive traversal)" : "MISSION",
+		"control:[avoid obstacle]" : "CONTROL",
+		"wheel:(torque)" : "SYSTEM",
+		"power bus:[transient]" : "FAULT",
+		"WEB:(temperature)" : "SYSTEM",
+		"power bus:[brownout]" : "FAULT",
+		"battery:(power draw)" : "SYSTEM",
+		"actuator:[stall]" : "FAULT",
+		"motor drive electronics:(stress)" : "SYSTEM",
+		"actuator:[loss]" : "FAULT",
+		"environment:[dust contamination]" : "ENVIRONMENT",
+		"environment:[rock contact]" : "ENVIRONMENT",
+		"wheel:[snag]" : "FAULT",
+		"motor drive electronics:[fault]" : "FAULT",
+		"fdir:[transient detected]" : "OBSERVATION",
+		"fdir:[brownout detected]" : "OBSERVATION",
+		"fdir:[stall detected]" : "OBSERVATION",
+		"fdir:[actuator loss detected]" : "OBSERVATION",
+		"fdir:[mde fault detected]" : "OBSERVATION",
+		"system:(pose)" : "MISSION",
+		"environment:(UTC time)" : "ENVIRONMENT",
+		"environment:[obstacle]" : "FAULT",
+		"environment:(temperature)" : "ENVIRONMENT",
+		"environment:(slip ratio)" : "ENVIRONMENT",
+		"environment:(slope)" : "ENVIRONMENT",
+		"environment:(sinkage)" : "ENVIRONMENT",
+		"radiator:(efficiency)" : "SYSTEM",
+		"thermal interface:(resistance)" : "SYSTEM",
+		"wheel:(degradation)" : "SYSTEM",
+	}
+	DG_rover.categorize_nodes(DG_rover_categorization)
+	
+	category_colors = {
+		"FAULT":"red",
+		"MISSION":"black",
+		"ENVIRONMENT":"green",
+		"SYSTEM":"orange",
+		"OBSERVATION":"blue",
+		"CONTROL":"purple",
+	}
+	DG_rover.set_category_colors(category_colors)
+	
 	DG_rover.display_interactive()
 	
-	###Set initial conditions
+	
+def restricted_problem():
+	#TODO
+	
+		###Set initial conditions
 	DG_rover.set_initial_values({
 		"environment:(temperature)" : 0,
 		"thermal interface:(resistance)" : 20000,
@@ -274,32 +262,9 @@ def subproblem():
 		"excess_temp_dependence" : "CONST_brownout_excesstemp_dependence", 
 		"load_dependence" : "CONST_brownout_load_dependence"
 	})
-
-	#testing
-	#DG_rover.display_interactive()
 	
 	DG_rover.get_specifications()
-	#DG_rover.printout()
 	
-	"""
-	print("t=0")
-	DG_rover.init_simulation()
-	DG_rover.get_node_vals(doPrint=True)
-	
-	#run for X time
-	run_time = 72 #hours
-	time = 0
-	values_timeseries = []
-	times=[]
-	while time < run_time:
-		time, values = DG_rover.simulation_step()
-		print("t="+str(time))
-		times.append(time)
-		values_timeseries.append([value[1] for value in values])
-	
-	for item in values:
-		print(item)
-	"""
 	times,values_timeseries,last_values = DG_rover.run_simulation(10, startOver=True, doPrint=True, logfile="rover_data")
 		
 	node_value_t = np.array(values_timeseries).T.tolist()
@@ -316,7 +281,6 @@ def subproblem():
 	plt.xlabel('t [hours]')
 	plt.tight_layout()  # Prevents overlapping labels and titles
 	plt.show()
-	
 
 	
 if __name__ == '__main__':  
@@ -327,14 +291,11 @@ if __name__ == '__main__':
 	#parser.add_argument('-v', type=float, default=0, help='Function value input')
 	args = parser.parse_args()
 	
-	if args.run == "full_problem":
-		full_problem()
+	if args.run == "extended_problem":
+		extended_problem()
 		
-	if args.run == "simplified_problem":
+	if args.run == "restricted_problem":
 		simplified_problem()
-		
-	if args.run == "subproblem":
-		subproblem()
 		
 	if args.run == 'debug':
 		debug()
