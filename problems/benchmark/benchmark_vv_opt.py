@@ -202,7 +202,7 @@ if __name__ == '__main__':
 	parser.add_argument('--filename', metavar='string', default="SA_QoI", help='Base name to five to SA_QoI_sample')
 	args = parser.parse_args()
 
-	case="T1"
+	case="T1meet"
 	problem = make_1D_benchmark_problem(case)
 
 	###Uncertainty Quantification
@@ -305,6 +305,26 @@ if __name__ == '__main__':
 			ax.plot_surface(ellipsoid[:,:,0], ellipsoid[:,:,1], ellipsoid[:,:,2], 
                 color=color, alpha=0.5, linewidth=0.5) #, edgecolor='white'
 			
+		plt.show()
+		
+	elif args.run == "BN_special_plots":
+		ds = [0, 0.2, 0.4,0.6, 1]
+		
+		theta_sample = problem.prior_rvs(args.n)
+		qs = [problem.H(theta) for theta in theta_sample]
+		fig, axs = plt.subplots(1, len(ds), sharey=True, figsize=(10, 4))
+		
+		for i,d in enumerate(ds):
+			#get scatter data
+			ys = [problem.eta(theta, [d]) for theta in theta_sample]
+			
+			#plot
+			axs[i].scatter(qs, ys, c='black', alpha=0.1, s=10)
+			axs[i].set_xlabel("Q")
+			axs[i].set_title("d="+str(d))
+		
+		axs[0].set_ylabel("y")
+		plt.tight_layout()
 		plt.show()
 		
 	elif args.run == "BN_find_ncomp":
