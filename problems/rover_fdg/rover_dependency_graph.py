@@ -20,7 +20,7 @@ def extended_problem():
 	
 	###MISSION: identify quantities of interest
 	DG_rover.add("mission:(downtime)")
-	DG_rover.add("mission:(productive traversal)",'<-',["control:(operational mode)", "control:(average drive speed)"]) #drive at speed if in drive mode
+	DG_rover.add("mission:(productive traversal)",'<-',["control:(operational mode)", "vehicle:(average drive speed)"]) #drive at speed if in drive mode
 	
 	###FAULTS: think about the failure modes that could affect QoI
 	
@@ -48,6 +48,8 @@ def extended_problem():
 	DG_rover.add("thermal interface:(resistance)",'->',"WEB:(temperature)")
 	DG_rover.add("WEB:(temperature)","->","control:(operational mode)")
 	
+	#could add wheel degradation here
+	
 	###FDIR: think about how observing, recovering, and mitigating those faults can introduce additional effects
 	
 	#detection&mitigation of actuator loss involves changing traversal pattern, partially resolving loss of speed but increasing wear on remaining actuators
@@ -64,7 +66,7 @@ def extended_problem():
 	###SYSTEM & CONOPS
 	
 	#pose is determined nominally by # productive traversal, but detours change that
-	DG_rover.add("system:(pose)","<-",["mission:(productive traversal)", "mission:(unproductive traversal remaining)"])
+	DG_rover.add("vehicle:(pose)","<-",["mission:(productive traversal)", "mission:(unproductive traversal remaining)"])
 	
 	#sleep mode at night, safe mode if we're incurring downtime
 	DG_rover.add("control:(operational mode)","<-",["environment:(UTC time)", "mission:(downtime)"])
@@ -80,9 +82,9 @@ def extended_problem():
 	DG_rover.add("environment:(temperature)","<-",["environment:(UTC time)"])
 	
 	#slip is a property of soil at a given location, partially determined by the slope and sinkage at that location
-	DG_rover.add("environment:(slip ratio)","<-",["system:(pose)", "environment:(slope)", "environment:(sinkage)"])
-	DG_rover.add("environment:(slope)","<-",["system:(pose)"])
-	DG_rover.add("environment:(sinkage)","<-",["system:(pose)", "environment:(slope)"])
+	DG_rover.add("environment:(slip ratio)","<-",["vehicle:(pose)", "environment:(slope)", "environment:(sinkage)"])
+	DG_rover.add("environment:(slope)","<-",["vehicle:(pose)"])
+	DG_rover.add("environment:(sinkage)","<-",["vehicle:(pose)", "environment:(slope)"])
 	
 	#obstacles may include large rocks, areas of unfavorable terrain
 	DG_rover.add("control:[avoid obstacle]","<-",["environment:[obstacle]"])
@@ -122,8 +124,8 @@ def extended_problem():
 	
 	###SOFTWARE
 	
-	DG_rover.add("software:(estimated pose)","<-","system:(pose)")
-	DG_rover.add("software:[nav error]",'<-',["software:(estimated pose)", "system:(pose)"])
+	DG_rover.add("software:(estimated pose)","<-","vehicle:(pose)")
+	DG_rover.add("software:[nav error]",'<-',["software:(estimated pose)", "vehicle:(pose)"])
 	
 	"""
 		#POWER INVERTER FAULT
@@ -179,7 +181,7 @@ def extended_problem():
 		"fdir:[actuator loss mitigated]" : "CONTROL",
 		"fdir:[mde fault detected]" : "OBSERVATION",
 		"fdir:[mde fault mitigated]" : "CONTROL",
-		"system:(pose)" : "MISSION",
+		"vehicle:(pose)" : "MISSION",
 		"environment:(UTC time)" : "ENVIRONMENT",
 		"environment:[obstacle]" : "FAULT",
 		"environment:(temperature)" : "ENVIRONMENT",
@@ -196,7 +198,7 @@ def extended_problem():
 	
 	category_colors = {
 		"FAULT":"red",
-		"MISSION":"black",
+		"QOI":"black",
 		"ENVIRONMENT":"green",
 		"SYSTEM":"orange",
 		"OBSERVATION":"blue",
@@ -205,7 +207,7 @@ def extended_problem():
 	DG_rover.set_category_colors(category_colors)
 	
 	DG_rover.display_interactive()
-	
+
 	
 def restricted_problem():
 	###Define graph structure
@@ -213,28 +215,34 @@ def restricted_problem():
 	
 	###MISSION: identify quantities of interest
 	DG_rover.add("mission:(downtime)")
-	DG_rover.add("mission:(productive traversal)",'<-',["control:(operational mode)", "control:(average drive speed)"]) #drive at speed if in drive mode
-	
-	###FAULTS: think about the failure modes that could affect QoI
+	#productive traversal is a subset of total traversal
+	DG_rover.add("mission:(distance traversed)","->",["mission:(productive traversal)"]) #simple addition
+	DG_rover.add("mission:(distance traversed)",'<-',["control:(operational mode)", "vehicle:(average drive speed)"]) #drive at speed if in drive mode
+
+
+	###FAULTS and first-order effects
+	DG_rover.add("vehicle:(average drive speed)",'<-',"control:(average drive speed)") #drive at speed if in drive mode
 	
 	#a stall or snag leads to a brief downtime
 	DG_rover.add("actuator:[stall]","->","mission:(downtime)")
 	
-	#accumulation of motor drive electronics stress causes a decrease in average speed
-	#DG_rover.add("motor drive electronics:[fault]",'->',"control:(average drive speed)")
-	DG_rover.add("motor drive electronics:[fault]",'<-',"motor drive electronics:(stress)")
+	#accumulation of motor drive electronics stress causes an involuntary decrease in average speed
+	DG_rover.add("motor drive electronics:[fault]",'->',"vehicle:(average drive speed)")
 	DG_rover.add("wheel:(torque)",'->',"motor drive electronics:[fault]")
 	
+
 	###FDIR: think about how observing, recovering, and mitigating those faults can introduce additional effects
 	
 	#a detected motor drive electionics fault requires drive abort and stuck recovery
+	#this resolves the slowdown
 	DG_rover.add("fdir:[mde fault detected]",'<-',"motor drive electronics:[fault]")
 	DG_rover.add("fdir:[mde fault mitigated]",'<-',"fdir:[mde fault detected]")
 	DG_rover.add("fdir:[mde fault mitigated]",'->',"mission:(downtime)")
-	
+	DG_rover.add("fdir:[mde fault mitigated]",'->',"vehicle:(average drive speed)")
+	"""
 	###SYSTEM & CONOPS
 	#pose is determined nominally by # productive traversal, but detours change that
-	DG_rover.add("system:(pose)","<-",["mission:(productive traversal)"])
+	DG_rover.add("vehicle:(pose)","<-",["mission:(productive traversal)"])
 	
 	#sleep mode at night, safe mode if we're incurring downtime
 	DG_rover.add("control:(operational mode)","<-",["environment:(UTC time)", "mission:(downtime)"])
@@ -242,25 +250,32 @@ def restricted_problem():
 	###ENVIRONMENTAL EFFECTS
 	
 	#slip is a property of soil at a given location, partially determined by the slope and sinkage at that location
-	DG_rover.add("environment:(slip ratio)","<-",["system:(pose)", "environment:(slope)", "environment:(sinkage)"])
-	DG_rover.add("environment:(slope)","<-",["system:(pose)"])
-	DG_rover.add("environment:(sinkage)","<-",["system:(pose)", "environment:(slope)"])
+	DG_rover.add("environment:(slip ratio)","<-","vehicle:(pose)")
+	DG_rover.add("environment:(slope)","<-","vehicle:(pose)")
+	DG_rover.add("environment:(sinkage)","<-","vehicle:(pose)")
+	#DG_rover.add("environment:(sinkage)","<-","environment:(slope)") #no, its actually that the slope increases slip which increases sinkage
+	#DG_rover.add("environment:(slip ratio)","<-","environment:(slope)") #i dont want to tangle with this yet; terramechanics
+
+	#Assertion: when the slip increases, the wheel digs into the regolith, leading to increasing sinkage
+	DG_rover.add("environment:(slip ratio)","->","environment:(sinkage)")
 
 	###MOBILITY
 	
 	#stall occurs when torque hits a limit, and that limit is lower if mde stress is high. MDE stress accumulates with torque
-	DG_rover.add("actuator:[stall]","<-",["wheel:(torque)", "motor drive electronics:(stress)"]) #discrete event, when torque hits a limit
-	DG_rover.add("motor drive electronics:(stress)","<-",["wheel:(torque)"])
+	DG_rover.add("actuator:[stall]","<-",["wheel:(torque)", "motor drive electronics:[fault]"]) #discrete event, when torque hits a limit
+	DG_rover.add("motor drive electronics:[fault]","<-",["wheel:(torque)"])
 	
 	#many instantaneous determinants of torque
-	DG_rover.add("wheel:(torque)","<-",["environment:(slope)", "environment:(slip ratio)", "environment:(sinkage)", "environment:[rock contact]", "wheel:(degradation)", "control:(average drive speed)"]) #continuous variable
+	DG_rover.add("wheel:(torque)","<-",["environment:(slope)", "environment:(slip ratio)", "environment:(sinkage)", "environment:[rock contact]", "wheel:(degradation)", "vehicle:(average drive speed)"]) #continuous variable
+	#wheel:(deformation)
 	
 	#wheel degrades with all distance ever traversed, and rocks and snags
 	DG_rover.add("wheel:(degradation)","<-",["mission:(distance traversed)", "environment:[rock contact]"])
-	DG_rover.add("mission:(distance traversed)","<-",["mission:(productive traversal)"]) #simple addition
+	DG_rover.add("environment:[rock contact]","<-","mission:(distance traversed)")	
 	
 	#driving over high-slip terrain kicks up dust, requires us to slow down
 	DG_rover.add("environment:(slip ratio)",'->',"control:(average drive speed)")
+	"""
 
 	"""
 		###Set initial conditions
@@ -387,9 +402,9 @@ def restricted_problem():
 		###Set categories and display
 	DG_rover_categorization = {
 		"control:(fault recovery)" : "CONTROL",
-		"mission:(downtime)" : "MISSION",
-		"mission:(productive traversal)" : "MISSION",
-		"mission:(distance traversed)" : "MISSION",
+		"mission:(downtime)" : "QOI",
+		"mission:(productive traversal)" : "QOI",
+		"mission:(distance traversed)" : "SYSTEM",
 		"mission:(unproductive traversal remaining)" : "FAULT",
 		"control:(operational mode)" : "CONTROL",
 		"control:(average drive speed)" : "CONTROL",
@@ -410,7 +425,8 @@ def restricted_problem():
 		"fdir:[actuator loss mitigated]" : "CONTROL",
 		"fdir:[mde fault detected]" : "OBSERVATION",
 		"fdir:[mde fault mitigated]" : "CONTROL",
-		"system:(pose)" : "MISSION",
+		"vehicle:(pose)" : "SYSTEM",
+		"vehicle:(average drive speed)" : "SYSTEM",
 		"environment:(UTC time)" : "ENVIRONMENT",
 		"environment:[obstacle]" : "FAULT",
 		"environment:(temperature)" : "ENVIRONMENT",
@@ -419,7 +435,7 @@ def restricted_problem():
 		"environment:(sinkage)" : "ENVIRONMENT",
 		"radiator:(efficiency)" : "SYSTEM",
 		"thermal interface:(resistance)" : "SYSTEM",
-		"wheel:(degradation)" : "SYSTEM",
+		"wheel:(degradation)" : "FAULT",
 		"software:[nav error]" : "FAULT",
 		"software:(estimated pose)" : "OBSERVATION",
 	}
@@ -427,7 +443,7 @@ def restricted_problem():
 	
 	category_colors = {
 		"FAULT":"red",
-		"MISSION":"black",
+		"QOI":"black",
 		"ENVIRONMENT":"green",
 		"SYSTEM":"orange",
 		"OBSERVATION":"blue",
